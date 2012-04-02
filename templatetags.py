@@ -152,6 +152,10 @@ def topic_browser_tree(tree, level=0):
     s = ""
     class_name = "topline"
     for child in tree.children:
+
+        if not child.has_children_of_type(["Topic", "Video", "Url"]):
+            continue
+
         if not child.children or child.id in models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
@@ -188,6 +192,10 @@ def topic_browser_get_topics(tree, level=0):
     needs_divider = False
 
     for child in tree.children:
+
+        if not child.has_children_of_type(["Topic", "Video", "Url"]):
+            continue
+
         if not child.children or child.id in models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
@@ -236,7 +244,7 @@ def topic_browser_get_topics(tree, level=0):
 
         idx += 1
 
-    return item_list if len(item_list) > 0 else None
+    return item_list
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None:
     "Templatetags.topic_browser_data_%s" % (
@@ -276,3 +284,12 @@ def to_secure_url(url):
     """
     
     return util.secure_url(url)
+
+def to_insecure_url(url):
+    """ Returns the appropriate http server URL for a url
+    somewhere on Khan Academy. Note - this is not intended for links to
+    external sites.
+
+    """
+    
+    return util.insecure_url(url)

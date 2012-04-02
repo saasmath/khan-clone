@@ -1,7 +1,7 @@
+import config
 import logging
 from urlparse import urlparse
-from google.appengine.api import users
-import config
+from oauth_provider.oauth import OAuthError
 
 OAUTH_BLACKLISTED_HOSTNAMES = getattr(config,'OAUTH_BLACKLISTED_HOSTNAMES',[])
 
@@ -10,13 +10,10 @@ import oauth
 from models_oauth import Nonce, Token, Consumer, Resource, generate_random
 from consts import VERIFIER_SIZE, MAX_URL_LENGTH, OUT_OF_BAND
 
-logger = logging.getLogger()
-
 def set_trace():
-  import pdb, sys
-  warningger = pdb.Pdb(stdin=sys.__stdin__,
-      stdout=sys.__stdout__)
-  warningger.set_trace(sys._getframe().f_back)
+    import pdb, sys
+    warningger = pdb.Pdb(stdin=sys.__stdin__, stdout=sys.__stdout__)
+    warningger.set_trace(sys._getframe().f_back)
 
 class GAEOAuthDataStore(oauth.OAuthDataStore):
     def __init__(self, oauth_request):
@@ -43,20 +40,19 @@ class GAEOAuthDataStore(oauth.OAuthDataStore):
         elif token_type == 'access':
             token_type = Token.ACCESS
 
-        logger.debug("!!! In GAEOAuthDataStore.lookup_token  key_:%s, token_type: %s"%(token,token_type))
-
-        request_tokens = Token.all()\
-            .filter('key_ =',token)\
-            .filter('token_type =',token_type).fetch(1000)
+        request_tokens = (Token.all().
+                filter('key_ =', token).
+                filter('token_type =', token_type).
+                fetch(1000))
 
         if len(request_tokens) == 1:
             self.request_token = request_tokens[0]
             return self.request_token
         elif len(request_tokens) == 0:
-            logger.info("No token found")
+            logging.info("No token found")
             return None
         else:
-            logger.info("%d tokens found" % len(request_tokens))
+            logging.info("%d tokens found" % len(request_tokens))
             raise Exception('More then one %s token matches token "%s"'%(token_type,token))
 
 
@@ -65,12 +61,11 @@ class GAEOAuthDataStore(oauth.OAuthDataStore):
         if oauth_token is None:
             return None
 
-        logger.debug("!!! In GAEOAuthDataStore.lookup_nonce  key_:%s, consumer_key: %s, token_key:%s"%(nonce,oauth_consumer.key_,oauth_token.key_))
-
-        nonces = Nonce.all()\
-            .filter('consumer_key =',oauth_consumer.key_)\
-            .filter('token_key =',oauth_token.key_)\
-            .filter('key_ =',nonce).fetch(1000)
+        nonces = (Nonce.all().
+                filter('consumer_key =', oauth_consumer.key_).
+                filter('token_key =', oauth_token.key_).
+                filter('key_ =', nonce).
+                fetch(1000))
 
         if len(nonces) == 1:
             nonce = nonces[0]
@@ -88,7 +83,6 @@ class GAEOAuthDataStore(oauth.OAuthDataStore):
 
 
     def fetch_request_token(self, oauth_consumer, oauth_callback):
-        logger.debug("!!! In MockOAuthDataStore.fetch_request_token  args: %s"%locals())
 
         if oauth_consumer.key != self.consumer.key:
             raise OAuthError('Consumer key does not match.')
@@ -123,25 +117,23 @@ class GAEOAuthDataStore(oauth.OAuthDataStore):
 
 
     def fetch_access_token(self, oauth_consumer, oauth_token, oauth_verifier):
-        logger.debug("!!! IN MockOAuthDataStore.fetch_access_token  args: %s"%locals())
-
-        if oauth_consumer.key_ == self.consumer.key_ \
-        and oauth_token.key_ == self.request_token.key_ \
-        and self.request_token.is_approved:
+        if (oauth_consumer.key_ == self.consumer.key_ and
+                oauth_token.key_ == self.request_token.key_ and
+                self.request_token.is_approved):
             # OAuth 1.0a: if there is a callback confirmed, check the verifier
-            if (self.request_token.callback_confirmed \
-            and oauth_verifier == self.request_token.verifier) \
-            or not self.request_token.callback_confirmed:
-                self.access_token = Token.create_token(consumer=self.consumer,
-                                                               token_type=Token.ACCESS,
-                                                               timestamp=self.timestamp,
-                                                               user=self.request_token.user,
-                                                               resource=self.request_token.resource)
+            if ((self.request_token.callback_confirmed and
+                    oauth_verifier == self.request_token.verifier) or
+                    not self.request_token.callback_confirmed):
+                self.access_token = Token.create_token(
+                        consumer=self.consumer,
+                        token_type=Token.ACCESS,
+                        timestamp=self.timestamp,
+                        user=self.request_token.user,
+                        resource=self.request_token.resource)
                 return self.access_token
-        raise oauth.OAuthError('Consumer key or token key does not match. ' \
-                        +'Make sure your request token is approved. ' \
-                        +'Check your verifier too if you use OAuth 1.0a.')
-
+        raise oauth.OAuthError("Consumer key or token key does not match. " +
+                               "Make sure your request token is approved. " +
+                               "Check your verifier too if you use OAuth 1.0a.")
 
     def authorize_request_token(self, oauth_token, user):
         if oauth_token.key == self.request_token.key:
@@ -157,7 +149,6 @@ class GAEOAuthDataStore(oauth.OAuthDataStore):
 
             return self.request_token
         raise OAuthError('Token key does not match.')
-
 
 def check_valid_callback(callback):
     """

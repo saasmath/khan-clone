@@ -10,7 +10,6 @@ var Profile = {
     fLoadingGraph: false,
     fLoadedGraph: false,
     profile: null,
-    secureUrlBase: null,
 
     /**
      * The root segment of the URL for the profile page for this user.
@@ -265,9 +264,21 @@ var Profile = {
             }
         },
 
+        settingsIframe_: null,
         showSettings: function() {
-            // Populate HTML/reset.
-            Settings.render($("#tab-content-settings"));
+            // Password change forms need to happen in an iframe since it needs
+            // to be POST'ed to a different domain (with https), and redirected
+            // back with information on error/success.
+            if (!Profile.settingsIframe_) {
+                Profile.settingsIframe_ = $("<iframe></iframe>")
+                        .attr("src", "/pwchange")
+                        .attr("frameborder", "0")
+                        .attr("scrolling", "no")
+                        .attr("allowtransparency", "yes")
+                        .attr("id", "settings-iframe")
+                        .attr("class", "settings-iframe")
+                        .appendTo($("#tab-content-settings"));
+            }
 
             // Show.
             $("#tab-content-settings").show().siblings().hide();

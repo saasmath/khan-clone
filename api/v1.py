@@ -201,10 +201,10 @@ def topic_version_change_list(version_id):
 def topic_version_delete_change(version_id):
     version = models.TopicVersion.get_by_id(version_id)
 
-    kind = request.request_string("kind")        
+    kind = request.request_string("kind")
     id = request.request_string("id")
-        
-    content = get_content_entity(kind, id, version) 
+
+    content = get_content_entity(kind, id, version)
     if content:
         query = models.VersionContentChange.all()
         query.filter("version =", version)
@@ -632,6 +632,33 @@ def save_url(url_id = None, version_id=None):
             request.json,
             changeable_props)
 
+
+@route("/api/v1/videos/<video_id>/explore_url", methods=["GET"])
+@open_access
+@jsonp
+@jsonify
+def get_explore_url(video_id):
+    video = models.Video.all().filter("youtube_id =", video_id).get()
+    if video and video.extra_properties:
+        return video.extra_properties.get('explore_url')
+    return None
+
+
+@route("/api/v1/videos/<video_id>/explore_url", methods=["PUT"])
+@developer_required
+@jsonp
+@jsonify
+def set_explore_url(video_id):
+    video = models.Video.all().filter("youtube_id =", video_id).get()
+    if video:
+        if video.extra_properties is None:
+            video.extra_properties = {}
+        video.extra_properties['explore_url'] = request.request_string('url', None)
+        video.put()
+        return video.extra_properties['explore_url']
+    return None
+
+
 @route("/api/v1/playlists/library", methods=["GET"])
 @open_access
 @etag(lambda: models.Setting.topic_tree_version())
@@ -648,13 +675,15 @@ def playlists_library():
     def convert_tree(tree):
         topics = []
         for child in tree.children:
-            # special cases
-            if child.id == "new-and-noteworthy":
-                continue
-            elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
-                child.id = "algebra-i"
-            elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
-                child.id = "geometry-2"
+
+            if hasattr(child, "id"):
+                # special cases
+                if child.id == "new-and-noteworthy":
+                    continue
+                elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                    child.id = "algebra-i"
+                elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                    child.id = "geometry-2"
 
             if child.kind() == "Topic":
                 topic = {}
@@ -681,7 +710,7 @@ def playlists_library():
 
 # We expose the following "fresh" route but don't publish the URL for internal services
 # that don't want to deal w/ cached values ie. youtube-export script
-@route("/api/v1/playlists/library/list/fresh", methods=["GET"], 
+@route("/api/v1/playlists/library/list/fresh", methods=["GET"],
                                                defaults = {"fresh": True})
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @open_access
@@ -779,7 +808,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
         float(data["seconds_per_fast_problem"]))
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
-                        "summative", "prerequisites", "covers", 
+                        "summative", "prerequisites", "covers",
                         "related_videos", "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise,
@@ -2404,3 +2433,12 @@ def get_avatars():
 def get_version_id():
     return { 'version_id' : os.environ['CURRENT_VERSION_ID'] if 'CURRENT_VERSION_ID' in os.environ else None }
 
+
+@route("/api/v1/parentsignup", methods=["POST", "PUT"])
+@open_access
+@jsonify
+def signup_parent():
+    email = request.request_string("email")
+    if email:
+        models.ParentSignup(key_name=email).put()
+    return {}
