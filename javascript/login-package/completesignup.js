@@ -37,9 +37,10 @@ Login.initCompleteSignupForm = function(options) {
  * Submits the complete signup attempt if it passes pre-checks.
  */
 Login.submitCompleteSignup = function() {
-    var valid = Login.ensureValid_("#nickname", "Name required");
-    valid = Login.ensureValid_("#username", "Username required") && valid;
-    valid = Login.ensureValid_("#password", "Password required") && valid;
+    var valid = Login.ensureValid_("#nickname", "Please tell us your name.") &&
+            Login.ensureValid_("#username", "Please pick a username.") &&
+            Login.ensureValid_("#password", "We need a password from you.");
+
     if (valid) {
         Login.asyncFormPost(
                 $("#signup-form"),
@@ -55,12 +56,6 @@ Login.submitCompleteSignup = function() {
                     // Hard fail - can't seem to talk to server right now.
                     // TODO(benkomalo): handle.
                 });
-    } else {
-        // Focus on the first required, empty field.
-        _.find([$("#nickname"), $("#username"), $("#password")],
-            function(jel) {
-                return !jel.val() || jel.val() === "unspecified";
-            }).focus();
     }
 };
 
@@ -77,15 +72,19 @@ Login.onCompleteSignupSucess = function(data) {
  * the signup - there was probably invalid data in the forms.
  */
 Login.onCompleteSignupError = function(errors) {
-    var firstFailed;
-    _.each(errors, function(error, fieldName) {
-        $("#" + fieldName + "-error").text(error);
-        if (firstFailed === undefined) {
-            firstFailed = fieldName;
-        }
-    });
-    if (firstFailed) {
-        $("#" + firstFailed).focus();
+    var firstFailed = _.find(
+            ["nickname", "username", "password"],
+            function(fieldName) {
+                return fieldName in errors;
+            });
+    if (!firstFailed) {
+        // Shouldn't happen, but just in case we get unknown errors.
+        $("#error-text").text("Oops. Something went wrong. Please try again.");
+        return;
     }
+
+    // Only show the first failed message and focus to it.
+    $("#error-text").text(errors[firstFailed]);
+    $("#" + firstFailed).focus();
 };
 

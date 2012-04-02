@@ -114,9 +114,9 @@ Login.handleSignupResponse = function(data) {
                 show: true
             });
     } else {
-        _.each(errors, function(error, fieldName) {
-            $("#" + fieldName + "-error").text(error);
-        });
+        // Only the e-mail can fail on a server side response from this
+        // form.
+        $("#error-text").text(errors["email"]);
     }
 };
 

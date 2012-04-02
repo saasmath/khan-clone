@@ -22,7 +22,7 @@
             <div class="field-container row-fluid">
                 <label class="field-label span4" for="email">Email</label>
                 <input id="email" name="email" type="email" class="simple-input ui-corner-all span4" value="{{ values['email']|escape }}">
-                <div class="field-error span4" id="email-error"></div>
+                <div class="field-error span4" id="error-text"></div>
             </div>
 
             <div class="field-container row-fluid">
@@ -31,7 +31,6 @@
 
                 {# Note that the actual name of the field sent to the server is "birthdate"
                    (it is a hidden input populated by the JS) #}
-                <div class="field-error span4" id="birthdate-error"></div>
             </div>
 
             <div class="field-container row-fluid">

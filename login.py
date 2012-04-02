@@ -177,13 +177,13 @@ class MobileOAuthLogin(request_handler.RequestHandler):
         identifier = self.request_string('identifier')
         password = self.request_string('password')
         if not identifier or not password:
-            self.render_login_page("Please enter your username and password")
+            self.render_login_page("Please enter your username and password.")
             return
 
         user_data = UserData.get_from_username_or_email(identifier.strip())
         if not user_data or not user_data.validate_password(password):
             # TODO(benkomalo): IP-based throttling of failed logins?
-            self.render_login_page("Username and password doesn't match")
+            self.render_login_page("Your login or password is incorrect.")
             return
         
         # Successful login - convert to an OAuth access_token
@@ -391,7 +391,8 @@ class Signup(request_handler.RequestHandler):
 
         errors = {}
 
-        # Under-13 check.
+        # Under-13 check (note the JavaScript on our form should never really
+        # send an invalid date, but just to make sure...)
         birthdate = None
         if values['birthdate']:
             try:
@@ -421,14 +422,14 @@ class Signup(request_handler.RequestHandler):
             # Perform loose validation - we can't actually know if this is
             # valid until we send an e-mail.
             if not _email_re.search(email):
-                errors['email'] = "Email appears to be invalid"
+                errors['email'] = "That email appears to be invalid."
             else:
                 existing = UserData.get_from_user_input_email(email)
                 if existing is not None:
                     if existing.has_password():
                         # TODO(benkomalo): do something nicer and maybe ask the
                         # user to try and login with that e-mail?
-                        errors['email'] = "There is already an account with that e-mail"
+                        errors['email'] = "Oops. There's already an account with that e-mail."
                     else:
                         existing_google_user_detected = True
                         logging.warn("User tried to register with password, "
@@ -440,15 +441,17 @@ class Signup(request_handler.RequestHandler):
                     if existing is not None:
                         # TODO(benkomalo): do something nicer here and present
                         # call to action for re-sending verification e-mail
-                        errors['email'] = "Looks like you've already tried signing up"
+                        errors['email'] = "Looks like you've already tried signing up."
         else:
-            errors['email'] = "Email required"
+            errors['email'] = "Please enter your email."
             
         if existing_google_user_detected:
             # TODO(benkomalo): just deny signing up with username/password for
             # existing users with a Google login. In the future, we can show
             # a message to ask them to sign in with their Google login
-            errors['email'] = "There is already an account with that e-mail"
+            errors['email'] = (
+                    "There is already an account with that e-mail. " +
+                    "If it's yours, sign in with Google below.")
 
         if len(errors) > 0:
             self.render_json({'errors': errors})
@@ -659,9 +662,9 @@ class CompleteSignup(request_handler.RequestHandler):
 
         # Simple existence validations
         errors = {}
-        for field, error in [('nickname', "Name required"),
-                             ('username', "Username required"),
-                             ('password', "Password required")]:
+        for field, error in [('nickname', "Please tell us your name."),
+                             ('username', "Please pick a username."),
+                             ('password', "We need a password from you.")]:
             if not values[field]:
                 errors[field] = error
 
@@ -674,21 +677,23 @@ class CompleteSignup(request_handler.RequestHandler):
         if values['username']:
             username = values['username']
             # TODO(benkomalo): ask for advice on text
-            if not models.UniqueUsername.is_valid_username(username):
-                errors['username'] = "Must start with a letter, be alphanumeric, and at least 3 characters"
+            if models.UniqueUsername.is_username_too_short(username):
+                errors['username'] = "Sorry, that username's too short."
+            elif not models.UniqueUsername.is_valid_username(username):
+                errors['username'] = "Usernames must start with a letter and be alphanumeric."
 
             # Only check to see if it's available if we're changing values
             # or if this is a brand new UserData
             elif ((not user_data or user_data.username != username) and
                     not models.UniqueUsername.is_available_username(username)):
-                errors['username'] = "Username is not available"
+                errors['username'] = "That username isn't available."
 
         if values['password']:
             password = values['password']
             if not auth.passwords.is_sufficient_password(password,
                                                          values['nickname'],
                                                          values['username']):
-                errors['password'] = "Password is too weak"
+                errors['password'] = "Sorry, but that password's too weak."
 
 
         if len(errors) > 0:
@@ -700,7 +705,7 @@ class CompleteSignup(request_handler.RequestHandler):
             def txn():
                 if (username != user_data.username
                         and not user_data.claim_username(username)):
-                    errors['username'] = "Username is not available"
+                    errors['username'] = "That username isn't available."
                     return False
 
                 user_data.set_password(password)
@@ -727,7 +732,7 @@ class CompleteSignup(request_handler.RequestHandler):
                         gender=gender)
 
                 if not user_data:
-                    self.render_json({'errors': {'username': "Username taken."}},
+                    self.render_json({'errors': {'username': "That username isn't available."}},
                                      camel_cased=True)
                     return
                 elif user_data.username != username:
@@ -776,12 +781,18 @@ class PasswordChange(request_handler.RequestHandler):
             self.render_form()
 
     def render_form(self, message=None, success=False):
+        transfer_token_value = self.request_string("transfer_token", default="")
         self.render_jinja2_template('password-change.html',
                                     {'message': message or "",
-                                     'success': success})
+                                     'success': success,
+                                     'transfer_token': transfer_token_value})
         
     def secure_url_with_token(self, url):
         user_data = UserData.current()
+        if not user_data:
+            logging.warn("No user detected for password change")
+            return util.secure_url(url)
+
         token = TransferAuthToken.for_user(user_data).value
         if url.find('?') == -1:
             return "%s?transfer_token=%s" % (util.secure_url(url), token)
@@ -792,7 +803,7 @@ class PasswordChange(request_handler.RequestHandler):
     def post(self):
         user_data = _resolve_user_in_https_frame(self)
         if not user_data:
-            self.response.unauthorized()
+            self.response.write("Oops. Something went wrong. Please try again.")
             return
 
         existing = self.request_string("existing")

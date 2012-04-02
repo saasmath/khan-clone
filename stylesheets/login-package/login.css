@@ -191,7 +191,7 @@ a:visited {
      * disable webkit-appearance. That removes the dropdown icon though. */
     -webkit-appearance: none;
 
-    background: white url("/images/dropdown.png") no-repeat right center;
+    background: #fafafa url("/images/dropdown.png") no-repeat right center;
 }
 
 .auth-form .simple-input#gender {
@@ -288,6 +288,13 @@ a.signup-link {
     text-align: right;
 }
 
+.signup-container #error-text {
+    /* semi hack - while the text may be multiple lines, we don't want it to affect
+     * the layout (since we know there is space below it), so force it to be a fixed
+     * height and just "bleed" outside of its layout container */
+    height: 1em;
+}
+
 /* completesignup specific styles */
 
 .completesignup-iframe-container {
@@ -338,7 +345,7 @@ a.signup-link {
 }
 
 .completesignup-contents .error-container {
-    margin-top: -6px;
+    margin-top: 4px;
 }
 
 .completesignup-contents .field-error {

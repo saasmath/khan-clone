@@ -88,13 +88,11 @@ Login.connectWithFacebook = function(continueUrl) {
 Login.loginWithPassword = function() {
     // Hide any previous failed login notification after any other attempt.
     // Use "visibility" so as to avoid any jerks in the layout.
-    $("#login-fail-message").css("visiblity", "hidden");
+    $("#error-text").css("visiblity", "hidden");
 
     // Pre-validate.
-    var valid = Login.ensureValid_("#identifier", "Email or username required");
-    valid = Login.ensureValid_("#password", "Password required") && valid;
-
-    if (valid) {
+    if (Login.ensureValid_("#identifier", "Email or username required") &&
+            Login.ensureValid_("#password", "Password required")) {
         Login.asyncFormPost(
                 $("#login-form"),
                 function(data) {
@@ -139,14 +137,14 @@ Login.enableSubmit_ = function() {
 Login.onPasswordLoginFail = function(errors) {
     var text;
     if (errors["badlogin"]) {
-        text = "Username and password doesn't match";
+        text = "Your login or password is incorrect.";
     } else {
         // Unexpected error. This shouldn't really happen but
         // just in case...
-        text = "Error logging in. Please try again";
+        text = "Error logging in. Please try again.";
     }
 
-    $("#login-fail-message").text(text).css("visibility", "");
+    $("#error-text").text(text).css("visibility", "");
     $("#password").focus();
 };
 
@@ -166,20 +164,25 @@ Login.onPasswordLoginSuccess = function(data) {
 };
 
 /**
- * Validates a field in the login form and displays an error on failure.
+ * Validates a field in a login/signup form and displays an error on failure
+ * on $("error-text").
+ * If validation fails, the field will automatically be focused.
  */
-Login.ensureValid_ = function(selector, errorText, checkFunc) {
+Login.ensureValid_ = function(
+        selector, errorText, checkFunc) {
     // By default - check that it's not just empty whitespace.
     checkFunc = checkFunc || function() {
         var value = $(selector).val();
         return !!$.trim(value);
     };
     if (!checkFunc()) {
-        $(selector + "-error").text(errorText);
+        $("#error-text").text(errorText);
+        $(selector).focus();
         return false;
     }
 
-    $(selector + "-error").text("");
+    // Include whitespace so that empty/non-empty values don't affect layout.
+    $("#error-text").html("&nbsp;");
     return true;
 };
 
