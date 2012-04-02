@@ -784,6 +784,10 @@ class PasswordChange(request_handler.RequestHandler):
         
     def secure_url_with_token(self, url):
         user_data = UserData.current()
+        if not user_data:
+            logging.warn("No user detected for password change")
+            return util.secure_url(url)
+
         token = TransferAuthToken.for_user(user_data).value
         if url.find('?') == -1:
             return "%s?transfer_token=%s" % (util.secure_url(url), token)
@@ -794,7 +798,7 @@ class PasswordChange(request_handler.RequestHandler):
     def post(self):
         user_data = _resolve_user_in_https_frame(self)
         if not user_data:
-            self.response.unauthorized()
+            self.response.write("Oops. Something went wrong. Please try again.")
             return
 
         existing = self.request_string("existing")
