@@ -148,26 +148,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
             this.el.removeClass("nodeLabelFiltered");
         }
 
-        // perf hack: instead of changing css opacity, set a whole new image
-        var img = this.el.find("img.node-icon");
-        var url = img.attr("src");
-
-        if (!url || url.indexOf("power-mode") >= 0) {
-            // TODO: for now, we don't have image opacity effects on topics
-            // during search filtering
-            return;
-        }
-
-        // normalize
-        if (url.indexOf("faded") >= 0) {
-            url = url.replace("-faded.png", ".png");
-        }
-
-        if (this.filtered) {
-            img.attr("src", url.replace(".png", "-faded.png"));
-        } else {
-            img.attr("src", url);
-        }
     },
 
     setHighlight: function(highlight) {

@@ -3403,10 +3403,15 @@ a.nodeLabel:hover {
     display: inline-block;
 }
 
-.node-icon.node-complete    { background: url(/images/node-complete.png); /*! data-uri(/images/node-complete.png) */ }
-.node-icon.node-review      { background: url(/images/node-review.png); /*! data-uri(/images/node-review.png) */ }
-.node-icon.node-suggested   { background: url(/images/node-suggested.png); /*! data-uri(/images/node-suggested.png) */ }
-.node-icon.node-not-started { background: url(/images/node-not-started.png); /*! data-uri(/images/node-not-started.png) */ }
+.node-icon.node-complete    { background: url(/images/node-complete.png?glove);    /*! data-uri(/images/node-complete.png) */ }
+.node-icon.node-review      { background: url(/images/node-review.png?glove);      /*! data-uri(/images/node-review.png) */ }
+.node-icon.node-suggested   { background: url(/images/node-suggested.png?glove);   /*! data-uri(/images/node-suggested.png) */ }
+.node-icon.node-not-started { background: url(/images/node-not-started.png?glove); /*! data-uri(/images/node-not-started.png) */ }
+
+.nodeLabelFiltered .node-icon.node-complete    { background: url(/images/node-complete-faded.png?glove);    /*! data-uri(/images/node-complete-faded.png) */ }
+.nodeLabelFiltered .node-icon.node-review      { background: url(/images/node-review-faded.png?glove);      /*! data-uri(/images/node-review-faded.png) */ }
+.nodeLabelFiltered .node-icon.node-suggested   { background: url(/images/node-suggested-faded.png?glove);   /*! data-uri(/images/node-suggested-faded.png) */ }
+.nodeLabelFiltered .node-icon.node-not-started { background: url(/images/node-not-started-faded.png?glove); /*! data-uri(/images/node-not-started-faded.png) */ }
 
 .zoom10 .nodeLabel {
     position: relative;
@@ -3438,10 +3443,16 @@ a.nodeLabel:hover {
     width: 40px;
     height: 40px;
 }
-.zoom9 .nodeLabel.exercise .node-icon.node-complete    { background: url(/images/node-complete-40.png); /*! data-uri(/images/node-complete-40.png) */ }
-.zoom9 .nodeLabel.exercise .node-icon.node-review      { background: url(/images/node-review-40.png); /*! data-uri(/images/node-review-40.png) */ }
-.zoom9 .nodeLabel.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-40.png); /*! data-uri(/images/node-suggested-40.png) */ }
-.zoom9 .nodeLabel.exercise .node-icon.node-not-started { background: url(/images/node-not-started-40.png); /*! data-uri(/images/node-not-started-40.png) */ }
+
+.zoom9 .nodeLabel.exercise .node-icon.node-complete    { background: url(/images/node-complete-40.png?glove);    /*! data-uri(/images/node-complete-40.png) */ }
+.zoom9 .nodeLabel.exercise .node-icon.node-review      { background: url(/images/node-review-40.png?glove);      /*! data-uri(/images/node-review-40.png) */ }
+.zoom9 .nodeLabel.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-40.png?glove);   /*! data-uri(/images/node-suggested-40.png) */ }
+.zoom9 .nodeLabel.exercise .node-icon.node-not-started { background: url(/images/node-not-started-40.png?glove); /*! data-uri(/images/node-not-started-40.png) */ }
+
+.zoom9 .nodeLabelFiltered.exercise .node-icon.node-complete    { background: url(/images/node-complete-40-faded.png?glove);    /*! data-uri(/images/node-complete-40-faded.png) */ }
+.zoom9 .nodeLabelFiltered.exercise .node-icon.node-review      { background: url(/images/node-review-40-faded.png?glove);      /*! data-uri(/images/node-review-40-faded.png) */ }
+.zoom9 .nodeLabelFiltered.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-40-faded.png?glove);   /*! data-uri(/images/node-suggested-40-faded.png) */ }
+.zoom9 .nodeLabelFiltered.exercise .node-icon.node-not-started { background: url(/images/node-not-started-40-faded.png?glove); /*! data-uri(/images/node-not-started-40-faded.png) */ }
 
 .zoom7 .nodeLabel.exercise .node-icon {
     width: 10px;
@@ -3450,10 +3461,16 @@ a.nodeLabel:hover {
 .zoom7 .nodeLabel.exercise .node-text {
     display: none;
 }
-.zoom7 .nodeLabel.exercise .node-icon.node-complete    { background: url(/images/node-complete-10.png); /*! data-uri(/images/node-complete-10.png) */ }
-.zoom7 .nodeLabel.exercise .node-icon.node-review      { background: url(/images/node-review-10.png); /*! data-uri(/images/node-review-10.png) */ }
-.zoom7 .nodeLabel.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-10.png); /*! data-uri(/images/node-suggested-10.png) */ }
-.zoom7 .nodeLabel.exercise .node-icon.node-not-started { background: url(/images/node-not-started-10.png); /*! data-uri(/images/node-not-started-10.png) */ }
+
+.zoom7 .nodeLabel.exercise .node-icon.node-complete    { background: url(/images/node-complete-10.png?glove);    /*! data-uri(/images/node-complete-10.png) */ }
+.zoom7 .nodeLabel.exercise .node-icon.node-review      { background: url(/images/node-review-10.png?glove);      /*! data-uri(/images/node-review-10.png) */ }
+.zoom7 .nodeLabel.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-10.png?glove);   /*! data-uri(/images/node-suggested-10.png) */ }
+.zoom7 .nodeLabel.exercise .node-icon.node-not-started { background: url(/images/node-not-started-10.png?glove); /*! data-uri(/images/node-not-started-10.png) */ }
+
+.zoom7 .nodeLabelFiltered.exercise .node-icon.node-complete    { background: url(/images/node-complete-10-faded.png?glove);    /*! data-uri(/images/node-complete-10-faded.png) */ }
+.zoom7 .nodeLabelFiltered.exercise .node-icon.node-review      { background: url(/images/node-review-10-faded.png?glove);      /*! data-uri(/images/node-review-10-faded.png) */ }
+.zoom7 .nodeLabelFiltered.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-10-faded.png?glove);   /*! data-uri(/images/node-suggested-10-faded.png) */ }
+.zoom7 .nodeLabelFiltered.exercise .node-icon.node-not-started { background: url(/images/node-not-started-10-faded.png?glove); /*! data-uri(/images/node-not-started-10-faded.png) */ }
 
 .lte7 .zoom6 .nodeLabel .node-icon,
 .lte7 .zoom7 .nodeLabel.topic .node-icon,
@@ -3480,10 +3497,16 @@ a.nodeLabel:hover {
 .lte7 .zoom8 .nodeLabel .node-icon {
     margin-left: 18px;
 }
-.zoom8 .nodeLabel.exercise .node-icon.node-complete    { background: url(/images/node-complete-26.png); /*! data-uri(/images/node-complete-26.png) */ }
-.zoom8 .nodeLabel.exercise .node-icon.node-review      { background: url(/images/node-review-26.png); /*! data-uri(/images/node-review-26.png) */ }
-.zoom8 .nodeLabel.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-26.png); /*! data-uri(/images/node-suggested-26.png) */ }
-.zoom8 .nodeLabel.exercise .node-icon.node-not-started { background: url(/images/node-not-started-26.png); /*! data-uri(/images/node-not-started-26.png) */ }
+
+.zoom8 .nodeLabel.exercise .node-icon.node-complete    { background: url(/images/node-complete-26.png?glove);    /*! data-uri(/images/node-complete-26.png) */ }
+.zoom8 .nodeLabel.exercise .node-icon.node-review      { background: url(/images/node-review-26.png?glove);      /*! data-uri(/images/node-review-26.png) */ }
+.zoom8 .nodeLabel.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-26.png?glove);   /*! data-uri(/images/node-suggested-26.png) */ }
+.zoom8 .nodeLabel.exercise .node-icon.node-not-started { background: url(/images/node-not-started-26.png?glove); /*! data-uri(/images/node-not-started-26.png) */ }
+
+.zoom8 .nodeLabelFiltered.exercise .node-icon.node-complete    { background: url(/images/node-complete-26-faded.png?glove);    /*! data-uri(/images/node-complete-26-faded.png) */ }
+.zoom8 .nodeLabelFiltered.exercise .node-icon.node-review      { background: url(/images/node-review-26-faded.png?glove);      /*! data-uri(/images/node-review-26-faded.png) */ }
+.zoom8 .nodeLabelFiltered.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-26-faded.png?glove);   /*! data-uri(/images/node-suggested-26-faded.png) */ }
+.zoom8 .nodeLabelFiltered.exercise .node-icon.node-not-started { background: url(/images/node-not-started-26-faded.png?glove); /*! data-uri(/images/node-not-started-26-faded.png) */ }
 
 .zoom6 .nodeLabel.exercise {
     display: none;
