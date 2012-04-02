@@ -181,7 +181,8 @@ Login.ensureValid_ = function(
         return false;
     }
 
-    $("#error-text").text("");
+    // Include whitespace so that empty/non-empty values don't affect layout.
+    $("#error-text").html("&nbsp;");
     return true;
 };
 
