@@ -290,15 +290,19 @@ a.signup-link {
 
 /* completesignup specific styles */
 
-.completesignup-container.card-case {
+.completesignup-iframe-container {
+    width: 565px;
     margin: 6em auto;
+}
+
+.completesignup-container.card-case {
     padding: 15px;
-    width: 550px;
+    width: 530px;
 }
 
 .completesignup-contents,
 .completesignup-contents .auth-form {
-    width: 548px;
+    width: 528px;
 }
 .completesignup-contents img.tree {
     float: left;

@@ -13,11 +13,11 @@
 
 {% block pagecontent %}
 <article id="page-root">
-    <div class="completesignup-container card-case vertical-shadow">
+    <div class="completesignup-iframe-container">
         <iframe frameborder="0"
                 scrolling="no"
-                width="550px"
-                height="380px"
+                width="565"
+                height="480"
                 allowtransparency="yes"
                 src="{{templatetags.to_secure_url('/completesignup')}}?{{params}}&continue={{continue|escape}}&form=1">
         </iframe>
