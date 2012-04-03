@@ -421,6 +421,8 @@ class Signup(request_handler.RequestHandler):
             return
 
         existing_google_user_detected = False
+        resend_detected = False
+
         if values['email']:
             email = values['email']
 
@@ -443,10 +445,7 @@ class Signup(request_handler.RequestHandler):
                     # No full user account detected, but have they tried to
                     # signup before and still haven't verified their e-mail?
                     existing = models.UnverifiedUser.get_for_value(email)
-                    if existing is not None:
-                        # TODO(benkomalo): do something nicer here and present
-                        # call to action for re-sending verification e-mail
-                        errors['email'] = "Looks like you've already tried signing up."
+                    resend_detected = existing is not None
         else:
             errors['email'] = "Please enter your email."
             
@@ -471,6 +470,7 @@ class Signup(request_handler.RequestHandler):
         response_json = {
                 'success': True,
                 'email': email,
+                'resend_detected': resend_detected,
                 'existing_google_user_detected': existing_google_user_detected,
                 }
         

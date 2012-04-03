@@ -103,6 +103,7 @@ Login.handleSignupResponse = function(data) {
         var template = Templates.get("login.signup-success");
         var dialogEl = $(template({
                 email: data["email"],
+                resendDetected: data["resendDetected"],
 
                 // On dev servers, the token is sent back down for easy
                 // debugging. This is obviously not available on prod.
