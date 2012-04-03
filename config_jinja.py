@@ -1,16 +1,13 @@
 # Jinja2 config
 
-from urllib import quote_plus
-import simplejson as json
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import os
-
 from webapp2_extras import jinja2
-
-# We configure django's version here just to make sure
-# we've got it specified in case a 3rd-party library wants to use it.
-# (gae_mini_profiler and gae_bingo currently use it)
-from google.appengine.dist import use_library
-use_library('django', '0.96')
 
 # Bring in our globally available custom templates and tags.
 # When possible, we now use jinja macros instead of these global tags.
@@ -49,7 +46,7 @@ jinja2.default_config = {
         "App": App,
     }, 
     "filters": {
-        "urlencode": lambda s: quote_plus(s or ""),
+        "urlencode": templatefilters.urlencode,
         "strip": lambda s: (s or "").strip(),
         "escapejs": templatefilters.escapejs,
         "phantom_login_link": templatefilters.phantom_login_link,
@@ -65,6 +62,7 @@ jinja2.default_config = {
         "find_column_index": templatefilters.find_column_index,
         "in_list": templatefilters.in_list,
         "column_height": templatefilters.column_height,
+        "bingo_redirect_url": templatefilters.bingo_redirect_url,
         "thousands_separated": util.thousands_separated_number,
         "static_url": util.static_url,
         "login_url": util.create_login_url,

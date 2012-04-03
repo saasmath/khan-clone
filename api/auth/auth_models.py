@@ -3,6 +3,9 @@ import logging
 
 from google.appengine.ext import db
 
+import auth.tokens
+
+
 # OAuthMap creates a mapping between our OAuth credentials and our identity providers'.
 class OAuthMap(db.Model):
 
@@ -24,6 +27,9 @@ class OAuthMap(db.Model):
     google_access_token_secret = db.StringProperty()
     google_verification_code = db.StringProperty()
 
+    # Auth token (redeemed via username/password combo)
+    khan_auth_token = db.StringProperty(indexed=False)
+
     # Our internal callback URL
     callback_url = db.StringProperty()
 
@@ -39,6 +45,9 @@ class OAuthMap(db.Model):
 
     def uses_google(self):
         return self.google_request_token
+
+    def uses_password(self):
+        return self.khan_auth_token is not None
 
     def is_expired(self):
         return self.expires and self.expires < datetime.datetime.now()
@@ -68,6 +77,11 @@ class OAuthMap(db.Model):
         elif self.uses_facebook():
             user_id = get_facebook_user_id_from_oauth_map(self)
             email = user_id
+        elif self.uses_password():
+            # Note that we can't "create" a user by username/password logins
+            # via the oauth flow.
+            return auth.tokens.AuthToken.get_user_for_value(
+                    self.khan_auth_token, UserData.get_from_user_id)
 
         user_data = UserData.get_from_user_id(user_id) or \
                     UserData.get_from_db_key_email(email) or \

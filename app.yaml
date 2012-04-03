@@ -23,6 +23,7 @@ skip_files:
 - ^requirements\.txt
 - ^agar
 - ^testutil
+- ^tools
 
 handlers:
 - url: /videos
@@ -160,16 +161,11 @@ handlers:
 - url: /gandalf?.*
   script: gandalf/main.py
 
-- url: /backends/.*
-  script: backends/videoprogress.py
-  login: admin
-
 - url: .*
   script: main.py
 
 builtins:
 - appstats: on
-- datastore_admin: on
 - deferred: on
 - remote_api: on
 

@@ -5,13 +5,14 @@ from jinja2.utils import escape
 
 import library
 import request_handler
+import user_util
 import models
 import layer_cache
 import templatetags
+import util
 from app import App
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
-from experiments import MarqueeVideoExperiment
 
 ITEMS_PER_SET = 4
 
@@ -119,6 +120,7 @@ def new_and_noteworthy_link_sets():
 
 class ViewHomePage(request_handler.RequestHandler):
 
+    @user_util.open_access
     def head(self):
         # Respond to HEAD requests for our homepage so twitter's tweet
         # counter will update:
@@ -127,9 +129,9 @@ class ViewHomePage(request_handler.RequestHandler):
 
     # See https://sites.google.com/a/khanacademy.org/forge/for-team-members/how-to-use-new-and-noteworthy-content
     # for info on how to update the New & Noteworthy videos
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self):
-
         version_number = None
 
         if models.UserData.current() and models.UserData.current().developer:
@@ -160,20 +162,7 @@ class ViewHomePage(request_handler.RequestHandler):
                                          thumbnail_link_set)
 
             if marquee_videos:
-                # default to rotating behavior
                 marquee_video = marquee_videos[day % len(marquee_videos)]
-
-                # but if the AB test returns a specific video, allow an override
-                marquee_alternative = MarqueeVideoExperiment.ab_test()
-                if marquee_alternative != 'rotating':
-                    # set the marquee video as determined by the ab_test, if we can find it
-                    alt_videos = []
-                    for thumbnail_link_set in thumbnail_link_sets:
-                        alt_videos += filter(lambda item: "/video/"+marquee_alternative == item["href"], thumbnail_link_set)
-
-                    if len(alt_videos)==1:  # should be 1 and only 1
-                        marquee_video = alt_videos[0]
-                    
                 marquee_video["selected"] = True
 
             if len(thumbnail_link_sets[current_link_set_offset]) < ITEMS_PER_SET:

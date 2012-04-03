@@ -2,12 +2,18 @@ import logging
 import urllib
 import urllib2
 
-import simplejson
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from google.appengine.api import memcache
 
 from custom_exceptions import TumblrException
 from app import App
 from about import util_about
+import user_util
 
 TUMBLR_URL = "http://khanacademy.tumblr.com"
 POSTS_PER_PAGE = 5
@@ -87,10 +93,10 @@ def get_single_post(post_id, force_refresh = False):
         return posts[0]
     return None
 
-def parse_json_posts(json):
+def parse_json_posts(json_string):
 
     dict_json = None
-    dict_json = simplejson.loads(json)
+    dict_json = json.loads(json_string)
 
     if not dict_json:
         return []
@@ -104,6 +110,7 @@ def parse_json_posts(json):
 
 class ViewBlog(util_about.AboutRequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         offset = self.request_int("offset", default=0)
@@ -135,6 +142,7 @@ class ViewBlog(util_about.AboutRequestHandler):
 
 class ViewBlogPost(util_about.AboutRequestHandler):
 
+    @user_util.open_access
     def get(self):
         post_id = None
 

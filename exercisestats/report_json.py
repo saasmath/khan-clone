@@ -13,7 +13,13 @@ import datetime as dt
 import math
 import random
 import time
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from google.appengine.ext import db
 
 import logging
@@ -70,6 +76,7 @@ def get_bucket_cursor(refresh_secs, bucket_size):
 ################################################################################
 
 class ExerciseOverTimeGraph(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jsonp(self.get_json_response())
 
@@ -180,6 +187,7 @@ class ExerciseOverTimeGraph(request_handler.RequestHandler):
 # This redirect is to eliminate duplicate code so we don't have to change every
 # Geckoboard widgets' URL for a general change
 class GeckoboardExerciseRedirect(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         bucket_index = self.request_int('ix', 0)
         return self.redirect('/exercisestats/exerciseovertime?chart=area_spline&past_days=%d&rsecs=%d&buckets=%d&ix=%d'
@@ -197,6 +205,7 @@ class ExerciseStatsMapGraph(request_handler.RequestHandler):
             'interested_day': interested_day
         }
 
+    @user_util.open_access
     def get(self):
         self.response.out.write(self.get_use_cache())
 
@@ -252,6 +261,7 @@ class ExerciseStatsMapGraph(request_handler.RequestHandler):
             'exercisestats/highcharts_scatter_map.json', context)
 
 class ExercisesLastAuthorCounter(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_json(self.exercise_counter_for_geckoboard_rag())
 
@@ -286,6 +296,7 @@ class ExercisesLastAuthorCounter(request_handler.RequestHandler):
         }
 
 class ExerciseNumberTrivia(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         number = self.request_int('num', len(Exercise.get_all_use_cache()))
         self.render_json(self.number_facts_for_geckboard_text(number))
@@ -321,6 +332,7 @@ class ExerciseNumberTrivia(request_handler.RequestHandler):
         }
 
 class UserLocationsMap(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         default_day = dt.date.today() - dt.timedelta(days=2)
         date = self.request_date('date', "%Y/%m/%d", default_day)
@@ -346,6 +358,7 @@ class UserLocationsMap(request_handler.RequestHandler):
         }
 
 class ExercisesCreatedHistogram(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         past_days = self.request_int('past_days', 7)
         today_dt = dt.datetime.combine(dt.date.today(), dt.time())
@@ -399,6 +412,7 @@ class ExercisesCreatedHistogram(request_handler.RequestHandler):
             'exercisestats/highcharts_exercises_created_histogram.json', context)
 
 class SetAllExerciseCreationDates(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         date_to_set = self.request_date('date', "%Y/%m/%d")
 

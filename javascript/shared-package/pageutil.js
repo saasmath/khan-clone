@@ -175,31 +175,26 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
 
 $(function() {
     // Configure the search form
-    if ($("#page_search input[type=text]").placeholder().length) {
-        initAutocomplete("#page_search input[type=text]", true);
+    if ($(".page-search input[type=text]").placeholder().length) {
+        initAutocomplete(".page-search input[type=text]", true);
     }
 
-    $("#page_search").submit(function(e) {
+    $(".page-search").submit(function(e) {
         // Only allow submission if there is a non-empty query.
-        return !!$.trim($("#page_search input[type=text]").val());
+        return !!$.trim($(this).find("input[type=text]").val());
     });
 
     var jelToggle = $("#user-info .dropdown-toggle");
 
-    if (KA.isMobileCapable) {
-        // Open dropdown on click
-        jelToggle.dropdown();
-    } else {
-        // Open dropdown on hover
-        jelToggle.dropdown("hover");
+    if (jelToggle.length) {
+        if (KA.isMobileCapable) {
+            // Open dropdown on click
+            jelToggle.dropdown();
+        } else {
+            // Open dropdown on hover
+            jelToggle.dropdown("hover");
+        }
     }
-
-    var width = jelToggle.width();
-    if (width < 60) {
-        jelToggle.parent().find(".dropdown-menu .profile-link").text("Profile");
-    }
-
-
 });
 
 var Badges = {
@@ -311,6 +306,37 @@ var Notifications = {
         );
 
         $.post("/notifierclose");
+    }
+};
+
+var DemoNotifications = { // for demo-notification-bar (brown and orange, which informs to logout after demo
+
+    show: function(sNotificationContainerHtml) {
+        var jel = $(".demo-notification-bar");
+
+        if (sNotificationContainerHtml)
+        {
+            var jelNew = $(sNotificationContainerHtml);
+            jel.empty().append(jelNew.children());
+        }
+
+        if (!jel.is(":visible")) {
+            setTimeout(function() {
+
+                jel
+                    .css("visibility", "hidden")
+                    .css("display", "")
+                    .css("top", -jel.height() - 2) // 2 for border and outline
+                    .css("visibility", "visible");
+
+                // Queue:false to make sure all of these run at the same time
+                var animationOptions = {duration: 350, queue: false};
+
+                $(".notification-bar-spacer").animate({ height: 35 }, animationOptions);
+                jel.show().animate({ top: 0 }, animationOptions);
+
+            }, 100);
+        }
     }
 };
 
@@ -852,3 +878,95 @@ var Review = {
         reviewCounterElem.data("counter", reviewsLeftCount);
     }
 };
+
+var HeaderTopicBrowser = {
+    topicBrowserData: null,
+    rendered: false,
+
+    init: function() {
+        // Use hoverIntent to hide the dropdown (which handles the delay)
+        // but it has to be set on the whole subheader so we still use
+        // mouseenter to show it.
+        var hoverIntentActive = false;
+        $(".nav-subheader").hoverIntent({
+            over: function() {
+                hoverIntentActive = true;
+            },
+            out: function() {
+                $(".nav-subheader .dropdown-toggle").dropdown("close");
+                hoverIntentActive = false;
+            },
+            timeout: 400
+        });
+        $(".nav-subheader .dropdown-toggle")
+            .on('mouseenter', function() {
+                if (!HeaderTopicBrowser.rendered) {
+                    gae_bingo.bingo(["topic_browser_clicked_link"]);
+                    HeaderTopicBrowser.render();
+                }
+                $(this).dropdown("open");
+            })
+            .on('mouseleave', function() {
+                if (!hoverIntentActive) {
+                    $(this).dropdown("close");
+                }
+            });
+    },
+
+    setData: function(topicBrowserData) {
+        this.topicBrowserData = topicBrowserData;
+    },
+
+    hoverIntentHandlers: function(timeout, setActive) {
+        // Intentionally create one closure per <ul> level so each has
+        // its own selected element
+        var activeEl = null;
+        return {
+            over: function() {
+                if (activeEl) {
+                    $(activeEl).removeClass("hover-active");
+                }
+                $(this).addClass("hover-active");
+                if (setActive) {
+                    $(".nav-subheader ul.topic-browser-menu")
+                        .addClass("child-active")
+                        .removeClass("none-active");
+                }
+                activeEl = this;
+            },
+            out: function() {
+                $(this).removeClass("hover-active");
+                if (activeEl == this) {
+                    activeEl = null;
+                    if (setActive) {
+                        $(".nav-subheader ul.topic-browser-menu")
+                            .removeClass("child-active")
+                            .addClass("none-active");
+                    }
+                }
+            },
+            timeout: timeout
+        };
+    },
+
+    render: function() {
+        if (this.topicBrowserData) {
+            var template = Templates.get("shared.topic-browser-pulldown");
+            var html = template({topics: this.topicBrowserData});
+            var el = $(html);
+
+            // Use hoverIntent to keep the menus selected/open
+            // even if you temporarily leave the item bounds.
+            el.children("li")
+                .hoverIntent(this.hoverIntentHandlers(200, true))
+                .children("ul")
+                    .children("li")
+                        .hoverIntent(this.hoverIntentHandlers(0, false))
+
+            $("#sitewide-navigation .topic-browser-dropdown").append(el);
+
+            this.rendered = true;
+        }
+    }
+};
+

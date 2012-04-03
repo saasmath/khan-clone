@@ -11,6 +11,7 @@ from api.auth.auth_models import OAuthMap
 from oauth_provider.decorators import is_valid_request, validate_token
 from oauth_provider.oauth import OAuthError
 
+import user_util
 import util
 import models
 import os
@@ -18,6 +19,7 @@ import logging
 
 # TODO: rename this to be something more generic, since it's not just
 # oauth specific.
+# TODO(csilves): make this login_required?
 def oauth_required(require_anointed_consumer = False):
     """ Decorator for validating an authenticated request.
 
@@ -71,9 +73,14 @@ def oauth_required(require_anointed_consumer = False):
             # Request validated - proceed with the method.
             return func(*args, **kwargs)
 
+        assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
+        wrapper._access_control = 'oauth-required'   # checked in api.route()
         return wrapper
+
     return outer_wrapper
 
+# TODO(csilves): get rid of this, and make it part of *all* the
+# access-control decorators.
 def oauth_optional(require_anointed_consumer = False):
     """ Decorator for validating an oauth request and storing the OAuthMap for use
     in the rest of the request.
@@ -113,29 +120,64 @@ def oauth_optional(require_anointed_consumer = False):
             return func(*args, **kwargs)
 
         return wrapper
+
     return outer_wrapper
+
+def open_access(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
+    wrapper._access_control = 'open-access'   # checked in api.route()
+    return wrapper
 
 def admin_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-
-        # Make sure current UserData exists as well as is_current_user_admin
-        # because UserData properly verifies xsrf token
-        user_data = models.UserData.current()
-
-        if user_data and users.is_current_user_admin():
+        if user_util.is_current_user_admin():
             return func(*args, **kwargs)
 
         return unauthorized_response()
+
+    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
+    wrapper._access_control = 'admin-required'   # checked in api.route()
     return wrapper
 
 def developer_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        user_data = models.UserData.current()
-        if user_data and (users.is_current_user_admin() or user_data.developer):
+        if user_util.is_current_user_developer():
             return func(*args, **kwargs)
 
         return unauthorized_response()
+
+    # TODO(csilvers): remove this 'if' once we move oauth checking
+    # everywhere and don't have a special handler for it.
+    if not ("_access_control" in wrapper.func_dict and
+            wrapper._access_control == 'oauth-required'):
+        assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
+    wrapper._access_control = 'developer-required'   # checked in api.route()
+    return wrapper
+
+def moderator_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if user_util.is_current_user_moderator():
+            return func(*args, **kwargs)
+
+        return unauthorized_response()
+
+    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
+    wrapper._access_control = 'moderator-required'   # checked in api.route()
+    return wrapper
+    
+def manual_access_checking(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
+    wrapper._access_control = 'manual-access'   # checked in api.route()
     return wrapper
 

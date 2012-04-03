@@ -1,6 +1,12 @@
 from __future__ import absolute_import
 import os
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import datetime
 import math
 import logging
@@ -9,9 +15,9 @@ import csv
 import StringIO
 import tarfile
 
-from request_handler import RequestHandler
+import request_handler
+import user_util
 from app import App
-from user_util import developer_only
 from google.appengine.ext.webapp import template
 from google.appengine.ext import db
 from google.appengine.api import mail
@@ -24,10 +30,12 @@ PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr"
 
 FROM_EMAIL = "no-reply@khan-academy.appspotmail.com"
 
-class PaypalIPN(RequestHandler):
+class PaypalIPN(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
         self.get()
 
+    @user_util.open_access
     def get(self):
         logging.info("Accessing %s" % self.request.path)
         txn_id = self.request.get('txn_id')
@@ -116,10 +124,12 @@ class PaypalIPN(RequestHandler):
 
         return
 
-class PaypalAutoReturn(RequestHandler):
+class PaypalAutoReturn(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
         self.get()
 
+    @user_util.open_access
     def get(self):
         logging.info("Accessing %s" % self.request.path)
         student_email = self.request.get('student_email')
@@ -222,7 +232,8 @@ class PaypalAutoReturn(RequestHandler):
 
         self.redirect("/summer/application-status")
 
-class GetStudent(RequestHandler):
+class GetStudent(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         student_email = self.request.get('student_email')
         logging.info("Accessing %s; student %s" % (self.request.path, student_email))
@@ -243,13 +254,13 @@ class GetStudent(RequestHandler):
 
         return
 
-class UpdateStudentStatus(RequestHandler):
-    @developer_only
+class UpdateStudentStatus(request_handler.RequestHandler):
+    @user_util.developer_only
     def get(self):
         template_values = {}
         self.render_jinja2_template('summer/uploadstatusfile.html', template_values)
 
-    @developer_only
+    @user_util.developer_only
     def post(self):
         template_values = {}
         user_data = UserData.current()
@@ -280,7 +291,7 @@ class UpdateStudentStatus(RequestHandler):
         self.response.set_status(200)
 
 
-class Download(RequestHandler):
+class Download(request_handler.RequestHandler):
     def authenticated_response(self):
         user_data = UserData.current()
         user_email = user_data.user_email
@@ -345,7 +356,7 @@ class Download(RequestHandler):
         self.response.out.write(f.getvalue())
         return
 
-    @developer_only
+    @user_util.developer_only
     def get(self):
         template_values = {}
         user_data = UserData.current()
@@ -361,7 +372,7 @@ class Download(RequestHandler):
         self.add_global_template_values(template_values)
         self.render_jinja2_template('summer/summer_process.html', template_values)
 
-class Tuition(RequestHandler):
+class Tuition(request_handler.RequestHandler):
     def authenticated_response(self):
         user_data = UserData.current()
         user_email = user_data.user_email
@@ -407,9 +418,11 @@ class Tuition(RequestHandler):
 
         return template_values
 
+    @user_util.manual_access_checking
     def post(self):
         self.get()
 
+    @user_util.manual_access_checking
     def get(self):
         template_values = {}
         user_data = UserData.current()
@@ -473,7 +486,7 @@ class Tuition(RequestHandler):
         self.render_jinja2_template('summer/summer_tuition.html', template_values)
 
 
-class Status(RequestHandler):
+class Status(request_handler.RequestHandler):
     def authenticated_response(self):
         user_data = UserData.current()
         user_email = user_data.user_email
@@ -512,6 +525,7 @@ class Status(RequestHandler):
 
         return template_values
 
+    @user_util.manual_access_checking
     def get(self):
         template_values = {}
         user_data = UserData.current()
@@ -530,7 +544,7 @@ class Status(RequestHandler):
         self.add_global_template_values(template_values)
         self.render_jinja2_template('summer/summer_status.html', template_values)
 
-class Application(RequestHandler):
+class Application(request_handler.RequestHandler):
     def authenticated_response(self):
         user_data = UserData.current()
         user_email = user_data.user_email
@@ -596,9 +610,11 @@ class Application(RequestHandler):
 
         return template_values
 
+    @user_util.open_access
     def post(self):
         self.get()
 
+    @user_util.open_access
     def get(self):
         template_values = {}
         user_data = UserData.current()

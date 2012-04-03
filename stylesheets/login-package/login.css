@@ -1,67 +1,107 @@
 #page_sub_nav { display: none; }
 
 #page-root {
-    text-align: center;
     position: relative;
-
+    padding-bottom: 20px;
 }
 
 form.auth-form {
     /* TODO(benkomalo): vertically position this and make it flex. */
     position: relative;
-    margin-top: 6em;
     display: block;
 }
 
-.providers, .pw-login, .registration-contents {
-    display: inline-block;
-    text-align: left;
-    width: 500px;
+.login-container.card-case {
+    margin: 6em auto;
+    padding: 2em 1em;
+    width: 740px;
+    white-space: nowrap;
 }
 
-#page-root .separator {
-    margin: 2em auto;
-    width: 800px;
+.providers, .pw-login {
+    display: inline-block;
+    vertical-align: top;
+    height: 250px;
+}
+
+.login-container .providers {
+    text-align: center;
+}
+
+.pw-login {
+    width: 430px;
+}
+.pw-login h3 {
+    text-align: left;
+    margin-bottom: 2em;
+}
+
+.pw-login-contents {
+    text-align: right;
+    width: 430px;
+}
+
+#page-root .vertical-separator {
+    width: 1px;
+    height: 250px;
+    margin: 0 2em;
+    border-left: 1px solid #ccc;
     text-align: center;
     position: relative;
-}
-.separator-bg {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 10px;
-    width: 100%;
-    height: 1px;
+    display: inline-block;
 }
 .separator-text {
-    color: #666;
-    font-family: "MuseoSans500", sans-serif;
-    font-size: 14px;
-    background: white;
+    color: #444;
+    font-family: "MuseoSans300", sans-serif;
+    text-transform: uppercase;
+    font-size: 16px;
+    letter-spacing: 2px;
+    background: #eee;
     display: inline-block;
-    padding: 0 0.5em;
+    padding: 0.7em;
     position: relative;
 }
+
+.vertical-separator .separator-text {
+    top: 50%;
+    margin-top: -0.5em;
+    margin-left: -1.5em;
+}
+
+#page-root .horizontal-separator {
+    height: 1px;
+    margin: 2em auto;
+    width: 100%;
+    border-top: 1px solid #ccc;
+    text-align: center;
+    position: relative;
+    display: inline-block;
+}
+
+.horizontal-separator .separator-text {
+    position: relative;
+    display: inline-block;
+    padding: 0 0.5em;
+    top: -0.7em;
+}
+
 
 h2.login-title {
     text-align: center;
     margin-bottom: 2em;
 }
-h3 {
-    color: #555;
-}
 a:visited {
     color: #0075b1;
 }
 
-.providers li {
+.providers .provider {
     position: relative;
     display: inline-block;
     border: 1px solid #ccc;
-    height: 90px;
+    width: 200px;
+    height: 78px;
     border-bottom-color: #aaa;
     border-right-color: #bbb;
-    margin: 0 10px;
 
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
@@ -74,17 +114,17 @@ a:visited {
     cursor: pointer;
 }
 
-.providers li .img-container {
+.providers .provider .img-container {
     display: table-cell;
     vertical-align: middle;
-    height: 95px;
+    height: 85px;
 }
-.providers li img {
+.providers .provider img {
     margin: 0 10px;
 }
 
-.providers li:hover,
-.providers li:active {
+.providers .provider:hover,
+.providers .provider:active {
     border-color: #aaa;
     left: 2px;
     top: 2px;
@@ -95,8 +135,7 @@ a:visited {
 }
 
 .field-container {
-    margin: 0.5em;
-    display: inline-block;
+    margin: 0.5em 0;
 }
 
 #login-fail-message {
@@ -104,7 +143,7 @@ a:visited {
 }
 
 .field-label {
-    color: #666;
+    color: #333;
     font-family: "MuseoSans500", sans-serif;
     font-size: 14px;
 }
@@ -116,9 +155,24 @@ a:visited {
 .auth-form .simple-input {
     font-size: 14px;
     padding: 0.1em 0.3em;
-    margin: 0.1em 0;
-    width: 18em;
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
 }
+.auth-form .field-label,
+.auth-form .field-error {
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+    /* to vertically align it with the simple-input text, since the input
+     * has border width */
+    padding: 0.2em 0;
+}
+
+#login-form .field-label {
+    margin-right: 0.5em;
+}
+
 
 .auth-form .simple-input:focus {
     -webkit-box-shadow: 0 0 8px rgba(115, 152, 44, .5);
@@ -127,13 +181,17 @@ a:visited {
     outline: none;
 }
 
+.auth-form .simple-input:disabled {
+    color: #333;
+}
+
 /* TODO(benkomalo): possibly make this a standard for the site. */
 .auth-form select.simple-input {
     /* Work around a webkit "bug" where box shadows don't work unless you
      * disable webkit-appearance. That removes the dropdown icon though. */
     -webkit-appearance: none;
 
-    background: url("/images/dropdown.png") no-repeat right center;
+    background: #fafafa url("/images/dropdown.png") no-repeat right center;
 }
 
 .auth-form .simple-input#gender {
@@ -143,23 +201,40 @@ a:visited {
 .auth-form .simple-input.birth-month,
 .auth-form .simple-input.birth-day,
 .auth-form .simple-input.birth-year {
-    width: 5em;
+    width: 33.333333%;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
 }
 
+.password-label {
+    margin-top: 0.4em;
+    display: inline-block;
+}
+.password-container {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: -3px;
+}
 #forgot-hint {
-    float: right;
     font-size: 90%;
     color: #678d00;
 
-    /* HACK: the login button is on the same row as the password field, making the
-     * parent container wider, but we want to align the forgot hint with
-     * the password field, so we put a right margin equivalent to the width
-     * of the login button+margin */
-    margin-right: 70px;
+    /* HACK(benkomalo): need to left-align with password field, so we apply a left
+     * padding equal to the password-label's margin-box-width */
+    margin-right: 8.2em;
+}
+
+.pw-login-contents #submit-button {
+    float: right;
+}
+
+.pw-login-contents img.tree {
+    float: left;
+    padding-left: 2em;
 }
 
 .signup-prompt-container {
-    margin: 8em 0;
+    margin-top: 4em;
 }
 
 .signup-prompt {
@@ -167,4 +242,197 @@ a:visited {
 }
 a.signup-link {
     color: #678d00;
+}
+
+
+#birthday-picker {
+    text-align: center;
+}
+
+.signup-container.card-case {
+    margin: 6em auto;
+    padding: 2em 4em;
+    width: 650px;
+}
+.signup-container .pw-signup {
+    width: 640px;
+}
+
+.completesignup-contents .field-label,
+.signup-container .field-label {
+    text-align: right;
+}
+
+.signup-container .simple-input {
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.signup-container .providers {
+    width: 640px;
+    height: auto;
+}
+
+.signup-container .providers h4 {
+    margin-bottom: 0.5em;
+}
+
+.signup-container .providers-info {
+    font-family: "MuseoSans500", sans-serif;
+    font-size: 14px;
+    margin-top: 0.5em;
+}
+
+.signup-container .submit-button-container {
+    margin-top: 0.5em;
+    text-align: right;
+}
+
+.signup-container #error-text {
+    /* semi hack - while the text may be multiple lines, we don't want it to affect
+     * the layout (since we know there is space below it), so force it to be a fixed
+     * height and just "bleed" outside of its layout container */
+    height: 1em;
+}
+
+/* completesignup specific styles */
+
+.completesignup-iframe-container {
+    width: 565px;
+    margin: 6em auto;
+}
+
+.completesignup-container.card-case {
+    padding: 15px;
+    width: 530px;
+}
+
+.completesignup-contents,
+.completesignup-contents .auth-form {
+    width: 528px;
+}
+.completesignup-contents img.tree {
+    float: left;
+    margin-right: 1em;
+}
+
+.completesignup-contents h3 {
+    font-family: "MuseoSans300", sans-serif;
+    vertical-align: middle;
+}
+
+.completesignup-contents .auth-form {
+    /* To clear the floated img of the tree */
+    clear: both;
+}
+
+.completesignup-contents .tos-area {
+    display: inline-block;
+    width: 18em;
+    line-height: 16px;
+    font-size: 11px;
+    text-align: right;
+    margin-right: 2em;
+    vertical-align: middle;
+}
+
+.completesignup-contents .submit-container {
+    margin-top: 2em;
+}
+.completesignup-contents .submit-container,
+.completesignup-contents .field-error {
+    text-align: right;
+}
+
+.completesignup-contents .error-container {
+    margin-top: 4px;
+}
+
+.completesignup-contents .field-error {
+    padding: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Settings page styles */
+
+#pw-change-form {
+    margin-top: 0;
+}
+
+#pw-change-form .input-label-cell {
+    padding: 0.5em 2em 0.5em 0;
+}
+
+#pw-change-form .sidenote {
+    margin-left: 5px;
+}
+
+/* TODO(benkomalo): style nicer */
+#pw-change-form .message.success {
+    color: green;
+}
+
+#pw-change-form .message.error {
+    color: red;
+}
+
+/* Dialog shown after step 1 of sign up */
+.signup-success-dialog.modal.fade.in {
+    width: 450px;
+    left: 50%;
+    margin-left: -200px;
+    position: absolute;
+    top: 150px;
+    background-color: #eee;
+}
+
+.signup-success-dialog .modal-body {
+    padding: 2em 4em;
+}
+
+.signup-success-dialog .email-header {
+    font-family: "MuseoSans300", sans-serif;
+    color: #333;
+    margin-bottom: 0.5em;
+}
+
+.signup-success-dialog .email {
+    font-family: "MuseoSans500", sans-serif;
+    font-size: 18px;
+    color: #000;
+    text-align: center;
+}
+
+.signup-success-dialog .instructions {
+    font-family: "MuseoSans500", sans-serif;
+    display: inline-block;
+    font-size: 16px;
+    width: 15em;
+    margin-left: 2em;
+    margin-top: 2em;
+}
+
+/* TODO(benkomalo): consolidate these with the profile page's sidenote styles */
+.sidenote {
+    background-repeat: no-repeat;
+    background-position: 0 30%;
+    padding-left: 13px;
+}
+.sidenote.success {
+    background-image:url(/images/video-indicator-complete.png);
+}
+.sidenote.error {
+    background-image:url(/images/cross.png);
+}
+
+/* A gray-background, rounded corner "card look" */
+.card-case {
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-background-clip: padding-box;
+    -moz-background-clip: padding-box;
+    border-background-clip: padding-box;
+    background: #eee;
 }

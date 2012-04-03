@@ -14,7 +14,13 @@ import points
 import layer_cache
 import knowledgemap
 import string
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from custom_exceptions import MissingExerciseException, QuietException
@@ -25,8 +31,10 @@ from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
 from experiments import StrugglingExperiment
 from js_css_packages import templatetags
+import util
 
 class MoveMapNodes(request_handler.RequestHandler):
+    @user_util.developer_only
     def post(self):
         self.get()
 
@@ -69,6 +77,7 @@ class ViewExercise(request_handler.RequestHandler):
         list(x) for x in zip(*_hints_conversion_tests)]
 
     @ensure_xsrf_cookie
+    @user_util.open_access
     def get(self, exid=None):
 
         # TODO(david): Is there some webapp2 magic that will allow me not to
@@ -312,6 +321,7 @@ def exercise_graph_dict_json(user_data, admin=False):
 
 class ViewAllExercises(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
@@ -334,6 +344,7 @@ class ViewAllExercises(request_handler.RequestHandler):
         self.render_jinja2_template('viewexercises.html', template_values)
 
 class RawExercise(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         path = self.request.path
         exercise_file = urllib.unquote(path.rpartition('/')[2])
@@ -489,9 +500,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         first_response = (attempt_number == 1 and count_hints == 0) or (count_hints == 1 and attempt_number == 0)
 
-        if user_exercise.total_done == 0:
-            bingo('marquee_num_exercises_started')
-        
         if user_exercise.total_done > 0 and user_exercise.streak == 0 and first_response:
             bingo('hints_keep_going_after_wrong')
 
@@ -752,6 +760,7 @@ class UpdateExercise(request_handler.RequestHandler):
         
         db.put(exercise_videos)
 
+    @user_util.developer_only
     def post(self):
         self.get()
 

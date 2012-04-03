@@ -314,12 +314,22 @@ var VideoStats = {
         var playing = this.playing || this.fAlternativePlayer;
         if (state === -2) { // playing normally
             var percent = this.getPercentWatched();
+
+            // Save after we hit certain intervals of video watching.
             if (percent > (this.dPercentLastSaved + this.dPercentGranularity)) {
                 this.save();
             } else if (this.playing) {
-                var estimate = this.getPointsEstimate();
-                if (estimate >= 0) {
-                    this.updatePointsDisplay(estimate);
+                // If we hit the max video points for the first time, force a save,
+                // since showing an estimate might entice the user to close the browser
+                // thinking they finished (and it not having actually saved).
+                var threshold = this.REQUIRED_PERCENTAGE_FOR_FULL_VIDEO_POINTS;
+                if (this.dPercentLastSaved < threshold && percent >= threshold) {
+                    this.save();
+                } else {
+                    var estimate = this.getPointsEstimate();
+                    if (estimate >= 0) {
+                        this.updatePointsDisplay(estimate);
+                    }
                 }
             }
         } else if (state === 0 && playing) { // ended
@@ -370,6 +380,8 @@ var VideoStats = {
                     "Video ID": id,
                     "Percent (begin)": this.dPercentLastSaved
                 });
+                gae_bingo.bingo(["topic_browser_started_video"]);
+                
             }
         }
         // If state is buffering, unstarted, or cued, don't do anything
@@ -481,6 +493,7 @@ var VideoStats = {
                 Analytics.trackSingleEvent("Video Complete", {
                     "Video ID": id
                 });
+                gae_bingo.bingo(["topic_browser_completed_video"]);
             }
         }
     },

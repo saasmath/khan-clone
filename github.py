@@ -1,12 +1,19 @@
 import re
 import base64
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import urllib2
 import httplib
 import logging
 
 import app
 import request_handler
+import user_util
 
 _USER = 'KhanBugz'
 _PASSWD = app.App.khanbugz_passwd
@@ -62,6 +69,7 @@ def gh_post(handler, url, data, headers):
 
 class NewPost(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         # This is a fall back when using jsonp on a local webserver to allow
         # cross-domain requests.
@@ -74,6 +82,7 @@ class NewPost(request_handler.RequestHandler):
 
         gh_post(self, url, data, HEADERS)
 
+    @user_util.open_access
     def post(self):
         # the POST method will be the standard means of communication.
 
@@ -85,6 +94,7 @@ class NewPost(request_handler.RequestHandler):
         gh_post(self, url, data, HEADERS)
 
 class NewComment(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
 
         data = json.loads(self.request.body)

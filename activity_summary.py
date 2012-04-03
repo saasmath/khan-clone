@@ -3,6 +3,7 @@ import datetime
 from mapreduce import control
 from google.appengine.ext import db
 
+import user_util
 import util
 import request_handler
 import models
@@ -206,6 +207,7 @@ def daily_activity_summary_map(user_data):
     db.put(list_entities_to_put)
 
 class StartNewDailyActivityLogMapReduce(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         # Admin-only restriction is handled by /admin/* URL pattern
         # so this can be called by a cron job.

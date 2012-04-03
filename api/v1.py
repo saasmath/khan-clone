@@ -32,7 +32,7 @@ from app import App
 from api import route
 from api.decorators import jsonify, jsonp, pickle, compress, decompress, etag,\
     cacheable, cache_with_key_fxn_and_param
-from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
+from api.auth.decorators import oauth_required, oauth_optional, open_access, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_unauthorized_response
 
@@ -127,6 +127,7 @@ def get_user_data_coach_from_request():
 @route("/api/v1/topicversion/<version_id>/topics/with_content", methods=["GET"])
 @route("/api/v1/topics/with_content", methods=["GET"])
 @route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
+@open_access
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
@@ -139,6 +140,7 @@ def content_topics(version_id = None):
 
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
+@open_access
 @cacheable(caching_age=(60 * 60 * 24 * 60))
 @etag(lambda: models.Setting.topic_tree_version())
 @jsonp
@@ -199,10 +201,10 @@ def topic_version_change_list(version_id):
 def topic_version_delete_change(version_id):
     version = models.TopicVersion.get_by_id(version_id)
 
-    kind = request.request_string("kind")        
+    kind = request.request_string("kind")
     id = request.request_string("id")
-        
-    content = get_content_entity(kind, id, version) 
+
+    content = get_content_entity(kind, id, version)
     if content:
         query = models.VersionContentChange.all()
         query.filter("version =", version)
@@ -218,6 +220,7 @@ def topic_version_delete_change(version_id):
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/videos", methods=["GET"])
+@open_access
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
@@ -243,6 +246,7 @@ def topic_videos(topic_id, version_id = None):
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/exercises", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/exercises", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/exercises", methods=["GET"])
+@open_access
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
@@ -263,6 +267,7 @@ def topic_exercises(topic_id, version_id = None):
     return exercises
 
 @route("/api/v1/topic/<topic_id>/progress", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -279,6 +284,7 @@ def topic_progress(topic_id):
 
 @route("/api/v1/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/topictree", methods=["GET"])
+@open_access
 @etag(lambda version_id = None: version_id)
 @jsonp
 @decompress
@@ -293,14 +299,14 @@ def topictree(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).make_tree()
 
-@route("/api/v1/dev/topictree/<version_id>/problems", methods=["GET"])
 @route("/api/v1/dev/topictree/problems", methods=["GET"])
-# TODO(james) add @developer_required once Tom creates interface
+# TODO(james): change to @developer_required once Tom creates interface
+@open_access
 @jsonp
 @jsonify
 def topic_tree_problems(version_id = "edit"):
-    version = models.TopicVersion.get_by_id(version_id)
-    return version.find_content_problems()
+    return layer_cache.KeyValueCache.get(
+        "set_default_version_content_problem_details")
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
@@ -328,7 +334,7 @@ def topictree_export(version_id = None, topic_id = "root"):
 @jsonify
 def topictree_import(version_id = "edit", topic_id="root", publish=False):
     import zlib
-    import pickle
+    import cPickle as pickle
     logging.info("calling /_ah/queue/deferred_import")
 
     # importing the full topic tree can be too large so pickling and compressing
@@ -338,6 +344,7 @@ def topictree_import(version_id = "edit", topic_id="root", publish=False):
                 _url = "/_ah/queue/deferred_import")
 
 @route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def topictreesearch(version_id, query):
@@ -346,6 +353,7 @@ def topictreesearch(version_id, query):
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["GET"])
 @route("/api/v1/topic/<topic_id>", methods=["GET"])
+@open_access
 @jsonp
 @layer_cache.cache_with_key_fxn(
     (lambda topic_id, version_id = None: ("api_topic_%s_%s_%s" % (
@@ -395,6 +403,7 @@ def put_topic(topic_id, version_id = "edit"):
     }
 
 @route("/api/v1/topicversion/default/id", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -517,6 +526,7 @@ def topic_ungroup(topic_id, version_id = "edit"):
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/children", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/children", methods=["GET"])
+@open_access
 @jsonp
 @layer_cache.cache_with_key_fxn(
     (lambda topic_id, version_id = None: "api_topic_children_%s_%s_%s" % (
@@ -572,6 +582,7 @@ def topic_version(version_id = None):
     return {}
 
 @route("/api/v1/topicversions/", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def topic_versions():
@@ -579,6 +590,7 @@ def topic_versions():
     return versions
 
 @route("/api/v1/topicversion/<version_id>/unused_content", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def topic_version_unused_content(version_id = None):
@@ -587,6 +599,7 @@ def topic_version_unused_content(version_id = None):
 
 @route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["GET"])
 @route("/api/v1/url/<int:url_id>", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def get_url(url_id, version_id=None):
@@ -619,7 +632,35 @@ def save_url(url_id = None, version_id=None):
             request.json,
             changeable_props)
 
+
+@route("/api/v1/videos/<video_id>/explore_url", methods=["GET"])
+@open_access
+@jsonp
+@jsonify
+def get_explore_url(video_id):
+    video = models.Video.all().filter("youtube_id =", video_id).get()
+    if video and video.extra_properties:
+        return video.extra_properties.get('explore_url')
+    return None
+
+
+@route("/api/v1/videos/<video_id>/explore_url", methods=["PUT"])
+@developer_required
+@jsonp
+@jsonify
+def set_explore_url(video_id):
+    video = models.Video.all().filter("youtube_id =", video_id).get()
+    if video:
+        if video.extra_properties is None:
+            video.extra_properties = {}
+        video.extra_properties['explore_url'] = request.request_string('url', None)
+        video.put()
+        return video.extra_properties['explore_url']
+    return None
+
+
 @route("/api/v1/playlists/library", methods=["GET"])
+@open_access
 @etag(lambda: models.Setting.topic_tree_version())
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
@@ -634,13 +675,15 @@ def playlists_library():
     def convert_tree(tree):
         topics = []
         for child in tree.children:
-            # special cases
-            if child.id == "new-and-noteworthy":
-                continue
-            elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
-                child.id = "algebra-i"
-            elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
-                child.id = "geometry-2"
+
+            if hasattr(child, "id"):
+                # special cases
+                if child.id == "new-and-noteworthy":
+                    continue
+                elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                    child.id = "algebra-i"
+                elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                    child.id = "geometry-2"
 
             if child.kind() == "Topic":
                 topic = {}
@@ -666,19 +709,22 @@ def playlists_library():
     return convert_tree(tree)
 
 # We expose the following "fresh" route but don't publish the URL for internal services
-# that don't want to deal w/ cached values. - since with topics now, the library is guaranteed
-# not to change until we have a new version, the cached version is good enough
-@route("/api/v1/playlists/library/list/fresh", methods=["GET"])
+# that don't want to deal w/ cached values ie. youtube-export script
+@route("/api/v1/playlists/library/list/fresh", methods=["GET"],
+                                               defaults = {"fresh": True})
 @route("/api/v1/playlists/library/list", methods=["GET"])
+@open_access
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda: "api_library_list_%s" % models.Setting.topic_tree_version(),
+    lambda fresh=False: (
+        None if fresh else
+        "api_library_list_%s" % models.Setting.topic_tree_version()),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
-def playlists_library_list():
+def playlists_library_list(fresh=False):
     topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
@@ -694,6 +740,7 @@ def playlists_library_list():
     return topics_list
 
 @route("/api/v1/exercises", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def get_exercises():
@@ -701,6 +748,7 @@ def get_exercises():
 
 @route("/api/v1/topicversion/<version_id>/exercises/<exercise_name>", methods=["GET"])
 @route("/api/v1/exercises/<exercise_name>", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def get_exercise(exercise_name, version_id = None):
@@ -712,12 +760,14 @@ def get_exercise(exercise_name, version_id = None):
     return exercise
 
 @route("/api/v1/exercises/recent", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def exercise_recent_list():
     return models.Exercise.all().order('-creation_date').fetch(20)
 
 @route("/api/v1/exercises/<exercise_name>/followup_exercises", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def exercise_info(exercise_name):
@@ -725,6 +775,7 @@ def exercise_info(exercise_name):
     return exercise.followup_exercises() if exercise else []
 
 @route("/api/v1/exercises/<exercise_name>/videos", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def exercise_videos(exercise_name):
@@ -757,7 +808,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
         float(data["seconds_per_fast_problem"]))
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
-                        "summative", "prerequisites", "covers", 
+                        "summative", "prerequisites", "covers",
                         "related_videos", "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise,
@@ -773,6 +824,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
 
 @route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["GET"])
 @route("/api/v1/videos/<video_id>", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def video(video_id, version_id = None):
@@ -786,6 +838,7 @@ def video(video_id, version_id = None):
 
 
 @route("/api/v1/videos/recent", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def video_recent_list():
@@ -818,6 +871,7 @@ def video_download_available(video_id):
     return video
 
 @route("/api/v1/videos/<video_id>/exercises", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def video_exercises(video_id):
@@ -827,6 +881,7 @@ def video_exercises(video_id):
     return []
 
 @route("/api/v1/videos/<topic_id>/<video_id>/play", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def video_play_data(topic_id, video_id):
@@ -852,6 +907,7 @@ def video_play_data(topic_id, video_id):
     return ret
 
 @route("/api/v1/commoncore", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def get_cc_map():
@@ -999,6 +1055,7 @@ def user_data_other():
     return None
 
 @route("/api/v1/user/username_available", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def is_username_available():
@@ -1026,7 +1083,17 @@ def mark_promo_as_seen(promo_name):
     user_data = models.UserData.current()
     return models.PromoRecord.record_promo(promo_name, user_data.user_id)
 
-# TODO: the "GET" version of this.
+@route("/api/v1/user/profile", methods=["GET"])
+@open_access
+@jsonp
+@jsonify
+def get_user_profile():
+    # TODO(marcia): This uses user_id, as opposed to email...
+    # which means that the GET and POST are not symmetric...
+    current_user_data = models.UserData.current() or models.UserData.pre_phantom()
+    user_data = request.request_user_data_by_user_id()
+    return util_profile.UserProfile.from_user(user_data, current_user_data)
+
 @route("/api/v1/user/profile", methods=["POST", "PUT"])
 @oauth_required()
 @jsonp
@@ -1152,6 +1219,7 @@ def get_user_studentlists():
     return None
 
 @route("/api/v1/user/studentlists", methods=["POST"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1175,6 +1243,7 @@ def create_user_studentlist():
     return student_list_json
 
 @route("/api/v1/user/studentlists/<list_key>", methods=["DELETE"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1226,6 +1295,7 @@ def user_videos_all():
     return None
 
 @route("/api/v1/user/videos/<youtube_id>", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1248,6 +1318,7 @@ def user_videos_specific(youtube_id):
 # and http://stackoverflow.com/questions/328281/why-content-length-0-in-post-requests
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["POST"])
 @route("/api/v1/user/videos/<youtube_id>/log_compatability", methods=["GET"])
+@open_access
 @oauth_optional(require_anointed_consumer=True)
 @api_create_phantom
 @jsonp
@@ -1298,6 +1369,7 @@ def log_user_video(youtube_id):
 
 
 @route("/api/v1/user/exercises", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1343,6 +1415,7 @@ def user_exercises_all():
 
     return results
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/progress/summary", methods=["GET"])
 @oauth_required()
 @jsonp
@@ -1411,6 +1484,7 @@ def get_students_progress_summary():
             'num_students': len(list_students)}
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1470,6 +1544,7 @@ def user_followup_exercises(exercise_name):
     return None
 
 @route("/api/v1/user/exercises/<exercise_name>/followup_exercises", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1543,6 +1618,7 @@ def user_problem_logs(exercise_name):
 # TODO(david): Factor out duplicated code between attempt_problem_number and
 #     hint_problem_number.
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/attempt", methods=["POST"])
+@open_access
 @oauth_optional()
 @api_create_phantom
 @jsonp
@@ -1612,6 +1688,7 @@ def attempt_problem_number(exercise_name, problem_number):
     return unauthorized_response()
 
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/hint", methods=["POST"])
+@open_access
 @oauth_optional()
 @api_create_phantom
 @jsonp
@@ -1673,6 +1750,7 @@ def hint_problem_number(exercise_name, problem_number):
 
 # TODO: Remove this route in v2
 @route("/api/v1/user/exercises/<exercise_name>/reset_streak", methods=["POST"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1680,6 +1758,7 @@ def reset_problem_streak(exercise_name):
     return _attempt_problem_wrong(exercise_name)
 
 @route("/api/v1/user/exercises/<exercise_name>/wrong_attempt", methods=["POST"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1696,6 +1775,7 @@ def _attempt_problem_wrong(exercise_name):
     return unauthorized_response()
 
 @route("/api/v1/user/exercises/review_problems", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1748,6 +1828,7 @@ def user_video_logs(youtube_id):
 
 # TODO: this should probably not return user data in it.
 @route("/api/v1/badges", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1775,12 +1856,14 @@ def badges_list():
     return sorted(filter(lambda badge: not badge.is_hidden(), badges_dict.values()), key=lambda badge: badge.name)
 
 @route("/api/v1/badges/categories", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def badge_categories():
     return badges.BadgeCategory.all()
 
 @route("/api/v1/badges/categories/<category>", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def badge_category(category):
@@ -1828,6 +1911,7 @@ def update_public_user_badges():
     return result
 
 @route("/api/v1/user/badges", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1954,6 +2038,7 @@ def remove_coworker():
     return True
 
 @route("/api/v1/autocomplete", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def autocomplete():
@@ -1974,12 +2059,6 @@ def autocomplete():
         topic_results = filter(
                 lambda topic_dict: query in topic_dict["title"].lower(),
                 topic_title_dicts())
-        topic_results.extend(map(lambda topic: {
-                "title": topic.standalone_title,
-                "key": str(topic.key()),
-                "relative_url": topic.relative_url,
-                "id": topic.id
-            }, filter(lambda topic: query in topic.title.lower(), models.Topic.get_super_topics())))
         url_results = filter(
                 lambda url_dict: query in url_dict["title"].lower(),
                 url_title_dicts())
@@ -2002,16 +2081,16 @@ def autocomplete():
     }
 
 @route("/api/v1/dev/backupmodels", methods=["GET"])
-@oauth_required()
 @developer_required
+@oauth_required()
 @jsonify
 def backupmodels():
     """Return the names of all models that inherit from models.BackupModel."""
     return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
 
 @route("/api/v1/dev/protobufquery", methods=["GET"])
-@oauth_required()
 @developer_required
+@oauth_required()
 @pickle
 def protobuf_query():
     """Return the results of a GQL query as pickled protocol buffer objects
@@ -2038,8 +2117,8 @@ def protobuf_query():
                db.GqlQuery(query))
 
 @route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
-@oauth_required()
 @developer_required
+@oauth_required()
 @pickle
 def protobuf_entities(entity):
     """Return up to 'max' entities last altered between 'dt_start' and 'dt_end'.
@@ -2063,8 +2142,8 @@ def protobuf_entities(entity):
                query.fetch(request.request_int("max", default=500)))
 
 @route("/api/v1/dev/problems", methods=["GET"])
-@oauth_required()
 @developer_required
+@oauth_required()
 @jsonp
 @jsonify
 def problem_logs():
@@ -2074,8 +2153,8 @@ def problem_logs():
     return problem_log_query.fetch(request.request_int("max", default=500))
 
 @route("/api/v1/dev/videos", methods=["GET"])
-@oauth_required()
 @developer_required
+@oauth_required()
 @jsonp
 @jsonify
 def video_logs():
@@ -2085,8 +2164,8 @@ def video_logs():
     return video_log_query.fetch(request.request_int("max", default=500))
 
 @route("/api/v1/dev/users", methods=["GET"])
-@oauth_required()
 @developer_required
+@oauth_required()
 @jsonp
 @jsonify
 def user_data():
@@ -2095,7 +2174,9 @@ def user_data():
     user_data_query.order("joined")
     return user_data_query.fetch(request.request_int("max", default=500))
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/progressreport", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -2114,6 +2195,7 @@ def get_student_progress_report():
         user_data_coach, students)
 
 @route("/api/v1/user/goals", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -2124,6 +2206,7 @@ def get_user_goals():
     return [g.get_visible_data() for g in goals]
 
 @route("/api/v1/user/goals/current", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -2133,7 +2216,9 @@ def get_user_current_goals():
     goals = GoalList.get_current_goals(student)
     return [g.get_visible_data() for g in goals]
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/goals", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -2167,6 +2252,7 @@ def get_student_goals():
     return return_data
 
 @route("/api/v1/user/goals", methods=["POST"])
+@open_access
 @oauth_optional()
 @api_create_phantom
 @jsonp
@@ -2238,6 +2324,7 @@ def create_user_goal():
 
 
 @route("/api/v1/user/goals/<int:id>", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -2255,6 +2342,7 @@ def get_user_goal(id):
 
 
 @route("/api/v1/user/goals/<int:id>", methods=["PUT"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -2284,6 +2372,7 @@ def put_user_goal(id):
 
 
 @route("/api/v1/user/goals/<int:id>", methods=["DELETE"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -2302,6 +2391,7 @@ def delete_user_goal(id):
     return {}
 
 @route("/api/v1/user/goals", methods=["DELETE"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -2319,6 +2409,7 @@ def delete_user_goals():
     return "Goals deleted"
 
 @route("/api/v1/avatars", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -2336,8 +2427,18 @@ def get_avatars():
     return result
 
 @route("/api/v1/dev/version", methods=["GET"])
+@open_access
 @jsonp
 @jsonify
 def get_version_id():
     return { 'version_id' : os.environ['CURRENT_VERSION_ID'] if 'CURRENT_VERSION_ID' in os.environ else None }
 
+
+@route("/api/v1/parentsignup", methods=["POST", "PUT"])
+@open_access
+@jsonify
+def signup_parent():
+    email = request.request_string("email")
+    if email:
+        models.ParentSignup(key_name=email).put()
+    return {}

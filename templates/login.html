@@ -8,70 +8,56 @@
 
 {% block pagecontent %}
 <article id="page-root">
-    <form method="POST" class="auth-form" id="login-form" action="{{templatetags.to_secure_url('/login')}}?continue={{continue|urlencode}}">
-    <input type="hidden" name="type" id="type-input">
+    <div class="login-container card-case vertical-shadow">
 
-    <ul class="providers">
-    <h3>Login to Khan Academy using one of these services:</h3>
-    <li class="action-gradient" id="login-google">
-        <div class="img-container">
-            <img width="205" height="70" src="/images/google-logo-large.png" />
+    <div class="providers">
+        <h3>Login to Khan Academy with</h3>
+        <div id="login-google" class="action-gradient provider">
+            <div class="img-container">
+                <a href="{{google_url}}">
+                    <img width="180" height="61" alt="Google" src="/images/google-logo-large.png">
+                </a>
+            </div>
         </div>
-    </li>
 
-    {% if App.facebook_app_secret %}
-    <li id="login-facebook" class="action-gradient">
-        <div class="img-container">
-        <img width="205" height="70" src="/images/facebook-logo-large.png" />
+        <br>
+
+        {% if App.facebook_app_secret %}
+        <div id="login-facebook" class="action-gradient provider">
+            <div class="img-container">
+            <img width="180" height="61" alt="Facebook" src="/images/facebook-logo-large.png">
+            </div>
         </div>
-    </li>
-    {% endif %}
-    </ul>
+        {% endif %}
+    </div>
 
-    <div class="separator"><img class="separator-bg" src="/images/hr.gif"><span class="separator-text">OR</span></div>
+    <div class="vertical-separator">
+        <span class="separator-text">OR</span>
+    </div>
 
     <div class="pw-login">
         <h3>Login with a Khan Academy account:</h3>
-        <div class="field-error" id="login-fail-message">{% if errors["badlogin"] %}Username and password doesn't match{% endif %}</div>
-
-        <div class="field-container">
-            <label class="field-label" for="identifier">Email or username</label><br>
-            <input tabindex=1 id="identifier" name="identifier" class="simple-input ui-corner-all" value="{{ identifier|escape }}">
-            <div class="field-error" id="identifier-error">{% if errors["noemail"] %}Email or username required{% endif %}</div>
-        </div>
-
-        <div class="field-container">
-            <label class="field-label" for="password">Password</label>
-            <!-- TODO(benkomalo): wire up forgot password logic. -->
-            <a id="forgot-hint" href="javascript:void(0);">Forgot password?</a><br>
-
-            <input tabindex=2 id="password" name="password" type="password" class="simple-input ui-corner-all">
-
-            <!-- TODO(benkomalo): handle "enter" key -->
-            <!-- HACK: put login button in same fieldset/same row as password button for easy lining up -->
-            <input tabindex=3 id="submit-button" class="simple-button action-gradient green" value="Login" type="button" style="margin-left:1em;">
-
-            <div class="field-error" id="password-error">{% if errors["nopassword"] %}Password required{% endif %}</div>
-        </div>
-
+        <iframe frameborder="0"
+                scrolling="no"
+                width="430px"
+                height="200px"
+                allowtransparency="yes"
+                src="{{templatetags.to_secure_url('/login')}}?continue={{continue|urlencode}}&form=1">
+        </iframe>
     </div>
 
-
-    <div class="signup-prompt-container">
-        <span class="signup-prompt">Don't have an account, yet?</span>
-        <!-- TODO(benkomalo): do a nice animation and use Backbone.Router to animate in
-             new contents on browsers that can support it. -->
-        <a class="signup-link" href="/register?continue={{continue|urlencode}}">Sign up</a>
     </div>
-
-    </form>
 </article>
 {% endblock pagecontent %}
 
 {% block bottompagescript %}
     {{ js_css_packages.js_package("login") }}
     <script>
-    $(Login.initLoginPage);
+    $(function() {
+        Login.initLoginPage({
+            continueUrl: {{ templatetags.jsonify(continue, camel_cased=True) }}
+        });
+    });
     </script>
 {% endblock bottompagescript %}
 

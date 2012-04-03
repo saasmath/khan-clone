@@ -64,7 +64,12 @@ javascript = {
             "goals.js",
             "goal-new.js",
             "topics.js",
-            "analytics.js"
+            "analytics.js",
+            "profile-model.js",
+            "hover-card.js",
+            "hover-card-view.js",
+            "hover-card.handlebars",
+            "topic-browser-pulldown.handlebars",
         ]
     },
     "video": {
@@ -122,6 +127,12 @@ javascript = {
         "files": [
             "bday-picker.js",
             "login.js",
+            "signup-success.handlebars",
+            "signup.js",
+            "completesignup.js",
+
+            # Used for password change forms
+            "settings.js",
         ]
     },
     "profile": {
@@ -136,8 +147,8 @@ javascript = {
             "avatar-picker.js",
             "username-picker.handlebars",
             "username-picker.js",
+            "user-card-view.js",
             "user-card.handlebars",
-            "user-card.js",
             "profile.handlebars",
             "suggested-activity.handlebars",
             "recent-activity-list.handlebars",
@@ -147,7 +158,6 @@ javascript = {
             "recent-activity-goal.handlebars",
             "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
-            "settings.handlebars",
             "coaches.js",
             "coach.handlebars",
             "no-coaches.handlebars",
@@ -168,7 +178,6 @@ javascript = {
             "class-progress-summary.js",
             "exercise_progress.handlebars",
             "profile-goals.js",
-            "settings.js",
             "profile.js",
         ]
     },
@@ -200,6 +209,11 @@ javascript = {
             "classprofile.js",
         ]
     },
+    "donate": {
+        "files": [
+            "donate.js",
+        ]
+    },
     "stories": {
         "files": [
             "bootstrap-modal.js",
@@ -229,7 +243,10 @@ javascript = {
             "utils/d3.js",
             "utils/derivative-intuition.js",
             "utils/exponents.js",
+            "utils/expr-helpers.js",
+            "utils/expr-normal-form.js",
             "utils/expressions.js",
+            "utils/factoring-expressions.js",
             "utils/functional.js",
             "utils/graphie-geometry.js",
             "utils/graphie-helpers-arithmetic.js",
@@ -248,8 +265,11 @@ javascript = {
             "utils/probability.js",
             "utils/raphael.js",
             "utils/scratchpad.js",
+            "utils/simplify.js",
+            "utils/simplifying-expressions.js",
             "utils/slice-clone.js",
             "utils/stat.js",
+            "utils/steps-helpers.js",
             "utils/subhints.js",
             "utils/tmpl.js",
             "utils/word-problems.js",
@@ -282,6 +302,12 @@ javascript = {
             "topics-admin.js",
         ]
     },
+
+    "highcharts": {
+        "files": [
+            "highcharts.js"
+        ]
+    }
 }
 
 stylesheets = {
@@ -341,6 +367,11 @@ stylesheets = {
             "guiders.css",
         ],
     },
+    "donate": {
+        "files": [
+            "donate.css",
+        ]
+    },
     "stories": {
         "files": [
             "bootstrap.css",
@@ -364,6 +395,11 @@ stylesheets = {
     "labs": {
         "files": [
             "labs.css",
+        ]
+    },
+    "bootstrap-grids": {
+        "files": [
+            "grids.css"
         ]
     },
     "bootstrap": {

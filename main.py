@@ -11,9 +11,8 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 from google.appengine.api import memcache
 
-from api.auth.decorators import developer_required
-
 import webapp2
+from webapp2_extras.routes import DomainRoute
 
 import devpanel
 import bulk_update.handler
@@ -46,6 +45,7 @@ import paypal
 import smarthistory
 import topics
 import goals.handlers
+import appengine_stats
 import stories
 import summer
 import common_core
@@ -53,6 +53,7 @@ import unisubs
 import api.jsonify
 import labs
 import socrates
+import labs.explorations
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, Topic
@@ -138,8 +139,11 @@ class ViewVideo(request_handler.RequestHandler):
 
         return template_values
 
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, path, video_id):
+        user_data = UserData.current()
+
         if path:
             path_list = path.split('/')
 
@@ -153,8 +157,11 @@ class ViewVideoDeprecated(request_handler.RequestHandler):
 
     # The handler itself is deprecated. The ViewVideo handler is the canonical
     # handler now.
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, readable_id=""):
+
+        user_data = UserData.current()
 
         # This method displays a video in the context of a particular topic.
         # To do that we first need to find the appropriate topic.  If we aren't
@@ -187,6 +194,7 @@ class ViewVideoDeprecated(request_handler.RequestHandler):
 
 class ReportIssue(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         issue_type = self.request.get('type')
         self.write_response(issue_type, {'issue_labels': self.request.get('issue_labels'), })
@@ -216,6 +224,7 @@ class ReportIssue(request_handler.RequestHandler):
         self.render_jinja2_template(page, template_values)
 
 class Crash(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         if self.request_bool("capability_disabled", default=False):
             raise CapabilityDisabledError("Simulate scheduled GAE downtime")
@@ -224,62 +233,76 @@ class Crash(request_handler.RequestHandler):
             raise Exception("What is Toronto?")
 
 class ReadOnlyDowntime(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         raise CapabilityDisabledError("App Engine maintenance period")
 
+    @user_util.open_access
     def post(self):
         return self.get()
 
 class SendToLog(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
         message = self.request_string("message", default="")
         if message:
             logging.critical("Manually sent to log: %s" % message)
 
 class MobileFullSite(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.set_mobile_full_site_cookie(True)
         self.redirect("/")
 
 class MobileSite(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.set_mobile_full_site_cookie(False)
         self.redirect("/")
 
 class ViewFAQ(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.redirect("/about/faq", True)
         return
 
 class ViewGetInvolved(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.redirect("/contribute", True)
 
 class ViewContribute(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('contribute.html', {"selected_nav_link": "contribute"})
 
 class ViewCredits(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('viewcredits.html', {"selected_nav_link": "contribute"})
 
 class Donate(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
-        self.redirect("/contribute", True)
+        self.render_jinja2_template('donate.html', {"selected_nav_link": "donate"})
 
 class ViewTOS(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('tos.html', {"selected_nav_link": "tos"})
 
 class ViewAPITOS(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('api-tos.html', {"selected_nav_link": "api-tos"})
 
 class ViewPrivacyPolicy(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('privacy-policy.html', {"selected_nav_link": "privacy-policy"})
 
 class ViewDMCA(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('dmca.html', {"selected_nav_link": "dmca"})
 
@@ -330,10 +353,14 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
             prop = "user"
         return (old_email, new_email, prop)
 
+    @user_util.admin_only
+    @ensure_xsrf_cookie
     def get(self):
         (old_email, new_email, prop) = self.get_email_params()
         if new_email == old_email:
             return bulk_update.handler.UpdateKind.get(self)
+        # TODO(csilvers): take this out once admin-only does
+        # XSRF-checking everywhere?
         self.response.out.write("To prevent a CSRF attack from changing email addresses, you initiate an email address change from the browser. ")
         self.response.out.write("Instead, run the following from remote_api_shell.py.<pre>\n")
         self.response.out.write("import bulk_update.handler\n")
@@ -367,6 +394,7 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
 
 class Search(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         query = self.request.get('page_search_query')
         template_values = {'page_search_query': query}
@@ -404,7 +432,7 @@ class Search(request_handler.RequestHandler):
 
         # Combine results & do one big get!
         all_key_list = [str(key_and_title[0]) for key_and_title in all_text_keys]
-        # all_key_list.extend([result["key"] for result in topic_partial_results])
+        all_key_list.extend([result["key"] for result in topic_partial_results])
         all_key_list.extend([result["key"] for result in video_partial_results])
         all_key_list.extend([result["key"] for result in url_partial_results])
         all_key_list = list(set(all_key_list))
@@ -427,8 +455,6 @@ class Search(request_handler.RequestHandler):
                 videos.append(entity)
             elif entity:
                 logging.info("Found unknown object " + repr(entity))
-
-        topic_count = len(topics)
 
         # Get topics for videos not in matching topics
         filtered_videos = []
@@ -463,14 +489,27 @@ class Search(request_handler.RequestHandler):
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
 
         # Count number of videos in each topic and sort descending
+        topic_count = 0
+        matching_topic_count = 0
         if topics:
             if len(filtered_videos) > 0:
                 for topic in topics:
                     topic.match_count = [(str(topic.key()) in video.topic_string_keys) for video in filtered_videos].count(True)
+                    if topic.match_count > 0:
+                        topic_count += 1
+
                 topics = sorted(topics, key=lambda topic:-topic.match_count)
             else:
                 for topic in topics:
                     topic.match_count = 0
+
+            for topic in topics:
+                if topic.title.lower() == query:
+                    topic.matches = True
+                    matching_topic_count += 1
+
+                    child_topics = topic.get_child_topics(include_descendants=True)
+                    topic.child_topics = [t for t in child_topics if t.has_content()]
 
         template_values.update({
                            'topics': topics,
@@ -479,19 +518,23 @@ class Search(request_handler.RequestHandler):
                            'search_string': query,
                            'video_count': video_count,
                            'topic_count': topic_count,
+                           'matching_topic_count': matching_topic_count
                            })
 
         self.render_jinja2_template("searchresults.html", template_values)
 
 class RedirectToJobvite(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.redirect("http://hire.jobvite.com/CompanyJobs/Careers.aspx?k=JobListing&c=qd69Vfw7")
 
 class RedirectToSchoolImplementationsBlog(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.redirect("http://ka-implementations.tumblr.com/")
 
 class PermanentRedirectToHome(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
 
         redirect_target = "/"
@@ -510,6 +553,7 @@ class PermanentRedirectToHome(request_handler.RequestHandler):
         self.redirect(redirect_target, True)
 
 class ServeUserVideoCss(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         user_data = UserData.current()
         if user_data == None:
@@ -525,9 +569,9 @@ class ServeUserVideoCss(request_handler.RequestHandler):
         self.response.out.write(user_video_css.video_css)
 
 class RealtimeEntityCount(request_handler.RequestHandler):
+    @user_util.open_access
+    @user_util.dev_server_only
     def get(self):
-        if not App.is_dev_server:
-            raise Exception("Only works on dev servers.")
         default_kinds = 'Exercise'
         kinds = self.request_string("kinds", default_kinds).split(',')
         for kind in kinds:
@@ -535,7 +579,7 @@ class RealtimeEntityCount(request_handler.RequestHandler):
             self.response.out.write("%s: %d<br>" % (kind, count))
 
 class MemcacheViewer(request_handler.RequestHandler):
-    @developer_required
+    @user_util.developer_only
     def get(self):
         key = self.request_string("key", "__layer_cache_models._get_settings_dict__")
         namespace = self.request_string("namespace", App.version)
@@ -547,11 +591,10 @@ class MemcacheViewer(request_handler.RequestHandler):
         if self.request_bool("clear", False):
             memcache.delete(key, namespace=namespace)
 
-applicationSmartHistory = webapp2.WSGIApplication([
-    ('/.*', smarthistory.SmartHistoryProxy)
-])
-
 application = webapp2.WSGIApplication([
+    DomainRoute('smarthistory.khanacademy.org', [
+        webapp2.SimpleRoute('/.*', smarthistory.SmartHistoryProxy)
+    ]),
     ('/', homepage.ViewHomePage),
     ('/about', util_about.ViewAbout),
     ('/about/blog', blog.ViewBlog),
@@ -579,6 +622,9 @@ application = webapp2.WSGIApplication([
 
     # Labs
     ('/labs', labs.LabsRequestHandler),
+
+    ('/labs/explorations', labs.explorations.RequestHandler),
+    ('/labs/explorations/([^/]+)', labs.explorations.RequestHandler),
     ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.
@@ -670,10 +716,9 @@ application = webapp2.WSGIApplication([
     ('/login/mobileoauth', login.MobileOAuthLogin),
     ('/postlogin', login.PostLogin),
     ('/logout', login.Logout),
-    
-    # TODO(benkomalo): disabled until password based logins is complete.
-    #('/register', login.Register),
-    #('/pwchange', login.PasswordChange),
+    ('/signup', login.Signup),
+    ('/completesignup', login.CompleteSignup),
+    ('/pwchange', login.PasswordChange),
 
     ('/api-apps/register', oauth_apps.Register),
 
@@ -753,6 +798,11 @@ application = webapp2.WSGIApplication([
     ('/summer/admin/download', summer.Download),
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
 
+    # Stats about appengine
+    ('/stats/dashboard', dashboard.Dashboard),
+    ('/stats/contentdash', dashboard.ContentDashboard),
+    ('/stats/memcache', appengine_stats.MemcacheStatus),
+
     ('/robots.txt', robots.RobotsTxt),
 
     ('/r/.*', redirects.Redirect),
@@ -776,10 +826,7 @@ application = GAEBingoWSGIMiddleware(application)
 application = request_cache.RequestCacheMiddleware(application)
 
 def main():
-    if os.environ["SERVER_NAME"] == "smarthistory.khanacademy.org":
-        run_wsgi_app(applicationSmartHistory)
-    else:
-        run_wsgi_app(application)
+    run_wsgi_app(application)
 
 if __name__ == '__main__':
     main()

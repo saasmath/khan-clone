@@ -1,7 +1,7 @@
 import hashlib
 import zlib
 from base64 import b64encode, b64decode
-from pickle import dumps, loads
+from cPickle import dumps, loads
 from functools import wraps
 
 import flask
@@ -91,15 +91,7 @@ def jsonify(func):
         camel_cased= (has_flask_request_context() and
                       flask.request.values.get("casing") == "camel")
 
-        if isinstance(obj, unicode):
-            # This saves us from calling api.jsonify
-            return obj
-        elif isinstance(obj, str):
-            # This will make sure that we will always return unicode rather 
-            # than a str, and saves us from calling api.jsonify
-            return obj.decode('utf-8') 
-        else: 
-            return apijsonify.jsonify(obj, camel_cased=camel_cased)
+        return apijsonify.jsonify(obj, camel_cased=camel_cased)
     return jsonified
 
 def jsonp(func):
@@ -192,9 +184,10 @@ def cache_with_key_fxn_and_param(
         def wrapper(*args, **kwargs):
             def wrapped_key_fxn(*args, **kwargs):
                 underlying = key_fxn(*args, **kwargs)
-                return "%s:%s=%s" % (underlying,
-                                     param_name,
-                                     request.values.get(param_name))
+                return (None if underlying is None else
+                        "%s:%s=%s" % (underlying,
+                                      param_name,
+                                      request.values.get(param_name)))
             return layer_cache_check_set_return(func,
                                                 wrapped_key_fxn,
                                                 expiration,
