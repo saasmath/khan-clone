@@ -172,4 +172,4 @@ def default_callback():
 @decorators.anointed_oauth_consumer_only
 def token_to_session():
     set_current_oauth_map_in_session()
-    return redirect(request.request_string("continue", default="/"))
+    return redirect(request.request_continue_url())

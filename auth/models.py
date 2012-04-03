@@ -124,3 +124,34 @@ class CredentialedUser(db.Model):
             txn()
         else:
             db.run_in_transaction(txn)
+
+class UserNonce(db.Model):
+    """ A user-specific nonce that can be used for various security related
+    purposes.
+    
+    Nonce values are "typed" so that clients may make multiple nonce values
+    for a user and differentiate them from each other. Only one nonce can be
+    made per type per user. Nonce values are not guaranteed to be unique
+    across users.
+
+    """
+
+    value = db.StringProperty(indexed=False)
+
+    @staticmethod
+    def make_for(user_data, type="default"):
+        """ Creates a new nonce value for the given user and type.
+        
+        This will override any existing nonce values for the same user/type.
+
+        """
+
+        nonce = UserNonce(parent=user_data,
+                          key_name=type,
+                          value=os.urandom(8).encode("hex"))
+        nonce.put()
+        return nonce
+
+    @staticmethod
+    def get_for(user_data, type="default"):
+        return UserNonce.get_by_key_name(type, parent=user_data)

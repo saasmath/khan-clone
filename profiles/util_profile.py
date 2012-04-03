@@ -18,7 +18,6 @@ from phantom_users.phantom_util import disallow_phantoms
 from models import StudentList, UserData, CoachRequest
 from avatars import util_avatars
 from badges import util_badges
-from gae_bingo.gae_bingo import bingo
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
@@ -236,11 +235,6 @@ class ViewProfile(request_handler.RequestHandler):
             'user_data_student': user_data if has_full_access else None,
             'profile_root': user_data.profile_root,
             "view": self.request_string("view", default=""),
-            
-            # TODO(benkomalo): consider moving this to a more generic app
-            # context so that the JS client always has this info
-            
-            "secure_url_base": util.secure_url("/"),
         }
         self.render_jinja2_template('viewprofile.html', template_values)
 
