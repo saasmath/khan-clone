@@ -501,7 +501,6 @@
 ./shared_jinja.py
 ./smarthistory.py
 ./social/templatetags.py
-./socrates/__init__.py
 ./stories/__init__.py
 ./subtitle-tools/upload_captions.py
 ./subtitle-tools/upload_unisubs.py

@@ -19,13 +19,13 @@ class SocratesHandler(request_handler.RequestHandler):
 
         topic_id = path_list[-1]
         from main import ViewVideo
-        template_values = ViewVideo.show_video(self, video_id, topic_id)
-        if not template_values:
+        context = ViewVideo.show_video(self, video_id, topic_id)
+        if not context:
             return
 
-        template_values['has_socrates'] = True
+        context['has_socrates'] = True
 
-        self.render_jinja2_template('labs/socrates/viewvideo.html', template_values)
+        self.render_jinja2_template('labs/socrates/viewvideo.html', context)
 
 
 class SocratesIndexHandler(request_handler.RequestHandler):
