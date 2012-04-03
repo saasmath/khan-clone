@@ -40,6 +40,7 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
         this.el.replaceWith(newContent);
         this.el = newContent;
         this.inflated = true;
+        this.delegateEvents();
     },
 
     onTitleClick: function(evt) {
