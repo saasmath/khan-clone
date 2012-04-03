@@ -148,6 +148,7 @@ hr {
 
 /* A simple 3D button style */
 .simple-button {
+    font-family: inherit; /* input[type=button] won't inherit by default */
     color: #333 !important;
     cursor: pointer !important;
     border: 1px solid #ccc;
