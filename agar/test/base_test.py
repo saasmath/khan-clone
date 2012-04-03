@@ -4,7 +4,7 @@ import unittest2
 from google.appengine.api import memcache
 from google.appengine.api import users
 from google.appengine.ext import testbed
-
+import request_cache as cachepy
 
 class BaseTest(unittest2.TestCase):
     """
@@ -50,6 +50,7 @@ class BaseTest(unittest2.TestCase):
         self.testbed.init_xmpp_stub()
         self.testbed.init_mail_stub()
         self.testbed.init_blobstore_stub()
+        cachepy.flush()
 
         try:
             from google.appengine.api.images import images_stub
@@ -224,3 +225,14 @@ class BaseTest(unittest2.TestCase):
         """
         self.assertEqual(items, memcache.get_stats()['items'])
 
+    def assertEqualTruncateError(self, a, b):
+        maxlen=100
+        assert a == b, "%s(%i): '%s%s' != %s(%i): '%s%s'" % (
+            type(a),
+            len(a),
+            str(a)[:maxlen], 
+            "..." if len(str(a)) > maxlen else '', 
+            type(b),
+            len(b),
+            str(b)[:maxlen], 
+            "..." if len(str(b)) > maxlen else "")
