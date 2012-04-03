@@ -38,11 +38,9 @@ def get_questions_data(user_data):
 
 
 class MetaQuestion(object):
-    """ Data associated with a user's questions and unread answers
-
-    Note: qa_expand_key is necessary so that the question appears expanded
-    when the user clicks through the notification to view the video page.
-
+    """ Data associated with a user's question, including the target video
+    and notifications count.
+    
     TODO(marcia): I am awful at naming things, help!
     """
     @staticmethod
@@ -64,7 +62,10 @@ class MetaQuestion(object):
         # along with the redirect.
         meta.topic_slug = video.first_topic().get_extended_slug()
 
+        # qa_expand_key is later used as a url parameter on the video page
+        # to expand the question and its answers
         meta.qa_expand_key = str(question.key())
+
         meta.viewer_user_data = viewer_user_data
 
         meta.notifications_count = 0
