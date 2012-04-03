@@ -100,7 +100,7 @@ class OAuthMap(db.Model):
                 UserData.insert_for(user_id, email))
 
     def get_user_id(self):
-        """ Returns the authenticated UserData for this OAuthMap
+        """ Returns the authenticated user_id for this OAuthMap
         if this OAuthMap still refers to an authenticated user.
 
         If the OAuth process is incomplete, or the credentials have been
@@ -111,7 +111,7 @@ class OAuthMap(db.Model):
         return self._get_authenticated_user_info(id_only=True)
 
     def get_user_data(self):
-        """ Returns the authenticated user_id for the user for this OAuthMap
+        """ Returns the authenticated UserData for the user for this OAuthMap
         if this OAuthMap still refers to an authenticated user.
 
         If the OAuth process is incomplete, or the credentials have been
