@@ -195,13 +195,7 @@ class Feedback(db.Model):
         # STOPSHIP(marcia): Backfill feedback with author user id
         query.filter('author_user_id =', user_id)
 
-        questions = []
-
-        for feedback in query:
-            if feedback.is_type(FeedbackType.Question):
-                questions.append(feedback)
-
-        return questions
+        return [q for q in query if q.is_type(FeedbackType.Question)]
 
 class FeedbackNotification(db.Model):
     feedback = db.ReferenceProperty(Feedback)
