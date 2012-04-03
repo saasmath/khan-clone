@@ -66,7 +66,12 @@ class OAuthMap(db.Model):
 
         return append_url_params(self.callback_url, params_callback)
 
-    def get_user_data(self):
+    def _get_authenticated_user_info(self, id_only=False):
+        """ Gets the UserData or user_id for this OAuthMap, if it's still
+        valid.
+        
+        """
+
         from models import UserData
 
         user_id = None
@@ -78,16 +83,43 @@ class OAuthMap(db.Model):
             user_id = get_facebook_user_id_from_oauth_map(self)
             email = user_id
         elif self.uses_password():
+            user_data = auth.tokens.AuthToken.get_user_for_value(
+                    self.khan_auth_token, UserData.get_from_user_id)
             # Note that we can't "create" a user by username/password logins
             # via the oauth flow.
-            return auth.tokens.AuthToken.get_user_for_value(
-                    self.khan_auth_token, UserData.get_from_user_id)
+            if not id_only:
+                return user_data
+            elif user_data:
+                user_id, email = user_data.user_id, user_data.email
 
-        user_data = UserData.get_from_user_id(user_id) or \
-                    UserData.get_from_db_key_email(email) or \
-                    UserData.insert_for(user_id, email)
+        if id_only:
+            return user_id
 
-        return user_data
+        return (UserData.get_from_user_id(user_id) or
+                UserData.get_from_db_key_email(email) or
+                UserData.insert_for(user_id, email))
+
+    def get_user_id(self):
+        """ Returns the authenticated UserData for this OAuthMap
+        if this OAuthMap still refers to an authenticated user.
+
+        If the OAuth process is incomplete, or the credentials have been
+        invalidated by the external Oauth providers or expired for any other
+        reason, this will return None
+
+        """
+        return self._get_authenticated_user_info(id_only=True)
+
+    def get_user_data(self):
+        """ Returns the authenticated user_id for the user for this OAuthMap
+        if this OAuthMap still refers to an authenticated user.
+
+        If the OAuth process is incomplete, or the credentials have been
+        invalidated by the external Oauth providers or expired for any other
+        reason, this will return None
+
+        """
+        return self._get_authenticated_user_info(id_only=False)
 
     @staticmethod
     def if_not_expired(oauth_map):
