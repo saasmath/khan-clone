@@ -320,6 +320,12 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
     model: null,
 
+    events: {
+        "click .take-a-break": "toDashboard",
+        "click .more-stacks": "toMoreStacks",
+        "click #show-topic-details": "showTopicDetails"
+    },
+
     leafEvents: ["change:done", "change:leavesEarned", "change:leavesAvailable"],
 
     initialize: function(options) {
@@ -395,6 +401,8 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 .html(
                     $(Templates.get(templateName)(context))
                 );
+
+        this.delegateEvents();
 
     },
 
@@ -567,6 +575,10 @@ Exercises.CurrentCardView = Backbone.View.extend({
             this.renderCardAfterAPIRequests(
                 "exercises.end-of-stack-card",
                 function() {
+
+                    // Collect various progress stats about both the current stack
+                    // and the current topic -- will be rendered by end of
+                    // stack card.
                     var unstartedExercises = _.filter(topicUserExercises, function(userExercise) {
                             return !userExercise.exerciseStates.proficient && userExercise.totalDone === 0;
                         }),
@@ -589,29 +601,18 @@ Exercises.CurrentCardView = Backbone.View.extend({
                         Exercises.sessionStats.progressStats(),
                         Exercises.completeStack.stats()
                     );
+
                 },
                 function() {
+
                     $(Exercises.completeStackView.el).hide();
                     $(Exercises.currentCardView.el)
                         .find(".stack-stats p, .small-exercise-icon")
                             .each(Exercises.currentCardView.attachTooltip)
                             .end()
-                        .find("#show-topic-details")
-                            .click(function() {
-                                $(".current-topic").slideDown();
-                                $(this).hide();
-                            })
-                            .end()
-                        .find(".take-a-break")
-                            .click(function() {
-                                window.location = "/exercisedashboard";
-                            })
-                            .end()
                         .find(".more-stacks")
-                            .click(function() {
-                                window.location.assign(window.location.href);
-                            })
                             .focus();
+
                 }
             );
 
@@ -706,6 +707,30 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 delay: 0
             }
         });
+    },
+
+    /**
+     * Show full details about the current topic
+     * (starts out hidden to highlight stack-only details.
+     */
+    showTopicDetails: function() {
+        $(".current-topic").slideDown();
+        $(this).hide();
+    },
+
+    /**
+     * Navigate to exercise dashboard
+     */
+    toDashboard: function() {
+        window.location = "/exercisedashboard";
+    },
+
+    /**
+     * Navigate to more stacks of the current type.
+     * TODO: in the future, this can be done quick'n'javascript-y.
+     */
+    toMoreStacks: function() {
+        window.location.assign(window.location.href);
     },
 
     /**
