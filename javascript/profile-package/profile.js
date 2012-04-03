@@ -983,7 +983,7 @@ var Profile = {
                     var context = data,
                         template = Templates.get("profile.questions-list");
 
-                    context.questions.sort(Profile.cmpQuestions_);
+                    context.sort(Profile.cmpQuestions_);
 
                     $("#tab-content-questions").append(template(context))
                         .find("span.timeago").timeago();

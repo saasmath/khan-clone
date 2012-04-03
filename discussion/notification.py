@@ -34,9 +34,7 @@ def get_questions_data(user_data):
         meta_question = dict_meta_questions[str(answer.question_key())]
         meta_question.update_notifications(answer)
 
-    return {
-            'questions': dict_meta_questions.values(),
-        }
+    return dict_meta_questions.values()
 
 
 class MetaQuestion(object):
