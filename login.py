@@ -30,8 +30,9 @@ class Login(request_handler.RequestHandler):
     def get(self):
         if self.request_bool("form", default=False):
             self.render_login_form()
-        elif not self.request_bool("use_new", default=False):
-            self.render_login_legacy()
+        # TODO(benkomalo): remove this code when auth has stabilized.
+        #elif not self.request_bool("use_new", default=False):
+            #self.render_login_legacy()
         else:
             self.render_login_outer()
             
@@ -42,6 +43,7 @@ class Login(request_handler.RequestHandler):
         # url actually specified it or not. Important things happen there.
         return util.create_post_login_url(cont)
 
+    # TODO(benkomalo): remove this and the legacy template when auth stabilizes
     def render_login_legacy(self):
         """ Renders the old login page with no username/password inputs. """
         cont = self.request_continue_url()
@@ -164,7 +166,9 @@ class MobileOAuthLogin(request_handler.RequestHandler):
             "anointed": self.request_bool("an", default=False),
             "view": self.request_string("view", default=""),
             "error": error,
-            "use_new": self.request_bool("use_new", default=False),
+            
+            # TODO(benkomalo): remove this when auth stabilizes
+            "use_new": True, #self.request_bool("use_new", default=False),
         })
 
     @user_util.manual_access_checking
