@@ -402,6 +402,8 @@
 ./jinja2/testsuite/tests.py
 ./jinja2/utils.py
 ./js_css_packages/packages.py
+./js_css_packages/packages_compressed.py
+./js_css_packages/packages_hash.py
 ./js_css_packages/templatetags.py
 ./khan-exercises/build/close-old-issues.py
 ./khan-exercises/build/kathjax.py
@@ -468,7 +470,6 @@
 ./offline/unzip.py
 ./offline/upload_individual_videos.py
 ./paypal/__init__.py
-./pep8_exclude.py
 ./phantom_users/cloner.py
 ./phantom_users/phantom_util.py
 ./phantom_users/templatetags.py
