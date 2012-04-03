@@ -22,7 +22,7 @@ Exercises.BottomlessQueue = {
 
     // # of exercises in queue below which we will
     // send off an ajax request for a refill
-    queueRefillSize: 3,
+    queueRefillSize: 2,
 
     // # of exercises in upcoming queue for which we
     // trigger upcomingExercise events to give
