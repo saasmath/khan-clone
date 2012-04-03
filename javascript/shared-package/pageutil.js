@@ -893,12 +893,12 @@ var HeaderTopicBrowser = {
                 hoverIntentActive = true;
             },
             out: function() {
-                $(".nav-subheader .dropdown-toggle").dropdown("close");
+                $(".nav-subheader .watch-link.dropdown-toggle").dropdown("close");
                 hoverIntentActive = false;
             },
             timeout: 400
         });
-        $(".nav-subheader .dropdown-toggle")
+        $(".nav-subheader .watch-link.dropdown-toggle")
             .on('mouseenter', function() {
                 if (!HeaderTopicBrowser.rendered) {
                     gae_bingo.bingo(["topic_browser_clicked_link"]);
@@ -910,6 +910,9 @@ var HeaderTopicBrowser = {
                 if (!hoverIntentActive) {
                     $(this).dropdown("close");
                 }
+            })
+            .on('click', function() {
+                location.href = $(this).attr("href");
             });
     },
 
@@ -917,35 +920,51 @@ var HeaderTopicBrowser = {
         this.topicBrowserData = topicBrowserData;
     },
 
-    hoverIntentHandlers: function(timeout, setActive) {
+    hoverIntentHandlers: function(timeout, sensitivityX, setActive) {
         // Intentionally create one closure per <ul> level so each has
         // its own selected element
         var activeEl = null;
+        var nextEl = null;
         return {
             over: function() {
+                if (this == activeEl) {
+                    return;
+                }
                 if (activeEl) {
-                    $(activeEl).removeClass("hover-active");
-                }
-                $(this).addClass("hover-active");
-                if (setActive) {
-                    $(".nav-subheader ul.topic-browser-menu")
-                        .addClass("child-active")
-                        .removeClass("none-active");
-                }
-                activeEl = this;
-            },
-            out: function() {
-                $(this).removeClass("hover-active");
-                if (activeEl == this) {
-                    activeEl = null;
+                    nextEl = this;
+                } else {
+                    $(this).addClass("hover-active");
                     if (setActive) {
                         $(".nav-subheader ul.topic-browser-menu")
-                            .removeClass("child-active")
-                            .addClass("none-active");
+                            .addClass("child-active")
+                            .removeClass("none-active");
+                    }
+                    activeEl = this;
+                }
+            },
+            out: function() {
+                if (activeEl == this) {
+                    $(this).removeClass("hover-active");
+                    if (nextEl) {
+                        $(nextEl).addClass("hover-active");
+                        activeEl = nextEl;
+                        nextEl = null;
+                    } else {
+                        activeEl = null;
+                        if (setActive) {
+                            $(".nav-subheader ul.topic-browser-menu")
+                                .removeClass("child-active")
+                                .addClass("none-active");
+                        }
+                    }
+                } else {
+                    if (this == nextEl) {
+                        nextEl = null;
                     }
                 }
             },
-            timeout: timeout
+            timeout: timeout,
+            directionalSensitivityX: sensitivityX
         };
     },
 
@@ -958,10 +977,10 @@ var HeaderTopicBrowser = {
             // Use hoverIntent to keep the menus selected/open
             // even if you temporarily leave the item bounds.
             el.children("li")
-                .hoverIntent(this.hoverIntentHandlers(200, true))
+                .hoverIntent(this.hoverIntentHandlers(50, 0.5, true))
                 .children("ul")
                     .children("li")
-                        .hoverIntent(this.hoverIntentHandlers(0, false))
+                        .hoverIntent(this.hoverIntentHandlers(0, 0, false))
 
             $("#sitewide-navigation .topic-browser-dropdown").append(el);
 
