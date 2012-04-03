@@ -345,6 +345,12 @@ input.simple-button {
     background-image: -o-linear-gradient( top, rgba(255,255,255, .5), rgba(255,255,255, 0) );
 }
 
+.action-gradient:disabled,
+.action-gradient.disabled {
+    /* Disable the gradient and just make them solid colors on disabling */
+    background-image: none;
+}
+
 .mobile-only { display: none; }
 /* Borrowed from those smart guys @ Fog Creek. Props to Justin & Bobby */
 .fancy-scrollbar::-webkit-scrollbar {
@@ -956,8 +962,7 @@ footer {
         margin: 0;
         left: 0;
         border: 1px solid #ccc;
-        width: 100%;
-        min-width: 86px;
+        min-width: 100%;
         padding: 3px 0px;
     }
     #top-header #user-info .dropdown-menu li > a {

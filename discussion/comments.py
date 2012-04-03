@@ -48,8 +48,7 @@ class PageComments(request_handler.RequestHandler):
             template_values = video_comments_context(video, topic, page, comments_hidden, sort_order)
 
             html = self.render_jinja2_template_to_string("discussion/video_comments_content.html", template_values)
-            json_string = json.dumps({"html": html, "page": page}, ensure_ascii=False)
-            self.response.out.write(json_string)
+            self.render_json({"html": html, "page": page})
 
 class AddComment(request_handler.RequestHandler):
     @disallow_phantoms

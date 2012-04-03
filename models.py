@@ -44,9 +44,10 @@ import base64, os
 
 from image_cache import ImageCache
 
+from auth import age_util
 from auth.models import CredentialedUser
 from templatefilters import slugify
-from gae_bingo.gae_bingo import ab_test, bingo
+from gae_bingo.gae_bingo import bingo
 from gae_bingo.models import GAEBingoIdentityModel
 from experiments import StrugglingExperiment
 import re
@@ -906,11 +907,17 @@ class UniqueUsername(db.Model):
     VALID_KEY_NAME_RE = re.compile('^[a-z][a-z0-9]{2,}$')
 
     @staticmethod
+    def is_username_too_short(username, key_name=None):
+        if key_name is None:
+            key_name = UniqueUsername.build_key_name(username)
+        return len(key_name) < 3
+
+    @staticmethod
     def is_valid_username(username, key_name=None):
         """ Determines if a candidate for a username is valid
         according to the limitations we enforce on usernames.
 
-        Usernames must be at least 5 characters long (excluding dots), start
+        Usernames must be at least 3 characters long (excluding dots), start
         with a letter and be alphanumeric (ascii only).
         """
         if username.startswith('.'):
@@ -985,6 +992,25 @@ class UniqueUsername(db.Model):
             return
         entity.release_date = clock.utcnow()
         entity.put()
+        
+    @staticmethod
+    def transfer(from_user, to_user):
+        """ Transfers a username from one user to another, assuming the to_user
+        does not already have a username.
+        
+        Returns whether or not a transfer occurred.
+
+        """
+        def txn():
+            if not from_user.username or to_user.username:
+                return False
+            entity = UniqueUsername.get_canonical(from_user.username)
+            entity.claimer_id = to_user.user_id
+            to_user.username = from_user.username
+            from_user.username = None
+            db.put([from_user, to_user, entity])
+            return True
+        return util.ensure_in_transaction(txn, xg_on=True)
 
     @staticmethod
     def get_canonical(username):
@@ -1050,6 +1076,33 @@ PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 # oauth tokens for khanacademy.demo2@gmail.com supplied via secrets.py
 COACH_DEMO_COWORKER_EMAIL = "khanacademy.demo2@gmail.com"
 
+class UnverifiedUser(db.Model):
+    """ Preliminary signup data, including an e-mail address that needs to be
+    verified. """
+    
+    email = db.StringProperty()
+    birthdate = db.DateProperty(indexed=False)
+
+    # used as a token sent in an e-mail verification link.
+    randstring = db.StringProperty(indexed=True)
+    
+    @staticmethod
+    def get_or_insert_for_value(email, birthdate):
+        return UnverifiedUser.get_or_insert(
+                key_name=email,
+                email=email,
+                birthdate=birthdate,
+                randstring=os.urandom(20).encode("hex"))
+
+    @staticmethod
+    def get_for_value(email):
+        # Email is also used as the db key
+        return UnverifiedUser.get_by_key_name(email)
+
+    @staticmethod
+    def get_for_token(token):
+        return UnverifiedUser.all().filter("randstring =", token).get()
+
 class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
     # as the fields of this property can change; only the ID is stable and
@@ -1078,10 +1131,19 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # A globally unique user-specified username,
     # which will be used in URLS like khanacademy.org/profile/<username>
     username = db.StringProperty(default="")
-
+    
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
+
+    # Account creation date in UTC
     joined = db.DateTimeProperty(auto_now_add=True)
+    
+    # TODO(benkomalo): STOPSHIP - put in a date when we launch as to when
+    # this should have started been filled in.
+
+    # Last login date in UTC. Note that this was incorrectly set, and could
+    # have stale values (though is always non-empty) for users who have never
+    # logged in prior to the launch of our own password based logins.
     last_login = db.DateTimeProperty(indexed=False)
 
     # Whether or not user has been hellbanned from community participation
@@ -1128,6 +1190,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # The user's birthday was only relatively recently collected (Mar 2012)
     # so older UserData may not have this information.
     birthdate = db.DateProperty(indexed=False)
+    
+    # The user's gender is optional, and only collected as of Mar 2012,
+    # so older UserData may not have this information.
+    gender = db.StringProperty(indexed=False)
 
     # Whether or not the user has indicated she wishes to have a public
     # profile (and can be searched, etc)
@@ -1141,8 +1207,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             "user_nickname", "user_email",
             "seconds_since_joined", "has_current_goals", "public_badges",
             "avatar_name", "username", "is_profile_public",
-            "credential_version", "birthdate",
-
+            "credential_version", "birthdate", "gender",
             "conversion_test_hard_exercises",
             "conversion_test_easy_exercises",
     ]
@@ -1190,7 +1255,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             def txn():
                 NicknameIndex.update_indices(self)
                 self.put()
-            db.run_in_transaction(txn)
+            util.ensure_in_transaction(txn, xg_on=True)
         return True
 
     @property
@@ -1336,6 +1401,15 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         query.order('-points') # Temporary workaround for issue 289
 
         return query.get()
+    
+    @staticmethod
+    def get_all_for_user_input_email(email):
+        if not email:
+            return []
+
+        query = UserData.all()
+        query.filter('user_email =', email)
+        return query
 
     @staticmethod
     def get_from_username(username):
@@ -1405,26 +1479,44 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         return UserData.get_from_username(username)
 
     @staticmethod
-    def insert_for(user_id, email, username=None, password=None):
+    def insert_for(user_id, email, username=None, password=None, **kwds):
+        """ Creates a user with the specified values, if possible, or returns
+        an existing user if the user_id has been used by an existing user.
+        
+        Returns None if user_id or email values are invalid.
+
+        """
+
         if not user_id or not email:
             return None
 
-        user = users.User(email)
-        key_name = UserData.key_for(user_id)
-        kwds = {
-	        'key_name': key_name,
-            'user': user,
-            'current_user': user,
-            'user_id': user_id,
+        # Make default dummy values for the ones that don't matter
+        prop_values = {
             'moderator': False,
-            'last_login': datetime.datetime.now(),
             'proficient_exercises': [],
             'suggested_exercises': [],
             'need_to_reassess': True,
             'points': 0,
             'coaches': [],
-            'user_email': email,
         }
+
+        # Allow clients to override
+        prop_values.update(**kwds)
+        
+        # Forcefully override with important items.
+        user = users.User(email)
+        key_name = UserData.key_for(user_id)
+        for pname, pvalue in {
+            'key_name': key_name,
+            'user': user,
+            'current_user': user,
+            'user_id': user_id,
+            'user_email': email,
+            }.iteritems():
+            if pname in prop_values:
+                logging.warning("UserData creation about to override"
+                                " specified [%s] value" % pname)
+            prop_values[pname] = pvalue
 
         if username or password:
             # Username or passwords are separate entities.
@@ -1432,10 +1524,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             def create_txn():
                 user_data = UserData.get_by_key_name(key_name)
                 if user_data is None:
-                    user_data = UserData(**kwds)
+                    user_data = UserData(**prop_values)
                     # Both claim_username and set_password updates user_data
                     # and will call put() for us.
-                    if username and not user_data._claim_username_internal(username):
+                    if username and not user_data.claim_username(username):
                         raise Rollback("username [%s] already taken" % username)
                     if password and user_data.set_password(password):
                         raise Rollback("invalid password for user")
@@ -1451,7 +1543,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             # No username means we don't have to do manual transactions.
             # Note that get_or_insert is a transaction itself, and it can't
             # be nested in the above transaction.
-            user_data = UserData.get_or_insert(**kwds)
+            user_data = UserData.get_or_insert(**prop_values)
 
         if user_data and not user_data.is_phantom:
             # Record that we now have one more registered user
@@ -1462,6 +1554,65 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
                 user_counter.add(1)
 
         return user_data
+
+    def consume_identity(self, new_user):
+        """ Takes over another UserData's identity by updating this user's
+        user_id, and other personal information with that of new_user's,
+        assuming the new_user has never received any points.
+
+        This is useful if this account is a phantom user with history
+        and needs to be updated with a newly registered user's info, or some
+        other similar situation.
+
+        This method will fail if new_user has any points whatsoever,
+        since we don't yet support migrating associated UserVideo
+        and UserExercise objects.
+
+        Returns whether or not the merge was successful.
+        
+        """
+        
+        if (new_user.points > 0):
+            return False
+
+        # Really important that we be mindful of people who have been added as
+        # coaches - no good way to transfer that right now.
+        if new_user.has_students():
+            return False
+    
+        def txn():
+            self.user_id = new_user.user_id
+            self.current_user = new_user.current_user
+            self.user_email = new_user.user_email
+            self.user_nickname = new_user.user_nickname
+            self.birthdate = new_user.birthdate
+            self.gender = new_user.gender
+            self.joined = new_user.joined
+            if new_user.last_login:
+                if self.last_login:
+                    self.last_login = max(new_user.last_login, self.last_login)
+                else:
+                    self.last_login = new_user.last_login
+            self.set_password_from_user(new_user)
+            UniqueUsername.transfer(new_user, self)
+            
+            # TODO(benkomalo): update nickname and indices!
+        
+            if self.put():
+                new_user.delete()
+                return True
+            return False
+
+        result = util.ensure_in_transaction(txn, xg_on=True)
+        if result:
+            # Note that all of the updates to the above fields causes changes
+            # to indices affected by each user. Since some of those are really
+            # important (e.g. retrieving a user by user_id), it'd be dangerous
+            # for a subsequent request to see stale indices. Force an apply()
+            # of the HRD by doing a get()
+            db.get(self.key())
+            db.get(new_user.key())
+        return result
 
     @staticmethod
     def get_visible_user(user, actor=None):
@@ -1486,6 +1637,8 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
         if not self.is_phantom:
             user_counter.add(-1)
+        
+        # TODO(benkomalo): handle cleanup of nickname indices!
 
         # Delegate to the normal implentation
         super(UserData, self).delete()
@@ -1499,6 +1652,9 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         """
 
         # Normal Gmail accounts and FB accounts require users be at least 13yo.
+        if self.birthdate:
+            return age_util.get_age(self.birthdate) >= 13
+            
         email = self.email
         return (email.endswith("@gmail.com")
                 or email.endswith("@googlemail.com")  # Gmail in Germany
@@ -1744,29 +1900,22 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             db.put([self, goal])
         db.run_in_transaction(save_goal)
 
-    def _claim_username_internal(self, name, clock=None):
-        """ Claims a username internally. Must be called in a transaction! """
-        # Since we are guaranteed to be in a transaction, and GAE does not
-        # support nested transactions, bypass making a transaction
-        # in UniqueUsername
-        claim_success = UniqueUsername._claim_internal(name,
-                                                       claimer_id=self.user_id,
-                                                       clock=clock)
-        if claim_success:
-            if self.username:
-                UniqueUsername.release(self.username, clock)
-            self.username = name
-            self.put()
-        return claim_success
-
     def claim_username(self, name, clock=None):
         """ Claims a username for the current user, and assigns it to her
         atomically. Returns True on success.
         """
         def claim_and_set():
-            return self._claim_username_internal(name, clock)
-        xg_on = db.create_transaction_options(xg=True)
-        result = db.run_in_transaction_options(xg_on, claim_and_set)
+            claim_success = UniqueUsername._claim_internal(name,
+                                                           claimer_id=self.user_id,
+                                                           clock=clock)
+            if claim_success:
+                if self.username:
+                    UniqueUsername.release(self.username, clock)
+                self.username = name
+                self.put()
+            return claim_success
+        
+        result = util.ensure_in_transaction(claim_and_set, xg_on=True)
         if result:
             # Success! Ensure we flush the apply() phase of the modifications
             # so that subsequent queries get consistent results. This makes
@@ -1775,10 +1924,18 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             db.get([self.key()])
         return result
 
+    def has_password(self):
+        return self.credential_version is not None
+
     def has_public_profile(self):
         return (self.is_profile_public
                 and self.username is not None
                 and len(self.username) > 0)
+
+    def __unicode__(self):
+        return "<UserData [%s] [%s] [%s]>" % (self.user_id,
+                                              self.email,
+                                              self.username or "<no username>")
 
     @classmethod
     def from_json(cls, json, user=None):
@@ -2438,8 +2595,9 @@ class Topic(Searchable, db.Model):
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
     # the ids of the topic on the homepage in which we will display their first
     # level child topics
-    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry",
-                        "brit-cruise", "california-standards-test", "gmat"]
+    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry", 
+                        "brit-cruise", "california-standards-test", "gmat",
+                        "linear-algebra"]
 
     @property
     def relative_url(self):
@@ -4101,7 +4259,7 @@ class Video(Searchable, db.Model):
 
         return {
             'title': video.title,
-            'extra_properties': video.extra_properties,
+            'extra_properties': video.extra_properties or {},
             'description': video.description,
             'youtube_id': video.youtube_id,
             'readable_id': video.readable_id,
@@ -5697,6 +5855,16 @@ class VideoSubtitlesFetchReport(db.Model):
     writes = db.IntegerProperty(indexed=False)
     errors = db.IntegerProperty(indexed=False)
     redirects = db.IntegerProperty(indexed=False)
+    
+class ParentSignup(db.Model):
+    """ An entity to collect an interest list for parents interested
+    in creating under-13 accounts before the feature is actually ready.
+    
+    The key_name stores the e-mail.
+
+    """
+
+    pass
 
 from badges import util_badges, last_action_cache, topic_exercise_badges
 from phantom_users import util_notify

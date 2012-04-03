@@ -717,10 +717,9 @@ application = webapp2.WSGIApplication([
     ('/login/mobileoauth', login.MobileOAuthLogin),
     ('/postlogin', login.PostLogin),
     ('/logout', login.Logout),
-
-    # TODO(benkomalo): disabled until password based logins is complete.
-    #('/register', login.Register),
-    #('/pwchange', login.PasswordChange),
+    ('/signup', login.Signup),
+    ('/completesignup', login.CompleteSignup),
+    ('/pwchange', login.PasswordChange),
 
     ('/api-apps/register', oauth_apps.Register),
 

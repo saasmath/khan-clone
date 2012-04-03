@@ -170,6 +170,18 @@ class UsernameTest(testutil.GAEModelTestCase):
             u.delete()
         super(UsernameTest, self).tearDown()
 
+    def validate(self, username):
+        return models.UniqueUsername.is_valid_username(username)
+
+    def test_user_name_validates_length_requirement(self):
+        # This test verifies that the multiple places that verify a username's
+        # length are in sync.
+        for i in range(10):
+            candidate = 'a' * i
+            self.assertEquals(
+                    not models.UniqueUsername.is_username_too_short(candidate),
+                    self.validate(candidate))
+
     def test_user_name_fuzzy_match(self):
         """ Tests user name search can ignore periods properly. """
         def k(n):
@@ -180,13 +192,9 @@ class UsernameTest(testutil.GAEModelTestCase):
         self.assertEqual(k('mrpants'), k('mrpants'))
         self.assertEqual(k('MrPants'), k('mrpants'))
 
-    def validate(self, username):
-        return models.UniqueUsername.is_valid_username(username)
-
     def test_bad_user_name_fails_validation(self):
         self.assertFalse(self.validate(''))
         self.assertFalse(self.validate('a')) # Too short
-        self.assertFalse(self.validate('aa')) # Still too short
         self.assertFalse(self.validate('4scoresand7years')) # Must start with letter
         self.assertFalse(self.validate('.dotsarebadtoo'))
         self.assertFalse(self.validate('!nvalid'))
@@ -388,3 +396,63 @@ class UserDataCreationTest(testutil.GAEModelTestCase):
         self.assertEqual("larry", retrieved.user_id)
         self.assertTrue(retrieved.validate_password("Password1"))
         self.assertFalse(retrieved.validate_password("Password2"))
+
+
+class UserConsumptionTest(testutil.GAEModelTestCase):
+
+    def make_exercise(self, name):
+        exercise = models.Exercise(name=name)
+        exercise.put()
+        return exercise
+        
+    def test_user_identity_consumption(self):
+        superman = models.UserData.insert_for(
+                "superman@gmail.krypt",
+                email="superman@gmail.krypt",
+                username="superman",
+                password="Password1",
+                gender="male",
+                )
+
+        clark = models.UserData.insert_for(
+                "clark@kent.com",
+                email="clark@kent.com",
+                username=None,
+                password=None,
+                )
+
+        clark.consume_identity(superman)
+        self.assertEqual("superman@gmail.krypt", clark.user_id)
+        self.assertEqual("superman@gmail.krypt", clark.email)
+        self.assertEqual(clark.key(),
+                         models.UserData.get_from_username("superman").key())
+        self.assertEqual(clark.key(),
+                         models.UserData.get_from_user_id("superman@gmail.krypt").key())
+        self.assertTrue(clark.validate_password("Password1"))
+        
+    def test_user_exercise_preserved_after_consuming(self):
+        # A user goes on as a phantom...
+        phantom = models.UserData.insert_for("phantom", "phantom")
+        exercises = [
+                self.make_exercise("Adding 1"),
+                self.make_exercise("Multiplication yo"),
+                self.make_exercise("All about chickens"),
+                ]
+
+        # Does some exercises....
+        for e in exercises:
+            ue = phantom.get_or_insert_exercise(e)
+            ue.total_done = 7
+            ue.put()
+
+        # Signs up!
+        jimmy = models.UserData.insert_for("justjoinedjimmy@gmail.com",
+                                           email="justjoinedjimmy@gmail.com")
+        phantom.consume_identity(jimmy)
+        
+        # Make sure we can still see the old user exercises
+        shouldbejimmy = models.UserData.get_from_user_id("justjoinedjimmy@gmail.com")
+        user_exercises = models.UserExercise.get_for_user_data(shouldbejimmy).fetch(100)
+        self.assertEqual(len(exercises), len(user_exercises))
+        for ue in user_exercises:
+            self.assertEqual(7, ue.total_done)

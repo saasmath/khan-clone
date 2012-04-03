@@ -692,7 +692,7 @@ var NewCustomGoalDialog = Backbone.View.extend({
 
     load: function() {
         if (!dynamicPackageLoader.packageLoaded("maps")) {
-            $('<script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false&callback=finishLoadingMapsPackage" type="text/javascript"></script>').appendTo(document);
+            $('<script src="http://maps.google.com/maps/api/js?v=3.8&sensor=false&callback=finishLoadingMapsPackage" type="text/javascript"></script>').appendTo(document);
         }
         return $.ajax({url: "/goals/new", type: "GET", dataType: "html"})
             .done($.proxy(function(html) {
