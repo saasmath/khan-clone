@@ -208,7 +208,8 @@ def anointed_oauth_consumer_only(func):
             # So for oauth requests, we're always using
             # flask.g.is_anointed, and for cookie requests, we're
             # always using the default value (3rd arg to getattr).
-            verify_and_cache_oauth_or_cookie(request)
+            if is_valid_request(request):   # only check if we're an oauth req.
+                verify_and_cache_oauth_or_cookie(request)
             if not getattr(flask.g, "is_anointed", True):
                 raise OAuthError("Consumer access denied.")
         except OAuthError, e:
