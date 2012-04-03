@@ -103,6 +103,16 @@
     .box-shadow(~"inset 0 0 0 2px #fff, inset 0 0 0 4px #cfcfcf");
     background-color: #ccc;
 }
+.stack .card-container:last-child .card-face.card-back,
+.stack .card-container.end-of-stack-card .card-face.card-back {
+    /* 
+     * This works in everything except IE8. Will work when we apply to appropriate
+     * classes to the end of stack card programatically. 
+     * TODO (jasonrr): remove :last-child selector when that happens
+     */
+    background-color: #E9EFDD;
+    .box-shadow(~"inset 0 0 0 2px white, inset 0 0 0 4px #E9EFDD");
+}
 
 .exercises-stack,
 .exercises-card {
