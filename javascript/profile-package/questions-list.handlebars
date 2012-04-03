@@ -1,0 +1,21 @@
+<div>
+{{#if questions.length}}
+    {{#each questions}}
+    <div style="font-size: 18px;">
+        <ul>
+        <li>
+            <div class="question {{#if notificationsCount}}unread{{/if}} visited-no-recolor">
+                <a title="{{video.title}}" href="/{{topicSlug}}/v/{{video.readableId}}?qa_expand_key={{qaExpandKey}}">
+                    {{video.title}}
+                </a>
+
+                <div style="font-size: 75%">{{notificationsCount}} unread, {{#if notificationsCount}}answered{{else}}asked{{/if}} <span class="timeago" title="{{notificationsDate}}">{{notificationsDate}}</span></div>
+            </div>
+        </li>
+        </ul>
+    </div>
+    {{/each}}
+{{else}}
+    You haven't asked any questions. Go <a href="/#browse">watch a video</a> and ask a question!
+{{/if}}
+</div>

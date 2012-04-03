@@ -162,6 +162,7 @@ javascript = {
             "coach.handlebars",
             "no-coaches.handlebars",
             "coaches.handlebars",
+            "questions-list.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",
             "user-badge.handlebars",

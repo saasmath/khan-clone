@@ -116,6 +116,7 @@ var Profile = {
         "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
         "/vital-statistics/:graph": "showVitalStatistics",
         "/coaches": "showCoaches",
+        "/questions": "showQuestions",
 
         // Not associated with any tab highlighting.
         "/settings": "showSettings",
@@ -256,12 +257,22 @@ var Profile = {
             $("#tab-content-coaches").show()
                 .siblings().hide();
 
-            this.activateRelatedTab("people coaches");
+            this.activateRelatedTab("community coaches");
             this.updateTitleBreadcrumbs(["Coaches"]);
 
             if (Profile.profile.get("isPhantom")) {
                 Profile.showNotification("no-coaches-for-phantoms");
             }
+        },
+
+        showQuestions: function() {
+            Profile.populateQuestions();
+
+            $("#tab-content-questions").show()
+                .siblings().hide();
+
+            this.activateRelatedTab("community questions");
+            this.updateTitleBreadcrumbs(["Your questions"]);
         },
 
         settingsIframe_: null,
@@ -928,6 +939,62 @@ var Profile = {
         Profile.coachesDeferred_ = Coaches.init();
 
         return Profile.coachesDeferred_;
+    },
+
+    /**
+     * Comparison function to order questions by number of notifications
+     * and then by recency
+     */
+    cmpQuestions_: function(first, second) {
+        var firstCount = first["notificationsCount"],
+            secondCount = second["notificationsCount"];
+
+        if (firstCount === secondCount) {
+            var firstDate = first["notificationsDate"],
+                secondDate = second["notificationsDate"];
+            if (firstDate < secondDate) {
+                return 1;
+            } else if (firstDate === secondDate) {
+                return 0;
+            } else {
+                return -1;
+            }
+        }
+        return secondCount - firstCount;
+    },
+
+    questionsDeferred_: null,
+    populateQuestions: function() {
+        if (Profile.questionsDeferred_) {
+            return Profile.questionsDeferred_;
+        }
+
+        var email = Profile.profile.get("email");
+        if (email) {
+            Profile.questionsDeferred_ = $.ajax({
+                type: "GET",
+                url: "/api/v1/user/questions",
+                data: {
+                    email: email,
+                    casing: "camel"
+                },
+                dataType: "json",
+                success: function(data) {
+                    var context = data,
+                        template = Templates.get("profile.questions-list");
+
+                    context.questions.sort(Profile.cmpQuestions_);
+
+                    $("#tab-content-questions").append(template(context))
+                        .find("span.timeago").timeago();
+                }
+            });
+        } else {
+            Profile.questionsDeferred_ = new $.Deferred();
+            Profile.questionsDeferred_.resolve();
+        }
+
+        return Profile.questionsDeferred_;
     },
 
     populateSuggestedActivity: function(activities) {

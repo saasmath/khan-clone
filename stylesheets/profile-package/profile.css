@@ -850,7 +850,11 @@ a[rel="achievements"] {
 a[rel="goals"] {
     background: transparent url(/images/profile-icons/tick-circle.png) no-repeat 4px 50%;
 }
-a[rel="people coaches"] {
+a[rel="community coaches"] {
+    background: transparent url(/images/profile-icons/user-silhouette.png) no-repeat 4px 50%;
+}
+/* TODO(marcia): Replace with actual icon. */
+a[rel="community questions"] {
     background: transparent url(/images/profile-icons/user-silhouette.png) no-repeat 4px 50%;
 }
 li.profile-tab {
@@ -1131,6 +1135,14 @@ li.profile-tab {
     margin-top: 10px;
 }
 
+#tab-content-questions .question {
+    padding: 10px 0 10px 10px;
+    border-bottom: 1px solid #EEE;
+    border-left: 5px solid transparent;
+}
+#tab-content-questions .question.unread {
+    border-left: 5px solid orange;
+}
 
 .settings-iframe {
     height: 400px;
