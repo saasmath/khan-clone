@@ -1,5 +1,3 @@
-from google.appengine.api import users
-
 import util
 import user_util
 

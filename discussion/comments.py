@@ -1,6 +1,3 @@
-import os
-
-from google.appengine.api import users
 from google.appengine.ext import db
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
@@ -13,7 +10,6 @@ import models
 import models_discussion
 import util_discussion
 import user_util
-import app
 import util
 import request_handler
 import voting
