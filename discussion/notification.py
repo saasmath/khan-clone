@@ -14,6 +14,81 @@ import models
 import models_discussion
 import voting
 
+
+def get_questions_data(user_data):
+    """ Get data associated with a user's questions and unread answers
+    """
+    dict_meta_questions = {}
+
+    # Get questions asked by user
+    questions = models_discussion.Feedback.get_all_questions_by_author(user_data.user_id)
+    for question in questions:
+        qa_expand_key = str(question.key())
+        meta_question = MetaQuestion.from_question(question, user_data)
+
+        dict_meta_questions[qa_expand_key] = meta_question
+
+    # Get unread answers to the above questions
+    unread_answers = feedback_answers_for_user_data(user_data)
+    for answer in unread_answers:
+        meta_question = dict_meta_questions[str(answer.question_key())]
+        meta_question.update_notifications(answer)
+
+    return {
+            'questions': dict_meta_questions.values(),
+        }
+
+
+class MetaQuestion(object):
+    """ Data associated with a user's questions and unread answers
+
+    Note: qa_expand_key is necessary so that the question appears expanded
+    when the user clicks through the notification to view the video page.
+
+    TODO(marcia): I am awful at naming things, help!
+    """
+    @staticmethod
+    def from_question(question, viewer_user_data):
+        """ Construct a MetaQuestion (ugh, the name!) from a
+        models_discussion.Feedback entity
+        """
+        meta = MetaQuestion()
+
+        # TODO(marcia): Is this too much junk to send down,
+        # when we only need the readable_id and title?
+        video = question.video()
+        meta.video = video
+
+        # HACK(marcia): The reason we need to send the topic is to construct
+        # the video url so that it doesn't redirect to the canonical url,
+        # which strips url parameters
+        # Consider actually fixing that so the url parameters are passed
+        # along with the redirect.
+        meta.topic_slug = video.first_topic().get_extended_slug()
+
+        meta.qa_expand_key = str(question.key())
+        meta.viewer_user_data = viewer_user_data
+
+        meta.notifications_count = 0
+        meta.notifications_date = question.date
+
+        return meta
+
+    def update_notifications(self, answer):
+        """ Update count and last-updated date for unread answers
+        """
+        if not answer.appears_as_deleted_to(self.viewer_user_data):
+            self.increment_notifications_count()
+            self.update_notifications_date(answer.date)
+
+    def increment_notifications_count(self):
+        self.notifications_count = self.notifications_count + 1
+
+    def update_notifications_date(self, other_date):
+        if self.notifications_date < other_date:
+            self.notifications_date = other_date
+
+
 class VideoFeedbackNotificationList(request_handler.RequestHandler):
 
     @user_util.open_access

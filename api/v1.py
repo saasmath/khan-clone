@@ -15,6 +15,7 @@ from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
 from exercises import attempt_problem, make_wrong_attempt
 from models import StudentList
+from discussion import notification
 from phantom_users.phantom_util import api_create_phantom, api_disallow_phantoms
 import notifications
 import user_util
@@ -1149,6 +1150,17 @@ def update_user_profile():
         }
         add_action_results(result, {})
     return result
+
+@route("/api/v1/user/questions", methods=["GET"])
+@oauth_required()
+@api_disallow_phantoms
+@jsonp
+@jsonify
+def get_user_questions():
+    """ Get data associated with a user's questions and unread answers
+    """
+    user_data = models.UserData.current()
+    return notification.get_questions_data(user_data)
 
 @route("/api/v1/user/coaches", methods=["GET"])
 @oauth_required()

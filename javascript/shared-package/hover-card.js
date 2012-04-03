@@ -83,6 +83,5 @@ var HoverCard = {
 
         // Replace tooltip content
         jel.qtip("option", "content.text", html);
-
     }
 }

@@ -186,6 +186,23 @@ class Feedback(db.Model):
             else:
                 return ''
 
+    @staticmethod
+    def get_all_questions_by_author(user_id):
+        """ Get all questions asked by specified user
+        """
+        query = Feedback.all()
+
+        # STOPSHIP(marcia): Backfill feedback with author user id
+        query.filter('author_user_id =', user_id)
+
+        questions = []
+
+        for feedback in query:
+            if feedback.is_type(FeedbackType.Question):
+                questions.append(feedback)
+
+        return questions
+
 class FeedbackNotification(db.Model):
     feedback = db.ReferenceProperty(Feedback)
     user = db.UserProperty()
