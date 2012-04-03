@@ -186,7 +186,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 suggested = user_data.is_suggested(user_exercise.exercise)
                 problem_log.suggested = suggested
 
-                problem_log.points_earned = points.ExercisePointCalculator(user_exercise, suggested, proficient)
+                problem_log.points_earned = points.ExercisePointCalculator(user_exercise, topic_mode, suggested, proficient)
                 user_data.add_points(problem_log.points_earned)
 
                 # Streak only increments if problem was solved correctly (on first attempt)

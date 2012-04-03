@@ -9,7 +9,7 @@ MIN_STREAK_TILL_PROFICIENCY = AccuracyModel.min_streak_till_threshold(consts.PRO
 # offset is used to derive a point value for the nth + offset problem (i.e. to get the current or last point value)
 # with offset = 0, ExercisePointCalculator yields the point value for the *next* correct exercise.
 # with offset = -1, ExercisePointCalculator yields the point value for the last correct exercise.
-def ExercisePointCalculator(user_exercise, suggested, proficient, offset=0):
+def ExercisePointCalculator(user_exercise, topic_mode, suggested, proficient, offset=0):
 
     points = 0
 
@@ -27,8 +27,11 @@ def ExercisePointCalculator(user_exercise, suggested, proficient, offset=0):
         # Never award less than a few points
         points = consts.EXERCISE_POINTS_BASE
 
-    if suggested:
-        # Higher awards for suggested
+    if topic_mode:
+        # Higher awards for topic mode
+        points = points * consts.TOPIC_EXERCISE_MULTIPLIER
+    elif suggested:
+        # Higher awards for suggested -- but doesn't stack on top of topic_mode
         points = points * consts.SUGGESTED_EXERCISE_MULTIPLIER
 
     if not proficient:

@@ -22,6 +22,9 @@ EXERCISE_POINTS_BASE = 5
 # Minimum number of energy points available for a problem in an unfinished exercise
 INCOMPLETE_EXERCISE_POINTS_BASE = 15
 
+# Multiplier for energy points while working in topic mode
+TOPIC_EXERCISE_MULTIPLIER = 3
+
 # Multiplier for energy points in suggested exercise problems
 SUGGESTED_EXERCISE_MULTIPLIER = 3
 
