@@ -113,6 +113,7 @@ Login.loginWithPassword = function() {
 };
 
 Login.submitDisabled_ = false;
+Login.navigatingAway_ = false;
 
 /**
  * Disables form submit on a login attempt, to prevent duplicate tries.
@@ -161,6 +162,8 @@ Login.onPasswordLoginSuccess = function(data) {
             Login.basePostLoginUrl +
             "postlogin?continue=" + encodeURIComponent(continueUri) +
             "&auth=" + encodeURIComponent(auth));
+
+    Login.navigatingAway_ = true;
 };
 
 /**
@@ -209,8 +212,11 @@ Login.asyncFormPost = function(jelForm, success, error) {
         "data": jelForm.serialize(),
         "dataType": "json",
         "success": success,
+        "error": error,
         "complete": function() {
-            Login.enableSubmit_();
+            if (!Login.navigatingAway_) {
+                Login.enableSubmit_();
+            }
         }
     });
 };
