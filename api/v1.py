@@ -842,7 +842,7 @@ def video_recent_list():
     return models.Video.all().order('-date_added').fetch(20)
 
 @route("/api/v1/videos/<video_id>/download_available", methods=["POST"])
-@api.auth.decorators.open_access
+@api.auth.decorators.developer_required
 @api.auth.decorators.anointed_oauth_consumer_only
 @jsonp
 @jsonify
