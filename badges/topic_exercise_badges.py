@@ -207,7 +207,7 @@ TOPICS_WITH_CUSTOM_ICONS = frozenset([
     "Systems of equations and inequalities",
     "Ratios and proportions",
     "Absolute value",
-    "Exponents and radicals",
+    "Exponents radicals",
     "Logarithms",
     "Polynomials and quadratics",
     "polynomials",
@@ -233,5 +233,6 @@ TOPICS_WITH_CUSTOM_ICONS = frozenset([
     "Probability",
     "Basic geometry",
     "Telling time",
-    "Equation of a line",    
+    "Equation of a line",
+    "Rates and ratios"
 ])
