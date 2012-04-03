@@ -188,19 +188,28 @@ def manual_access_checking(func):
     return wrapper
 
 
-# This is a bit different from user authentication -- it only cares
-# about the oauth *consumer* token.  That is, we don't care who the
-# user is, we care what app (or script, etc) they are using to make
-# this API call.  Some apps, such as the Khan iPad app, are
-# "annointed", and have powers that normal API callers don't.
 def anointed_oauth_consumer_only(func):
+    """ Check that if a client is an oauth client, it's an 'anointed' one.
+
+    This is a bit different from user authentication -- it only cares
+    about the oauth *consumer* token.  That is, we don't care who the
+    user is, we care what app (or script, etc) they are using to make
+    this API call.  Some apps, such as the Khan iPad app, are
+    'annointed', and have powers that normal API callers don't.
+
+    NOTE: If the client is accessing via cookies and not via oauth, we
+    always succeed.
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            # This sets flask.g.is_anointed, though only if the request
-            # was an oauth request (and not a cookie request).
+            # This sets flask.g.is_anointed, though only if the
+            # request was an oauth request (and not a cookie request).
+            # So for oauth requests, we're always using
+            # flask.g.is_anointed, and for cookie requests, we're
+            # always using the default value (3rd arg to getattr).
             verify_and_cache_oauth_or_cookie(request)
-            if not getattr(flask.g, "is_anointed", False):
+            if not getattr(flask.g, "is_anointed", True):
                 raise OAuthError("Consumer access denied.")
         except OAuthError, e:
             return oauth_error_response(e)
