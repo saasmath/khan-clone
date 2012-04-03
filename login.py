@@ -19,6 +19,7 @@ import models
 import os
 import re
 import request_handler
+import shared_jinja
 import uid
 import user_util
 import util
@@ -465,9 +466,7 @@ class Signup(request_handler.RequestHandler):
         unverified_user = models.UnverifiedUser.get_or_insert_for_value(
                 email,
                 birthdate)
-        verification_link = CompleteSignup.build_link(unverified_user)
-
-        self.send_verification_email(email, verification_link)
+        Signup.send_verification_email(unverified_user)
         
         response_json = {
                 'success': True,
@@ -476,6 +475,8 @@ class Signup(request_handler.RequestHandler):
                 }
         
         if App.is_dev_server:
+            # Send down the verification token so the client can easily 
+            # create a link to test with.
             response_json['token'] = unverified_user.randstring
 
         # TODO(benkomalo): since users are now blocked from further access
@@ -485,12 +486,16 @@ class Signup(request_handler.RequestHandler):
         #    registering, for example)
         self.render_json(response_json, camel_cased=True)
 
-    def send_verification_email(self, recipient, verification_link):
+    @staticmethod
+    def send_verification_email(unverified_user):
+        recipient = unverified_user.email
+        verification_link = CompleteSignup.build_link(unverified_user)
+
         template_values = {
                 'verification_link': verification_link,
             }
 
-        body = self.render_jinja2_template_to_string(
+        body = shared_jinja.template_to_string(
                 'verification-email-text-only.html',
                 template_values)
 
