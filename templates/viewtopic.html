@@ -20,36 +20,62 @@
 
 {% block pagecontent %}
 
-<article id="homepage">
+<article id="topic-page">
 
-<div id="main-video">
-{% if is_mobile_capable %}
-  {{ youtube.player_embed(marquee_video["youtube_id"], 480, 395) }}
-{% else %}
-  <a class="main-video-link" href="{{ marquee_video["href"] }}" data-tag="Topic Page Featured">
-    <div class="main-video-placeholder" style="background-image:url('{{ marquee_video["thumb_urls"]["sd"]|escape }}')">
-      <div class="youtube-placeholder-title">{{ marquee_video["title"]|escape }}</div>
-      <img class="youtube-play" src="/images/youtube_play.png" />
-    </div>
-  </a>
-{% endif %}
-</div>
-
+<!--
 <div class="topic-page-header">
-  <div data-role="header" class="library-content-header">
+  <div id="thumbnails_container">
+    <table>
+        <tr>
+            <td>
+                <div id="thumbnails" class="visited-no-recolor">
+                  <table>
+                    {% for thumbnail_link_row in thumbnail_link_set %}
+                    <tr>
+                    {% for thumbnail_link in thumbnail_link_row %}
+                      <td class="thumbnail_td {{ thumbnail_link["type"] }} {% if thumbnail_link["selected"] %}selected{% endif %}" data-key="{{ thumbnail_link["key"]|escape }}" data-youtube-id="{{ thumbnail_link["youtube_id"]|escape }}">
+
+                        <a href="{{ thumbnail_link["href"]|escape }}" data-tag="Homepage Featured" class="thumbnail_link"><div 
+                                class="thumb" style="background-image:url('{{ thumbnail_link["thumb_urls"]["hq"]|escape }}')"
+                                ></div></a>
+
+                        <a href="{{ thumbnail_link["href"]|escape }}" data-tag="Homepage Featured" class="thumbnail_link"><div class="thumbnail_label"><div class="thumbnail_desc">{{ thumbnail_link["desc_html"] }}</div><div class="thumbnail_teaser">{{ thumbnail_link["teaser_html"] }}</div></div></a>
+                      </td>
+                      {% endfor %}
+                    </tr>
+                    {% endfor %}
+                  </table>
+                </div>
+            </td>
+        </tr>
+    </table>
+  </div>
+
+  <div data-role="header" class="main-header">
     <h2 class='topic-heading'>{{ main_topic.standalone_title }}</h2>
     <p class='topic-desc'>{{ main_topic.description }}</p>
   </div>
 </div>
+-->
 
 <div class="topic-page-content">
   <div class="container">
     {% if topic_children %}
+    <div class="nav-pane-background"></div>
     <div class="nav-pane">
+      <h2 class='topic-heading'>{{ main_topic.standalone_title }}</h2>
+
       <ul>
+        <li data-id="">
+          <a href="/{{ main_topic.get_extended_slug() }}" data-id="">
+            {{ main_topic.title }} Home
+            <div class="right-arrow"></div>
+          </a>
+        </li>
+        <li class="subheading"><span>Videos</span></li>
       {% for child in topic_children %}
         <li data-id="{{ child.id }}">
-          <a href="{{ main_topic.id }}/{{ child.id }}" data-id="{{ child.id }}">
+          <a href="/{{ main_topic.get_extended_slug() }}/{{ child.id }}" data-id="{{ child.id }}">
             {{ child.title|escape }}
             <div class="right-arrow"></div>
           </a>
@@ -72,12 +98,14 @@
 {% block bottompagescript %}
     {{ js_css_packages.js_package("topic") }}
     {{ js_css_packages.css_package("topic") }}
+    {{ js_css_packages.js_package("video") }}
+    {{ js_css_packages.css_package("video") }}
     <script type="text/javascript">
       $(function() {
         var videoLists = {{ video_lists }};
-        var marqueeVideoID = "{{ marquee_video["youtube_id"]|escapejs }}";
         var rootPath = "/{{ main_topic.get_extended_slug() }}";
-        TopicPage.init(videoLists, marqueeVideoID, rootPath);
+        var rootTopic = {{ templatetags.jsonify(main_topic_info, True) }};
+        TopicPage.init(videoLists, rootPath, rootTopic);
       });
     </script>
 {% endblock %}

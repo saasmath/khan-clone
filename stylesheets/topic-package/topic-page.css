@@ -1,3 +1,7 @@
+#topic-page {
+    padding: 0;
+}
+
 .main-video-placeholder {
     position: relative;
     background: #000;
@@ -36,10 +40,25 @@ a.main-video-link:hover {
 }
 
 .topic-page-header {
-    position: absolute;
-    left: 720px;
-    top: 12px;
+    position: relative;
+    width: 500px;
+    height: 240px;
     margin: 10px;
+    top-margin: 20px;
+}
+
+.topic-page-header #thumbnails tr {
+    height: 120px;
+}
+.topic-page-header #thumbnails .thumbnail_td {
+    padding: 8px;
+}
+
+.topic-page-header div.main-header {
+    position: absolute;
+    top: 10px;
+    left: 450px;
+    width: 450px;
 }
 
 .topic-page-header h2.topic-heading {
@@ -59,21 +78,45 @@ a.main-video-link:hover {
 
 .topic-page-content {
     width: 1162px;
-    margin-top: 430px;
+    margin-top: 0px;
     margin-bottom: 10px;
 }
 .topic-page-content > .container {
     position: relative;
     width: 100%;
-    border: solid 1px #666;
+}
+
+.topic-page-content > .container > .nav-pane-background {
+    position: absolute;
+    background-color: #f4f4f5;
+    border-right: solid 1px #ccc;
+    left: 0px;
+    top: 0px;
+    bottom: 0px;
+    width: 330px;
+    margin-top: 100px;
 }
 
 .topic-page-content > .container > .nav-pane {
     display: inline-block;
-    width: 260px;
-    height: 100%;
-    border-right: solid 3px #005987;
+    background-color: #f4f4f5;
+    border-right: solid 1px #ccc;
+    width: 320px;
+    padding-left: 10px;
 }
+
+.topic-page-content > .container > .nav-pane-spacer {
+    display: inline-block;
+    width: 330px;
+    height: 100%;
+}
+
+.topic-page-content > .container > .nav-pane > h2 {
+    font-size: 22pt;
+    font-weight: bold;
+    margin: 20px 10px;
+}
+
 .topic-page-content > .container > .nav-pane > ul {
     width: 260px;
     margin-top: 0px;
@@ -81,7 +124,18 @@ a.main-video-link:hover {
 }
 .topic-page-content > .container > .nav-pane > ul > li {
     position: relative;
-    width: 260px;
+    width: 322px;
+}
+.topic-page-content > .container > .nav-pane > ul > li.subheading {
+    padding-top: 20px;
+}
+.topic-page-content > .container > .nav-pane > ul > li.subheading span {
+    color: #000;
+    font-family: MuseoSans300;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 4px 8px;
+    padding-right: 20px;
 }
 .topic-page-content > .container > .nav-pane > ul > li > a {
     display: block;
@@ -92,10 +146,11 @@ a.main-video-link:hover {
     letter-spacing: 0;
     font-family: MuseoSans300;
     color: #333;
-    width: 244px;
+    width: 291px;
     font-weight: normal;
     font-size: 16px;
     padding: 4px 8px;
+    padding-right: 20px;
 }
 .topic-page-content > .container > .nav-pane > ul > li > a > .right-arrow {
     background-image: url(/images/non-repeating-sprites.4.png);
@@ -109,12 +164,13 @@ a.main-video-link:hover {
     height: 13px;
 }
 .topic-page-content > .container > .nav-pane > ul > li.selected > a {
-    color: #ffffff;
+    color: #005987;
     text-decoration: none;
-    background-color: #005987;
-}
-.topic-page-content > .container > .nav-pane > ul > li.selected > a > .right-arrow {
-    background-position: -110px -36px;
+    background-color: #fff;
+    border-left: solid 1px #ccc;
+    border-top: solid 1px #ccc;
+    border-bottom: solid 1px #ccc;
+    border-right: solid 1px #fff;
 }
 
 .topic-page-content > .container > .content-pane {
@@ -123,7 +179,7 @@ a.main-video-link:hover {
     width: 1162px
 }
 .topic-page-content > .container > .content-pane.indent {
-    width: 889px;
+    width: 789px;
 }
 
 .topic-page-content > .container > .content-pane .content-inner {

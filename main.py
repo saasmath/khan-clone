@@ -123,12 +123,22 @@ class TopicPage(request_handler.RequestHandler):
 
         from homepage import thumbnail_link_dict
 
+        videos_list = [ t.get_first_video_and_topic() for t in topic_children ]
+        thumbnail_link_array = [ thumbnail_link_dict(video=it[0], parent_topic=it[1]) for it in videos_list if it[0] ]
+        thumbnail_link_set = [ [ thumbnail_link_array[0], thumbnail_link_array[1] ], [ thumbnail_link_array[2], thumbnail_link_array[3] ] ]
+
+        topic_info = {
+            "topic": topic,
+            "thumbnail_link_set": thumbnail_link_set,
+            "marquee_video": thumbnail_link_dict(video=marquee_video, parent_topic=subtopic),
+        }
+
         template_values = {
             "main_topic": topic,
+            "main_topic_info": topic_info,
             "selected_topic": selected_topic,
             "topic_children": topic_children,
             "video_lists": api.jsonify.jsonify(video_lists),
-            "marquee_video": thumbnail_link_dict(video=marquee_video, parent_topic=subtopic),
         }
         handler.render_jinja2_template('viewtopic.html', template_values)
 

@@ -49,7 +49,7 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None, parent_
 
     if link_dict:
 
-        if len(link_dict["teaser_html"]) > 60:
+        if link_dict["teaser_html"] and len(link_dict["teaser_html"]) > 60:
             link_dict["teaser_html"] = link_dict["teaser_html"][:60] + "&hellip;"
 
         return link_dict
