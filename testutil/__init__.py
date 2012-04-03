@@ -9,6 +9,7 @@ except ImportError:
 
 from google.appengine.ext import testbed
 from google.appengine.datastore import datastore_stub_util
+import request_cache as cachepy
 
 class GAEModelTestCase(unittest.TestCase):
     """ A test case that stubs out appengine's persistence layers in setUp.
@@ -28,6 +29,7 @@ class GAEModelTestCase(unittest.TestCase):
         self.testbed.init_datastore_v3_stub(consistency_policy=self.policy)
         self.testbed.init_user_stub()
         self.testbed.init_memcache_stub()
+        cachepy.flush()
 
     def tearDown(self):
         self.testbed.deactivate()
