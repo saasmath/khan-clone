@@ -2404,7 +2404,7 @@ def get_version_id():
 
 
 @route("/api/v1/parentsignup", methods=["POST", "PUT"])
-@open_access
+@api.auth.decorators.open_access
 @jsonify
 def signup_parent():
     email = request.request_string("email")
