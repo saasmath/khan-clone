@@ -61,11 +61,6 @@ a.main-video-link:hover {
     width: 450px;
 }
 
-.topic-page-header h2.topic-heading {
-    font-size: 22pt;
-    font-weight: bold;
-    margin-bottom: 18px;
-}
 .topic-page-header a.call-to-action {
     display: inline-block;
     font-size: 20px;
@@ -86,7 +81,7 @@ a.main-video-link:hover {
     width: 100%;
 }
 
-.topic-page-content > .container > .nav-pane-background {
+.nav-pane-background {
     position: absolute;
     background-color: #f4f4f5;
     border-right: solid 1px #ccc;
@@ -95,6 +90,16 @@ a.main-video-link:hover {
     bottom: 0px;
     width: 330px;
     margin-top: 100px;
+}
+
+.nav-fixed-background {
+    position: fixed;
+    height: 100%;
+    top: -39px;
+}
+.nav-fixed-background > .nav-pane-background {
+    margin-top: 125px;
+    margin-left: 1px;
 }
 
 .topic-page-content > .container > .nav-pane {
@@ -111,10 +116,10 @@ a.main-video-link:hover {
     height: 100%;
 }
 
-.topic-page-content > .container > .nav-pane > h2 {
+.topic-page-content > .container > .nav-pane h2 {
     font-size: 22pt;
     font-weight: bold;
-    margin: 20px 10px;
+    margin: 10px 0px;
 }
 
 .topic-page-content > .container > .nav-pane > ul {
@@ -171,6 +176,7 @@ a.main-video-link:hover {
     border-top: solid 1px #ccc;
     border-bottom: solid 1px #ccc;
     border-right: solid 1px #fff;
+    padding: 3px 21px 3px 7px;
 }
 
 .topic-page-content > .container > .content-pane {

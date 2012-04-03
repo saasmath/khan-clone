@@ -20,6 +20,11 @@
 
 {% block pagecontent %}
 
+<!-- Extends pane background down to footer -->
+<div class="nav-fixed-background">
+  <div class="nav-pane-background"></div>
+</div>
+
 <article id="topic-page">
 
 <!--
@@ -63,12 +68,11 @@
     {% if topic_children %}
     <div class="nav-pane-background"></div>
     <div class="nav-pane">
-      <h2 class='topic-heading'>{{ main_topic.standalone_title }}</h2>
 
       <ul>
         <li data-id="">
           <a href="/{{ main_topic.get_extended_slug() }}" data-id="">
-            {{ main_topic.title }} Home
+            <h2 class='topic-heading'>{{ main_topic.title }}</h2>
             <div class="right-arrow"></div>
           </a>
         </li>
