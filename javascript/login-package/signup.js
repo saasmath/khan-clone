@@ -62,6 +62,10 @@ Login.initSignupPage = function() {
  * Submits the signup attempt if it passes pre-checks.
  */
 Login.submitSignup = function() {
+    if (Login.submitDisabled_) {
+        return;
+    }
+
     // TODO(benkomalo): fix this at the bday-picker level.
     // "change" events aren't entirely reliable, and the bday-picker code
     // is prone to a bug where it doesn't properly update the hidden
@@ -114,6 +118,7 @@ Login.handleSignupResponse = function(data) {
                 backdrop: "static",
                 show: true
             });
+        Login.disableSubmit_();
     } else {
         // Only the e-mail can fail on a server side response from this
         // form.
