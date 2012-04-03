@@ -81,16 +81,7 @@
 ./atom/service.py
 ./atom/token_store.py
 ./atom/url.py
-./auth/age_util.py
-./auth/age_util_test.py
-./auth/cookies.py
-./auth/models.py
-./auth/models_test.py
-./auth/passwords.py
-./auth/passwords_test.py
 ./auth/pbkdf2.py
-./auth/tokens.py
-./auth/tokens_test.py
 ./autocomplete.py
 ./avatars/avatars.py
 ./avatars/templatetags.py
