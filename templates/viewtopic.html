@@ -27,42 +27,6 @@
 
 <article id="topic-page">
 
-<!--
-<div class="topic-page-header">
-  <div id="thumbnails_container">
-    <table>
-        <tr>
-            <td>
-                <div id="thumbnails" class="visited-no-recolor">
-                  <table>
-                    {% for thumbnail_link_row in thumbnail_link_set %}
-                    <tr>
-                    {% for thumbnail_link in thumbnail_link_row %}
-                      <td class="thumbnail_td {{ thumbnail_link["type"] }} {% if thumbnail_link["selected"] %}selected{% endif %}" data-key="{{ thumbnail_link["key"]|escape }}" data-youtube-id="{{ thumbnail_link["youtube_id"]|escape }}">
-
-                        <a href="{{ thumbnail_link["href"]|escape }}" data-tag="Homepage Featured" class="thumbnail_link"><div 
-                                class="thumb" style="background-image:url('{{ thumbnail_link["thumb_urls"]["hq"]|escape }}')"
-                                ></div></a>
-
-                        <a href="{{ thumbnail_link["href"]|escape }}" data-tag="Homepage Featured" class="thumbnail_link"><div class="thumbnail_label"><div class="thumbnail_desc">{{ thumbnail_link["desc_html"] }}</div><div class="thumbnail_teaser">{{ thumbnail_link["teaser_html"] }}</div></div></a>
-                      </td>
-                      {% endfor %}
-                    </tr>
-                    {% endfor %}
-                  </table>
-                </div>
-            </td>
-        </tr>
-    </table>
-  </div>
-
-  <div data-role="header" class="main-header">
-    <h2 class='topic-heading'>{{ main_topic.standalone_title }}</h2>
-    <p class='topic-desc'>{{ main_topic.description }}</p>
-  </div>
-</div>
--->
-
 <div class="topic-page-content">
   <div class="container">
     {% if topic_children %}
@@ -71,15 +35,15 @@
 
       <ul>
         <li data-id="">
-          <a href="/{{ main_topic.get_extended_slug() }}" data-id="">
+          <a class="subtopic-link" href="/{{ main_topic_info.extended_slug }}" data-id="">
             <h2 class='topic-heading'>{{ main_topic.title }}</h2>
             <div class="right-arrow"></div>
           </a>
         </li>
-        <li class="subheading"><span>Videos</span></li>
+        <li class="subheading"><span>Topics</span></li>
       {% for child in topic_children %}
         <li data-id="{{ child.id }}">
-          <a href="/{{ main_topic.get_extended_slug() }}/{{ child.id }}" data-id="{{ child.id }}">
+          <a class="subtopic-link" href="/{{ main_topic_info.extended_slug }}/{{ child.id }}" data-id="{{ child.id }}">
             {{ child.title|escape }}
             <div class="right-arrow"></div>
           </a>
@@ -90,8 +54,6 @@
     </div>
     {% endif %}
     <div class="content-pane {% if topic_children %}indent{% endif %}">
-      <div class="content-inner">
-      </div>
     </div>
   </div>
 </div>
@@ -106,10 +68,9 @@
     {{ js_css_packages.css_package("video") }}
     <script type="text/javascript">
       $(function() {
-        var videoLists = {{ video_lists }};
         var rootPath = "/{{ main_topic.get_extended_slug() }}";
         var rootTopic = {{ templatetags.jsonify(main_topic_info, True) }};
-        TopicPage.init(videoLists, rootPath, rootTopic);
+        TopicPage.init(rootPath, rootTopic);
       });
     </script>
 {% endblock %}

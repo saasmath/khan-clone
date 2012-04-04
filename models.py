@@ -2353,6 +2353,9 @@ class Topic(Searchable, db.Model):
         else:
             children = db.get(self.child_keys)
 
+        (thumbnail_video, thumbnail_topic) = self.get_first_video_and_topic()
+        from homepage import thumbnail_link_dict
+
         ret = {
             "id": self.id,
             "title": self.title,
@@ -2361,7 +2364,9 @@ class Topic(Searchable, db.Model):
                 "url": "/%s/v/%s" % (self.get_extended_slug(), v.readable_id),
                 "key_id": v.key().id(),
                 "title": v.title
-            } for v in children if v.__class__.__name__ == "Video"]
+            } for v in children if v.__class__.__name__ == "Video"],
+            "child_count": len([v for v in children if v.__class__.__name__ == "Video"]),
+            "thumbnail_link": thumbnail_link_dict(video=thumbnail_video, parent_topic=thumbnail_topic),
         }
 
         return ret

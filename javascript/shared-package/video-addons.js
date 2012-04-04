@@ -140,14 +140,14 @@ var VideoControls = {
             .find(".thumbnail_link")
                 .click(VideoControls.thumbnailClick).end();
 
-        this.initThumbnailHover();
+        this.initThumbnailHover($("#thumbnails"));
     },
 
-    initThumbnailHover: function() {
+    initThumbnailHover: function(parentEl) {
         // Queue:false to make sure all of these run at the same time
         var animationOptions = {duration: 150, queue: false};
 
-        $("#thumbnails")
+        parentEl
             .find(".thumbnail_td")
                 .hover(
                         function() {

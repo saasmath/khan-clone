@@ -10,10 +10,12 @@
 
     // View for the root topic in the content pane
     var rootTopicView = null;
+
+    // All the video information sorted by YouTube ID
+    var videosDict = {};
     
     window.TopicPage = {
-        init: function(videoLists, rootPath, rootTopic) {
-            var selectedID = videoLists[0].id;
+        init: function(rootPath, rootTopic) {
             var self = this;
 
             rootPageTopic = rootTopic;
@@ -21,24 +23,32 @@
             // TODO(tomyedwab): Temporary, should move this to a shared lib 
             Handlebars.registerPartial("youtube-player", Templates.get("shared.youtube-player"));
 
-            _.each(videoLists, function(topic) {
+            videosDict[rootTopic.marqueeVideo.youtubeId] = rootTopic.marqueeVideo;
+            _.each(rootTopic.subtopics, function(topic) {
                 videosByTopic[topic.id] = topic;
+                videosDict[topic.thumbnailLink.youtubeId] = topic.thumbnailLink;
             });
 
-            $(".topic-page-content .nav-pane").on("click", "a", function() {
+            $(".topic-page-content").on("click", ".topic-page-content a.subtopic-link", function() {
                 selectedID = $(this).attr("data-id");
                 self.router.navigate("/" + selectedID, true);
                 return false;
             });
 
-            VideoControls.initThumbnailHover();
-            $("#thumbnails").find(".thumbnail_link").click(function(ev) {
-                var video = {
-                    youtube_id: $(this).parent().attr("data-youtube-id")
-                };
-                ModalVideo.show(video);
-                ev.preventDefault();
-                return false;
+            $(".topic-page-content").on("click", "a.modal-video", function(ev) {
+                var videoDesc = videosDict[$(this).attr("data-youtube-id")];
+                if (videoDesc) {
+                    var video = {
+                        youtube_id: videoDesc.youtubeId,
+                        relative_url: videoDesc.href,
+                        title: videoDesc.title,
+                        description: videoDesc.teaserHtml
+                    };
+                    ModalVideo.show(video);
+                    ev.preventDefault();
+                    return false;
+                }
+                return true;
             });
 
             this.router = new this.SubTopicRouter();
@@ -79,6 +89,8 @@
                         .end()
                     .find("li[data-id=\"" + selectedTopicID + "\"]")
                         .addClass("selected");
+
+                $("body").scrollTop(0);
             }
         }),
 
@@ -93,7 +105,7 @@
             },
 
             show: function() {
-                $(".topic-page-content .content-pane .content-inner")
+                $(".topic-page-content .content-pane")
                     .children()
                         .detach()
                         .end()
@@ -109,10 +121,11 @@
 
             render: function() {
                 $(this.el).html(this.template(this.model));
+                VideoControls.initThumbnailHover($(this.el));
             },
 
             show: function() {
-                $(".topic-page-content .content-pane .content-inner")
+                $(".topic-page-content .content-pane")
                     .children()
                         .detach()
                         .end()
