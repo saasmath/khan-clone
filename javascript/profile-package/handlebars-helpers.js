@@ -2,8 +2,30 @@ Handlebars.registerHelper("encodeURIComponent", function(str) {
     return encodeURIComponent(str);
 });
 
-Handlebars.registerHelper("pluralize", function(num) {
-    return (num === 1) ? "" : "s";
+/**
+ * Usage:
+    {{pluralize 1 "dog"}} ==> 1 dog
+    {{pluralize 3 "dog"}} ==> 3 dogs
+    {{pluralize 1 "person"}} ==> 1 person
+    {{pluralize 5 "person"}} ==> 5 people
+
+ * TODO(marcia): Unify w the real pluralize function in
+ * /khan-exercises/utils/word-problems.js
+ */
+Handlebars.registerHelper("pluralize", function(num, word) {
+    if (num === 1) {
+        return num + " " + word;
+    }
+
+    var result = num + " ";
+
+    if (word === "person") {
+        result += "people";
+    } else {
+        result += word + "s";
+    }
+
+    return result;
 });
 
 /**
