@@ -1,6 +1,3 @@
-import os
-
-from google.appengine.api import users
 from google.appengine.ext import db
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
@@ -13,7 +10,6 @@ import models
 import models_discussion
 import util_discussion
 import user_util
-import app
 import util
 import request_handler
 import voting
@@ -48,8 +44,7 @@ class PageComments(request_handler.RequestHandler):
             template_values = video_comments_context(video, topic, page, comments_hidden, sort_order)
 
             html = self.render_jinja2_template_to_string("discussion/video_comments_content.html", template_values)
-            json_string = json.dumps({"html": html, "page": page}, ensure_ascii=False)
-            self.response.out.write(json_string)
+            self.render_json({"html": html, "page": page})
 
 class AddComment(request_handler.RequestHandler):
     @disallow_phantoms

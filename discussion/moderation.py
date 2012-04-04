@@ -1,6 +1,7 @@
 from google.appengine.ext import db
 from google.appengine.api import users
 
+import api.auth.xsrf
 import request_handler
 import models
 import models_discussion
@@ -22,6 +23,7 @@ class ModeratorList(request_handler.RequestHandler):
 
     # Must be an admin to change moderators
     @user_util.admin_only
+    @api.auth.xsrf.ensure_xsrf_cookie
     def get(self):
         mods = models.UserData.gql("WHERE moderator = :1", True)
         self.render_jinja2_template('discussion/mod/moderatorlist.html', {
@@ -30,6 +32,7 @@ class ModeratorList(request_handler.RequestHandler):
         })
 
     @user_util.admin_only
+    @api.auth.xsrf.ensure_xsrf_cookie
     def post(self):
         user_data = self.request_user_data("user")
 

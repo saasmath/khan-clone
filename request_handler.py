@@ -2,12 +2,6 @@ import os
 import logging
 import datetime
 
-# use json in Python 2.7, fallback to simplejson for Python 2.5
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
 import sys
 import re
 import traceback
@@ -28,8 +22,27 @@ from gae_bingo.gae_bingo import ab_test
 
 class RequestInputHandler(object):
 
-    def request_string(self, key, default = ''):
+    def request_string(self, key, default=''):
         return self.request.get(key, default_value=default)
+    
+    def request_continue_url(self, key="continue", default="/"):
+        """ Gets the request string representing a continue URL for the current
+        request.
+        
+        This will safely filter out continue URL's that are not-served by
+        us so that users can't be tricked into going to a malicious site post
+        login or some other flow that goes through KA.
+        """
+        val = self.request_string(key, default)
+        if val and not App.is_dev_server and not util.is_khanacademy_url(val):
+            logging.warn("Invalid continue URI [%s]. Ignoring." % val)
+            if val != default and util.is_khanacademy_url(default):
+                # Make a last ditch effort to try the default, in case the
+                # explicit continue URI was the bad one
+                return default
+            return "/"
+
+        return val
 
     def request_int(self, key, default = None):
         try:
@@ -125,7 +138,6 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
     class __metaclass__(type):
         """Enforce that subclasses of RequestHandler decorate get()/post()/etc.
-
         This metaclass enforces that whenever we create a
         RequestHandler or subclass thereof, that the class we're
         creating has a decorator on its get(), post(), and other
@@ -445,14 +457,18 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         self.response.write(self.render_jinja2_template_to_string(template_name, template_values))
 
     def render_jinja2_template_to_string(self, template_name, template_values):
-        return shared_jinja.get().render_template(template_name, **template_values)
+        return shared_jinja.template_to_string(template_name, template_values)
 
-    def render_json(self, obj):
-        json_string = json.dumps(obj, ensure_ascii=False)
+    def render_json(self, obj, camel_cased=False):
+        json_string = jsonify(obj, camel_cased=camel_cased)
+        self.response.content_type = "application/json"
         self.response.out.write(json_string)
 
-    def render_jsonp(self, obj):
-        json_string = obj if isinstance(obj, basestring) else json.dumps(obj, ensure_ascii=False, indent=4)
+    def render_jsonp(self, obj, camel_cased=False):
+        if isinstance(obj, basestring):
+            json_string = obj
+        else:
+            json_string = jsonify(obj, camel_cased=camel_cased)
         callback = self.request_string("callback")
         if callback:
             self.response.out.write("%s(%s)" % (callback, json_string))

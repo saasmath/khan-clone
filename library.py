@@ -52,7 +52,8 @@ def flatten_tree(tree, parent_topics=[]):
 
     for child in tree.children:
         if child.key().kind() == "Topic":
-            tree.subtopics.append(child)
+            if child.has_children_of_type(["Topic", "Video", "Url"]):
+                tree.subtopics.append(child)
         else:
             tree.content.append(child)
 

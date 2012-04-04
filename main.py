@@ -53,6 +53,7 @@ import unisubs
 import api.jsonify
 import labs
 import socrates
+import labs.explorations
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, Topic
@@ -430,10 +431,13 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
         return (old_email, new_email, prop)
 
     @user_util.admin_only
+    @ensure_xsrf_cookie
     def get(self):
         (old_email, new_email, prop) = self.get_email_params()
         if new_email == old_email:
             return bulk_update.handler.UpdateKind.get(self)
+        # TODO(csilvers): take this out once admin-only does
+        # XSRF-checking everywhere?
         self.response.out.write("To prevent a CSRF attack from changing email addresses, you initiate an email address change from the browser. ")
         self.response.out.write("Instead, run the following from remote_api_shell.py.<pre>\n")
         self.response.out.write("import bulk_update.handler\n")
@@ -695,6 +699,9 @@ application = webapp2.WSGIApplication([
 
     # Labs
     ('/labs', labs.LabsRequestHandler),
+
+    ('/labs/explorations', labs.explorations.RequestHandler),
+    ('/labs/explorations/([^/]+)', labs.explorations.RequestHandler),
     ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.
@@ -786,10 +793,9 @@ application = webapp2.WSGIApplication([
     ('/login/mobileoauth', login.MobileOAuthLogin),
     ('/postlogin', login.PostLogin),
     ('/logout', login.Logout),
-    
-    # TODO(benkomalo): disabled until password based logins is complete.
-    #('/register', login.Register),
-    #('/pwchange', login.PasswordChange),
+    ('/signup', login.Signup),
+    ('/completesignup', login.CompleteSignup),
+    ('/pwchange', login.PasswordChange),
 
     ('/api-apps/register', oauth_apps.Register),
 

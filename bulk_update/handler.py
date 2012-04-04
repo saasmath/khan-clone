@@ -111,7 +111,8 @@ def _is_in_progress(task_path):
     return result
     
 class UpdateKind(webapp.RequestHandler):
-    @user_util.admin_only
+    # The "access checking" here is via app.yaml: this method is under /admin/
+    @user_util.manual_access_checking
     def get(self):
         if self.request.get('cancel'):
             cancel_task(self.request.path)

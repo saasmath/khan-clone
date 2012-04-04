@@ -434,18 +434,18 @@ class ImportSmartHistory(request_handler.RequestHandler):
                                                                 version,
                                                                 video_data)
                         else:
-                            logging.error("Could not import youtube_id %s for" +
-                                          " %s %s" % (youtube_id, href, title))
+                            logging.error(("Could not import youtube_id %s " +
+                                          "for %s %s") % (youtube_id, href, title))
                             
-                            raise Exception("Could not import youtube_id %s " +
-                                            " for %s %s" % (youtube_id, href, 
+                            raise Exception(("Could not import youtube_id %s " +
+                                            " for %s %s") % (youtube_id, href, 
                                             title))
 
                 else:
                     video = video_dict[youtube_id] 
                     if video.extra_properties != extra_properties:
-                        logging.info("changing extra properties of %i %s %s " +
-                                     "from %s to %s" % (i, href, title, 
+                        logging.info(("changing extra properties of %i %s %s " +
+                                     "from %s to %s") % (i, href, title, 
                                      video.extra_properties, extra_properties))
                         
                         video.extra_properties = extra_properties
