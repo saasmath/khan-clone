@@ -3524,12 +3524,6 @@ a.nodeLabel:hover {
     display: none;
 }
 
-.nodeLabel.topic .node-icon {
-    -moz-border-radius: 40px;
-    -webkit-border-radius: 40px;
-    border-radius: 40px;
-}
-
 .nodeLabelHighlight .node-text {
     -webkit-box-shadow: 0 0 10px yellow;
     -moz-box-shadow: 0 0 10px yellow;
