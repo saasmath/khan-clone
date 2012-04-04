@@ -941,21 +941,6 @@ var Profile = {
         return Profile.coachesDeferred_;
     },
 
-    /**
-     * Comparison function to order questions by recency
-     */
-    cmpQuestions_: function(first, second) {
-        var firstDate = first["notificationsDate"],
-            secondDate = second["notificationsDate"];
-        if (firstDate < secondDate) {
-            return 1;
-        } else if (firstDate === secondDate) {
-            return 0;
-        } else {
-            return -1;
-        }
-    },
-
     questionsDeferred_: null,
     populateQuestions: function() {
         if (Profile.questionsDeferred_) {
@@ -976,7 +961,13 @@ var Profile = {
                     var context = data,
                         template = Templates.get("profile.questions-list");
 
-                    context.sort(Profile.cmpQuestions_);
+                    // Order questions from oldest to newest
+                    context = _.sortBy(context, function(question) {
+                        return question["lastDate"];
+                    });
+
+                    // Then reverse to get newest to oldest
+                    context.reverse();
 
                     $("#tab-content-questions").append(template(context))
                         .find("span.timeago").timeago();

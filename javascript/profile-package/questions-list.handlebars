@@ -1,15 +1,17 @@
 <div>
 {{#if this.length}}
     {{#each this}}
-    <div style="font-size: 18px;">
+    <div style="font-size: 14px; width: 60%">
         <ul>
         <li>
-            <div class="question {{#if notificationsCount}}unread{{/if}} visited-no-recolor">
-                <a title="{{video.title}}" href="/{{topicSlug}}/v/{{video.readableId}}?qa_expand_key={{qaExpandKey}}">
-                    {{video.title}}
-                </a>
-
-                <div style="font-size: 75%">{{notificationsCount}} unread, {{#if notificationsCount}}answered{{else}}asked{{/if}} <span class="timeago" title="{{notificationsDate}}">{{notificationsDate}}</span></div>
+            <div class="question {{#if hasUnread}}unread{{/if}} visited-no-recolor">
+                <div style="white-space: nowrap; overflow: hidden;text-overflow: ellipsis;">
+                <a class="discussion-link" href="/{{topicSlug}}/v/{{video.readableId}}?qa_expand_key={{qaExpandKey}}">{{pluralize answererCount "person"}} answered your question</a>
+                <span>{{content}}</span>
+                </div>
+                <div>
+                    about the video "<a href="/{{topicSlug}}/v/{{video.readableId}}" style="color: #777">{{video.title}}</a>"
+                </div>
             </div>
         </li>
         </ul>

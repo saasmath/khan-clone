@@ -32,7 +32,7 @@ def get_questions_data(user_data):
     unread_answers = feedback_answers_for_user_data(user_data)
     for answer in unread_answers:
         meta_question = dict_meta_questions[str(answer.question_key())]
-        meta_question.update_notifications(answer)
+        meta_question.mark_has_unread()
 
     return dict_meta_questions.values()
 
@@ -42,6 +42,7 @@ class MetaQuestion(object):
     and notifications count.
     
     TODO(marcia): I am awful at naming things, help!
+    TODO(marcia): Do not send viewer_user_data back in json
     """
     @staticmethod
     def from_question(question, viewer_user_data):
@@ -65,27 +66,39 @@ class MetaQuestion(object):
         # qa_expand_key is later used as a url parameter on the video page
         # to expand the question and its answers
         meta.qa_expand_key = str(question.key())
+        meta.content = question.content
+
+        meta.has_unread = False
 
         meta.viewer_user_data = viewer_user_data
 
-        meta.notifications_count = 0
-        meta.notifications_date = question.date
+        user_ids, last_date = MetaQuestion.get_answer_data(
+                question,
+                viewer_user_data)
+
+        meta.answerer_count = len(user_ids)
+        meta.last_date = last_date
 
         return meta
 
-    def update_notifications(self, answer):
-        """ Update count and last-updated date for unread answers
-        """
-        if not answer.appears_as_deleted_to(self.viewer_user_data):
-            self.increment_notifications_count()
-            self.update_notifications_date(answer.date)
+    def mark_has_unread(self):
+        self.has_unread = True
 
-    def increment_notifications_count(self):
-        self.notifications_count = self.notifications_count + 1
+    @staticmethod
+    def get_answer_data(question, viewer_user_data):
+        answerer_user_ids = set()
+        query = util_discussion.feedback_query(question.key())
+        last_date = question.date
 
-    def update_notifications_date(self, other_date):
-        if self.notifications_date < other_date:
-            self.notifications_date = other_date
+        for answer in query:
+            if not answer.appears_as_deleted_to(viewer_user_data):
+                if last_date < answer.date:
+                    last_date = answer.date
+
+                if answer.author_user_id not in answerer_user_ids:
+                    answerer_user_ids.add(answer.author_user_id)
+
+        return (answerer_user_ids, last_date)
 
 
 class VideoFeedbackNotificationList(request_handler.RequestHandler):
