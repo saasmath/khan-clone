@@ -1,5 +1,6 @@
 import pbkdf2
 
+
 def hash_password(raw_password, salt):
     """ Generates a strong one-way hash (effective 192 bits) for the
     specified password and salt.
@@ -7,12 +8,16 @@ def hash_password(raw_password, salt):
     """
     return pbkdf2.crypt(raw_password, salt, iterations=5000)
 
+
 def validate_password(raw_password, salt, expected):
     """ Returns whether or not the raw_password+salt combination hashes
     to the same value as expected, assuming it used hash_password. """
     return hash_password(raw_password, salt) == expected
 
+
 MIN_PASSWORD_LENGTH = 8
+
+
 def is_sufficient_password(raw_password, user_nickname="", user_username=""):
     """ Returns whether or not the password is sufficiently strong for use
     as a credential in Khan Academy.
@@ -35,7 +40,10 @@ def is_sufficient_password(raw_password, user_nickname="", user_username=""):
         return False
     return True
 
+
 _blacklisted_passwords = None
+
+
 def get_password_blacklist():
     """ Gets a list of banned passwords.
 

@@ -1,17 +1,18 @@
 from __future__ import absolute_import
 
+from google.appengine.ext import db
+
 import layer_cache
 import request_handler
 import user_util
 
-from models import ProblemLog, Exercise, Setting
+from models import Exercise, Setting
 from .models import ExerciseStatistic
 
 import bisect
 import cgi
 import datetime as dt
 import math
-import random
 import time
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
@@ -20,9 +21,6 @@ try:
 except ImportError:
     import simplejson as json
 
-from google.appengine.ext import db
-
-import logging
 
 # Constants for Geckoboard display.
 NUM_BUCKETS = 19

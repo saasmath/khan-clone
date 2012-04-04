@@ -1056,12 +1056,9 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Account creation date in UTC
     joined = db.DateTimeProperty(auto_now_add=True)
     
-    # TODO(benkomalo): STOPSHIP - put in a date when we launch as to when
-    # this should have started been filled in.
-
     # Last login date in UTC. Note that this was incorrectly set, and could
     # have stale values (though is always non-empty) for users who have never
-    # logged in prior to the launch of our own password based logins.
+    # logged in prior to the launch of our own password based logins(2012-04-12)
     last_login = db.DateTimeProperty(indexed=False)
 
     # Whether or not user has been hellbanned from community participation
