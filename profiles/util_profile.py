@@ -1,19 +1,23 @@
 import datetime
 import urllib
 
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from profiles import templatetags
 import request_handler
+import user_util
 import util
 import models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import disallow_phantoms
-from models import StudentList, UserData
-import simplejson
+from models import StudentList, UserData, CoachRequest
 from avatars import util_avatars
 from badges import util_badges
-from gae_bingo.gae_bingo import bingo
-from experiments import SuggestedActivityExperiment
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
@@ -89,9 +93,12 @@ def get_coach_student_and_student_list(request_handler):
     return (coach, student, student_list)
 
 class ViewClassProfile(request_handler.RequestHandler):
+    # TODO(sundar) - add login_required_special(demo_allowed = True)
     @disallow_phantoms
     @ensure_xsrf_cookie
+    @user_util.manual_access_checking
     def get(self):
+        show_coach_resources = self.request_bool('show_coach_resources', default=True)
         coach = UserData.current()
 
         if coach:
@@ -133,7 +140,7 @@ class ViewClassProfile(request_handler.RequestHandler):
                     'list_id': list_id,
                     'student_list': current_list,
                     'student_lists': student_lists_list,
-                    'student_lists_json': simplejson.dumps(student_lists_list),
+                    'student_lists_json': json.dumps(student_lists_list),
                     'coach_nickname': coach.nickname,
                     'selected_graph_type': selected_graph_type,
                     'initial_graph_url': initial_graph_url,
@@ -148,8 +155,12 @@ class ViewClassProfile(request_handler.RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
 
 class ViewProfile(request_handler.RequestHandler):
+    # TODO(sundar) - add login_required_special(demo_allowed = True)
+    # However, here only the profile of the students of the demo account are allowed
     @ensure_xsrf_cookie
+    @user_util.open_access
     def get(self, email_or_username=None, subpath=None):
+
         """Render a student profile.
 
         Keyword arguments:
@@ -197,10 +208,6 @@ class ViewProfile(request_handler.RequestHandler):
         show_intro = False
 
         if is_self:
-            bingo([
-                'suggested_activity_visit_profile',
-            ])
-
             promo_record = models.PromoRecord.get_for_values(
                     "New Profile Promo", user_data.user_id)
 
@@ -241,7 +248,9 @@ class UserProfile(object):
 
     def __init__(self):
         self.username = None
+        self.profile_root = "/profile"
         self.email = ""
+        self.is_phantom = True
         
         # Indicates whether or not the profile has been marked public. Not
         # necessarily indicative of what fields are currently filled in this
@@ -254,6 +263,8 @@ class UserProfile(object):
         self.is_data_collectible = False
         
         self.is_coaching_logged_in_user = False
+        self.is_requesting_to_coach_logged_in_user = False
+
         self.nickname = ""
         self.date_joined = ""
         self.points = 0
@@ -322,23 +333,69 @@ class UserProfile(object):
 
         profile.is_self = is_self
         profile.is_coaching_logged_in_user = is_coaching_logged_in_user
-
-        suggested_alternative = SuggestedActivityExperiment.get_alternative_for_user(
-                user, is_self) or SuggestedActivityExperiment.NO_SHOW
-        show_suggested_activity = (suggested_alternative == SuggestedActivityExperiment.SHOW)
-
-        profile.show_suggested_activity = show_suggested_activity
+        profile.is_phantom = user.is_phantom
 
         profile.is_public = user.has_public_profile()
+
+        if profile.is_public or full_projection:
+            profile.profile_root = user.profile_root
+
         if full_projection:
             profile.email = user.email
             profile.is_data_collectible = user.is_certain_to_be_thirteen()
 
         return profile
 
+    @staticmethod
+    def get_coach_and_requester_profiles_for_student(student_user_data):
+        coach_profiles = []
+
+        for coach_user_data in student_user_data.get_coaches_data():
+            profile = UserProfile._from_coach(coach_user_data, student_user_data)
+            coach_profiles.append(profile)
+
+        requests = CoachRequest.get_for_student(student_user_data)
+        for request in requests:
+            coach_user_data = request.coach_requesting_data
+            profile = UserProfile._from_coach(coach_user_data, student_user_data)
+            coach_profiles.append(profile)
+
+        return coach_profiles
+
+    @staticmethod
+    def _from_coach(coach, actor):
+        """ Retrieve profile information about a coach for the specified actor.
+
+        At minimum, this will return a UserProfile with the following data:
+        -- email
+        -- is_coaching_logged_in_user
+        -- is_requesting_to_coach_logged_in_user
+        
+        If the coach has a public profile or if she is coached by the actor,
+        more information will be retrieved as allowed.
+        
+        coach - models.UserData object to retrieve information from
+        actor - models.UserData object corresponding to who is requesting
+                the data
+
+        TODO(marcia): Move away from using email to manage coaches, since
+        this breaks our notions of public/private profiles.
+        
+        """
+
+        profile = UserProfile.from_user(coach, actor) or UserProfile()
+
+        profile.email = coach.email
+
+        is_coach = actor.is_coached_by(coach)
+        profile.is_coaching_logged_in_user = is_coach
+        profile.is_requesting_to_coach_logged_in_user = not is_coach
+
+        return profile
 
 class ProfileGraph(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         html = ""
         json_update = ""
@@ -499,41 +556,53 @@ class ProfileDateRangeGraph(ProfileDateToolsGraph):
 
         return False
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
+# However, here only the profile of the students of the demo account are allowed
 class ActivityGraph(ProfileDateRangeGraph):
     GRAPH_TYPE = "activity"
     def graph_html_and_context(self, student):
         return templatetags.profile_activity_graph(student, self.get_start_date(), self.get_end_date(), self.tz_offset())
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
+# However, here only the profile of the students of the demo account are allowed
 class FocusGraph(ProfileDateRangeGraph):
     GRAPH_TYPE = "focus"
     def graph_html_and_context(self, student):
         return templatetags.profile_focus_graph(student, self.get_start_date(), self.get_end_date())
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
+# However, here only the profile of the students of the demo account are allowed
 class ExercisesOverTimeGraph(ProfileGraph):
     GRAPH_TYPE = "exercisesovertime"
     def graph_html_and_context(self, student):
         return templatetags.profile_exercises_over_time_graph(student)
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
+# However, here only the profile of the students of the demo account are allowed
 class ExerciseProblemsGraph(ProfileGraph):
     GRAPH_TYPE = "exerciseproblems"
     def graph_html_and_context(self, student):
         return templatetags.profile_exercise_problems_graph(student, self.request_string("exercise_name"))
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 class ClassExercisesOverTimeGraph(ClassProfileGraph):
     GRAPH_TYPE = "classexercisesovertime"
     def graph_html_and_context(self, coach):
         student_list = self.get_student_list(coach)
         return templatetags.class_profile_exercises_over_time_graph(coach, student_list)
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 class ClassProgressReportGraph(ClassProfileGraph):
     GRAPH_TYPE = "progressreport"
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 class ClassTimeGraph(ClassProfileDateGraph):
     GRAPH_TYPE = "classtime"
     def graph_html_and_context(self, coach):
         student_list = self.get_student_list(coach)
         return templatetags.class_profile_time_graph(coach, self.get_date(), self.tz_offset(), student_list)
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 class ClassEnergyPointsPerMinuteGraph(ClassProfileGraph):
     GRAPH_TYPE = "classenergypointsperminute"
     def graph_html_and_context(self, coach):

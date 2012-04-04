@@ -11,7 +11,8 @@ import urllib2
 
 from models import Setting
 
-from request_handler import RequestHandler
+import request_handler
+import user_util
 
 from custom_exceptions import SmartHistoryLoadException 
 
@@ -30,10 +31,12 @@ def deleteOldBlobs():
             if age.days * 86400 + age.seconds >= SMARTHISTORY_IMAGE_CACHE_EXPIRATION:
                 blob.delete()
 
-class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHandler):
-    def __init__(self):
+class SmartHistoryProxy(request_handler.RequestHandler, blobstore_handlers.BlobstoreDownloadHandler):
+    def __init__(self, request=None, response=None):
+        self.initialize(request, response)
         self.attempt_counter = 0	
 	
+    @user_util.open_access
     def get(self):
 
         if self.request.params.has_key("clearcache"):
@@ -84,6 +87,7 @@ class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHand
         self.response.out.write(data)
         return 
   		
+    @user_util.open_access
     def post(self):
         arguments = self.request.arguments()
         
@@ -96,8 +100,8 @@ class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHand
             else:
                 raise SmartHistoryLoadException(response.status_code)     
         except Exception, e:
-            raise SmartHistoryLoadException("Post attempt failed to SmartHsitory with :"+str(e))  
-            return      
+            raise SmartHistoryLoadException("Post attempt failed to SmartHistory with :"+str(e))  
+            return
 
         self.response.out.write(data)   
 
@@ -114,7 +118,7 @@ class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHand
         persist_across_app_versions = True, 
         permanent_key_fxn = lambda self: "smart_history_permanent_%s" % (self.request.path_qs))
     def load_resource(self):
-        path = self.request.path
+        path = self.request.path_qs
 
         #img is in users browser cache - we don't want to cache a Not-Modified response otherwise people who don't have image in browser cache won't get it
         headers = dict((k, v) for (k, v) in self.request.headers.iteritems() if k not in ["If-Modified-Since", "If-None-Match", "Content-Length","Host"])
@@ -124,7 +128,7 @@ class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHand
             response = urlfetch.fetch(url = SMARTHISTORY_URL + path, headers = headers, deadline=25)
         except urlfetch.ResponseTooLargeError, e:
             logging.info("got too large a file back, sending redirect headers")
-            response_headers = {"Location": SMARTHISTORY_URL + str(self.request.path)}
+            response_headers = {"Location": SMARTHISTORY_URL + str(path)}
             return ["", response_headers, None]    
         except Exception, e:
             raise SmartHistoryLoadException("Failed loading %s from SmartHistory with Exception: %s" % (path, e))

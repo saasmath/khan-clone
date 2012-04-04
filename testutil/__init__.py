@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
+import copy
 import datetime
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
 from google.appengine.ext import testbed
 from google.appengine.datastore import datastore_stub_util
 
@@ -43,7 +48,7 @@ class MockDatetime(object):
         value.
 
         """
-        return self.value
+        return copy.copy(self.value)
 
     def advance(self, delta):
         """ Advances by a datetime.timedelta """

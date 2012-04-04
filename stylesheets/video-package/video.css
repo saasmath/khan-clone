@@ -123,9 +123,6 @@
 .youtube-video {
     position: relative;
 }
-.subtitles {
-    display: none;
-}
 .subtitles-warning {
     display: none;
     margin-left: 256px;
@@ -198,4 +195,67 @@
 
 .sticky_note_content table.tips-and-examples {
     width: 100%;
+}
+
+/* Interactive transcript widget */
+
+.subtitles-container {
+    display: none;
+    clear: both;
+    margin: 10px 0;
+    padding: 5px 0;
+    border: 1px solid #bbb;
+
+    -webkit-box-shadow: inset 0 0 10px #CCC;
+    -moz-box-shadow: inset 0 0 10px #CCC;
+    box-shadow: inset 0 0 10px #CCC;
+}
+
+.subtitles {
+    max-height: 200px;
+    padding: 0 5px;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+
+    /* JavaScript needs the child element's offsetTop relative to .subtitles */
+    position: relative;
+}
+
+.subtitles a,
+/* to override a:link/visited:focus styles from default.css */
+.subtitles a:visited:focus,
+.subtitles a:link:focus {
+    color: #333;
+    display: block;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height:1.6em;
+    padding: 0 5px;
+}
+
+.subtitles a:before {
+    content: attr(data-fmttime);
+    color: #759243;
+    display: inline-block;
+    width: 35px;
+}
+
+.subtitles a:hover:before {
+    color: #fafafa;
+}
+
+.subtitles .active a {
+    background-color: #d3ddb6;
+    font-weight: bold;
+}
+
+.subtitles a:hover,
+/* to override a:link/visited:hover styles from default.css */
+.subtitles a:visited:hover,
+.subtitles a:link:hover {
+    background-color: #9db63b;
+    color: #fafafa;
+    text-decoration: none;
 }

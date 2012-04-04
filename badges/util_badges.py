@@ -1,7 +1,12 @@
 import logging
 import datetime
 import sys
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from google.appengine.api import taskqueue
 from mapreduce import control
@@ -28,9 +33,9 @@ import consecutive_activity_badges
 import discussion_badges
 import feedback_badges
 
-import fast_slow_queue
 import layer_cache
 import request_handler
+import user_util
 
 # Authoritative list of all badges
 @layer_cache.cache()
@@ -275,6 +280,7 @@ def get_public_user_badges(user_data=None):
 
 class ViewBadges(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         grouped_badges = get_grouped_user_badges(user_data)
@@ -283,12 +289,14 @@ class ViewBadges(request_handler.RequestHandler):
 # /admin/badgestatistics is called periodically by a cron job
 class BadgeStatistics(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         # Admin-only restriction is handled by /admin/* URL pattern
         # so this can be called by a cron job.
         taskqueue.add(url='/admin/badgestatistics', queue_name='badge-statistics-queue', params={'start': '1'})
         self.response.out.write("Badge statistics task started.")
 
+    @user_util.open_access
     def post(self):
         if not self.request_bool("start", default=False):
             return
@@ -304,6 +312,7 @@ class BadgeStatistics(request_handler.RequestHandler):
 # /admin/startnewbadgemapreduce is called periodically by a cron job
 class StartNewBadgeMapReduce(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         # Admin-only restriction is handled by /admin/* URL pattern
@@ -317,7 +326,7 @@ class StartNewBadgeMapReduce(request_handler.RequestHandler):
                 reader_parameters = {"entity_kind": "models.UserData"},
                 mapreduce_parameters = {"processing_rate": 250},
                 shard_count = 64,
-                queue_name = fast_slow_queue.QUEUE_NAME,
+                queue_name = "user-badge-queue"
                 )
 
         self.response.out.write("OK: " + str(mapreduce_id))
@@ -344,8 +353,11 @@ def is_badge_review_waiting(user_data):
 
     return True
 
-@fast_slow_queue.handler(is_badge_review_waiting)
 def badge_update_map(user_data):
+
+    if not is_badge_review_waiting(user_data):
+        return
+
     action_cache = last_action_cache.LastActionCache.get_for_user_data(user_data)
 
     # Update all no-context badges

@@ -1,0 +1,9 @@
+<span class="email">{{email}}{{#unless isCoachingLoggedInUser}} <span class="pending">(pending){{/unless}}</span></span>
+<span class="controls">
+{{#if isCoachingLoggedInUser}}
+    <span class="remove simple-button action-gradient">Remove</span>
+{{else}}
+    <span class="accept simple-button action-gradient green">Accept</span>
+    <span class="deny simple-button action-gradient">Ignore</span>
+{{/if}}
+</span>

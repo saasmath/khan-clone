@@ -29,10 +29,12 @@ javascript = {
             "jquery.qtip.js",
             "../../khan-exercises/utils/underscore.js",
             "underscore-extras.js",
+            "keyhandling.js",
             "backbone.js",
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
             "templates.js",
             "bootstrap-modal.js",
+            "dropdown.js",
             "../../gae_bingo/static/js/gae_bingo.js",
 
             # application code & templates:
@@ -40,6 +42,7 @@ javascript = {
             "handlebars-extras.js",
             "cookies.js",
             "pageutil.js",
+            "facebookutil.js",
             "video-addons.js",
             "api.js",
             "backbone-extensions.js",
@@ -60,7 +63,13 @@ javascript = {
             "goal-create.handlebars",
             "goals.js",
             "goal-new.js",
-            "topics.js"
+            "topics.js",
+            "analytics.js",
+            "profile-model.js",
+            "hover-card.js",
+            "hover-card-view.js",
+            "hover-card.handlebars",
+            "topic-browser-pulldown.handlebars",
         ]
     },
     "video": {
@@ -70,9 +79,35 @@ javascript = {
             "thumbnail.handlebars",
             "related-video-link.handlebars",
             "modal-video.handlebars",
+            "video-nav.handlebars",
+            "video-description.handlebars",
+            "video-header.handlebars",
+            "video-footer.handlebars",
+            "video-flv-player.handlebars",
             "modalvideo.js",
         ]
     },
+    "socrates": {
+        "files": [
+            "underscore.string.js",
+            "../topicsadmin-package/jquery.ui.draggable.js",
+            "jquery.ui.resizable.js",
+            "inputtext.handlebars",
+            "socrates-nav.handlebars",
+            "submit-area.handlebars",
+            "poppler.js",
+            "socrates.js",
+        ]
+    },
+
+    # Socrates questions. For now, they're here.
+    # todo(dmnd) In the long run they should move somewhere else, perhaps
+    # to another repository.
+    "xyAuNHPsq-g": {"allfiles": True},
+    "-a_w0_VAo6U": {"allfiles": True},
+    "3XOt1fjWKi8": {"allfiles": True},
+    "U2ovEuEUxXQ": {"allfiles": True},
+
     "homepage": {
         "files": [
             "jquery.easing.1.3.js",
@@ -88,6 +123,18 @@ javascript = {
             "highcharts.js",
         ]
     },
+    "login": {
+        "files": [
+            "bday-picker.js",
+            "login.js",
+            "signup-success.handlebars",
+            "signup.js",
+            "completesignup.js",
+
+            # Used for password change forms
+            "settings.js",
+        ]
+    },
     "profile": {
         "files": [
             "jquery.address-1.4.min.js",
@@ -100,8 +147,8 @@ javascript = {
             "avatar-picker.js",
             "username-picker.handlebars",
             "username-picker.js",
+            "user-card-view.js",
             "user-card.handlebars",
-            "user-card.js",
             "profile.handlebars",
             "suggested-activity.handlebars",
             "recent-activity-list.handlebars",
@@ -111,6 +158,10 @@ javascript = {
             "recent-activity-goal.handlebars",
             "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
+            "coaches.js",
+            "coach.handlebars",
+            "no-coaches.handlebars",
+            "coaches.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",
             "user-badge.handlebars",
@@ -158,6 +209,11 @@ javascript = {
             "classprofile.js",
         ]
     },
+    "donate": {
+        "files": [
+            "donate.js",
+        ]
+    },
     "stories": {
         "files": [
             "bootstrap-modal.js",
@@ -180,13 +236,17 @@ javascript = {
             "khan-exercise.js",
             "utils/angles.js",
             "utils/answer-types.js",
+            "utils/ast.js",
             "utils/calculus.js",
             "utils/congruence.js",
             "utils/convert-values.js",
             "utils/d3.js",
             "utils/derivative-intuition.js",
             "utils/exponents.js",
+            "utils/expr-helpers.js",
+            "utils/expr-normal-form.js",
             "utils/expressions.js",
+            "utils/factoring-expressions.js",
             "utils/functional.js",
             "utils/graphie-geometry.js",
             "utils/graphie-helpers-arithmetic.js",
@@ -198,14 +258,19 @@ javascript = {
             "utils/jquery.mobile.vmouse.js",
             "utils/math-format.js",
             "utils/math.js",
+            "utils/math-model.js",
             "utils/mean-and-median.js",
             "utils/parabola-intuition.js",
             "utils/polynomials.js",
             "utils/probability.js",
             "utils/raphael.js",
             "utils/scratchpad.js",
+            "utils/simplify.js",
+            "utils/simplifying-expressions.js",
             "utils/slice-clone.js",
             "utils/stat.js",
+            "utils/steps-helpers.js",
+            "utils/subhints.js",
             "utils/tmpl.js",
             "utils/word-problems.js",
             "utils/spin.js",
@@ -237,6 +302,12 @@ javascript = {
             "topics-admin.js",
         ]
     },
+
+    "highcharts": {
+        "files": [
+            "highcharts.js"
+        ]
+    }
 }
 
 stylesheets = {
@@ -250,6 +321,7 @@ stylesheets = {
             "museo-sans.css",
             "jquery-ui-1.8.16.custom.css",
             "bootstrap-modal.css",
+            "bootstrap-dropdown.css",
             "goals.css",
         ]
     },
@@ -264,6 +336,13 @@ stylesheets = {
             "video.css",
             "discussion.css",
             "modalvideo.css",
+        ]
+    },
+    "socrates": {
+        "files": [
+            "bootstrap-alerts.css",
+            "bootstrap-tables.css",
+            "socrates.css",
         ]
     },
     "studentlists": {
@@ -288,6 +367,11 @@ stylesheets = {
             "guiders.css",
         ],
     },
+    "donate": {
+        "files": [
+            "donate.css",
+        ]
+    },
     "stories": {
         "files": [
             "bootstrap.css",
@@ -308,4 +392,19 @@ stylesheets = {
             "topics-admin.css"
         ]
     },
+    "labs": {
+        "files": [
+            "labs.css",
+        ]
+    },
+    "bootstrap-grids": {
+        "files": [
+            "grids.css"
+        ]
+    },
+    "bootstrap": {
+        "files": [
+            "bootstrap.css"
+        ]
+    }
 }

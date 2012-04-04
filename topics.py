@@ -6,7 +6,16 @@ import urllib
 import logging
 import layer_cache
 import urllib2
-import simplejson
+from youtube_sync import youtube_get_video_data_dict
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+import zlib
+import cPickle as pickle
 
 from api.auth.xsrf import ensure_xsrf_cookie
 from google.appengine.ext import deferred
@@ -28,14 +37,9 @@ class EditContent(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     @user_util.developer_only
     def get(self):
-        if self.request.get('migrate', False):
-            return self.topic_migration()
-        if self.request.get('fixdupes', False):
-            return self.fix_duplicates()
 
         version_name = self.request.get('version', 'edit')
 
-        tree_nodes = []
         edit_version = TopicVersion.get_by_id(version_name)
         if edit_version is None:
             default_version = TopicVersion.get_default_version()
@@ -48,10 +52,19 @@ class EditContent(request_handler.RequestHandler):
             else:
                 raise Exception("Wait for setting default version to finish making an edit version.")
 
-        
+        if self.request.get('autoupdate', False):
+            self.render_jinja2_template('autoupdate_in_progress.html', {"edit_version": edit_version})
+            return
+        if self.request.get('autoupdate_begin', False):
+            return self.topic_update_from_live(edit_version)
+        if self.request.get('migrate', False):
+            return self.topic_migration()
+        if self.request.get('fixdupes', False):
+            return self.fix_duplicates()
+
         root = Topic.get_root(edit_version)
         data = root.get_visible_data()
-        tree_nodes.append(data)
+        tree_nodes = [data]
         
         template_values = {
             'edit_version': jsonify(edit_version),
@@ -60,6 +73,24 @@ class EditContent(request_handler.RequestHandler):
  
         self.render_jinja2_template('topics-admin.html', template_values)
         return
+
+    def topic_update_from_live(self, edit_version):
+        request = urllib2.Request("http://www.khanacademy.org/api/v1/topictree")
+        try:
+            opener = urllib2.build_opener()
+            f = opener.open(request)
+            topictree = json.load(f)
+
+            logging.info("calling /_ah/queue/deferred_import")
+
+            # importing the full topic tree can be too large so pickling and compressing
+            deferred.defer(models.topictree_import_task, "edit", "root", True,
+                        zlib.compress(pickle.dumps(topictree)),
+                        _queue="import-queue",
+                        _url="/_ah/queue/deferred_import")
+
+        except urllib2.URLError, e:
+            logging.exception("Failed to fetch content from khanacademy.org")
 
     def topic_migration(self):
         logging.info("deleting all existing topics")
@@ -283,11 +314,11 @@ def removePlaylistIndex():
 
 @layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
 def getSmartHistoryContent():
-    request = urllib2.Request("http://khan.smarthistory.org/video-urls-for-khan-academy.html")
+    request = urllib2.Request("http://khan.smarthistory.org/youtube-urls-for-khan-academy.html")
     try:
         opener = urllib2.build_opener()
         f = opener.open(request)
-        smart_history = simplejson.load(f)
+        smart_history = json.load(f)
     except urllib2.URLError, e:
         logging.exception("Failed fetching smarthistory video list")
         smart_history = None
@@ -295,6 +326,7 @@ def getSmartHistoryContent():
 
 class ImportSmartHistory(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         """update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)"""
         default = models.TopicVersion.get_default_version()
@@ -338,7 +370,10 @@ class ImportSmartHistory(request_handler.RequestHandler):
         
         urls = topic.get_urls(include_descendants=True)
         href_to_key_dict = dict((url.url, url.key()) for url in urls)
-        hrefs = [url.url for url in urls]
+        
+        videos = topic.get_videos(include_descendants=True)
+        video_dict = dict((v.youtube_id, v) for v in videos)
+
         content = getSmartHistoryContent()
         if content is None:
             raise Exception("Aborting import, could not read from smarthistory")
@@ -355,12 +390,17 @@ class ImportSmartHistory(request_handler.RequestHandler):
             href = link["href"]
             title = link["title"]
             parent_title = link["parent"]
+            content = link["content"]
+            youtube_id = link["youtube_id"] if "youtube_id" in link else None
+            extra_properties = {"original_url": href}
 
             if parent_title not in subtopic_dict:
                 subtopic = Topic.insert(title=parent_title,
                                  parent=topic,
-                                 standalone_title="Art History: %s" % parent_title,
+                                 standalone_title="Art History: %s" 
+                                                  % parent_title,
                                  description="")
+
                 subtopic_dict[parent_title] = subtopic
             else:
                 subtopic = subtopic_dict[parent_title]
@@ -370,9 +410,54 @@ class ImportSmartHistory(request_handler.RequestHandler):
 
             if parent_title not in subtopic_child_keys:
                  subtopic_child_keys[parent_title] = []
+            
+            if youtube_id:
+                if youtube_id not in video_dict:
+                    # make sure it didn't get imported before, but never put 
+                    # into a topic
+                    query = models.Video.all()
+                    video = query.filter("youtube_id =", youtube_id).get()
 
-            if href not in hrefs:
-                logging.info("adding %i %s %s to %s" % (i, href, title, parent_title))
+                    if video is None:
+                        logging.info("adding youtube video %i %s %s %s to %s" % 
+                                     (i, youtube_id, href, title, parent_title))
+                        
+                        video_data = youtube_get_video_data_dict(youtube_id)
+                        # use the title from the webpage not from the youtube 
+                        # page
+                        video = None
+                        if video_data:
+                            video_data["title"] = title
+                            video_data["extra_properties"] = extra_properties
+                            video = models.VersionContentChange.add_new_content(
+                                                                models.Video,
+                                                                version,
+                                                                video_data)
+                        else:
+                            logging.error(("Could not import youtube_id %s " +
+                                          "for %s %s") % (youtube_id, href, title))
+                            
+                            raise Exception(("Could not import youtube_id %s " +
+                                            " for %s %s") % (youtube_id, href, 
+                                            title))
+
+                else:
+                    video = video_dict[youtube_id] 
+                    if video.extra_properties != extra_properties:
+                        logging.info(("changing extra properties of %i %s %s " +
+                                     "from %s to %s") % (i, href, title, 
+                                     video.extra_properties, extra_properties))
+                        
+                        video.extra_properties = extra_properties
+                        video.put()
+                                    
+                if video:
+                    subtopic_child_keys[parent_title].append(video.key())
+
+            elif href not in href_to_key_dict:
+                logging.info("adding %i %s %s to %s" % 
+                             (i, href, title, parent_title))
+                
                 models.VersionContentChange.add_new_content(
                     models.Url, 
                     version,
@@ -384,6 +469,7 @@ class ImportSmartHistory(request_handler.RequestHandler):
                 url = Url(url=href,
                           title=title,
                           id=id)
+
                 url.put()
                 subtopic_child_keys[parent_title].append(url.key())
 

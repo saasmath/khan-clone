@@ -5,11 +5,13 @@ from google.appengine.api import mail
 
 from app import App
 import request_handler
+import user_util
 
 FROM_EMAIL = "no-reply@khan-academy.appspotmail.com"
 TO_EMAIL = "testimonials@khanacademy.org"
 
 class SubmitStory(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
         """ This is a temporary method of sending in users' submitted stories.
         We can obviously turn this into a nicer CRUD interface if stories
@@ -40,6 +42,7 @@ class SubmitStory(request_handler.RequestHandler):
                     body = story)
 
 class ViewStories(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
 
         stories = []

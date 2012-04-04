@@ -2,13 +2,16 @@ from __future__ import absolute_import
 import os
 import logging
 
-from request_handler import RequestHandler
+import request_handler
+import user_util
 from google.appengine.ext.webapp import template
+from coach_resources import util_coach
 
 from .models import CommonCoreMap
 
-class CommonCore(RequestHandler):
+class CommonCore(util_coach.CoachResourcesRequestHandler):
 
+    @user_util.open_access
     def get(self):
         cc_map = CommonCoreMap.get_all_structured(lightweight=True)
         
@@ -27,5 +30,5 @@ class CommonCore(RequestHandler):
             grade_totals[grade['grade']] = grade_total
                 
         
-        self.render_jinja2_template('commoncore/view_map.html', {'cc_map' : cc_map, 'grade_totals' : grade_totals})
+        self.render_jinja2_template('coach_resources/view_map.html', {'cc_map' : cc_map, 'grade_totals' : grade_totals, "selected_id": "commoncore"})
 

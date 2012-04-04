@@ -87,13 +87,9 @@ var Voting = {
     },
 
     finishVoteEntity: function(data, jel, jelParent, jelVotes, votes) {
-        try { eval("var dict_json = " + data); }
-        catch(e) { return; }
-
-        if (dict_json && dict_json.error)
-        {
+        if (data && data.error) {
             this.clearVote(jel, jelParent, jelVotes, votes);
-            QA.showInfoNote(jel.get(0), dict_json.error);
+            QA.showInfoNote(jel.get(0), data.error);
         }
     }
 
@@ -228,6 +224,10 @@ var QA = {
 
         QA.loadPage($("#qa_page").val() || 0, true, $("#qa_expand_key").val());
         QA.enable();
+
+        $(".video-footer").on("mouseenter", ".author-nickname", function() {
+            HoverCard.createHoverCardQtip($(this));
+        });
     },
 
     initPagesAndQuestions: function() {
@@ -283,11 +283,8 @@ var QA = {
         var parent = QA.getQuestionParent(el);
         if (!parent.length) return;
 
-        try { eval("var dict_json = " + data); }
-        catch(e) { return; }
-
         setTimeout(function(){QA.cancel.apply(el)}, 1);
-        $(".answers_container", parent).html(dict_json.html);
+        $(".answers_container", parent).html(data.html);
         VideoControls.initJumpLinks();
         Throbber.hide();
         QA.enable();
@@ -314,21 +311,20 @@ var QA = {
     },
 
     finishLoadPage: function(data, fInitialLoad) {
-        try { eval("var dict_json = " + data); }
-        catch(e) { return; }
-
-        $(".questions_container").html(dict_json.html);
-        QA.page = dict_json.page;
+        $(".questions_container").html(data.html);
+        QA.page = data.page;
         QA.initPagesAndQuestions();
         if (!fInitialLoad) Throbber.hide();
         VideoControls.initJumpLinks();
 
         var hash = "qa";
-        if (dict_json.qa_expand_key)
-            hash = "q_" + dict_json.qa_expand_key;
+        if (data.qa_expand_key) {
+            hash = "q_" + data.qa_expand_key;
+        }
 
-        if (!fInitialLoad || hash != "qa")
+        if (!fInitialLoad || hash != "qa") {
             document.location = "#" + hash;
+        }
     },
 
     getQAParent: function(el) {
@@ -588,17 +584,15 @@ var Comments = {
     },
 
     finishLoadPage: function(data, fInitialLoad) {
-        try { eval("var dict_json = " + data); }
-        catch(e) { return; }
-
-        $(".comments_container").html(dict_json.html);
-        Comments.page = dict_json.page;
+        $(".comments_container").html(data.html);
+        Comments.page = data.page;
         Comments.initPages();
         if (!fInitialLoad) Throbber.hide();
         VideoControls.initJumpLinks();
 
-        if (!fInitialLoad)
+        if (!fInitialLoad) {
             document.location = "#comments";
+        }
     },
 
     add: function() {

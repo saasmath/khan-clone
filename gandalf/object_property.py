@@ -1,13 +1,13 @@
 # From http://kovshenin.com/archives/app-engine-python-objects-in-the-google-datastore/
 
 from google.appengine.ext import db
-import pickle
+import cPickle as pickle
 
 # Use this property to store objects.
 class ObjectProperty(db.BlobProperty):
     def validate(self, value):
         try:
-            result = pickle.dumps(value)
+            dummy = pickle.dumps(value)
             return value
         except pickle.PicklingError, e:
             return super(ObjectProperty, self).validate(value)

@@ -7,6 +7,12 @@
 * http://www.opensource.org/licenses/mit-license.php
 * http://www.gnu.org/licenses/gpl.html
 */
+
+/*
+ * Modified by Tom Yedwab:
+ * - Added directional sensitivity to hoverIntent
+ */
+
 (function($) {
 	$.fn.hoverFlow = function(type, prop, speed, easing, callback) {
 		// only allow hover events
@@ -92,6 +98,8 @@
 * $("ul li").hoverIntent({
 *	sensitivity: 7, // number = sensitivity threshold (must be 1 or higher)
 *	interval: 100,   // number = milliseconds of polling interval
+*   directionalSensitivityX: 0, // number = threshold of horizontal movement that extends the onMouseOut delay (0 = disabled, positive = right, negative = left)
+*   directionalSensitivityY: 0, // number = threshold of vertical movement that extends the onMouseOut delay (0 = disabled, positive = down, negative = up)
 *	over: showNav,  // function = onMouseOver callback (required)
 *	timeout: 0,   // number = milliseconds delay before onMouseOut function call
 *	out: hideNav    // function = onMouseOut callback (required)
@@ -106,6 +114,9 @@
 		// default configuration options
 		var cfg = {
 			sensitivity: 7,
+            directionalSensitivityStop: 0,
+            directionalSensitivityX: 0,
+            directionalSensitivityY: 0,
 			interval: 100,
 			timeout: 0
 		};
@@ -115,10 +126,13 @@
 		// instantiate variables
 		// cX, cY = current X and Y position of mouse, updated by mousemove event
 		// pX, pY = previous X and Y position of mouse, set by mouseover and polling interval
-		var cX, cY, pX, pY;
+		// dX, dY = average X and Y movement velocity, set by mouseover and polling interval
+		var cX = 0, cY = 0, pX, pY, dX = 0, dY = 0;
 
 		// A private function for getting mouse position
 		var track = function(ev) {
+            dX = dX * 0.75 + (ev.pageX-cX)*0.25;
+            dY = dY * 0.75 + (ev.pageY-cY)*0.25;
 			cX = ev.pageX;
 			cY = ev.pageY;
 		};
@@ -127,8 +141,7 @@
 		var compare = function(ev,ob) {
 			ob.hoverIntent_t = clearTimeout(ob.hoverIntent_t);
 			// compare mouse positions to see if they've crossed the threshold
-			if ( ( Math.abs(pX-cX) + Math.abs(pY-cY) ) < cfg.sensitivity ) {
-				$(ob).unbind("mousemove",track);
+			if ( ( Math.abs(pX-cX) + Math.abs(pY-cY) ) < cfg.sensitivity) {
 				// set hoverIntent state to true (so mouseOut can be called)
 				ob.hoverIntent_s = 1;
 				return cfg.over.apply(ob,[ev]);
@@ -143,8 +156,25 @@
 		// A private function for delaying the mouseOut function
 		var delay = function(ev,ob) {
 			ob.hoverIntent_t = clearTimeout(ob.hoverIntent_t);
-			ob.hoverIntent_s = 0;
-			return cfg.out.apply(ob,[ev]);
+
+            if ((cfg.directionalSensitivityX > 0 && dX > cfg.directionalSensitivityX) ||
+                 (cfg.directionalSensitivityX < 0 && dX > -cfg.directionalSensitivityX) ||
+                 (cfg.directionalSensitivityY > 0 && dY > cfg.directionalSensitivityY) ||
+                 (cfg.directionalSensitivityY < 0 && dY > -cfg.directionalSensitivityY)) {
+				// set previous coordinates for next time
+				pX = cX; pY = cY;
+                // Decay deltas if there are no mouseMove events
+                dX *= 0.25;
+                dY *= 0.25;
+                // directional mouse movement causing us to extend the timeout interval
+                ob.hoverIntent_t = setTimeout( function(){delay(ev,ob);} , cfg.timeout );
+            } else {
+                ob.hoverIntent_s = 0;
+                // unbind expensive mousemove event
+                $(ob).unbind("mousemove",track);
+                ob.mouseMoveBound = false;
+                return cfg.out.apply(ob,[ev]);
+            }
 		};
 
 		// A private function for handling mouse 'hovering'
@@ -158,19 +188,28 @@
 
 			// if e.type == "mouseenter"
 			if (e.type == "mouseenter") {
-				// set "previous" X and Y position based on initial entry point
-				pX = ev.pageX; pY = ev.pageY;
-				// update "current" X and Y position based on mousemove
-				$(ob).bind("mousemove",track);
-				// start polling interval (self-calling timeout) to compare mouse coordinates over time
-				if (ob.hoverIntent_s != 1) { ob.hoverIntent_t = setTimeout( function(){compare(ev,ob);} , cfg.interval );}
+                if (ob.hoverIntent_s != 1) {
+                    if (!ob.mouseMoveBound) {
+                        // update "current" X and Y position based on mousemove
+                        $(ob).bind("mousemove",track);
+                        ob.mouseMoveBound = true;
+                    }
+
+                    // set "previous" X and Y position based on initial entry point
+                    pX = ev.pageX; pY = ev.pageY;
+                    // start polling interval (self-calling timeout) to compare mouse coordinates over time
+                    ob.hoverIntent_t = setTimeout( function(){compare(ev,ob);} , cfg.interval );
+                }
 
 			// else e.type == "mouseleave"
 			} else {
-				// unbind expensive mousemove event
-				$(ob).unbind("mousemove",track);
 				// if hoverIntent state is true, then call the mouseOut function after the specified delay
-				if (ob.hoverIntent_s == 1) { ob.hoverIntent_t = setTimeout( function(){delay(ev,ob);} , cfg.timeout );}
+				if (ob.hoverIntent_s == 1) {
+                    // set "previous" X and Y position based on exit point
+                    pX = ev.pageX; pY = ev.pageY;
+                    // delay mouseout until time passes (and directional threshold hasn't been met)
+                    ob.hoverIntent_t = setTimeout( function(){delay(ev,ob);} , cfg.timeout );
+                }
 			}
 		};
 

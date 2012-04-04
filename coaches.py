@@ -1,9 +1,16 @@
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from app import App
 import app
+import custom_exceptions
 import facebook_util
 import util
 import user_util
-from request_handler import RequestHandler
+import request_handler
 
 from models import UserData, CoachRequest, StudentList
 from badges import util_badges
@@ -13,39 +20,87 @@ from profiles.util_profile import ClassProgressReportGraph, ClassEnergyPointsPer
 
 from phantom_users.phantom_util import disallow_phantoms
 import profiles.util_profile as util_profile
-import simplejson as json
 from api.auth.xsrf import ensure_xsrf_cookie
 
+def update_coaches_and_requests(user_data, coaches_json):
+    """ Update the user's coaches and requests.
+    
+    Expects a list of jsonified UserProfiles, where an
+    isCoachingLoggedInUser value of True indicates a coach relationship,
+    and a value of False indicates a pending request.
+    
+    Any extant coach or request relationships not represented in
+    coaches_json will be deleted.
+    """
+    requester_emails = update_coaches(user_data, coaches_json)
+    update_requests(user_data, requester_emails)
+    return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
 
-class ViewCoaches(RequestHandler):
+def update_coaches(user_data, coaches_json):
+    """ Add as coaches those in coaches_json with isCoachingLoggedInUser
+    value True, and remove any old coaches not in coaches_json.
+    
+    Return a list of requesters' emails.
+    """
+    updated_coach_key_emails = []
+    current_coaches_data = user_data.get_coaches_data()
+    outstanding_coaches_dict = dict([(coach.email, coach.key_email)
+            for coach in current_coaches_data])
+    requester_emails = []
+
+    for coach_json in coaches_json:
+        email = coach_json['email']
+        is_coaching_logged_in_user = coach_json['isCoachingLoggedInUser']
+        if is_coaching_logged_in_user:
+            if email in outstanding_coaches_dict:
+                # Email corresponds to a current coach
+                updated_coach_key_emails.append(outstanding_coaches_dict[email])
+                del outstanding_coaches_dict[email]
+            else:
+                # Look up this new coach's key_email
+                coach_user_data = UserData.get_from_username_or_email(email)
+                if coach_user_data is not None:
+                    updated_coach_key_emails.append(coach_user_data.key_email)
+                else:
+                    raise custom_exceptions.InvalidEmailException()
+        else:
+            requester_emails.append(email)
+
+    user_data.remove_student_lists(outstanding_coaches_dict.keys())
+    user_data.coaches = updated_coach_key_emails
+    user_data.put()
+
+    return requester_emails
+
+def update_requests(user_data, requester_emails):
+    """ Remove all CoachRequests not represented by requester_emails.
+    """
+    current_requests = CoachRequest.get_for_student(user_data)
+
+    for current_request in current_requests:
+        coach_email = current_request.coach_requesting_data.email
+        if coach_email not in requester_emails:
+            current_request.delete()
+
+class ViewCoaches(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.open_access
     def get(self):
+        """ Redirect legacy /coaches to profile page's coaches tab.
+        """
         user_data = UserData.current()
-
         if user_data:
-            invalid_coach = self.request_bool("invalid_coach", default = False)
-
-            coach_requests = CoachRequest.get_for_student(user_data).fetch(1000)
-
-            template_values = {
-                        "coach_emails": user_data.coach_emails(),
-                        "invalid_coach": invalid_coach,
-                        "coach_requests": coach_requests,
-                        "student_id": user_data.email,
-                        'selected_nav_link': 'coach'
-                    }
-
-            self.render_jinja2_template('viewcoaches.html', template_values)
+            self.redirect(user_data.profile_root + "/coaches")
         else:
             self.redirect(util.create_login_url(self.request.uri))
 
 
-class ViewStudents(RequestHandler):
+class ViewStudents(request_handler.RequestHandler):
     @disallow_phantoms
     @ensure_xsrf_cookie
+    @user_util.open_access
     def get(self):
         user_data = UserData.current()
-
         if user_data:
 
             user_data_override = self.request_user_data("coach_email")
@@ -76,22 +131,23 @@ class ViewStudents(RequestHandler):
             students.sort(key=lambda s: s['nickname'])
 
             template_values = {
-                "students": students,
-                "students_json": json.dumps(students),
-                "student_lists": student_lists_list,
-                "student_lists_json": json.dumps(student_lists_list),
-                "invalid_student": invalid_student,
-                "coach_requests": coach_requests,
-                "coach_requests_json": json.dumps(coach_requests),
-                'selected_nav_link': 'coach'
+                'students': students,
+                'students_json': json.dumps(students),
+                'student_lists': student_lists_list,
+                'student_lists_json': json.dumps(student_lists_list),
+                'invalid_student': invalid_student,
+                'coach_requests': coach_requests,
+                'coach_requests_json': json.dumps(coach_requests),
+                'selected_nav_link': 'coach',
+                'email': user_data.email,
             }
             self.render_jinja2_template('viewstudentlists.html', template_values)
         else:
             self.redirect(util.create_login_url(self.request.uri))
 
-
-class RegisterCoach(RequestHandler):
+class RequestStudent(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.manual_access_checking
     def post(self):
         user_data = UserData.current()
 
@@ -99,29 +155,6 @@ class RegisterCoach(RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
             return
 
-        user_data_coach = self.request_user_data("coach")
-        if user_data_coach:
-            if not user_data.is_coached_by(user_data_coach):
-                user_data.coaches.append(user_data_coach.key_email)
-                user_data.put()
-
-            if not self.is_ajax_request():
-                self.redirect("/coaches")
-            return
-
-        if self.is_ajax_request():
-            self.response.set_status(400)
-        else:
-            self.redirect("/coaches?invalid_coach=1")
-
-class RequestStudent(RequestHandler):
-    @disallow_phantoms
-    def post(self):
-        user_data = UserData.current()
-
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
         user_data_student = self.request_user_data("student_email")
         if user_data_student:
             if not user_data_student.is_coached_by(user_data):
@@ -136,11 +169,13 @@ class RequestStudent(RequestHandler):
         else:
             self.redirect("/students?invalid_student=1")
 
-
-class AcceptCoach(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
+class AcceptCoach(request_handler.RequestHandler):
+    @user_util.manual_access_checking
+    @request_handler.RequestHandler.exceptions_to_http(400)
     @disallow_phantoms
     def get(self):
+        """ Only used when a coach deletes a request in studentlists.js.
+        """
         user_data = UserData.current()
 
         if not user_data:
@@ -171,7 +206,7 @@ class AcceptCoach(RequestHandler):
         if not self.is_ajax_request():
             self.redirect("/coaches")
 
-class UnregisterStudentCoach(RequestHandler):
+class UnregisterStudentCoach(request_handler.RequestHandler):
     @staticmethod
     def remove_student_from_coach(student, coach):
         if student.student_lists:
@@ -201,27 +236,23 @@ class UnregisterStudentCoach(RequestHandler):
         if not self.is_ajax_request():
             self.redirect(redirect_to)
 
-class UnregisterCoach(UnregisterStudentCoach):
-    @disallow_phantoms
-    def get(self):
-        return self.do_request(
-            UserData.current(),
-            self.request_user_data("coach"),
-            "/coaches"
-        )
-
 class UnregisterStudent(UnregisterStudentCoach):
     @disallow_phantoms
+    @user_util.open_access
     def get(self):
+        user_data = UserData.current()
         return self.do_request(
             self.request_user_data("student_email"),
             UserData.current(),
             "/students"
         )
 
-class AddStudentToList(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
+class AddStudentToList(request_handler.RequestHandler):
+    @user_util.open_access
+    @request_handler.RequestHandler.exceptions_to_http(400)
     def post(self):
+        user_data = UserData.current()
+
         coach_data, student_data, student_list = util_profile.get_coach_student_and_student_list(self)
 
         if student_list.key() in student_data.student_lists:
@@ -230,9 +261,12 @@ class AddStudentToList(RequestHandler):
         student_data.student_lists.append(student_list.key())
         student_data.put()
 
-class RemoveStudentFromList(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
+class RemoveStudentFromList(request_handler.RequestHandler):
+    @user_util.open_access
+    @request_handler.RequestHandler.exceptions_to_http(400)
     def post(self):
+        user_data = UserData.current()
+
         coach_data, student_data, student_list = util_profile.get_coach_student_and_student_list(self)
 
         # due to a bug, we have duplicate lists in the collection. fix this:

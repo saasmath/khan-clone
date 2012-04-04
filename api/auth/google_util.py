@@ -2,7 +2,6 @@ import urllib
 
 from google.appengine.api import oauth as google_oauth
 from google.appengine.api.oauth.oauth_api import InvalidOAuthTokenError
-from google.appengine.api import users
 
 from flask import request, redirect
 
@@ -11,14 +10,16 @@ from oauth_provider.oauth import OAuthError
 import layer_cache
 
 from api import route
-from api.auth.auth_util import current_oauth_map, authorize_token_redirect, access_token_response, append_url_params, oauth_error_response
+from api.auth.auth_util import authorize_token_redirect, pretty_error_response, oauth_error_response, OAuthBadRequestError
 from api.auth.google_oauth_client import GoogleOAuthClient
 from api.auth.auth_models import OAuthMap
 from api.decorators import jsonify
+from api.auth import decorators
 
-# Utility request handler to let Google authorize the OAuth token/request and 
+# Utility request handler to let Google authorize the OAuth token/request and
 # return the authorized user's id and email address.
 @route("/api/auth/current_google_oauth_user_id_and_email")
+@decorators.manual_access_checking
 @jsonify
 def current_google_oauth_user_id_and_email():
     user = None
@@ -56,15 +57,13 @@ def google_request_token_handler(oauth_map):
         # Add google-specific mobile view identifier
         params["btmpl"] = "mobile"
 
-    return redirect("http://www.khanacademy.org/_ah/OAuthAuthorizeToken?%s" % urllib.urlencode(params))
+    return redirect("http://www.khanacademy.org/_ah/OAuthAuthorizeToken?%s" %
+                    urllib.urlencode(params))
 
 def retrieve_google_access_token(oauth_map):
     # Start Google access token process
-    try:
-        google_client = GoogleOAuthClient()
-        google_token = google_client.fetch_access_token(oauth_map)
-    except Exception, e:
-        raise OAuthError(e.message)
+    google_client = GoogleOAuthClient()
+    google_token = google_client.fetch_access_token(oauth_map)
 
     oauth_map.google_access_token = google_token.key
     oauth_map.google_access_token_secret = google_token.secret
@@ -72,6 +71,7 @@ def retrieve_google_access_token(oauth_map):
     return oauth_map
 
 @route("/api/auth/google_token_callback", methods=["GET"])
+@decorators.manual_access_checking
 def google_token_callback():
     oauth_map = OAuthMap.get_by_id_safe(request.values.get("oauth_map_id"))
 
@@ -85,6 +85,8 @@ def google_token_callback():
 
     try:
         oauth_map = retrieve_google_access_token(oauth_map)
+    except OAuthBadRequestError, e:
+        return pretty_error_response('Unable to log in with Google.')
     except OAuthError, e:
         return oauth_error_response(e)
 

@@ -9,13 +9,19 @@
         {{ js_css_packages.css_package("profile-intro") }}
     {% endif %}
 
+    {# The view template variable is used for our iPad app, and you
+        can see the result by visiting /profile?view=mobile.
+        See request_handler.py for more on the related but different
+        global template values is_mobile and is_mobile_capable.
+     #}
     {% if view == "mobile" %}
     <style type="text/css">
         header,
         footer,
         .profile-navigation,
         .user-profile-controls,
-        .visibility-toggler {
+        .visibility-toggler,
+        #suggested-activity {
             display: none;
         }
 
@@ -42,6 +48,13 @@
 
         .avatar-pic-container,
         .display-case-cover {
+            pointer-events: none;
+        }
+
+        .activity-badge a,
+        .activity-goal a,
+        .activity-exercise a {
+            color: #555;
             pointer-events: none;
         }
     </style>

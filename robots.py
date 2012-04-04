@@ -1,8 +1,10 @@
-from request_handler import RequestHandler
+import request_handler
+import user_util
 import os
 
-class RobotsTxt(RequestHandler):
+class RobotsTxt(request_handler.RequestHandler):
     """Dynamic robots.txt that hides staging apps from search engines"""
+    @user_util.open_access
     def get(self):
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.write("User-agent: *\n")

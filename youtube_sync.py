@@ -14,6 +14,7 @@ from google.appengine.ext import db
 
 from models import Setting, Video, Playlist, VideoPlaylist, Topic
 import request_handler
+import user_util
 
 def youtube_get_video_data_dict(youtube_id):
     yt_service = gdata.youtube.service.YouTubeService()
@@ -81,7 +82,8 @@ class YouTubeSyncStep:
 #    INDEX_VIDEO_DATA = 4
 #    INDEX_PLAYLIST_DATA = 5
 #    REGENERATE_LIBRARY_CONTENT = 6
-    UPDATE_FROM_TOPICS = 1
+    UPDATE_VIDEO_STATS = 1
+    UPDATE_FROM_TOPICS = 2
 
 class YouTubeSyncStepLog(db.Model):
     step = db.IntegerProperty()
@@ -90,6 +92,7 @@ class YouTubeSyncStepLog(db.Model):
 
 class YouTubeSync(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         if self.request_bool("start", default = False):
@@ -105,6 +108,7 @@ class YouTubeSync(request_handler.RequestHandler):
                 self.response.out.write("Step: %s, Generation: %s, Date: %s<br/>" % (sync_log.step, sync_log.generation, sync_log.dt))
             self.response.out.write("<br/><a href='/admin/youtubesync?start=1'>Start New Sync</a>")
 
+    @user_util.open_access
     def post(self):
         # Protected for admins only by app.yaml so taskqueue can hit this URL
         step = self.request_int("step", default = 0)
@@ -123,6 +127,8 @@ class YouTubeSync(request_handler.RequestHandler):
 #            self.indexPlaylistData()
 #        elif step == YouTubeSyncStep.REGENERATE_LIBRARY_CONTENT:
 #            self.regenerateLibraryContent()
+        elif step == YouTubeSyncStep.UPDATE_VIDEO_STATS:
+            self.updateVideoStats()
         elif step == YouTubeSyncStep.UPDATE_FROM_TOPICS:
             self.copyTopicsToPlaylist()
 
@@ -140,6 +146,50 @@ class YouTubeSync(request_handler.RequestHandler):
     def startYouTubeSync(self):
         Setting.last_youtube_sync_generation_start(int(Setting.last_youtube_sync_generation_start()) + 1)
 
+    def updateVideoStats(self):
+        yt_service = gdata.youtube.service.YouTubeService()
+        # Now that we run these queries from the App Engine servers, we need to 
+        # explicitly specify our developer_key to avoid being lumped together w/ rest of GAE and
+        # throttled by YouTube's "Too many request" quota
+        yt_service.developer_key = "AI39si6ctKTnSR_Vx7o7GpkpeSZAKa6xjbZz6WySzTvKVYRDAO7NHBVwofphk82oP-OSUwIZd0pOJyNuWK8bbOlqzJc9OFozrQ"
+        yt_service.client_id = "n/a"
+
+        videos_to_put = set()
+
+        # doing fetch now otherwise query timesout later while doing youtube requests
+        # theoretically we can also change this code to use Mapper class:
+        # http://code.google.com/appengine/articles/deferred.html
+        for i, video in enumerate(Video.all().fetch(100000)):
+            entry = None
+            youtube_id = video.youtube_id
+
+            # truncating youtubeid at 11 to handle _DUP_X's
+            # handling the _DUPs to make it easier to detect content problems when duration = 0
+            if re.search("_DUP_\d*$", youtube_id):
+                youtube_id = youtube_id[0:11]
+
+            try:
+                entry = yt_service.GetYouTubeVideoEntry(video_id=youtube_id)
+
+            except Exception, e:
+                logging.info("Error trying to get %s: %s" % 
+                            (youtube_id, e))
+            
+            if entry:
+                count = int(entry.statistics.view_count)
+                if count != video.views:
+                    logging.info("%i: Updating %s from %i to %i views" % 
+                                (i, video.title, video.views, count)) 
+                    video.views = count
+                    videos_to_put.add(video)
+                
+                duration = int(entry.media.duration.seconds)
+                if duration != video.duration:
+                    video.duration = duration
+                    videos_to_put.add(video)
+
+        db.put(list(videos_to_put))
+            
     def updateVideoAndPlaylistData(self):
         self.response.out.write('<html>')
 

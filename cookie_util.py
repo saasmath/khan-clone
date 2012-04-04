@@ -1,11 +1,12 @@
 import Cookie
 import logging
 import os
+from app import App
 
 def get_cookie_value(key):
     cookies = None
     try:
-        cookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE',''))
+        cookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE', ''))
     except Cookie.CookieError, error:
         logging.debug("Ignoring Cookie Error, skipping get cookie: '%s'" % error)
 
@@ -18,6 +19,19 @@ def get_cookie_value(key):
         return None
 
     return cookie.value
+
+def get_google_cookie():
+    """ Retrieves the auth cookie value used to authenticate Google users with
+    appengine over HTTP.
+
+    This does no validation of the value.
+    
+    """
+
+    if App.is_dev_server:
+        return get_cookie_value('dev_appserver_login')
+    else:
+        return get_cookie_value('ACSID')
 
 # Cookie handling from http://appengine-cookbook.appspot.com/recipe/a-simple-cookie-class/
 def set_cookie_value(key, value='', max_age=None,
@@ -36,8 +50,8 @@ def set_cookie_value(key, value='', max_age=None,
         ]:
         if var_value is not None and var_value is not False:
             cookies[key][var_name] = str(var_value)
-        if max_age is not None:
-            cookies[key]['expires'] = max_age
+    if max_age is not None:
+        cookies[key]['expires'] = max_age
 
     cookies_header = cookies[key].output(header='').lstrip()
 
@@ -56,7 +70,7 @@ def set_request_cookie(key, value):
     set on their computer.
     '''
     try:
-        allcookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE',''))
+        allcookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE', ''))
     except Cookie.CookieError, error:
         logging.critical("Ignoring Cookie Error: '%s'" % error)
 

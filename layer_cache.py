@@ -5,7 +5,8 @@ from google.appengine.ext import blobstore
 
 import datetime
 import logging
-import pickle
+import cPickle as pickle
+import zlib
 
 from google.appengine.api import memcache
 from google.appengine.ext import db
@@ -151,7 +152,10 @@ def layer_cache_check_set_return(
         if layer & Layers.InAppMemory:
             result = cachepy.get(key)
             if result is not None:
-                return result
+                if isinstance(result, CompressedResult):
+                    return result.get_result()
+                else:
+                    return result
 
         if layer & Layers.Memcache:
             result = memcache.get(key, namespace=namespace)
@@ -159,7 +163,11 @@ def layer_cache_check_set_return(
                 # Found in memcache, fill upward layers
                 if layer & Layers.InAppMemory:
                     cachepy.set(key, result, expiry=expiration)
-                return result
+
+                if isinstance(result, CompressedResult):
+                    return result.get_result()
+                else:
+                    return result
 
         if layer & Layers.Datastore:
             result = KeyValueCache.get(key, namespace=namespace)
@@ -173,6 +181,7 @@ def layer_cache_check_set_return(
         
         if layer & Layers.Blobstore:
             result = BlobCache.get(key, namespace=namespace)
+    
             # TODO: fill upward layers if size of dumped result is going to be less than 1MB (might be too costly to figure that out
             return result
 
@@ -183,14 +192,29 @@ def layer_cache_check_set_return(
             cachepy.set(key, result, expiry=expiration)
 
         if layer & Layers.Memcache:
-            if not memcache.set(key, result, time=expiration, namespace=namespace):
-                logging.error("Memcache set failed for %s" % key)
+            try:
+                if not memcache.set(key, result, time=expiration, namespace=namespace):
+                    logging.error("Memcache set failed for %s" % key)
+            except ValueError, e:
+                if str(e).startswith("Values may not be more than"):
+                    compressed_result = CompressedResult(result)
+                    try:
+                        memcache.set(key, compressed_result, time=expiration, namespace=namespace)
+                        logging.info("Had to compress %s to size %i to store in cache" % (key, len(compressed_result.compressed_result)))
+                    except:
+                        logging.error("Can't store %s in cache. Compressed size %i > 1000000 bytes" % (key, len(compressed_result.compressed_result)))
+                else: 
+                    raise
 
         if layer & Layers.Datastore:
             KeyValueCache.set(key, result, time=expiration, namespace=namespace)
 
         if layer & Layers.Blobstore:
-            BlobCache.set(key, result, time=expiration, namespace=namespace)
+            try:
+                BlobCache.set(key, result, time=expiration, namespace=namespace)
+            except Exception, e:
+                logging.warning("Writing to the blobstore failed with: %s" % e)
+                
 
     bust_cache = False
     if "bust_cache" in kwargs:
@@ -257,6 +281,14 @@ def layer_cache_check_set_return(
         set_cached_result(key, namespace, expiration, layer, result)
 
     return result
+
+class CompressedResult():
+    def __init__(self, result):
+        value = pickle.dumps(result)
+        self.compressed_result = zlib.compress(value)
+    
+    def get_result(self):
+        return pickle.loads(zlib.decompress(self.compressed_result))
 
 # Functions can return an UncachedResult-wrapped object
 # to tell layer_cache to skip caching this specific result.
@@ -357,19 +389,16 @@ class BlobCache():
         start = datetime.now()
         blob_info = BlobCache.get_first_blob_info(key, namespace)
         end = datetime.now()
-        logging.info("time to get blob info %s", (end-start))
 
         if blob_info:
             start = datetime.now()
             blob_reader = blob_info.open()
             value = blob_reader.read()
             end = datetime.now()
-            logging.info("time to read blob into mem %s", (end-start))
 
             start = datetime.now()
             obj = pickle.loads(value)
             end = datetime.now()
-            logging.info("time to depickle %s", (end-start))
 
             return obj
        

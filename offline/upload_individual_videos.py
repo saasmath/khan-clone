@@ -1,6 +1,11 @@
 import sys, urllib, os, traceback
 from pprint import pprint
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 video_mapping = {}
 

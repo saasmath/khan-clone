@@ -8,10 +8,11 @@ import models
 import shared_jinja
 import layer_cache
 from models import Exercise
+import util
 
 
-def user_info(username, user_data):
-    context = {"username": username, "user_data": user_data}
+def user_info(user_data):
+    context = {"user_data": user_data}
     return shared_jinja.get().render_template("user_info_only.html", **context)
 
 def column_major_sorted_videos(topic, num_cols=3, column_width=300, gutter=20, font_size=12):
@@ -123,7 +124,11 @@ def topic_browser(browser_id, version_number=None):
     else:
         version = None
 
-    tree = models.Topic.get_root(version).make_tree(types = ["Topics"])
+    root = models.Topic.get_root(version)
+    if not root:
+        return ""
+
+    tree = root.make_tree(types = ["Topics"])
 
     # TODO(tomyedwab): Remove this once the confusion over the old Developmental Math playlists settles down
     if not version:
@@ -135,7 +140,7 @@ def topic_browser(browser_id, version_number=None):
         standalone_title="Developmental Math"
     )
     developmental_math.children = []
-    [topic for topic in tree.children if topic.id == "math"][0].children.append(developmental_math)
+    #[topic for topic in tree.children if topic.id == "math"][0].children.append(developmental_math)
 
     template_values = {
        'browser_id': browser_id, 'topic_tree': tree 
@@ -147,6 +152,10 @@ def topic_browser_tree(tree, level=0):
     s = ""
     class_name = "topline"
     for child in tree.children:
+
+        if not child.has_children_of_type(["Topic", "Video", "Url"]):
+            continue
+
         if not child.children or child.id in models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
@@ -160,9 +169,9 @@ def topic_browser_tree(tree, level=0):
             href = "#%s" % escape(slugify(child.id))
 
             if level == 0:
-                s += "<li class='solo'><a href='%s' class='menulink'>%s</a></li>" % (href, escape(child.title))
+                s += "<li class='solo'><a href='%s' data-tag='TopicBrowser' class='menulink'>%s</a></li>" % (href, escape(child.title))
             else:
-                s += "<li class='%s'><a href='%s'>%s</a></li>" % (class_name, href, escape(child.title))
+                s += "<li class='%s'><a href='%s' data-tag='TopicBrowser'>%s</a></li>" % (class_name, href, escape(child.title))
 
         else:
             if level > 0:
@@ -174,8 +183,113 @@ def topic_browser_tree(tree, level=0):
 
     return s
 
+def topic_browser_get_topics(tree, level=0):
+    """ Return a two-level tree of topics that we use to build the
+        topic browser in the page header. """
+
+    item_list = []
+    idx = 0
+    needs_divider = False
+
+    for child in tree.children:
+
+        if not child.has_children_of_type(["Topic", "Video", "Url"]):
+            continue
+
+        if not child.children or child.id in models.Topic._super_topic_ids:
+            # special cases
+            if child.id == "new-and-noteworthy":
+                continue
+            elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                child.id = "algebra-i"
+            elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                child.id = "geometry-2"
+
+            # Show leaf node as a link
+            item_list.append({
+                "level": level,
+                "href": child.relative_url,
+                "title": child.title,
+                "has_divider": needs_divider
+            })
+
+            needs_divider = False
+
+        elif level == 0:
+
+            # First level gets a popup menu for children
+            child_list = topic_browser_get_topics(child, level=level + 1)
+
+            item_list.append({
+                "level": level,
+                "href": None,
+                "title": child.title,
+                "children": child_list
+            })
+
+        else:
+
+            # Second level has children embedded into the list
+            item_list.append({
+                "level": level,
+                "href": None,
+                "has_children": True,
+                "has_divider": True,
+                "title": child.title
+            })
+
+            item_list += topic_browser_get_topics(child, level=level + 1)
+
+            needs_divider = True
+
+        idx += 1
+
+    return item_list
+
+@layer_cache.cache_with_key_fxn(lambda version_number=None:
+    "Templatetags.topic_browser_data_%s" % (
+    version_number if version_number else models.Setting.topic_tree_version()))
+def topic_browser_data(version_number=None):
+    """ Returns the JSON data necessary to render the topic browser embedded
+        in the page header on the client. """
+
+    if version_number:
+        version = models.TopicVersion.get_by_number(version_number)
+    else:
+        version = None
+
+    root = models.Topic.get_root(version)
+    if not root:
+        return ""
+
+    tree = root.make_tree(types = ["Topics"])
+    topics_list = topic_browser_get_topics(tree)
+
+    return apijsonify.jsonify(topics_list)
+
 def video_name_and_progress(video):
     return "<span class='vid-progress v%d'>%s</span>" % (video.key().id(), escape(video.title.encode('utf-8', 'ignore')))
 
 def jsonify(obj, camel_cased):
     return apijsonify.jsonify(obj, camel_cased=camel_cased)
+
+def to_secure_url(url):
+    """ Returns the appropriate https server URL for a url
+    somewhere on Khan Academy. Note - this is not intended for links to
+    external sites.
+
+    This abstracts away some of the difficulties and limitations of https
+    in the current environment.
+    
+    """
+    
+    return util.secure_url(url)
+
+def to_insecure_url(url):
+    """ Returns the appropriate http server URL for a url
+    somewhere on Khan Academy. Note - this is not intended for links to
+    external sites.
+
+    """
+    
+    return util.insecure_url(url)

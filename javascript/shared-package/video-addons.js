@@ -1,15 +1,27 @@
 function onYouTubePlayerStateChange(state) {
     VideoStats.playerStateChange(state);
+    $(VideoControls).trigger("playerStateChange", state);
 }
 
 var VideoControls = {
 
     player: null,
+    autoPlayEnabled: false,
+    autoPlayCallback: null,
+    continuousPlayButton: null,
 
     readyDeferred_: new $.Deferred(),
 
     initJumpLinks: function() {
         $("span.youTube").addClass("playYouTube").removeClass("youTube").click(VideoControls.clickYouTubeJump);
+    },
+
+    initContinuousPlayLinks: function(parentEl) {
+        this.continuousPlayButton = $("a.continuous-play", parentEl);
+        this.continuousPlayButton.click(function() {
+            VideoControls.setAutoPlayEnabled(!VideoControls.autoPlayEnabled);
+        });
+        this.setAutoPlayEnabled(VideoControls.autoPlayEnabled);
     },
 
     clickYouTubeJump: function() {
@@ -31,6 +43,22 @@ var VideoControls = {
     pause: function() {
         if (VideoControls.player && VideoControls.player.pauseVideo)
             VideoControls.player.pauseVideo();
+    },
+
+    setAutoPlayEnabled: function(enabled) {
+    /*
+        this.autoPlayEnabled = enabled;
+        this.continuousPlayButton.toggleClass("green", enabled);
+        if (enabled) {
+            this.continuousPlayButton.html("Continuous play is ON");
+        } else {
+            this.continuousPlayButton.html("Continuous play is OFF");
+        }
+        */
+    },
+
+    setAutoPlayCallback: function(callback) {
+        this.autoPlayCallback = callback;
     },
 
     scrollToPlayer: function() {
@@ -91,19 +119,28 @@ var VideoControls = {
     thumbnailClick: function() {
         var jelParent = $(this).parents("td").first();
         var youtubeId = jelParent.attr("data-youtube-id");
-        if (VideoControls.player && youtubeId) {
-            $(VideoControls).trigger("beforeplay");
-
-            VideoControls.player.loadVideoById(youtubeId, 0, "default");
-            VideoControls.scrollToPlayer();
+        if (youtubeId) {
+            VideoControls.playVideo(youtubeId, jelParent.attr("data-key"), true);
 
             $("#thumbnails td.selected").removeClass("selected");
             jelParent.addClass("selected");
 
-            VideoStats.startLoggingProgress(jelParent.attr("data-key"));
-
             return false;
         }
+    },
+
+    playVideo: function(youtubeId, videoKey, forcePlayBegin) {
+        if (VideoControls.player && youtubeId) {
+            $(VideoControls).trigger("beforeplay");
+
+            if (forcePlayBegin || this.autoPlayEnabled) {
+                VideoControls.player.loadVideoById(youtubeId, 0, "default");
+            } else {
+                VideoControls.player.cueVideoById(youtubeId, 0, "default");
+            }
+            VideoControls.scrollToPlayer();
+        }
+        VideoStats.startLoggingProgress(videoKey);
     },
 
     /**
@@ -122,9 +159,10 @@ var VideoControls = {
 
 var VideoStats = {
 
-    dPercentGranularity: 0.05,
+    dPercentGranularity: 0.1,
     dPercentLastSaved: 0.0,
     fSaving: false,
+    consecutiveFailures: 0,
     player: null,
     intervalId: null,
     fAlternativePlayer: false,
@@ -136,6 +174,13 @@ var VideoStats = {
     sYoutubeId: null,
     playing: false, //ensures pause and end events are idempotent
 
+    /**
+     * A cache of the last point value saved.
+     * A value of -1 indicates that no value has been saved and we don't
+     * know the points earned for the current video.
+     */
+    pointsSaved: -1,
+
     getSecondsWatched: function() {
         if (!this.player) return 0;
         return this.player.getCurrentTime() || 0;
@@ -146,13 +191,44 @@ var VideoStats = {
         return Math.min(secondsPageTime, this.getSecondsWatched());
     },
 
+    POINTS_BASE: 750,
+    REQUIRED_PERCENTAGE_FOR_FULL_VIDEO_POINTS: 0.9,
+
+    /**
+     * Computes an estimate of the points for the current video.
+     * Returns -1 if no reasonable estimate can be made.
+     * This logic must be in sync with the code in the server at points.py
+     */
+    getPointsEstimate: function() {
+        if (this.pointsSaved < 0) {
+            return -1;
+        }
+        var duration = this.player.getDuration() || 0;
+        if (duration <= 0) {
+            return -1;
+        }
+
+        var secondsSinceSave = this.getSecondsWatchedSinceSave();
+        var percentSinceSave = Math.min(1.0, secondsSinceSave / duration);
+        var percentTotal = percentSinceSave + (this.pointsSaved / this.POINTS_BASE);
+        if (percentTotal > this.REQUIRED_PERCENTAGE_FOR_FULL_VIDEO_POINTS) {
+            percentTotal = 1.0;
+        }
+
+        return Math.ceil(this.POINTS_BASE * percentTotal);
+    },
+
     getPercentWatched: function() {
-        if (!this.player) return 0;
+        if (!this.player) {
+            return 0;
+        }
 
         var duration = this.player.getDuration() || 0;
-        if (duration <= 0) return 0;
+        if (duration <= 0) {
+            return 0;
+        }
 
-        return this.getSecondsWatched() / duration;
+        return Math.min(1.0, this.getSecondsWatched() / duration);
     },
 
     startLoggingProgress: function(sVideoKey, sYoutubeId) {
@@ -178,10 +254,8 @@ var VideoStats = {
         if (this.player) this.listenToPlayerStateChange();
         // If the player isn't ready yet or if it is replaced in the future,
         // listen to the state changes once it is ready/replaced.
-        var me = this;
-        $(this).bind("playerready.videostats", function() {
-            me.listenToPlayerStateChange();
-        });
+        $(this).on("playerready.videostats",
+            _.bind(this.listenToPlayerStateChange, this));
 
         if (this.intervalId === null) {
             // Every 10 seconds check to see if we've crossed over our percent
@@ -222,28 +296,102 @@ var VideoStats = {
         }
     },
 
+    checkVideoComplete: function() {
+        var state = this.player.getPlayerState();
+        if (state === 0) { // ended
+            if (VideoControls.autoPlayCallback) {
+                VideoControls.autoPlayCallback();
+            } else {
+                VideoControls.setAutoPlayEnabled(false);
+            }
+        } else if (state === 2) { // paused
+            VideoControls.setAutoPlayEnabled(false);
+        }
+    },
+
     playerStateChange: function(state) {
+        var self = this;
         var playing = this.playing || this.fAlternativePlayer;
         if (state === -2) { // playing normally
             var percent = this.getPercentWatched();
+
+            // Save after we hit certain intervals of video watching.
             if (percent > (this.dPercentLastSaved + this.dPercentGranularity)) {
-                // Another 10% has been watched
                 this.save();
+            } else if (this.playing) {
+                // If we hit the max video points for the first time, force a save,
+                // since showing an estimate might entice the user to close the browser
+                // thinking they finished (and it not having actually saved).
+                var threshold = this.REQUIRED_PERCENTAGE_FOR_FULL_VIDEO_POINTS;
+                if (this.dPercentLastSaved < threshold && percent >= threshold) {
+                    this.save();
+                } else {
+                    var estimate = this.getPointsEstimate();
+                    if (estimate >= 0) {
+                        this.updatePointsDisplay(estimate);
+                    }
+                }
             }
         } else if (state === 0 && playing) { // ended
             this.playing = false;
             this.save();
+
+            if (VideoControls.autoPlayEnabled) {
+                setTimeout(function() { self.checkVideoComplete() }, 500);
+            } else {
+                VideoControls.setAutoPlayEnabled(false);
+            }
+
+            if (this.analyticsActivity) {
+                this.analyticsActivity.parameters["Percent (end)"] = this.dPercentLastSaved;
+                Analytics.trackActivityEnd(this.analyticsActivity);
+                this.analyticsActivity = null;
+            }
         } else if (state === 2 && playing) { // paused
             this.playing = false;
             if (this.getSecondsWatchedSinceSave() > 1) {
-              this.save();
+                this.save();
+            }
+
+            if (VideoControls.autoPlayEnabled) {
+                setTimeout(function() { self.checkVideoComplete() }, 500);
+            } else {
+                VideoControls.setAutoPlayEnabled(false);
+            }
+
+            if (this.analyticsActivity) {
+                this.analyticsActivity.parameters["Percent (end)"] = this.dPercentLastSaved;
+                Analytics.trackActivityEnd(this.analyticsActivity);
+                this.analyticsActivity = null;
             }
         } else if (state === 1) { // play
             this.playing = true;
             this.dtLastSaved = new Date();
             this.dPercentLastSaved = this.getPercentWatched();
+
+            if (!this.analyticsActivity) {
+                var id = "";
+                if (this.sVideoKey !== null) {
+                    id = this.sVideoKey;
+                } else if (this.sYoutubeId !== null) {
+                    id = this.sYoutubeId;
+                }
+                this.analyticsActivity = Analytics.trackActivityBegin("Video Play", {
+                    "Video ID": id,
+                    "Percent (begin)": this.dPercentLastSaved
+                });
+                gae_bingo.bingo(["topic_browser_started_video"]);
+                
+            }
         }
         // If state is buffering, unstarted, or cued, don't do anything
+    },
+
+    // TODO(benkomalo): move this temporary check elsewhere and beef it up.
+    // Right now it relies on a global variable set in page_template.html
+    // for the user's nickname.
+    isPhantom_: function() {
+        return !window.USERNAME;
     },
 
     save: function() {
@@ -255,6 +403,11 @@ var VideoStats = {
         // Make sure cookies are enabled, otherwise this totally won't work
         if (!areCookiesEnabled()) {
             KAConsole.log("Cookies appear to be disabled. Not logging video progress.");
+            return;
+        }
+
+        if (this.isPhantom_() && this.consecutiveFailures >= 3) {
+            KAConsole.log("Not sending video log request due to too many failures");
             return;
         }
 
@@ -279,12 +432,14 @@ var VideoStats = {
                 data: data,
                 success: function(data) {
                     VideoStats.finishSave(data, percent);
+                    VideoStats.consecutiveFailures = 0;
                 },
                 error: function() {
                     // Restore pre-error stats so user can still get full
                     // credit for video even if GAE timed out on a request
                     VideoStats.fSaving = false;
                     VideoStats.dtLastSaved = dtLastSavedBeforeError;
+                    VideoStats.consecutiveFailures++;
                 }
         });
 
@@ -322,14 +477,50 @@ var VideoStats = {
 
         if (dict_json && dict_json.action_results.user_video) {
             video = dict_json.action_results.user_video;
-            // Update the energy points box with the new data.
-            var jelPoints = $(".video-energy-points");
-            if (jelPoints.length)
-            {
-                jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, video.points));
-                $(".video-energy-points-current", jelPoints).text(video.points);
+            if (window.Video && Video.updateVideoPoints) {
+                Video.updateVideoPoints(video.points);
+            } else {
+                this.updatePointsSaved(video.points);
+            }
 
-                // Replace the old tooltip with an updated one.
+            if (video.completed) {
+                var id = "";
+                if (this.sVideoKey !== null) {
+                    id = this.sVideoKey;
+                } else if (this.sYoutubeId !== null) {
+                    id = this.sYoutubeId;
+                }
+                Analytics.trackSingleEvent("Video Complete", {
+                    "Video ID": id
+                });
+                gae_bingo.bingo(["topic_browser_completed_video"]);
+            }
+        }
+    },
+
+    /**
+     * Updates the number of points the video has earned, as saved to
+     * the server.
+     */
+    updatePointsSaved: function(points) {
+        this.pointsSaved = points;
+        this.updatePointsDisplay(points);
+    },
+
+    /**
+     * Update the points in the visible display of the video player.
+     */
+    updatePointsDisplay: function(points) {
+        var jelPoints = $(".video-energy-points");
+        if (jelPoints.length) {
+            var hoverData = jelPoints.data("title");
+            if (hoverData) {
+                jelPoints.data("title", hoverData.replace(/^\d+/, points));
+            }
+            $(".video-energy-points-current", jelPoints).text(points);
+
+            // Replace the old tooltip with an updated one.
+            if (hoverData) {
                 VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
             }
         }
@@ -429,4 +620,3 @@ function connectYouTubePlayer(player) {
     $(VideoControls).trigger("playerready");
     $(VideoStats).trigger("playerready");
 }
-

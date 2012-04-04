@@ -5,9 +5,12 @@ from jinja2.utils import escape
 
 import library
 import request_handler
+import user_util
 import models
 import layer_cache
 import templatetags
+import util
+from app import App
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
 
@@ -117,6 +120,7 @@ def new_and_noteworthy_link_sets():
 
 class ViewHomePage(request_handler.RequestHandler):
 
+    @user_util.open_access
     def head(self):
         # Respond to HEAD requests for our homepage so twitter's tweet
         # counter will update:
@@ -125,10 +129,11 @@ class ViewHomePage(request_handler.RequestHandler):
 
     # See https://sites.google.com/a/khanacademy.org/forge/for-team-members/how-to-use-new-and-noteworthy-content
     # for info on how to update the New & Noteworthy videos
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self):
-
         version_number = None
+
         if models.UserData.current() and models.UserData.current().developer:
             version_number = self.request_string('version', default=None)
 
@@ -167,15 +172,25 @@ class ViewHomePage(request_handler.RequestHandler):
 
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
-        # Only running ajax version of homepage for non-mobile clients
-        if version_number:
+        default = models.TopicVersion.get_default_version()
+        if App.is_dev_server and default is None:
+            library_content = "<h1>Content not initialized. <a href=\"/devadmin/content?autoupdate=1\">Click here</a> to autoupdate from khanacademy.org."
+        elif version_number:
             layer_cache.disable()
             library_content = library.library_content_html(version_number=int(version_number))
         elif not self.is_mobile_capable():
+            # Only running ajax version of homepage for non-mobile clients
             library_content = library.library_content_html(ajax = True)
         else:
             library_content = library.library_content_html()
             
+        from gae_bingo.gae_bingo import ab_test, create_redirect_url
+
+        donate_button_test = ab_test("donate_button",
+                                     {"button":1, "text":99},
+                                     conversion_name=['hp_click', 'paypal'])
+        donate_redirect_url = create_redirect_url("/donate", "hp_click")
+
         template_values = {
                             'marquee_video': marquee_video,
                             'thumbnail_link_sets': thumbnail_link_sets,
@@ -185,7 +200,9 @@ class ViewHomePage(request_handler.RequestHandler):
                             'approx_vid_count': models.Video.approx_count(),
                             'exercise_count': models.Exercise.get_count(),
                             'link_heat': self.request_bool("heat", default=False),
-                            'version_number': version_number
+                            'version_number': version_number,
+                            'donate_button_test': donate_button_test,
+                            'donate_redirect_url': donate_redirect_url
                         }
 
         self.render_jinja2_template('homepage.html', template_values)

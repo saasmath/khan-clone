@@ -4,10 +4,15 @@ import urllib2
 import datetime
 import xml.dom.minidom as minidom
 
-import simplejson
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from app import App
 import request_handler
+import user_util
 
 CONSTANT_CONTACT_USERNAME = "shantanu@khanacademy.org"
 
@@ -111,10 +116,11 @@ def subscribe_to_constant_contact(email, list_id):
     return False
 
 class Subscribe(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
 
         email = self.request_string("email")
         list_id = self.request_string("list_id")
 
         result = subscribe_to_constant_contact(email, list_id)
-        self.response.out.write(simplejson.dumps({"result": result}, True))
+        self.response.out.write(json.dumps({"result": result}, True))

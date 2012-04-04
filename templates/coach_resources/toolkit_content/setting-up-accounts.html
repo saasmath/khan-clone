@@ -1,0 +1,74 @@
+{% extends "coach_resources/view_toolkit.html" %}
+
+{% block col1content %}
+		
+	<h1>Setting up a class</h1>
+	<hr>
+	<p class="lead">To get the most out of Khan Academy, you'll need to set up student and teacher accounts. We've created a handy guide to make sure you'll be up and running in no time.</p>
+	<p>We recommend setting up Google accounts to register classes on Khan Academy. You can register accounts through Google Apps for Education.</p>
+	<ul class="bullet">
+		<li><a href="http://www.google.com/apps/intl/en/edu/k12.html">Google Apps for Education registration</a></li>
+		<li><a href="http://www.google.com/support/a/bin/answer.py?answer=139019">Google Apps for Education common questions</a></li>
+	</ul>
+	
+	<h3>A smooth start to class</h3>
+	<p class="has-media"><span class="toolkit-media"><img width="100%" src="/images/toolkit/Login-with-Google.png"/></span>
+	To get started easily, we recommend pre-registering students for class with assigned Google accounts (e.g., john-appleseed@school.org for the student John Appleseed) and passwords (e.g., school2012). Students can use these email addresses and passwords to log into KA with Google.</p>
+		
+        <p>Logging in to a new system for the first time can be a bit hectic, so we included <a href="http://dl.dropbox.com/u/33113979/KA_add_students.pdf">a sample handout</a> to guide students through the initial login process.
+        <!--- <strong>TODO: add in sample document</strong></p>	--->
+	
+	<p>Coaches can see students' data and help support their learning. If you want to see your students' data, you'll need to be their coach. We also encourage students to add their parents as coaches for extra support. To add a coach to their accounts, students should follow the instructions below:</p>
+		
+	<!-- TODO(Matt): Link to coach.html template instead of copying in file contents. -->
+						
+    {% set coach_email = UserData.current().email if UserData.current() else "Sign in for your Coach id." %}
+
+    <div id="empty-class">
+        {% if class_is_empty %}
+        <h1>You don't have any students yet.</h1>
+        {% endif %}
+        <h3>Each of your students needs to sign in and follow these steps:</h3>
+        <ol>
+            <li>
+                <p>First, they should visit <a href="/profile">their profile</a> by clicking on their name at the top of the page.</p>
+                <img src="/images/profile-link-in-header.png?1" class="vertical-shadow rounded-background" />
+            </li>
+            <li>
+                <p>Then, they should click on the Coaches tab.</p>
+                <img src="/images/coaches-nav.png?1" class="vertical-shadow rounded-background"/>
+            </li>
+            <li class="enter-email">
+                <!-- Are you a flying chimpanzee? Are you changing this element or anything inside?
+                If you answered yes to any of these questions, please update the positioning of the coach email.
+                Look in default.css for #empty-class ol li.enter-email div.coach-email -->
+                <p>Finally, they need to enter your Coach id and click the <em>Add coach</em> button.</p>
+                {% if UserData.current() %}
+                    <p>Your Coach id is <strong>{{ coach_email|escape }}</strong>.</p>
+                {% else %}
+                    <p>{{ coach_email|escape}}</p>
+                {% endif %}
+                <div class="coach-email">{{ coach_email|escape }}</div>
+                <img src="/images/coaches-tab-in-profile.png?1" class="vertical-shadow rounded-background"/>
+            </li>
+        </ol>
+        <p>Once students make you their coach, you'll have access to all types of interesting data about their progress and achievements.</p>
+        <p>You can access that data via the <a href="/class_profile">Class Report</a>.</p>
+    </div>
+	
+	<p><a href="{{base_url}}/technology" class="call-to-action simple-button action-gradient green">Next: Technology →</a></p>
+
+{% endblock col1content %}	
+		
+{% block col2content %}	
+<div class="callout">
+		<h3>Useful links</h3>
+                <ul class="bullet">
+			<li><a href="http://dl.dropbox.com/u/33113979/KA_add_students.pdf">Download handout for students to add a coach</a></li>
+			<li><a href="http://khanacademy.desk.com/customer/portal/articles/414069-how-can-i-add-my-class-to-khan-academy-">How can I add my class to Khan Academy?</a></li>
+			<li><a href="http://khanacademy.desk.com/customer/portal/articles/414096-we-cannot-use-gmail-or-facebook-in-our-school-how-can-we-log-in-to-khan-academy-">How can we log in without gmail or facebook?</a></li>
+			<li><a href="http://khanacademy.desk.com/customer/portal/articles/414103-do-you-support-any-other-ways-to-log-into-khan-academy-">Are there other ways to log into Khan Academy?</a></li>
+			<li><a href="http://khanacademy.desk.com/customer/portal/articles/414104-does-khan-academy-have-its-own-login-">Does Khan Academy have its own login?</a></li>
+		</ul>			
+</div>
+{% endblock col2content %}	

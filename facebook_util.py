@@ -4,7 +4,6 @@ import logging
 import unicodedata
 import urllib2
 
-from google.appengine.api import memcache
 from google.appengine.api import urlfetch
 
 from app import App
@@ -22,7 +21,7 @@ def get_facebook_nickname_key(user_id):
 
 @request_cache.cache_with_key_fxn(get_facebook_nickname_key)
 @layer_cache.cache_with_key_fxn(
-        get_facebook_nickname_key, 
+        get_facebook_nickname_key,
         layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore,
         persist_across_app_versions=True)
 def get_facebook_nickname(user_id):
@@ -80,18 +79,33 @@ def get_profile_from_cookies():
     morsel = cookies.get(morsel_key)
     if morsel:
         return get_profile_from_cookie_key_value(morsel_key, morsel.value)
-    
+
     return None
 
+def get_profile_cache_key(cookie_key, cookie_value):
+    return "facebook:profile_from_cookie:%s" % cookie_value
+
+@request_cache.cache_with_key_fxn(key_fxn = get_profile_cache_key)
 @layer_cache.cache_with_key_fxn(
-        key_fxn = lambda cookie_key, cookie_value: "facebook:profile_from_cookie:%s" % cookie_value,
+        key_fxn = get_profile_cache_key,
         layer = layer_cache.Layers.Memcache,
         persist_across_app_versions=True)
 def get_profile_from_cookie_key_value(cookie_key, cookie_value):
+    """ Communicate with Facebook to get a FB profile associated with
+    the specific cookie value.
+
+    Because this talks to Facebook via an HTTP request, this is cached 
+    in memcache to avoid constant communication while a FB user is
+    browsing the site. If we encounter an error or fail to load
+    a Facebook profile, the results are not cached in memcache.
+
+    However, we also cache in request_cache because if we fail to load
+    a Facebook profile, we only want to do that once per request.
+    """
 
     fb_auth_dict = facebook.get_user_from_cookie_patched(
             { cookie_key: cookie_value },
-            App.facebook_app_id, 
+            App.facebook_app_id,
             App.facebook_app_secret)
 
     if fb_auth_dict:
@@ -100,7 +114,7 @@ def get_profile_from_cookie_key_value(cookie_key, cookie_value):
         if profile:
             return profile
 
-    # Don't cache any missing results
+    # Don't cache any missing results in memcache
     return layer_cache.UncachedResult(None)
 
 def get_profile_from_fb_token(access_token):
@@ -125,7 +139,7 @@ def get_profile_from_fb_token(access_token):
                 logging.debug("Ignoring '%s'. Assuming access_token is no longer valid: %s" % (error, access_token))
             else:
                 c_facebook_tries_left -= 1
-                logging.debug("Ignoring Facebook graph error '%s'. Tries left: %s" % (error, c_facebook_tries_left))
+                logging.error("Ignoring Facebook graph error '%s'. Tries left: %s" % (error, c_facebook_tries_left))
 
     return profile
 

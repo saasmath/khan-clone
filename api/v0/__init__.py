@@ -14,6 +14,7 @@ import request_handler
 
 from api import route
 from api.decorators import jsonp
+import api.auth.decorators
 
 from flask import request
 
@@ -35,22 +36,26 @@ def frozen_json_content(url_suffix):
     return result
 
 @route("/api/playlists", methods=["GET"])
+@api.auth.decorators.open_access
 @jsonp
 def playlists():
     return frozen_json_content("playlists")
 
 @route("/api/playlistvideos", methods=["GET"])
+@api.auth.decorators.open_access
 @jsonp
 def playlist_videos():
     playlist_title = request.values["playlist"]
     return frozen_json_content("playlistvideos?playlist=%s" % urllib.quote(playlist_title))
 
 @route("/api/videolibrary", methods=["GET"])
+@api.auth.decorators.open_access
 @jsonp
 def video_library():
     return frozen_json_content("videolibrary")
 
 @route("/api/videolibrarylastupdated", methods=["GET"])
+@api.auth.decorators.open_access
 @jsonp
 def video_library_last_updated():
     return frozen_json_content("videolibrarylastupdated")
