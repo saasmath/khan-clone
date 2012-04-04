@@ -25,6 +25,11 @@
 
             videosDict[rootTopic.marqueeVideo.youtubeId] = rootTopic.marqueeVideo;
             _.each(rootTopic.subtopics, function(topic) {
+                // Split topic children into two equal lists
+                var listLength = Math.floor((topic.children.length+1)/2);
+                topic.childrenCol1 = topic.children.slice(0, listLength);
+                topic.childrenCol2 = topic.children.slice(listLength);
+
                 videosByTopic[topic.id] = topic;
                 videosDict[topic.thumbnailLink.youtubeId] = topic.thumbnailLink;
             });
@@ -102,6 +107,7 @@
 
             render: function() {
                 $(this.el).html(this.template(this.model));
+                VideoControls.initThumbnailHover($(this.el));
             },
 
             show: function() {

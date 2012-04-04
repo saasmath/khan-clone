@@ -1,11 +1,28 @@
 <div>
-  <div>
-    <div class="title">{{ title }}</div>
-    <div class="description">{{ description }}</div>
+  <div data-role="header" class="main-header">
+    <div class="left">
+      <div class='topic-title'>{{ title }}</div>
+      <div class='topic-desc'>{{ description }}</div>
+      <div><a href="{{ thumbnailLink.href }}" data-tag="Topic Home C2A" data-youtube-id="{{ thumbnailLink.youtubeId }}" class="call-to-action simple-button action-gradient green modal-video">Watch "{{ thumbnailLink.title }}"</a></div>
+    </div>
+    <div class="right thumbnail_td">
+      <a href="{{ thumbnailLink.href }}" data-tag="Topic Page Featured" data-youtube-id="{{ thumbnailLink.youtubeId }}" class="thumbnail_link modal-video">
+        <div class="thumb" style="background-image:url('{{ thumbnailLink.thumbUrls.hq }}')"></div>
+        <div class="thumbnail_label"><div class="thumbnail_desc">{{{ thumbnailLink.descHtml }}}</div><div class="thumbnail_teaser">{{{ thumbnailLink.teaserHtml }}}</div></div>
+      </a>
+    </div>
   </div>
-  <ol>
-  {{#each children }}
-    <li class="video-link"><a href="{{ url }}" data-tag="Topic Page Library"><span class='vid-progress v{{ key_id }}'>{{ title }}</span></a></li>
-  {{/each }}
-  </ol>
+  <div class="videos-list">
+    <div class="videos-header">Videos</div>
+    <ol>
+    {{#each childrenCol1 }}
+      <li class="video-link"><a href="{{ url }}" data-tag="Topic Page Library"><span class='vid-progress v{{ keyId }}'>{{ title }}</span></a></li>
+    {{/each }}
+    </ol>
+    <ol>
+    {{#each childrenCol2 }}
+      <li class="video-link"><a href="{{ url }}" data-tag="Topic Page Library"><span class='vid-progress v{{ key_id }}'>{{ title }}</span></a></li>
+    {{/each }}
+    </ol>
+  </div>
 </div>
