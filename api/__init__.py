@@ -43,9 +43,20 @@ def route(rule, **options):
                 '(It must be the first decorator after all the @route decorators.)'
                 % (func.__module__, func.__name__))
 
+        # Send down a common format for all API errors
         func = format_api_errors(func)
+
+        # Allow cross origin requests to our API so our mobile app
+        # doesn't have any issues. We rely on OAuth parameters for security,
+        # not cross origin policies.
         func = allow_cross_origin(func)
+
+        # Add a header that specifies this response as a Khan API response
+        # so client listeners can detect the response if they'd like.
         func = add_api_header(func)
+
+        # Explicitly specify Cache-Control:no-cache unless otherwise specified
+        # already. We don't want API responses to be cached.
         func = add_no_cache_header(func)
 
         rule_desc = rule
