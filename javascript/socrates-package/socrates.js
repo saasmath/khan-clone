@@ -672,8 +672,26 @@ Socrates.QuestionRouter = Backbone.Router.extend({
     initialize: function(options) {
         _.defaults(options, this.constructor.defaults);
 
-        this.beep = new Audio(options.beepUrl);
-        this.beep.volume = options.beepVolume;
+        this.beep = new Audio("");
+        var mimeTypes = {
+            "ogg": "audio/ogg",
+            "mp3": "audio/mpeg",
+            "wav": "audio/x-wav"
+        };
+        var ext;
+        var match = _.find(mimeTypes, function(i, k) {
+            if (this.beep.canPlayType(mimeTypes[k]) !== "") {
+                ext = k;
+                return true;
+            }
+            return false;
+        }, this);
+        if (match) {
+            this.beep.src = options.beepUrl + "." + ext;
+            this.beep.volume = options.beepVolume;
+        } else {
+            this.beep = null;
+        }
 
         this.videoControls = options.videoControls;
 
@@ -782,7 +800,9 @@ Socrates.QuestionRouter = Backbone.Router.extend({
     videoTriggeredQuestion: function(question) {
         // pause the video
         this.videoControls.pause();
-        this.beep.play();
+        if (this.beep != null) {
+            this.beep.play();
+        }
 
         // update the fragment in the URL
         this.navigate(question.slug());
@@ -876,7 +896,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
     }
 }, {
     defaults: {
-        beepUrl: "/sounds/72126__kizilsungur__sweetalertsound2.wav",
+        beepUrl: "/sounds/72126__kizilsungur__sweetalertsound2",
         beepVolume: 0.3
     }
 });
