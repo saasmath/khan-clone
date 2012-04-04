@@ -245,6 +245,11 @@ var Exercises = {
         // Triggered when a user attempts an answer
         $(Khan).bind("checkAnswer", function(ev, data) {
 
+            // Iff data.pass is true, give 3 or 4 leaves.
+            // data.pass is sent from khan-exercises's validator() function,
+            // which can return true, false, or a string that describes a
+            // specific mistake the user made. In this latter case, the attempt
+            // is still considered incorrect.
             if (data.pass === true) {
 
                 if (data.fast === true) {
@@ -255,7 +260,7 @@ var Exercises = {
                     Exercises.currentCard.decreaseLeavesAvailable(3);
                 }
 
-            } else if (data.pass === false) {
+            } else {
                 // Incorrect answer drops leaves possibility to 2
                 Exercises.currentCard.decreaseLeavesAvailable(2);
             }
