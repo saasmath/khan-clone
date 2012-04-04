@@ -1278,7 +1278,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
     @property
     def is_facebook_user(self):
-        return self.is_facebook_user_id(self.user_id)
+        return is_facebook_user_id(self.user_id)
 
     @property
     def is_phantom(self):
