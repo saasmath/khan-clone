@@ -116,11 +116,11 @@ class TopicPage(request_handler.RequestHandler):
         topic_children = [t for t in tree.children if t.kind() == "Topic"]
 
         if topic_children:
-            video_lists = [ t.get_library_data() for t in topic_children ]
+            video_lists = [t.get_library_data() for t in topic_children if t.has_children_of_type(["Video"])]
             if not selected_topic:
                 selected_topic = topic_children[0]
         else:
-            video_lists = [ topic.get_library_data() ]
+            video_lists = [topic.get_library_data()]
 
         from homepage import thumbnail_link_dict
 
