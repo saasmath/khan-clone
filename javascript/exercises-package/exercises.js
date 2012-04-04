@@ -236,6 +236,8 @@ var Exercises = {
             Exercises.currentCard.set({
                 done: true,
                 leavesEarned: Exercises.currentCard.get("leavesAvailable")
+            }, {
+                updateLeaves: true
             });
 
         });

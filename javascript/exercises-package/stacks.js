@@ -326,23 +326,25 @@ Exercises.CurrentCardView = Backbone.View.extend({
         "click #show-topic-details": "showTopicDetails"
     },
 
-    leafEvents: ["change:done", "change:leavesEarned", "change:leavesAvailable"],
+    // leafEvents: ["change:done", "change:leavesEarned", "change:leavesAvailable", "change"],
 
     initialize: function(options) {
         this.attachEvents();
         return Backbone.View.prototype.initialize.call(this, options);
     },
 
+    onModelChange: function( info, options ) {
+        if ( options.updateLeaves ) {
+            this.updateLeaves();
+        }
+    },
+
     attachEvents: function() {
-        _.each(this.leafEvents, function(leafEvent) {
-            this.model.bind(leafEvent, function() { this.updateLeaves(); }, this);
-        }, this);
+        this.model.bind("change", this.onModelChange, this);
     },
 
     detachEvents: function() {
-        _.each(this.leafEvents, function(leafEvent) {
-            this.model.unbind(leafEvent);
-        }, this);
+        this.model.unbind("change", this.onModelChange);
     },
 
     /**
