@@ -1,4 +1,5 @@
 import shared_jinja
+from badges import badges, util_badges
 from notifications import UserNotifier
 
 def login_notifications(user_data, continue_url):
@@ -12,8 +13,6 @@ def login_notifications_html(login_notifications, user_data, continue_url="/"):
     return shared_jinja.get().render_template("phantom_users/notifications.html", **context)
 
 def badge_info(user_data):
-    from .badges import badges, util_badges
-
     counts_dict = {}
     if user_data:
         counts_dict = util_badges.get_badge_counts(user_data)

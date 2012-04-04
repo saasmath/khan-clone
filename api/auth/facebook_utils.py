@@ -8,7 +8,7 @@ from app import App
 from api import route
 from api.auth.auth_util import pretty_error_response, oauth_error_response, get_response, get_parsed_params, authorize_token_redirect, OAuthBadRequestError
 from api.auth.auth_models import OAuthMap
-from api.auth.decorators import manual_access_checking
+from api.auth import decorators
 
 from oauth_provider.oauth import OAuthError
 
@@ -62,7 +62,7 @@ def retrieve_facebook_access_token(oauth_map):
 
 # Associate our request or access token with Facebook's tokens
 @route("/api/auth/facebook_token_callback", methods=["GET"])
-@manual_access_checking
+@decorators.manual_access_checking
 def facebook_token_callback():
     oauth_map = OAuthMap.get_by_id_safe(request.values.get("oauth_map_id"))
 

@@ -14,12 +14,12 @@ from api.auth.auth_util import authorize_token_redirect, pretty_error_response, 
 from api.auth.google_oauth_client import GoogleOAuthClient
 from api.auth.auth_models import OAuthMap
 from api.decorators import jsonify
-from api.auth.decorators import open_access, manual_access_checking
+from api.auth import decorators
 
 # Utility request handler to let Google authorize the OAuth token/request and
 # return the authorized user's id and email address.
 @route("/api/auth/current_google_oauth_user_id_and_email")
-@open_access
+@decorators.manual_access_checking
 @jsonify
 def current_google_oauth_user_id_and_email():
     user = None
@@ -71,7 +71,7 @@ def retrieve_google_access_token(oauth_map):
     return oauth_map
 
 @route("/api/auth/google_token_callback", methods=["GET"])
-@manual_access_checking
+@decorators.manual_access_checking
 def google_token_callback():
     oauth_map = OAuthMap.get_by_id_safe(request.values.get("oauth_map_id"))
 

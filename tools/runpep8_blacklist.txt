@@ -81,16 +81,7 @@
 ./atom/service.py
 ./atom/token_store.py
 ./atom/url.py
-./auth/age_util.py
-./auth/age_util_test.py
-./auth/cookies.py
-./auth/models.py
-./auth/models_test.py
-./auth/passwords.py
-./auth/passwords_test.py
 ./auth/pbkdf2.py
-./auth/tokens.py
-./auth/tokens_test.py
 ./autocomplete.py
 ./avatars/avatars.py
 ./avatars/templatetags.py
@@ -402,6 +393,8 @@
 ./jinja2/testsuite/tests.py
 ./jinja2/utils.py
 ./js_css_packages/packages.py
+./js_css_packages/packages_compressed.py
+./js_css_packages/packages_hash.py
 ./js_css_packages/templatetags.py
 ./khan-exercises/build/close-old-issues.py
 ./khan-exercises/build/kathjax.py
@@ -468,7 +461,6 @@
 ./offline/unzip.py
 ./offline/upload_individual_videos.py
 ./paypal/__init__.py
-./pep8_exclude.py
 ./phantom_users/cloner.py
 ./phantom_users/phantom_util.py
 ./phantom_users/templatetags.py
