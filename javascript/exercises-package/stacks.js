@@ -326,8 +326,6 @@ Exercises.CurrentCardView = Backbone.View.extend({
         "click #show-topic-details": "showTopicDetails"
     },
 
-    // leafEvents: ["change:done", "change:leavesEarned", "change:leavesAvailable", "change"],
-
     initialize: function(options) {
         this.attachEvents();
         return Backbone.View.prototype.initialize.call(this, options);
