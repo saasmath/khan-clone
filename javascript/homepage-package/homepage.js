@@ -115,6 +115,14 @@ var Homepage = {
         });
     },
 
+    /**
+     * Renders the contents of the video lists inside of the topic containers
+     * sent down by the server.
+     *
+     * This logic must be kept in sync with library.py and
+     * library_content_template.html, and changes must increment
+     * library._layout_version.
+     */
     renderLibraryContent: function(topics) {
         var template = Templates.get("homepage.videolist");
         $.each(topics, function(i, topic) {
@@ -131,7 +139,7 @@ var Homepage = {
                 }
             }
 
-            $("#" + topic["id"] + " ol").html(template(topic));
+            $("#" + topic["id"] + "-container ol").html(template(topic));
         });
 
         topics = null;
