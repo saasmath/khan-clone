@@ -46,6 +46,7 @@ def route(rule, **options):
         func = format_api_errors(func)
         func = allow_cross_origin(func)
         func = add_api_header(func)
+        func = add_no_cache_header(func)
 
         rule_desc = rule
         for key in options:
@@ -93,6 +94,23 @@ def add_api_header(func):
         return result
 
     return api_header_added
+
+def add_no_cache_header(func):
+    @wraps(func)
+    def no_cache_header_added(*args, **kwargs):
+        result = func(*args, **kwargs)
+
+        if not isinstance(result, current_app.response_class):
+            result = current_app.response_class(result)
+
+        # If this isn't an explicitly cacheable response,
+        # never cache any API results. We don't want private caches.
+        if not result.cache_control.public:
+            result.cache_control.no_cache = True
+
+        return result
+
+    return no_cache_header_added
 
 def allow_cross_origin(func):
     @wraps(func)
