@@ -140,15 +140,15 @@ class TopicExerciseBadge(Badge):
         """
         # TODO: unleash the new -completed- icons when @marcos finishes them!
         return self.compact_icon_src
-        return "/images/power-mode/badges/%s-completed-40x40.png" % self.icon_filename
+        return "/images/power-mode/badges/%s-completed-40x40.png?1" % self.icon_filename
 
     @property
     def compact_icon_src(self):
-        return "/images/power-mode/badges/%s-40x40.png" % self.icon_filename
+        return "/images/power-mode/badges/%s-40x40.png?1" % self.icon_filename
 
     @property
     def icon_src(self):
-        return "/images/power-mode/badges/%s-60x60.png" % self.icon_filename
+        return "/images/power-mode/badges/%s-60x60.png?1" % self.icon_filename
 
 class TopicExerciseBadgeType(db.Model):
     """ Every time we publish a new topic tree,
