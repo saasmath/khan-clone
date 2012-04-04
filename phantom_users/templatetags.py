@@ -1,4 +1,5 @@
 import shared_jinja
+from badges import badges, util_badges
 from notifications import UserNotifier
 
 def login_notifications(user_data, continue_url):

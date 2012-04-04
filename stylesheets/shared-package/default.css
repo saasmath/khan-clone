@@ -3068,18 +3068,17 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 #sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li > a:hover,
 #sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li > a:hover,
 #sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active li.hover-active > a {
+    text-decoration: underline;
     color: #ffffff;
-    text-decoration: none;
     background-color: #005987;
+}
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li.has-subtopics > a:hover,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active li.has-subtopics.hover-active > a {
+    text-decoration: none;
 }
 #sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li > a:hover > .right-arrow,
 #sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active > li.hover-active > a > .right-arrow {
     background-position: -110px -36px;
-}
-#sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li.no-children > a:hover,
-#sitewide-navigation .nav-subheader ul.topic-browser-menu > ul > li.no-children > a:hover,
-#sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active li.hover-active.no-children > a {
-    text-decoration: underline;
 }
 
 #sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul {

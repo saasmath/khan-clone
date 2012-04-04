@@ -1,5 +1,3 @@
-import logging
-
 import webapp2
 from webapp2_extras import jinja2
 
@@ -9,11 +7,16 @@ from app import App
 SHARED_APP = None
 @request_cache.cache()
 def get():
-    # Make sure configuration is imported before we ever initialize, which should only happen once per request
-    import config_jinja
+    # Make sure configuration is imported before we ever initialize,
+    # which should only happen once per request
+    import config_jinja #@UnusedImport
 
     global SHARED_APP
     if SHARED_APP is None:
         SHARED_APP = webapp2.WSGIApplication(debug=App.is_dev_server)
 
     return jinja2.get_jinja2(app=SHARED_APP)
+
+
+def template_to_string(template_name, template_values):
+    return get().render_template(template_name, **template_values)
