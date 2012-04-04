@@ -35,8 +35,7 @@ class SubmitStory(request_handler.RequestHandler):
             subject += " (sharing with others allowed)"
         else:
             subject += " (sharing with others *NOT* allowed)"
-#COMMENT - commented out the next line to be able to send test email
-       # if not App.is_dev_server:
+	if not App.is_dev_server:
             mail.send_mail( \
                     sender = FROM_EMAIL, \
                     to = TO_EMAIL, \
