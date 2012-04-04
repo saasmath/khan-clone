@@ -12,6 +12,13 @@ var Settings = {
         $("#password2").on(
                 Keys.textChangeEvents,
                 Keys.wrapTextChangeHandler(Settings.onPasswordInput_, Settings));
+        $("#password2").on(
+                "keypress",
+                function(e) {
+                    if (e.keyCode === $.ui.keyCode.ENTER) {
+                        Settings.submitForm_();
+                    }
+                });
 
         $("#submit-settings").click(_.bind(Settings.onClickSubmit_, Settings));
     },
@@ -23,6 +30,10 @@ var Settings = {
     },
 
     onClickSubmit_: function(e) {
+        this.submitForm_();
+    },
+
+    submitForm_: function() {
         $("#submit-settings")
             .val("Submitting...")
             .prop("disabled", true);

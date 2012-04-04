@@ -26,4 +26,4 @@ def google_user_id(user):
     """ Generates the user ID used in our databases given a
     google.appengine.api.users.user """
 
-    return GOOGLE_USER_ID_PREFIX + user.user_id()
+    return "%s%s" % (GOOGLE_USER_ID_PREFIX, user.user_id())

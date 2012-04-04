@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
+import copy
 import datetime
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
 from google.appengine.ext import testbed
 from google.appengine.datastore import datastore_stub_util
-import copy
 
 class GAEModelTestCase(unittest.TestCase):
     """ A test case that stubs out appengine's persistence layers in setUp.

@@ -11,12 +11,14 @@
             <div class="completesignup-contents">
             <img src="/images/hand-tree.png" width="75" height="75" class="tree">
             <h3><strong>Great!</strong>
-            {% if not user %}
-                Now create your Khan Academy login.
-            {% elif user.is_facebook_user %}
-                Now create your Khan Academy login and we'll connect it to your existing Facebook account.
+            {% if user %}
+                {% if user.is_facebook_user %}
+                    Now create your Khan Academy login and we'll connect it to your existing Facebook account.
+                {% else %}
+                    Now create your Khan Academy login and we'll connect it to your existing Google account.
+                {% endif %}
             {% else %}
-                Now create your Khan Academy login and we'll connect it to your existing Google account.
+                Now create your Khan Academy login.
             {% endif %}
             </h3>
 
@@ -37,9 +39,6 @@
                 <label class="field-label span4" for="nickname">Your name</label>
                 <input id="nickname" name="nickname" class="simple-input ui-corner-all span6" value="{{values['nickname']|escape}}">
             </div>
-            <div class="error-container row-fluid">
-                <div class="field-error span10" id="nickname-error"></div>
-            </div>
 
             <div class="field-container row-fluid">
                 <label class="field-label span4" for="gender">Male/Female (optional)</label>
@@ -54,16 +53,15 @@
                 <label class="field-label span4" for="username">Username</label>
                 <input id="username" name="username" class="simple-input ui-corner-all span6" value="{{ values['username']|escape }}">
             </div>
-            <div class="error-container row-fluid">
-                <div class="field-error span10" id="username-error"></div>
-            </div>
 
             <div class="field-container row-fluid">
                 <label class="field-label span4" for="password">Password</label>
                 <input id="password" name="password" type="password" class="simple-input ui-corner-all span6">
             </div>
+
             <div class="error-container row-fluid">
-                <div class="field-error span10" id="password-error"></div>
+                {# Whitespace included so that the layout doesn't change if text is added/removed #}
+                <div class="field-error span10" id="error-text">&nbsp;</div>
             </div>
 
             <div class="field-container submit-container row-fluid">
