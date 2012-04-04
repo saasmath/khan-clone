@@ -84,7 +84,11 @@
                     selectedTopic.view.show();
                     selectedTopicID = selectedTopic.id;
                 } else {
-                    rootTopicView = rootTopicView || new TopicPage.RootTopicView({ model: rootPageTopic });
+                    if (rootPageTopic.subtopics[0].id == rootPageTopic.topic.id) {
+                        rootTopicView = rootTopicView || new TopicPage.ContentTopicView({ model: rootPageTopic.subtopics[0] });
+                    } else {
+                        rootTopicView = rootTopicView || new TopicPage.RootTopicView({ model: rootPageTopic });
+                    }
                     rootTopicView.show();
                 }
 

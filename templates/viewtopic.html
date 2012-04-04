@@ -29,7 +29,6 @@
 
 <div class="topic-page-content">
   <div class="container">
-    {% if topic_children %}
     <div class="nav-pane-background"></div>
     <div class="nav-pane">
 
@@ -40,20 +39,21 @@
             <div class="right-arrow"></div>
           </a>
         </li>
+        {% if topic_children %}
         <li class="subheading"><span>Topics</span></li>
-      {% for child in topic_children %}
-        <li data-id="{{ child.id }}">
-          <a class="subtopic-link" href="/{{ main_topic_info.extended_slug }}/{{ child.id }}" data-id="{{ child.id }}">
-            {{ child.title|escape }}
-            <div class="right-arrow"></div>
-          </a>
-        </li>
-      {% endfor %}
+        {% for child in topic_children %}
+          <li data-id="{{ child.id }}">
+            <a class="subtopic-link" href="/{{ main_topic_info.extended_slug }}/{{ child.id }}" data-id="{{ child.id }}">
+              {{ child.title|escape }}
+              <div class="right-arrow"></div>
+            </a>
+          </li>
+        {% endfor %}
+        {% endif %}
       </ul>
       <div style="clear: both"></div>
     </div>
-    {% endif %}
-    <div class="content-pane {% if topic_children %}indent{% endif %}">
+    <div class="content-pane indent">
     </div>
   </div>
 </div>

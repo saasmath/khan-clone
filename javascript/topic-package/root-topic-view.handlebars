@@ -2,7 +2,7 @@
   <div data-role="header" class="main-header">
     <div class="left">
       <div class='topic-title'>{{ topic.title }}</div>
-      <div class='topic-desc'>{{ topic.description }}</div>
+      <div class='topic-desc'>{{{ topic.description }}}</div>
       <div><a href="{{ marqueeVideo.href }}" data-tag="Topic Home C2A" data-youtube-id="{{ marqueeVideo.youtubeId }}" class="call-to-action simple-button action-gradient green modal-video">Watch "{{ marqueeVideo.title }}"</a></div>
     </div>
     <div class="right thumbnail_td">
@@ -22,7 +22,7 @@
         </a>
         <div class="topic-info">
           <div class="topic-title">{{ title }}</div>
-          <div class="topic-description">{{ description }}</div>
+          <div class="topic-description">{{{ description }}}</div>
           <div class="topic-video-count"><a class="subtopic-link" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">Browse {{ childCount }} videos</a></div>
         </div>  
       </div>
