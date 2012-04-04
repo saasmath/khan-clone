@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 
+import datetime
 from app import App
 from agar.test import BaseTest
+
 import auth.tokens as tokens
-import datetime
 import models
 import testutil
 
@@ -11,6 +12,7 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+
 
 class TimestampTests(unittest.TestCase):
     def test_timestamp_creation(self):
@@ -32,6 +34,7 @@ class TimestampTests(unittest.TestCase):
         assertDatetimeSerializes()
         clock.advance(datetime.timedelta(microseconds=1))
         assertDatetimeSerializes()
+
 
 class TokenTests(BaseTest):
     def setUp(self):
@@ -86,7 +89,7 @@ class TokenTests(BaseTest):
         clock = testutil.MockDatetime()
         u = self.make_user("userid1", "credential version 0")
         token = tokens.AuthToken.for_user(u, clock)
-        
+
         parsed = tokens.AuthToken.for_value(token.value)
         time_to_expiry = datetime.timedelta(30)
         self.assertTrue(parsed.is_valid(u, time_to_expiry, clock))

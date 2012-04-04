@@ -825,11 +825,17 @@ class UniqueUsername(db.Model):
     VALID_KEY_NAME_RE = re.compile('^[a-z][a-z0-9]{2,}$')
 
     @staticmethod
+    def is_username_too_short(username, key_name=None):
+        if key_name is None:
+            key_name = UniqueUsername.build_key_name(username)
+        return len(key_name) < 3
+
+    @staticmethod
     def is_valid_username(username, key_name=None):
         """ Determines if a candidate for a username is valid
         according to the limitations we enforce on usernames.
 
-        Usernames must be at least 5 characters long (excluding dots), start
+        Usernames must be at least 3 characters long (excluding dots), start
         with a letter and be alphanumeric (ascii only).
         """
         if username.startswith('.'):
@@ -1050,12 +1056,9 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Account creation date in UTC
     joined = db.DateTimeProperty(auto_now_add=True)
     
-    # TODO(benkomalo): STOPSHIP - put in a date when we launch as to when
-    # this should have started been filled in.
-
     # Last login date in UTC. Note that this was incorrectly set, and could
     # have stale values (though is always non-empty) for users who have never
-    # logged in prior to the launch of our own password based logins.
+    # logged in prior to the launch of our own password based logins(2012-04-12)
     last_login = db.DateTimeProperty(indexed=False)
 
     # Whether or not user has been hellbanned from community participation

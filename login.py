@@ -19,6 +19,7 @@ import models
 import os
 import re
 import request_handler
+import shared_jinja
 import uid
 import user_util
 import util
@@ -30,8 +31,9 @@ class Login(request_handler.RequestHandler):
     def get(self):
         if self.request_bool("form", default=False):
             self.render_login_form()
-        elif not self.request_bool("use_new", default=False):
-            self.render_login_legacy()
+        # TODO(benkomalo): remove this code when auth has stabilized.
+        #elif not self.request_bool("use_new", default=False):
+            #self.render_login_legacy()
         else:
             self.render_login_outer()
             
@@ -42,6 +44,7 @@ class Login(request_handler.RequestHandler):
         # url actually specified it or not. Important things happen there.
         return util.create_post_login_url(cont)
 
+    # TODO(benkomalo): remove this and the legacy template when auth stabilizes
     def render_login_legacy(self):
         """ Renders the old login page with no username/password inputs. """
         cont = self.request_continue_url()
@@ -164,7 +167,9 @@ class MobileOAuthLogin(request_handler.RequestHandler):
             "anointed": self.request_bool("an", default=False),
             "view": self.request_string("view", default=""),
             "error": error,
-            "use_new": self.request_bool("use_new", default=False),
+            
+            # TODO(benkomalo): remove this when auth stabilizes
+            "use_new": True, #self.request_bool("use_new", default=False),
         })
 
     @user_util.manual_access_checking
@@ -177,13 +182,13 @@ class MobileOAuthLogin(request_handler.RequestHandler):
         identifier = self.request_string('identifier')
         password = self.request_string('password')
         if not identifier or not password:
-            self.render_login_page("Please enter your username and password")
+            self.render_login_page("Please enter your username and password.")
             return
 
         user_data = UserData.get_from_username_or_email(identifier.strip())
         if not user_data or not user_data.validate_password(password):
             # TODO(benkomalo): IP-based throttling of failed logins?
-            self.render_login_page("Username and password doesn't match")
+            self.render_login_page("Your login or password is incorrect.")
             return
         
         # Successful login - convert to an OAuth access_token
@@ -391,7 +396,8 @@ class Signup(request_handler.RequestHandler):
 
         errors = {}
 
-        # Under-13 check.
+        # Under-13 check (note the JavaScript on our form should never really
+        # send an invalid date, but just to make sure...)
         birthdate = None
         if values['birthdate']:
             try:
@@ -415,20 +421,22 @@ class Signup(request_handler.RequestHandler):
             return
 
         existing_google_user_detected = False
+        resend_detected = False
+
         if values['email']:
             email = values['email']
 
             # Perform loose validation - we can't actually know if this is
             # valid until we send an e-mail.
             if not _email_re.search(email):
-                errors['email'] = "Email appears to be invalid"
+                errors['email'] = "That email appears to be invalid."
             else:
                 existing = UserData.get_from_user_input_email(email)
                 if existing is not None:
                     if existing.has_password():
                         # TODO(benkomalo): do something nicer and maybe ask the
                         # user to try and login with that e-mail?
-                        errors['email'] = "There is already an account with that e-mail"
+                        errors['email'] = "Oops. There's already an account with that e-mail."
                     else:
                         existing_google_user_detected = True
                         logging.warn("User tried to register with password, "
@@ -437,18 +445,17 @@ class Signup(request_handler.RequestHandler):
                     # No full user account detected, but have they tried to
                     # signup before and still haven't verified their e-mail?
                     existing = models.UnverifiedUser.get_for_value(email)
-                    if existing is not None:
-                        # TODO(benkomalo): do something nicer here and present
-                        # call to action for re-sending verification e-mail
-                        errors['email'] = "Looks like you've already tried signing up"
+                    resend_detected = existing is not None
         else:
-            errors['email'] = "Email required"
+            errors['email'] = "Please enter your email."
             
         if existing_google_user_detected:
             # TODO(benkomalo): just deny signing up with username/password for
             # existing users with a Google login. In the future, we can show
             # a message to ask them to sign in with their Google login
-            errors['email'] = "There is already an account with that e-mail"
+            errors['email'] = (
+                    "There is already an account with that e-mail. " +
+                    "If it's yours, sign in with Google below.")
 
         if len(errors) > 0:
             self.render_json({'errors': errors})
@@ -458,17 +465,18 @@ class Signup(request_handler.RequestHandler):
         unverified_user = models.UnverifiedUser.get_or_insert_for_value(
                 email,
                 birthdate)
-        verification_link = CompleteSignup.build_link(unverified_user)
-
-        self.send_verification_email(email, verification_link)
+        Signup.send_verification_email(unverified_user)
         
         response_json = {
                 'success': True,
                 'email': email,
+                'resend_detected': resend_detected,
                 'existing_google_user_detected': existing_google_user_detected,
                 }
         
         if App.is_dev_server:
+            # Send down the verification token so the client can easily 
+            # create a link to test with.
             response_json['token'] = unverified_user.randstring
 
         # TODO(benkomalo): since users are now blocked from further access
@@ -478,12 +486,16 @@ class Signup(request_handler.RequestHandler):
         #    registering, for example)
         self.render_json(response_json, camel_cased=True)
 
-    def send_verification_email(self, recipient, verification_link):
+    @staticmethod
+    def send_verification_email(unverified_user):
+        recipient = unverified_user.email
+        verification_link = CompleteSignup.build_link(unverified_user)
+
         template_values = {
                 'verification_link': verification_link,
             }
 
-        body = self.render_jinja2_template_to_string(
+        body = shared_jinja.template_to_string(
                 'verification-email-text-only.html',
                 template_values)
 
@@ -620,9 +632,18 @@ class CompleteSignup(request_handler.RequestHandler):
 
             # TODO(benkomalo): handle storage for FB users. Right now their
             # "email" value is a URI like http://facebookid.ka.org/1234
+            email = user_data.email
             if not user_data.is_facebook_user:
-                values['email'] = user_data.email
-            values['nickname'] = user_data.nickname
+                values['email'] = email
+            
+            nickname = user_data.nickname
+            if email.find('@') != -1 and email.split('@')[0] == nickname:
+                # The user's "nickname" property defaults to the user part of
+                # their e-mail. Encourage them to use a real name and leave
+                # the name field blank in that case.
+                nickname = ""
+
+            values['nickname'] = nickname
             values['gender'] = user_data.gender
             values['username'] = user_data.username
 
@@ -659,9 +680,9 @@ class CompleteSignup(request_handler.RequestHandler):
 
         # Simple existence validations
         errors = {}
-        for field, error in [('nickname', "Name required"),
-                             ('username', "Username required"),
-                             ('password', "Password required")]:
+        for field, error in [('nickname', "Please tell us your name."),
+                             ('username', "Please pick a username."),
+                             ('password', "We need a password from you.")]:
             if not values[field]:
                 errors[field] = error
 
@@ -674,21 +695,23 @@ class CompleteSignup(request_handler.RequestHandler):
         if values['username']:
             username = values['username']
             # TODO(benkomalo): ask for advice on text
-            if not models.UniqueUsername.is_valid_username(username):
-                errors['username'] = "Must start with a letter, be alphanumeric, and at least 3 characters"
+            if models.UniqueUsername.is_username_too_short(username):
+                errors['username'] = "Sorry, that username's too short."
+            elif not models.UniqueUsername.is_valid_username(username):
+                errors['username'] = "Usernames must start with a letter and be alphanumeric."
 
             # Only check to see if it's available if we're changing values
             # or if this is a brand new UserData
             elif ((not user_data or user_data.username != username) and
                     not models.UniqueUsername.is_available_username(username)):
-                errors['username'] = "Username is not available"
+                errors['username'] = "That username isn't available."
 
         if values['password']:
             password = values['password']
             if not auth.passwords.is_sufficient_password(password,
                                                          values['nickname'],
                                                          values['username']):
-                errors['password'] = "Password is too weak"
+                errors['password'] = "Sorry, but that password's too weak."
 
 
         if len(errors) > 0:
@@ -700,7 +723,7 @@ class CompleteSignup(request_handler.RequestHandler):
             def txn():
                 if (username != user_data.username
                         and not user_data.claim_username(username)):
-                    errors['username'] = "Username is not available"
+                    errors['username'] = "That username isn't available."
                     return False
 
                 user_data.set_password(password)
@@ -727,7 +750,7 @@ class CompleteSignup(request_handler.RequestHandler):
                         gender=gender)
 
                 if not user_data:
-                    self.render_json({'errors': {'username': "Username taken."}},
+                    self.render_json({'errors': {'username': "That username isn't available."}},
                                      camel_cased=True)
                     return
                 elif user_data.username != username:
@@ -776,12 +799,18 @@ class PasswordChange(request_handler.RequestHandler):
             self.render_form()
 
     def render_form(self, message=None, success=False):
+        transfer_token_value = self.request_string("transfer_token", default="")
         self.render_jinja2_template('password-change.html',
                                     {'message': message or "",
-                                     'success': success})
+                                     'success': success,
+                                     'transfer_token': transfer_token_value})
         
     def secure_url_with_token(self, url):
         user_data = UserData.current()
+        if not user_data:
+            logging.warn("No user detected for password change")
+            return util.secure_url(url)
+
         token = TransferAuthToken.for_user(user_data).value
         if url.find('?') == -1:
             return "%s?transfer_token=%s" % (util.secure_url(url), token)
@@ -792,7 +821,7 @@ class PasswordChange(request_handler.RequestHandler):
     def post(self):
         user_data = _resolve_user_in_https_frame(self)
         if not user_data:
-            self.response.unauthorized()
+            self.response.write("Oops. Something went wrong. Please try again.")
             return
 
         existing = self.request_string("existing")

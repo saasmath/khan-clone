@@ -24,7 +24,7 @@
             .providers {
                 height: 100px;
             }
-            .providers li .img-container {
+            .providers .provider .img-container {
                 height: 80px;
             }
 
@@ -60,21 +60,22 @@
                     action="{{templatetags.to_secure_url('/login/mobileoauth')}}">
                 <h3>Login to Khan Academy</h3>
                 <input type="hidden" name="oauth_map_id" value="{{ oauth_map_id|escape }}">
+                <input type="hidden" name="view" value="{{ view|escape }}">
 
                 {# ontouchstart="" is needed to allow the :active pseudoclass to work
                      See http://stackoverflow.com/questions/3885018/active-pseudo-class-doesnt-work-in-mobile-safari #}
                 <ul class="providers">
-                    <li class="action-gradient" title="Google">
+                    <li class="provider action-gradient" title="Google">
                         <div class="img-container">
                             <a ontouchstart="" href="/api/auth/request_token_callback/google/{{ oauth_map_id|escape }}">
-                                <img width="180" height="65" src="/images/google-logo-large-2x.png" />
+                                <img width="180" height="61" src="/images/google-logo-large-2x.png" />
                             </a>
                         </div>
                     </li>
-                    <li class="action-gradient facebook" title="Facebook">
+                    <li class="provider action-gradient facebook" title="Facebook">
                         <div class="img-container">
                             <a ontouchstart="" href="/api/auth/request_token_callback/facebook/{{ oauth_map_id|escape }}">
-                                <img width="180" height="65" src="/images/facebook-logo-large-2x.png" />
+                                <img width="180" height="61" src="/images/facebook-logo-large-2x.png" />
                             </a>
                         </div>
                     </li>

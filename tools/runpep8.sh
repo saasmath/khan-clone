@@ -9,9 +9,13 @@
 blacklist=`dirname "$0"`/runpep8_blacklist.txt
 
 # To generate the blacklist:
-# find . -name '*.py' -print0 | xargs -0 pep8 -r | cut -d : -f 1 | sort -u
+# $ export LC_ALL=C
+# $ find . -name '*.py' -print0 | xargs -0 pep8 -r | cut -d : -f 1 | sort -u
+# (Note the LC_ALL=C makes the sort independent of locale on the machine
+#  and makes this more consistent across developer machines)
 
 # Lint files not in the blacklist.
+export LC_ALL=C
 find . -name "*.py" \
     | sort -u \
     | comm -23 - "${blacklist}" \
