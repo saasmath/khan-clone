@@ -272,7 +272,7 @@ var Profile = {
                 .siblings().hide();
 
             this.activateRelatedTab("community questions");
-            this.updateTitleBreadcrumbs(["Your questions"]);
+            this.updateTitleBreadcrumbs(["Discussion"]);
         },
 
         settingsIframe_: null,
@@ -942,25 +942,18 @@ var Profile = {
     },
 
     /**
-     * Comparison function to order questions by number of notifications
-     * and then by recency
+     * Comparison function to order questions by recency
      */
     cmpQuestions_: function(first, second) {
-        var firstCount = first["notificationsCount"],
-            secondCount = second["notificationsCount"];
-
-        if (firstCount === secondCount) {
-            var firstDate = first["notificationsDate"],
-                secondDate = second["notificationsDate"];
-            if (firstDate < secondDate) {
-                return 1;
-            } else if (firstDate === secondDate) {
-                return 0;
-            } else {
-                return -1;
-            }
+        var firstDate = first["notificationsDate"],
+            secondDate = second["notificationsDate"];
+        if (firstDate < secondDate) {
+            return 1;
+        } else if (firstDate === secondDate) {
+            return 0;
+        } else {
+            return -1;
         }
-        return secondCount - firstCount;
     },
 
     questionsDeferred_: null,
