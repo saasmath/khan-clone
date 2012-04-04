@@ -246,3 +246,49 @@ class TransferAuthToken(BaseSecureToken):
         dt = _from_timestamp(self.timestamp)
         now = (clock or datetime.datetime).utcnow()
         return not dt or (now - dt) > time_to_expiry
+
+
+class PasswordResetToken(BaseSecureToken):
+    """ A short-lived token used to allow users to reset a password on her
+    account.
+
+    """
+
+    @staticmethod
+    def make_token_signature(user_data, timestamp):
+        if not user_data.credential_version:
+            raise "Can't make password reset token for user w/no password."
+
+        nonce = UserNonce.make_for(user_data, "pw_reset").value
+        payload = "\n".join([
+                user_data.user_id,
+                nonce,
+                user_data.credential_version,
+                timestamp
+                ])
+        secret = App.token_recipe_key
+        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+    def validate_signature_for(self, user_data):
+        nonce_entity = UserNonce.get_for(user_data, "pw_reset")
+        if nonce_entity is None:
+            return False
+
+        nonce = nonce_entity.value
+        payload = "\n".join([
+                user_data.user_id,
+                nonce,
+                user_data.credential_version,
+                self.timestamp
+                ])
+        secret = App.token_recipe_key
+        expected = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        return expected == self.signature
+
+    # Force a short expiry for these tokens.
+    DEFAULT_EXPIRY = datetime.timedelta(hours=1)
+
+    def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
+        dt = _from_timestamp(self.timestamp)
+        now = (clock or datetime.datetime).utcnow()
+        return not dt or (now - dt) > time_to_expiry
