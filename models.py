@@ -1201,7 +1201,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     @property
     def prettified_user_email(self):
         if self.is_facebook_user:
-            return "_fb" + self.user_email[len(FACEBOOK_ID_PREFIX):]
+            return "_fb" + self.user_id[len(FACEBOOK_ID_PREFIX):]
         elif self.is_phantom:
             return "nouser"
         else:
@@ -1278,7 +1278,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
     @property
     def is_facebook_user(self):
-        return self.user_email.startswith(FACEBOOK_ID_PREFIX)
+        return is_facebook_user_id(self.user_id)
 
     @property
     def is_phantom(self):

@@ -485,15 +485,12 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
         this.fToggling = true;
         jelDrawer.animate({left: leftDrawer}, 500, function() {self.fToggling = false;});
 
-        if (self.knowledgeMap)
-        {
+        if (self.knowledgeMap) {
             var leftMap = (fExpanded ? 0 : 340);
-            $("#" + this.container + " .map-canvas").animate({marginRight: leftMap + "px", left: leftMap + "px"},
-                    500,
-                    function() {
-                        google.maps.event.trigger(self.knowledgeMap, "resize");
-                    }
-            );
+            $("#" + this.container + " .map-canvas").animate(
+                {marginRight: leftMap + "px", left: leftMap + "px"},
+                500,
+                _.bind(self.triggerResize, self));
         }
     };
 
@@ -517,8 +514,13 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
         var jelDrawerInner = $(".dashboard-drawer-inner", context);
         jelDrawerInner.height(jelDrawerInner.height() - 20);
 
-        if (self.knowledgeMap && self.knowledgeMap.map)
+        self.triggerResize();
+    };
+
+    this.triggerResize = function() {
+        if (self.knowledgeMap && self.knowledgeMap.map) {
             google.maps.event.trigger(self.knowledgeMap.map, "resize");
+        }
     };
 
     this.init();
