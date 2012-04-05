@@ -367,13 +367,26 @@ def layer_cache_check_set_return(
     return result
 
 class ChunkedResult():
+    ''' Allows for storing of data between 1MB and 32MB in size.  If compression
+    is turned on then it will first compress the result and store it in this 
+    object with data set, if it is now under 1MB, otherwise if after compression
+    or if compression is turned off it will do a set_multi to store the result 
+    in chunks.
+    '''
+
     def __init__(self, chunk_list=None, data=None, compress=True):
-        ''' Stores the list of chunks keys that hold the separate chunks of 
-        the result.  If after compressing the result the data is able to fit
-        within a single chunk then the list won't be used and the compressed
-        result will be stored in data.  An optional compress boolean states 
-        whether or not to use compression
+        ''' Stores info on the data to be stored. Either chunk_list is set 
+        or data but not both
+
+        Arguments:
+            chunk_list: listing out the keys of the chunks that store the data 
+            data:  for the case in which the compressed value could fit in a 
+                   single chunk, then data will store the compressed result
+            compress: boolean saying whether we should compress the result
+                      before storing and decompressing afterwards  
         '''
+        assert ((chunk_list or data) and not (chunk_list and data)), ( 
+                "Either chunk_list or data must be set")
         self.chunk_list = chunk_list
         self.data = data
         self.compress = compress
@@ -510,10 +523,7 @@ class KeyValueCache(db.Model):
     @staticmethod
     def get(key, namespace=""):
         values = KeyValueCache.get_multi([key], namespace)
-        if key in values:
-            return values[key]
-
-        return None
+        return values.get(key, None)
 
     @staticmethod
     def get_multi(keys, namespace=""):
