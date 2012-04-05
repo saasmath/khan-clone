@@ -2161,19 +2161,29 @@ def preload_library(version_number, run_code):
     version = TopicVersion.get_by_id(version_number)
 
     # causes circular importing if put at the top
-    from library import library_content_html
+    from library import library_content_html, library_topic_html
     import autocomplete
     import templatetags
+
+    topics = Topic.get_all_topics(version)  # does not include hidden topics!
 
     # preload library and autocomplete cache
     library_content_html(False, version.number)
     logging.info("preloaded library_content_html")
+
+    for topic in topics:
+        library_topic_html(topic.id, version.number)
+    logging.info("preloaded library_topic_html for all topics")
+
     library_content_html(True, version.number)
     logging.info("preloaded ajax library_content_html")
+
     autocomplete.video_title_dicts(version.number)
     logging.info("preloaded video autocomplete")
+
     autocomplete.topic_title_dicts(version.number)
     logging.info("preloaded topic autocomplete")
+
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
@@ -2464,6 +2474,10 @@ class Topic(Searchable, db.Model):
         return '/#%s' % self.id
 
     @property
+    def topic_page_url(self):
+         return '/%s' % self.get_extended_slug()
+
+    @property
     def ka_url(self):
         return util.absolute_url(self.relative_url)
 
@@ -2489,6 +2503,79 @@ class Topic(Searchable, db.Model):
 			})
         return self
 
+    def get_library_data(self, node_dict=None):
+        from homepage import thumbnail_link_dict
+
+        if node_dict:
+            children = [ node_dict[c] for c in self.child_keys if c in node_dict ]
+        else:
+            children = db.get(self.child_keys)
+
+        (thumbnail_video, thumbnail_topic) = self.get_first_video_and_topic()
+
+        ret = {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "children": [{
+                "url": "/%s/v/%s" % (self.get_extended_slug(), v.readable_id),
+                "key_id": v.key().id(),
+                "title": v.title
+            } for v in children if v.__class__.__name__ == "Video"],
+            "child_count": len([v for v in children if v.__class__.__name__ == "Video"]),
+            "thumbnail_link": thumbnail_link_dict(video=thumbnail_video, parent_topic=thumbnail_topic),
+        }
+
+        return ret
+
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_topic_page_data_%s" % self.key(),
+        layer=layer_cache.Layers.Memcache)
+    def get_topic_page_data(self):
+        """ Retrieve the listing of subtopics and videos for this topic.
+            Used on the topic page. """
+        from homepage import thumbnail_link_dict
+
+        (marquee_video, subtopic) = self.get_first_video_and_topic()
+
+        tree = self.make_tree(types=["Video"])
+
+        # Fetch child topics
+        video_child_keys = [v for v in self.child_keys if v.kind() == "Video"]
+        if not video_child_keys:
+            topic_child_keys = [t for t in self.child_keys if t.kind() == "Topic"]
+            topic_children = filter(lambda t: t.has_children_of_type(["Video"]),
+                                    db.get(topic_child_keys))
+
+            # Fetch the descendent videos
+            node_keys = []
+            for subtopic in topic_children:
+                videos = filter(lambda v: v.kind() == "Video", subtopic.child_keys)
+                if videos:
+                    node_keys.extend(videos)
+
+            nodes = db.get(node_keys)
+            node_dict = dict((node.key(), node) for node in nodes)
+
+            subtopics = [t.get_library_data(node_dict=node_dict) for t in topic_children]
+            child_videos = None
+        else:
+            nodes = db.get(video_child_keys)
+            node_dict = dict((node.key(), node) for node in nodes)
+
+            subtopics = None
+            child_videos = self.get_library_data(node_dict=node_dict)
+
+        topic_info = {
+            "topic": self,
+            "marquee_video": thumbnail_link_dict(video=marquee_video, parent_topic=subtopic),
+            "subtopics": subtopics,
+            "child_videos": child_videos,
+            "extended_slug": self.get_extended_slug(),
+        }
+
+        return topic_info
+
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
 
@@ -2509,8 +2596,7 @@ class Topic(Searchable, db.Model):
 
     # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_extended_slug_%s" % self.key(),
-        layer=layer_cache.Layers.Memcache)
+        "topic_extended_slug_%s" % self.key())
     def get_extended_slug(self):
         parent_ids = [topic.id for topic in db.get(self.ancestor_keys)]
         parent_ids.reverse()
@@ -2559,7 +2645,7 @@ class Topic(Searchable, db.Model):
 
         ancestor_topics = [{
             "title": topic.title, 
-            "url": (topic.relative_url if topic.id in Topic._super_topic_ids 
+            "url": (topic.topic_page_url if topic.id in Topic._super_topic_ids 
                     or topic.has_content() else None)
             } 
             for topic in db.get(self.ancestor_keys)][0:-1]
@@ -2568,7 +2654,7 @@ class Topic(Searchable, db.Model):
         return {
             'id': self.id,
             'title': self.title,
-            'url': self.relative_url,
+            'url': self.topic_page_url,
             'extended_slug': self.get_extended_slug(),
             'ancestor_topics': ancestor_topics,
             'top_level_topic': db.get(self.ancestor_keys[-2]).id if len(self.ancestor_keys) > 1 else self.id,

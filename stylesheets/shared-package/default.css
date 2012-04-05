@@ -4047,31 +4047,31 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background: url(/images/email-button-24.png) no-repeat;
 }
 
-.search-topics span.highlighted {
-    font-weight: bold;
-}
-.search-topics div.matching-topic {
+div.topic-condensed {
     width: 620px;
-    margin-left: 20px;
 }
-.search-topics .matching-topic h2 {
+.topic-condensed .topic-description {
+    margin-bottom: 5px;
+}
+.topic-condensed h2 {
     padding-top: 20px;
     font-weight: bold;
     text-decoration: underline;
     margin-bottom: 5px;
 }
-.search-topics .matching-topic .topic-description {
-    margin-bottom: 5px;
-}
-.search-topics .matching-topic ul {
+.topic-condensed ul {
     margin-left: 20px;
 }
-.search-topics .matching-topic li {
+.topic-condensed li {
     float: left;
     width: 300px;
     list-style-type: none;
     margin-top: 0px;
     margin-bottom: 0px;
+}
+
+.search-topics span.highlighted {
+    font-weight: bold;
 }
 
 .searchresult-counts {
@@ -4081,6 +4081,13 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     margin-top: 38px;
     margin-bottom: 5px;
     font-size: 18px
+}
+.search-topics div.topic-condensed {
+    margin-left: 20px;
+}
+.search-topics .topic-condensed li {
+    margin-top: 0px;
+    margin-bottom: 0px;
 }
 .search-topics .videos {
     margin-left: 0px;

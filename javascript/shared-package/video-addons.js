@@ -24,6 +24,48 @@ var VideoControls = {
         this.setAutoPlayEnabled(VideoControls.autoPlayEnabled);
     },
 
+    initPlaceholder: function(jelPlaceholder, youtubeParams) {
+        var jelWrapper = null;
+
+        // Once the youtube player is all loaded and ready, clicking the play
+        // button will play inline.
+        $(VideoControls).one("playerready", function() {
+
+            // Before any playing, unveil and play the real youtube player
+            $(VideoControls).one("beforeplay", function() {
+
+                // Use .left to unhide the player without causing any
+                // re-rendering or "pop"-in of the player.
+                jelWrapper.css("left", 0);
+
+                jelPlaceholder.find(".youtube-play").css("visibility", "hidden");
+
+            });
+
+            jelPlaceholder.click(function(e) {
+
+                VideoControls.play();
+                e.preventDefault();
+
+            });
+
+        });
+
+        // Start loading the youtube player immediately,
+        // and insert it wrapped in a hidden container
+        var template = Templates.get("shared.youtube-player");
+
+        jelPlaceholder
+            .parent()
+                .after(
+                    $(template(youtubeParams))
+                        .wrap("<div class='player-loading-wrapper'/>")
+                        .parent()
+            );
+
+        jelWrapper = jelPlaceholder.parent().next();
+    },
+
     clickYouTubeJump: function() {
         var seconds = $(this).attr("seconds");
         if (VideoControls.player && seconds) {
@@ -78,9 +120,6 @@ var VideoControls = {
     },
 
     initThumbnails: function() {
-        // Queue:false to make sure all of these run at the same time
-        var animationOptions = {duration: 150, queue: false};
-
         $("#thumbnails")
             .cycle({
                 fx: "scrollHorz",
@@ -99,7 +138,16 @@ var VideoControls = {
             })
             .css({ width: "" }) // We want #thumbnails to be full width even though the cycle plugin doesn't
             .find(".thumbnail_link")
-                .click(VideoControls.thumbnailClick).end()
+                .click(VideoControls.thumbnailClick).end();
+
+        this.initThumbnailHover($("#thumbnails"));
+    },
+
+    initThumbnailHover: function(parentEl) {
+        // Queue:false to make sure all of these run at the same time
+        var animationOptions = {duration: 150, queue: false};
+
+        parentEl
             .find(".thumbnail_td")
                 .hover(
                         function() {
@@ -113,7 +161,6 @@ var VideoControls = {
                                 .find(".thumbnail_teaser").animate({ height: 0 }, animationOptions);
                         }
             );
-
     },
 
     thumbnailClick: function() {

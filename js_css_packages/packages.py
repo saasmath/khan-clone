@@ -99,6 +99,13 @@ javascript = {
             "socrates.js",
         ]
     },
+    "topic": {
+        "files": [
+            "content-topic-videos.handlebars",
+            "root-topic-view.handlebars",
+            "topic-page.js",
+        ]
+    },
 
     # Socrates questions. For now, they're here.
     # todo(dmnd) In the long run they should move somewhere else, perhaps
@@ -343,6 +350,11 @@ stylesheets = {
             "bootstrap-alerts.css",
             "bootstrap-tables.css",
             "socrates.css",
+        ]
+    },
+    "topic": {
+        "files": [
+            "topic-page.css",
         ]
     },
     "studentlists": {

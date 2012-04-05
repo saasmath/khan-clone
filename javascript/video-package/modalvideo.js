@@ -72,7 +72,7 @@ var ModalVideo = {
             points: points,
             possible_points: 750, // VIDEO_POINTS_BASE in consts.py
             logged_in: !!USERNAME, // phantom users have empty string usernames
-            video_url: Khan.relatedVideos.makeHref(video)
+            video_url: window.Khan && Khan.relatedVideos && Khan.relatedVideos.makeHref(video) || video.relative_url
         };
 
         this.modal = $(this.template(context))
