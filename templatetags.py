@@ -208,7 +208,7 @@ def topic_browser_get_topics(tree, level=0):
             # Show leaf node as a link
             item_list.append({
                 "level": level,
-                "href": child.relative_url,
+                "href": child.topic_page_url,
                 "title": child.title,
                 "has_divider": needs_divider
             })
@@ -247,7 +247,7 @@ def topic_browser_get_topics(tree, level=0):
     return item_list
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None:
-    "Templatetags.topic_browser_data_%s" % (
+    "Templatetags.topic_browser_data_%s_v1" % (
     version_number if version_number else models.Setting.topic_tree_version()))
 def topic_browser_data(version_number=None):
     """ Returns the JSON data necessary to render the topic browser embedded

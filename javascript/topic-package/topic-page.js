@@ -25,11 +25,6 @@
 
             videosDict[rootTopic.marqueeVideo.youtubeId] = rootTopic.marqueeVideo;
             _.each(rootTopic.subtopics, function(topic) {
-                // Split topic children into two equal lists
-                var listLength = Math.floor((topic.children.length+1)/2);
-                topic.childrenCol1 = topic.children.slice(0, listLength);
-                topic.childrenCol2 = topic.children.slice(listLength);
-
                 videosByTopic[topic.id] = topic;
                 videosDict[topic.thumbnailLink.youtubeId] = topic.thumbnailLink;
             });
@@ -84,8 +79,8 @@
                     selectedTopic.view.show();
                     selectedTopicID = selectedTopic.id;
                 } else {
-                    if (rootPageTopic.subtopics[0].id == rootPageTopic.topic.id) {
-                        rootTopicView = rootTopicView || new TopicPage.ContentTopicView({ model: rootPageTopic.subtopics[0] });
+                    if (rootPageTopic.childVideos) {
+                        rootTopicView = rootTopicView || new TopicPage.ContentTopicView({ model: rootPageTopic.childVideos });
                     } else {
                         rootTopicView = rootTopicView || new TopicPage.RootTopicView({ model: rootPageTopic });
                     }
@@ -110,7 +105,16 @@
             },
 
             render: function() {
-                $(this.el).html(this.template(this.model));
+                // Split topic children into two equal lists
+                var listLength = Math.floor((this.model.children.length+1)/2);
+                var childrenCol1 = this.model.children.slice(0, listLength);
+                var childrenCol2 = this.model.children.slice(listLength);
+
+                $(this.el).html(this.template({
+                    topic: this.model,
+                    childrenCol1: childrenCol1,
+                    childrenCol2: childrenCol2
+                }));
                 VideoControls.initThumbnailHover($(this.el));
             },
 

@@ -107,7 +107,7 @@ a.main-video-link:hover {
 
 .topic-page-content > .container > .nav-pane h2 {
     font-size: 22pt;
-    font-weight: bold;
+    line-height: 32px;
     margin: 10px 0px;
 }
 
@@ -115,7 +115,7 @@ a.main-video-link:hover {
     width: 260px;
     margin-top: 0px;
     padding: 3px 0;
-    padding-top: 24px;
+    padding-top: 12px;
 }
 .topic-page-content > .container > .nav-pane > ul > li {
     position: relative;
@@ -159,7 +159,6 @@ a.main-video-link:hover {
     height: 13px;
 }
 .topic-page-content > .container > .nav-pane > ul > li.selected > a {
-    color: #005987;
     text-decoration: none;
     background-color: #fff;
     border-left: solid 1px #ccc;
@@ -246,21 +245,21 @@ a.main-video-link:hover {
     font-size: 11px;
 }
 
-.content-pane div.main-header .left {
+.content-pane div.main-header .topic-info {
     display: inline-block;
     width: 450px;
     vertical-align: top;
 }
-.content-pane div.main-header .left .topic-title {
+.content-pane div.main-header .topic-info .topic-title {
     font-size: 16pt;
-    margin: 16px 0 12px 0;
+    margin: 30px 0 12px 0;
 }
-.content-pane div.main-header .left .topic-desc {
+.content-pane div.main-header .topic-info .topic-desc {
     font-size: 11pt;
     margin-bottom: 20px;
     color: #777;
 }
-.content-pane div.main-header .right .thumb {
+.content-pane div.main-header .topic-video .thumb {
     background-position: no-repeat top left;
     width: 300px;
     height: 150px;
@@ -271,7 +270,7 @@ a.main-video-link:hover {
     background-size: 300px 150px;
 }
 
-.content-pane div.main-header .left a.call-to-action {
+.content-pane div.main-header .topic-info a.call-to-action {
     position: absolute;
     right: 350px;
     top: 138px;
@@ -283,45 +282,62 @@ a.main-video-link:hover {
     font-family: "MuseoSans500", Helvetica, Arial, sans-serif;
 }
 
-.content-pane div.main-header .right {
+.content-pane div.main-header .topic-video {
     display: inline-block;
     width: 316px;
     vertical-align: top;
 }
-.content-pane div.main-header .right a {
+.content-pane div.main-header .topic-video a {
     display: block;
     width: 316px;
-    padding-top: 20px;
-    padding-left: 30px;
+    padding-top: 30px;
 }
 
-.content-pane div.subtopics-list .subtopic-header {
+.content-pane div.subtopics-list {
+    margin-left: -10px;
+}
+
+.content-pane .subtopic-header {
     font-size: 16pt;
     margin: 22px 0 12px 0;
 }
 .content-pane div.subtopics-list .subtopic {
-    padding: 20px;
-    height: 160px;
+    float: left;
+    width: 50%;
+    height: 102px;
+    border-bottom: solid 1px #ddd;
+}
+.content-pane div.subtopics-list a.subtopic-link {
+    display: block;
+    color: #356700;
+    height: 102px;
+}
+.content-pane div.subtopics-list a.subtopic-link:hover {
+    background-color: #ebf1df;
+    color: #356700;
+    text-decoration: none;
 }
 .content-pane div.subtopics-list .thumbnail-link {
     display: inline-block;
-    width: 270px;
+    width: 150px;
     vertical-align: top;
 }
 .content-pane div.subtopics-list .thumb {
+    display: inline-block;
     background-position: no-repeat top left;
-    width: 250px;
-    height: 150px;
+    width: 140px;
+    height: 80px;
     border: 1px solid #aaa;
     -webkit-box-shadow: 0 0 3px #ccc;
     -moz-box-shadow: 0 0 3px #ccc;
     box-shadow: 0 0 3px #ccc;
-    background-size: 250px 150px;
+    background-size: 140px 80px;
+    margin: 10px 5px 10px 10px;
 }
 
 .content-pane div.subtopics-list .topic-info {
     display: inline-block;
-    width: 450px;
+    width: 230px;
     padding-top: 10px;
     padding-bottom: 20px;
     vertical-align: top;
@@ -362,4 +378,7 @@ a.main-video-link:hover {
 }
 .content-pane div.videos-list ol > li > a > .vid-progress {
     display: block;
+    line-height: 18px;
+    padding-top: 8px;
+    padding-bottom: 8px;
 }

@@ -98,44 +98,17 @@ class TopicPage(request_handler.RequestHandler):
 
     @staticmethod
     def show_topic(handler, topic):
-        selected_topic = None
         parent_topic = db.get(topic.parent_keys[0])
-
-        import logging
-        logging.info("Parent key %s" % topic.parent_keys[0])
 
         # If the parent is a supertopic, use that instead
         if parent_topic.id in Topic._super_topic_ids:
-            selected_topic = topic
             topic = parent_topic
 
-        (marquee_video, subtopic) = topic.get_first_video_and_topic()
-
-        tree = topic.make_tree(types=["Video"])
-
-        topic_children = [t for t in tree.children if t.kind() == "Topic"]
-
-        if topic_children:
-            video_lists = [t.get_library_data() for t in topic_children if t.has_children_of_type(["Video"])]
-            if not selected_topic:
-                selected_topic = topic_children[0]
-        else:
-            video_lists = [topic.get_library_data()]
-
-        from homepage import thumbnail_link_dict
-
-        topic_info = {
-            "topic": topic,
-            "marquee_video": thumbnail_link_dict(video=marquee_video, parent_topic=subtopic),
-            "subtopics": video_lists,
-            "extended_slug": topic.get_extended_slug(),
-        }
+        topic_info = topic.get_topic_page_data()
 
         template_values = {
             "main_topic": topic,
-            "main_topic_info": topic_info,
-            "selected_topic": selected_topic,
-            "topic_children": topic_children,
+            "main_topic_info": topic_info
         }
         handler.render_jinja2_template('viewtopic.html', template_values)
 

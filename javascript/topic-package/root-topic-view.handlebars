@@ -1,30 +1,28 @@
 <div>
   <div data-role="header" class="main-header">
-    <div class="left">
-      <div class='topic-title'>{{ topic.title }}</div>
-      <div class='topic-desc'>{{{ topic.description }}}</div>
-      <div><a href="{{ marqueeVideo.href }}" data-tag="Topic Home C2A" data-youtube-id="{{ marqueeVideo.youtubeId }}" class="call-to-action simple-button action-gradient green modal-video">Watch "{{ marqueeVideo.title }}"</a></div>
-    </div>
-    <div class="right thumbnail_td">
+    <div class="topic-video thumbnail_td">
       <a href="{{ marqueeVideo.href }}" data-tag="Topic Page Featured" data-youtube-id="{{ marqueeVideo.youtubeId }}" class="thumbnail_link modal-video">
         <div class="thumb" style="background-image:url('{{ marqueeVideo.thumbUrls.hq }}')"></div>
         <div class="thumbnail_label"><div class="thumbnail_desc">{{{ marqueeVideo.descHtml }}}</div><div class="thumbnail_teaser">{{{ marqueeVideo.teaserHtml }}}</div></div>
       </a>
     </div>
+    <div class="topic-info">
+      <div class='topic-title'>{{ topic.title }}</div>
+      <div class='topic-desc'>{{{ topic.description }}}</div>
+    </div>
   </div>
+  <div class="subtopic-header">Topics</div>
   <div class="subtopics-list">
-    <div class="subtopic-header">Topics</div>
     {{#each subtopics }}
       <div class="subtopic thumbnail_td">
-        <a href="{{ thumbnailLink.href }}" data-tag="Topic Page Featured" data-youtube-id="{{ thumbnailLink.youtubeId }}" class="thumbnail-link modal-video">
+        <a class="subtopic-link" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
           <div class="thumb" style="background-image:url('{{ thumbnailLink.thumbUrls.hq }}')"></div>
-          <div class="thumbnail_label"><div class="thumbnail_desc">{{{ thumbnailLink.descHtml }}}</div><div class="thumbnail_teaser">{{{ thumbnailLink.teaserHtml }}}</div></div>
-        </a>
         <div class="topic-info">
           <div class="topic-title">{{ title }}</div>
           <div class="topic-description">{{{ description }}}</div>
-          <div class="topic-video-count"><a class="subtopic-link" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">Browse {{ childCount }} videos</a></div>
+          <div class="topic-video-count">Browse {{ childCount }} videos</div>
         </div>  
+        </a>
       </div>
     {{/each}}
   </div>

@@ -39,9 +39,9 @@
             <div class="right-arrow"></div>
           </a>
         </li>
-        {% if topic_children %}
+        {% if main_topic_info.subtopics %}
         <li class="subheading"><span>Topics</span></li>
-        {% for child in topic_children %}
+        {% for child in main_topic_info.subtopics %}
           <li data-id="{{ child.id }}">
             <a class="subtopic-link" href="/{{ main_topic_info.extended_slug }}/{{ child.id }}" data-id="{{ child.id }}">
               {{ child.title|escape }}
