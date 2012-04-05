@@ -136,10 +136,12 @@ def get_profile_from_fb_token(access_token):
         except (facebook.GraphAPIError, urlfetch.DownloadError, AttributeError, urllib2.HTTPError), error:
             if type(error) == urllib2.HTTPError and error.code == 400:
                 c_facebook_tries_left = 0
-                logging.debug("Ignoring '%s'. Assuming access_token is no longer valid: %s" % (error, access_token))
+                logging.error(("Ignoring '%s'. Assuming access_token " +
+                               "is no longer valid: %s") % (error, access_token))
             else:
                 c_facebook_tries_left -= 1
-                logging.error("Ignoring Facebook graph error '%s'. Tries left: %s" % (error, c_facebook_tries_left))
+                logging.error(("Ignoring Facebook graph error '%s'. " +
+                               "Tries left: %s") % (error, c_facebook_tries_left))
 
     return profile
 

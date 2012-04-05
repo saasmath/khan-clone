@@ -40,6 +40,7 @@ from counters import user_counter
 from facebook_util import is_facebook_user_id, FACEBOOK_ID_PREFIX
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
 from decorators import clamp, synchronized_with_memcache
+from phantom_users import phantom_util
 import base64, os
 
 from image_cache import ImageCache
@@ -1177,9 +1178,12 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
     @property
     def email(self):
-        """ Unlike key_email below, this email property
-        represents the user's current email address and
-        can be displayed to users.
+        """ Unlike key_email below, this email property represents the user's
+        current email address and can be displayed to users.
+
+        Note that for some users, this field can be a URI and not an actual
+        e-mail address.
+
         """
         return self.user_email
 
@@ -1193,6 +1197,19 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         property.
         """
         return self.user.email()
+    
+    def has_sendable_email(self):
+        """ Returns whether or not this user's email property corresponds to
+        an actual e-mail that we can send mail to.
+
+        """
+
+        if self.is_pre_phantom():
+            return False
+
+        value = self.email
+        return (not is_facebook_user_id(value) and
+                not phantom_util.is_phantom_id(value))
 
     @property
     def badge_counts(self):
