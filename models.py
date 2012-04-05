@@ -1385,17 +1385,22 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
         return user_data
 
-    # Avoid an extra DB call in the (fairly often) case that the requested email
-    # is the email of the currently logged-in user
     @staticmethod
-    def get_possibly_current_user(email):
-        if not email:
+    def get_possibly_current_user(identifier):
+        """ Returns a UserData object corresponding to the identifier
+        (key_email or user_id value), using the request cache for the
+        current-logged in user if the identifier matches.
+        
+        """
+
+        if not identifier:
             return None
 
         user_data_current = UserData.current()
-        if user_data_current and user_data_current.user_email == email:
+        if user_data_current and user_data_current.key_email == identifier:
             return user_data_current
-        return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
+        return (UserData.get_from_user_id(identifier) or
+                UserData.get_from_db_key_email(identifier))
 
     @classmethod
     def key_for(cls, user_id):
