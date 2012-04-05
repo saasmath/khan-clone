@@ -2457,7 +2457,7 @@ class Topic(Searchable, db.Model):
     # level child topics
     _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry", 
                         "brit-cruise", "california-standards-test", "gmat",
-                        "linear-algebra"]
+                        "linear-algebra", "finance-economics"]
 
     @property
     def relative_url(self):
