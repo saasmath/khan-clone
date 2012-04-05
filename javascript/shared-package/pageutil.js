@@ -923,18 +923,30 @@ var HeaderTopicBrowser = {
     hoverIntentHandlers: function(timeout, sensitivityX, setActive) {
         // Intentionally create one closure per <ul> level so each has
         // its own selected element
+        
+        // activeEl is the currently focused <li> element. The focus is
+        // maintained until the out() function is called, even if other
+        // <li> elements get an over() call.
         var activeEl = null;
+
+        // nextEl is the element currently being hovered over in the case
+        // that activeEl isn't giving up focus. When activeEl gives up
+        // focus it moves to the current nextEl.
         var nextEl = null;
+
         return {
             over: function() {
                 if (this == activeEl) {
                     return;
                 }
                 if (activeEl) {
+                    // Don't grab focus until activeEl gives it up.
                     nextEl = this;
                 } else {
+                    // There is no activeEl, so grab focus now.
                     $(this).addClass("hover-active");
                     if (setActive) {
+                        // Setting child-active overrides the hover CSS
                         $(".nav-subheader ul.topic-browser-menu")
                             .addClass("child-active")
                             .removeClass("none-active");
@@ -946,12 +958,15 @@ var HeaderTopicBrowser = {
                 if (activeEl == this) {
                     $(this).removeClass("hover-active");
                     if (nextEl) {
+                        // Transfer the focus to nextEl and keep child-active on
                         $(nextEl).addClass("hover-active");
                         activeEl = nextEl;
                         nextEl = null;
                     } else {
+                        // Clear the focus
                         activeEl = null;
                         if (setActive) {
+                            // Setting none-active re-enables the hover CSS
                             $(".nav-subheader ul.topic-browser-menu")
                                 .removeClass("child-active")
                                 .addClass("none-active");
@@ -959,6 +974,9 @@ var HeaderTopicBrowser = {
                     }
                 } else {
                     if (this == nextEl) {
+                        // If this element was queued up for focus, clear it
+                        // to prevent an element getting focus and never losing
+                        // it.
                         nextEl = null;
                     }
                 }
