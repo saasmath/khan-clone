@@ -1,14 +1,12 @@
 #!/user/bin/env python
 
-from agar.test import BaseTest
 import layer_cache
 import request_cache as cachepy
 from google.appengine.api import memcache
 from google.appengine.ext import db
-from google.appengine.api import apiproxy_stub
-from google.appengine.ext import testbed
+from testutil import GAEModelTestCase
 
-class LayerCacheTest(BaseTest):
+class LayerCacheTest(GAEModelTestCase):
 
     def setUp(self):
         # big_string is bigger than the 1MB memcache and datastore limits and

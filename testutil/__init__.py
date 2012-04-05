@@ -34,6 +34,23 @@ class GAEModelTestCase(unittest.TestCase):
     def tearDown(self):
         self.testbed.deactivate()
 
+    def truncateValue(self, a):
+        max_length=100
+        str_a = str(a)
+        if str_a <= max_length:
+            return str_a
+        else:
+            return "%s(%i): '%s...%s'" % (
+                a.__class__.__name__, 
+                len(a), 
+                str_a[:max_length/2], 
+                str_a[-max_length/2:])
+
+    def assertEqualTruncateError(self, a, b):
+        maxlen=100
+        assert a == b, "%s != %s" % (self.truncateValue(a), 
+                                     self.truncateValue(b))
+
 class MockDatetime(object):
     """ A utility for mocking out the current time.
 
