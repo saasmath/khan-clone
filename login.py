@@ -471,7 +471,6 @@ class Signup(request_handler.RequestHandler):
                 'success': True,
                 'email': email,
                 'resend_detected': resend_detected,
-                'existing_google_user_detected': existing_google_user_detected,
                 }
         
         if App.is_dev_server:
