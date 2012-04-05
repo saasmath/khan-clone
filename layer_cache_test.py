@@ -32,21 +32,15 @@ class LayerCacheMemcacheTest(LayerCacheTest):
         super(LayerCacheMemcacheTest, self).setUp()
 
     def test_memcache_should_return_cached_result(self):
-        ''' A basic test to make sure memcache layer is working '''
         self.cache_func("a")
         self.assertEqual("a", self.cache_func("b"))
 
     def test_large_memcache_should_chunk_and_return_cached_result(self):
-        ''' This test will test something that will make use of multiple chunks
-        '''
         self.cache_func(self.big_string)
         self.assertIsNotNone(memcache.get(self.key + "__chunk0__"))
         self.assertEqualTruncateError(self.big_string, self.cache_func("a"))
 
     def test_should_throw_out_result_on_missing_chunk_and_reexecute(self):
-        ''' This will test that results are recalculated when chunk is missing
-        '''
-
         self.cache_func(self.big_string)
         # deleting the 2nd chunk ... next time we get it pickle.loads should 
         # throw an error and the target func will be rexecuted
@@ -68,16 +62,10 @@ class LayerCacheMemcacheTest(LayerCacheTest):
         self.assertEqualTruncateError("a", self.cache_func("a"))
     
     def test_huge_memcache_set_should_fail_gracefully_and_reexecute(self):
-        ''' This will test to see if seeting a huge value fails gracefully '''
-
         self.cache_func(self.huge_string)
         self.assertEqualTruncateError("a", self.cache_func("a"))
     
     def test_use_chunks_parameters_forces_chunking_for_small_size(self):
-        '''Test whether use_chunks parameter works correctly
- 
-        Checks to make sure it saves a ChunkedResult regardless of size
-        '''
         @layer_cache.cache(layer=layer_cache.Layers.Memcache, use_chunks=True)
         def func(result):
             return result
@@ -98,8 +86,6 @@ class LayerCacheDatastoreTest(LayerCacheTest):
         super(LayerCacheDatastoreTest, self).setUp()
 
     def test_datastore_should_return_cached_result(self):
-        ''' Basic sanity check to make sure we can read/write to datastore  
-        '''
         self.cache_func("a")
         
         # asserting that we are not using chunks
@@ -108,9 +94,7 @@ class LayerCacheDatastoreTest(LayerCacheTest):
 
         self.assertEqual("a", self.cache_func("b"))
     
-    def test_large_datastore_should_chunk_and_return_cached_result(self):
-        ''' Test that the datastore works with Chunked Results '''
-        
+    def test_large_datastore_should_chunk_and_return_cached_result(self):        
         self.cache_func(self.big_string)
 
         # asserting that it is using chunks
@@ -121,8 +105,6 @@ class LayerCacheDatastoreTest(LayerCacheTest):
         self.assertEqualTruncateError(self.big_string, self.cache_func("a"))
 
     def test_chunked_result_deletion_leaves_no_chunks_behind(self):
-        ''' This will test that all chunks are deleted
-        '''
         self.cache_func(self.big_string)
         layer_cache.ChunkedResult.delete(
             self.key, 
@@ -150,10 +132,8 @@ class LayerCacheLayerTest(LayerCacheTest):
     def test_missing_inapp_cache_gets_repopulated_when_read_from_memcache(self):
         ''' Tests if missing inapp cache gets repopulated from memcache
         
-        This will make sure that if something is missing from inAppMemory
-        in layercache that it will correctly save it with the values from
-        memcache.  It performs the checks on large values that will make
-        use of the ChunkedResult
+        It performs the checks on large values that will make use of the 
+        ChunkedResult
         '''
 
         @layer_cache.cache(layer=layer_cache.Layers.Memcache | 
@@ -178,10 +158,8 @@ class LayerCacheLayerTest(LayerCacheTest):
     def test_missing_inapp_and_memcache_get_repopulated_from_datastore(self):
         ''' Tests if result from datastore resaves data to higher levels
          
-        This will make sure that if something is missing from a higher level
-        in layercache that it will correctly save it with the values from
-        the lower levels.  It performs the checks on large values that will make
-        use of the ChunkedResult.
+        It performs the checks on large values that will make use of the 
+        ChunkedResult.
         '''
 
         @layer_cache.cache(layer=layer_cache.Layers.Memcache | 
@@ -225,8 +203,6 @@ class LayerCacheCompressionTest(LayerCacheTest):
 
 
     def test_with_compression_should_save_in_just_one_chunk(self):
-        ''' This test will test that compressing is working
-        '''
         self.cache_func(self.big_string)
         
         # make sure cache is being used by checking to make sure it is the same
@@ -236,7 +212,7 @@ class LayerCacheCompressionTest(LayerCacheTest):
         # check to make sure that only one memcache item got created
         # if compression wasn't working than 4 keys would be set including the
         # following key
-        self.assertIsNone(memcache.get(self.key + "__chunk1__"))
+        self.assertIsNone(memcache.get(self.key + "__chunk0__"))
 
     def test_corrupted_uncompressible_chunk_should_reexecute_target(self):
         '''Tests whether decompression fails silently if data is corrupt. 
