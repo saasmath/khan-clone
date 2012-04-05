@@ -427,7 +427,7 @@ var VideoStats = {
                     "Video ID": id,
                     "Percent (begin)": this.dPercentLastSaved
                 });
-                gae_bingo.bingo(["topic_browser_started_video"]);
+                gae_bingo.bingo(["topic_pages_started_video"]);
                 
             }
         }
@@ -540,7 +540,7 @@ var VideoStats = {
                 Analytics.trackSingleEvent("Video Complete", {
                     "Video ID": id
                 });
-                gae_bingo.bingo(["topic_browser_completed_video"]);
+                gae_bingo.bingo(["topic_pages_completed_video"]);
             }
         }
     },

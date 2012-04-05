@@ -901,7 +901,6 @@ var HeaderTopicBrowser = {
         $(".nav-subheader .watch-link.dropdown-toggle")
             .on('mouseenter', function() {
                 if (!HeaderTopicBrowser.rendered) {
-                    gae_bingo.bingo(["topic_browser_clicked_link"]);
                     HeaderTopicBrowser.render();
                 }
                 $(this).dropdown("open");

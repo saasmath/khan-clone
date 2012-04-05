@@ -74,6 +74,7 @@ import robots
 from importer.handlers import ImportHandler
 
 from library import library_topic_html
+from gae_bingo.gae_bingo import bingo, ab_test
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -129,6 +130,13 @@ class TopicPage(request_handler.RequestHandler):
                 topic = models.Topic.get_by_id(path_list[-2])
 
             if topic:
+                # Begin topic pages A/B test
+                show_topic_pages = ab_test("Show topic pages", ["show", "hide"], ["topic_pages_view_page", "topic_pages_started_video", "topic_pages_completed_video"])
+                if show_topic_pages == "hide":
+                    self.redirect("/#%s" % topic.id)
+                bingo("topic_pages_view_page")
+                # End topic pages A/B test
+
                 if path != topic.get_extended_slug():
                     # If the topic ID is found but the path is incorrect,
                     # redirect the user to the canonical path

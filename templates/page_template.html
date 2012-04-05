@@ -275,7 +275,7 @@
     {% if watch_topic_browser_enabled %}
     <script type="text/javascript">
     HeaderTopicBrowser.init();
-    HeaderTopicBrowser.setData({{ templatetags.topic_browser_data() }});
+    HeaderTopicBrowser.setData({{ templatetags.topic_browser_data(show_topic_pages=show_topic_pages) }});
     </script>
     {% endif %}
 
