@@ -46,7 +46,7 @@ class TokenTests(BaseTest):
         App.token_recipe_key = self.orig_recipe_key
         super(TokenTests, self).tearDown()
 
-    def make_user(self, user_id, credential_version):
+    def make_user(self, user_id, credential_version=None):
         u = models.UserData.insert_for(user_id, user_id)
         u.credential_version = credential_version
         u.put()
@@ -93,3 +93,27 @@ class TokenTests(BaseTest):
         parsed = tokens.AuthToken.for_value(token.value)
         time_to_expiry = datetime.timedelta(30)
         self.assertTrue(parsed.is_valid(u, time_to_expiry, clock))
+
+    def test_pw_reset_token_should_be_single_use(self):
+        clock = testutil.MockDatetime()
+        u = self.make_user("userid1")
+        u.set_password("seekrit one")
+        pw_token = tokens.PasswordResetToken.for_user(u, clock)
+
+        self.assertTrue(pw_token.is_valid(
+                u, datetime.timedelta(1), clock))
+
+        u.set_password("seekrit two")
+        self.assertFalse(pw_token.is_valid(
+                u, datetime.timedelta(1), clock))
+
+    def test_pw_reset_token_resets_on_subsequent_creations(self):
+        clock = testutil.MockDatetime()
+        u = self.make_user("userid1", "credential version 0")
+
+        token1 = tokens.PasswordResetToken.for_user(u, clock)
+        self.assertTrue(token1.is_valid(u, datetime.timedelta(1), clock))
+
+        token2 = tokens.PasswordResetToken.for_user(u, clock)
+        self.assertFalse(token1.is_valid(u, datetime.timedelta(1), clock))
+        self.assertTrue(token2.is_valid(u, datetime.timedelta(1), clock))
