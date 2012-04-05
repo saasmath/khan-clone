@@ -259,6 +259,7 @@
             margin-top: -7px;
             padding: 0 10px;
             line-height: 23px;
+            display: inline-block;
         }
     .tab-content .graph-options {
         font-size: 10px;
