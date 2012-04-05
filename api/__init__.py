@@ -4,7 +4,6 @@ from functools import wraps
 
 from app import App
 from custom_exceptions import QuietException
-from werkzeug.wrappers import BaseResponse
 
 # *PRIVATE* API version number
 # Increment the version if any non-public API calls change in a non-backwards compatible way.
@@ -112,10 +111,7 @@ def add_no_cache_header(func):
     def no_cache_header_added(*args, **kwargs):
         result = func(*args, **kwargs)
 
-        if not isinstance(result, BaseResponse):
-            result = current_app.response_class(result)
-
-        if hasattr(result, "cache_control"):
+        if isinstance(result, current_app.response_class):
             # If this isn't an explicitly cacheable response,
             # never cache any API results. We don't want private caches.
             if not result.cache_control.public:
