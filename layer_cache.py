@@ -392,7 +392,7 @@ class ChunkedResult():
         
         size = len(result)
         if size > MAX_SIZE:
-            logging.warning("Trying to cache %s of %i bytes (%i bytes is max)" % 
+            logging.warning("Not caching %s: %i is greater than maxsize %i" % 
                             (key, size, MAX_SIZE))
             return
             
