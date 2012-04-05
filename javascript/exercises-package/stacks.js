@@ -454,15 +454,24 @@ Exercises.CurrentCardView = Backbone.View.extend({
         }, 500);
 
         // Fade in/out our various pieces of "calculating progress" text
-        var fadeInNextText = function(jel) {
+        var fadeInNextText = function(jel, egg) {
 
+            var messages = $(".current-card-contents .calc-text-spin span");
             if (!jel || !jel.length) {
-                jel = $(".current-card-contents .calc-text-spin span").first();
+                jel = messages;
             }
 
-            jel.fadeIn(600, function() {
-                jel.delay(1000).fadeOut(600, function() {
-                    fadeInNextText(jel.next("span"));
+            var thisMessage = (egg == null) ? jel.first() : $(egg);
+            var nextMessage = jel.next("span:not(.egg)");
+
+            var r = Math.random();
+            var nextEgg = _.find(_.shuffle(messages.filter(".egg")), function(elt){
+                return r < $(elt).data("prob");
+              });
+
+            thisMessage.fadeIn(600, function() {
+                thisMessage.delay(1000).fadeOut(600, function() {
+                    fadeInNextText(nextMessage, nextEgg);
                 });
             });
         };
