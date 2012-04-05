@@ -1801,9 +1801,19 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         return self.videos_completed
 
     def feedback_notification_count(self):
+        """ Return the number of the user's questions with unread answers
+        """
         if self.count_feedback_notification == -1:
-            self.count_feedback_notification = models_discussion.FeedbackNotification.gql("WHERE user = :1", self.user).count()
+            # There is a FeedbackNotification for each unread answer
+            notification_query = models_discussion.FeedbackNotification.gql(
+                    "WHERE user = :1",
+                    self.user)
+
+            question_keys = set(n.feedback.question_key() for n in notification_query)
+
+            self.count_feedback_notification = len(question_keys)
             self.put()
+
         return self.count_feedback_notification
 
     def save_goal(self, goal):
