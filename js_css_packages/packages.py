@@ -343,6 +343,7 @@ stylesheets = {
             "bootstrap-alerts.css",
             "bootstrap-tables.css",
             "socrates.css",
+            "timebar.css",
         ]
     },
     "studentlists": {

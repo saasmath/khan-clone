@@ -1,0 +1,38 @@
+.timebar {
+	position: relative;
+}
+
+.event {
+	display: inline-block;
+	margin-left: -20px;
+	width: 40px;
+	position: absolute;
+}
+
+.event .stem {
+	margin: 0 auto;
+	height: 8px;
+	width: 2px;
+	border: none;
+	background-color: #000;
+}
+
+.event .icon {
+	display: block;
+	margin: 0 auto;
+	width: 18px;
+	background-color: orange;
+	border: 2px solid #000;
+	color: #000;
+	text-align: center;
+	font-family: Courier;
+	font-weight: bold;
+	font-size: 18px;
+	line-height: 18px;
+	border-radius: 4px;
+}
+
+.event a.icon:hover {
+	text-decoration: none;
+	color: #000;
+}

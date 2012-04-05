@@ -1,12 +1,8 @@
-<strong>Video sections:</strong>
-<ol>
-    {{#each sections}}
-    <li>
-        <span>{{time}}</span>
-        <a href="#{{slug}}">{{title}}</a>
-        {{#each nested}}
-            <a class="question-link" href="#{{slug}}" title="{{time}}">?</a>
-        {{/each}}
-    </li>
-    {{/each}}
-</ol>
+<div class="timebar">
+	{{#each questions}}
+	<span class="event" style="left: {{pc}}%">
+		<div class="stem"></div>
+		<a href="#{{slug}}" class="icon" title="{{time}}">?</a>
+	</span>
+	{{/each}}
+</div>

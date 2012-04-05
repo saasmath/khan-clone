@@ -122,6 +122,8 @@
 }
 .youtube-video {
     position: relative;
+    /* without the following, 7 extra pixels sneak in from somewhere? */
+    height: 480px;
 }
 .subtitles-warning {
     display: none;

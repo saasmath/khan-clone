@@ -627,8 +627,9 @@ Socrates.MasterView = Backbone.View.extend({
 Socrates.Nav = Backbone.View.extend({
     template: Templates.get("socrates.socrates-nav"),
 
-    render: function() {
-        // want to render list of toplevel items only
+    // todo(dmnd) remove this if it's no longer needed
+    bookmarksJson: function() {
+        // render list of toplevel items only
         var sections = [];
         this.model.each(function(item) {
             var json = {
@@ -643,10 +644,28 @@ Socrates.Nav = Backbone.View.extend({
             } else {
                 sections.push(json);
             }
-        });
+        }, this);
 
+        return sections;
+    },
+
+    questionsJson: function() {
+        return this.model.
+            filter(function(i) {return i.constructor == Socrates.Question;}).
+            map(function(question) {
+                return {
+                    title: question.get("title"),
+                    time: question.get("time"),
+                    slug: question.slug(),
+                    nested: [],
+                    pc: question.seconds() / this.options.videoDuration * 100
+                };
+            }, this);
+    },
+
+    render: function() {
         $(this.el).html(this.template({
-            sections: sections
+            questions: this.questionsJson()
         }));
         return this;
     }
@@ -944,11 +963,15 @@ Socrates.init = function(youtubeId) {
 
 
     // Render views
-    window.nav = new Socrates.Nav({
-        el: ".socrates-nav",
-        model: Bookmarks
+    VideoControls.invokeWhenReady(function() {
+        var duration = VideoControls.player.getDuration();
+        window.nav = new Socrates.Nav({
+            el: ".socrates-nav",
+            model: Bookmarks,
+            videoDuration: duration
+        });
+        nav.render();
     });
-    nav.render();
 
     window.masterView = new Socrates.MasterView({
         el: ".video-overlay",
