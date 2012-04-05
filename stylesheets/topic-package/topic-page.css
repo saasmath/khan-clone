@@ -148,15 +148,16 @@ a.main-video-link:hover {
     padding-right: 20px;
 }
 .topic-page-content > .container > .nav-pane > ul > li > a > .right-arrow {
-    background-image: url(/images/non-repeating-sprites.4.png);
-    background-position: -82px -36px;
+    border-color: transparent transparent transparent black;
+    border-width: 4px;
+    border-style: solid;
+    width: 0px;
+    height: 0px;
 
     position: absolute;
     top: 50%;
-    margin-top: -7px;
-    right: 12px;
-    width: 7px;
-    height: 13px;
+    margin-top: -4px;
+    right: 8px;
 }
 .topic-page-content > .container > .nav-pane > ul > li.selected > a {
     text-decoration: none;
@@ -166,6 +167,9 @@ a.main-video-link:hover {
     border-bottom: solid 1px #ccc;
     border-right: solid 1px #fff;
     padding: 3px 21px 3px 7px;
+}
+.topic-page-content > .container > .nav-pane > ul > li.selected > a > .right-arrow {
+    right: 9px;
 }
 
 .topic-page-content > .container > .content-pane {
@@ -232,8 +236,10 @@ a.main-video-link:hover {
 }
 .content-pane div.main-header div.thumbnail_desc,
 .content-pane div.subtopics-list div.thumbnail_desc {
+    width: 270px;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .content-pane div.main-header div.thumbnail_teaser,
 .content-pane div.subtopics-list div.thumbnail_teaser {
@@ -260,14 +266,15 @@ a.main-video-link:hover {
     color: #777;
 }
 .content-pane div.main-header .topic-video .thumb {
-    background-position: no-repeat top left;
+    background-repeat: no-repeat;
+    background-position: 0px -37px;
     width: 300px;
-    height: 150px;
+    height: 160px;
     border: 1px solid #aaa;
     -webkit-box-shadow: 0 0 3px #ccc;
     -moz-box-shadow: 0 0 3px #ccc;
     box-shadow: 0 0 3px #ccc;
-    background-size: 300px 150px;
+    background-size: 300px 234px;
 }
 
 .content-pane div.main-header .topic-info a.call-to-action {
@@ -305,7 +312,9 @@ a.main-video-link:hover {
     float: left;
     width: 50%;
     height: 102px;
-    border-bottom: solid 1px #ddd;
+}
+.content-pane div.subtopics-list .subtopic.not-first {
+    border-top: solid 1px #ddd;
 }
 .content-pane div.subtopics-list a.subtopic-link {
     display: block;
@@ -347,7 +356,6 @@ a.main-video-link:hover {
     font-weight: bold;
 }
 .content-pane div.subtopics-list .topic-info .topic-description {
-    padding-bottom: 12px;
     color: #777;
 }
 .content-pane div.subtopics-list .topic-info .topic-video-count {

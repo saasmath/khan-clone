@@ -134,6 +134,11 @@
             },
 
             render: function() {
+                $.each(this.model.subtopics, function(idx, subtopic) {
+                    if (idx > 1) {
+                        subtopic.notFirst = true;
+                    }
+                });
                 $(this.el).html(this.template(this.model));
                 VideoControls.initThumbnailHover($(this.el));
             },

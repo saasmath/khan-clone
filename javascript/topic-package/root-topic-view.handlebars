@@ -14,12 +14,12 @@
   <div class="subtopic-header">Topics</div>
   <div class="subtopics-list">
     {{#each subtopics }}
-      <div class="subtopic thumbnail_td">
+      <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{/if}}">
         <a class="subtopic-link" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
           <div class="thumb" style="background-image:url('{{ thumbnailLink.thumbUrls.hq }}')"></div>
         <div class="topic-info">
           <div class="topic-title">{{ title }}</div>
-          <div class="topic-description">{{{ description }}}</div>
+          <div class="topic-description">{{{ ellipsis description 76 }}}</div>
           <div class="topic-video-count">Browse {{ childCount }} videos</div>
         </div>  
         </a>

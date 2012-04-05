@@ -103,6 +103,10 @@ class TopicPage(request_handler.RequestHandler):
         # If the parent is a supertopic, use that instead
         if parent_topic.id in Topic._super_topic_ids:
             topic = parent_topic
+        elif not (topic.id in Topic._super_topic_ids or
+                  topic.has_children_of_type(["Video"])):
+            handler.redirect("/", True)
+            return
 
         topic_info = topic.get_topic_page_data()
 
