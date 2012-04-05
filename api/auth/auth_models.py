@@ -66,7 +66,7 @@ class OAuthMap(db.Model):
 
         return append_url_params(self.callback_url, params_callback)
 
-    def _get_authenticated_user_info(self, id_only=False):
+    def _get_authenticated_user_info(self):
         """ Gets the UserData and user_id for this OAuthMap, if it's still
         valid. Returns (None, None) if no valid user is found.
         

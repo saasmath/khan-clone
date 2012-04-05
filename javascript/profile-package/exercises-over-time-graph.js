@@ -23,7 +23,7 @@ var ExerciseGraphOverTime = {
                     events: {
                         click: function() {
                             Profile.router.navigate(
-                                    "/vital-statistics/exercise-problems/" + this.name,
+                                    "/vital-statistics/problems/" + this.name,
                                     true);
                         }
                     }
@@ -43,7 +43,7 @@ var ExerciseGraphOverTime = {
         },
         yAxis: {
             title: {
-                text: "Modules Completed"
+                text: "Skills Completed"
             },
             plotLines: [{
                 value: 0,

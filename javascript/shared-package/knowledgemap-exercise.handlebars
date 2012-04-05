@@ -1,10 +1,13 @@
-<div class="exercise-badge" data-id="{{ name }}">
-  <a class="proficient-badge {{#if disabled}}disabled{{/if}}" href="{{ url }}">
-    <img src="{{ badgeIcon }}" height="80" width="76">
-    <div class="exercise-goal-wrapper"><img class="exercise-goal-icon" style="display: none" src="/images/flag.png"></div>
-  </a>
-  <div class="energy-points-badge">{{ points }}</div>
-  <div class="exercise-title"><a href="{{ url }}">{{ display_name }}</a></div>
-  <span class="exercise-show simple-button action-gradient" data-id="name" style="display:none;"><img src="/images/map-target.png" title="Show in map" alt="Show in map"></span>
-  {{#with streakBar}}{{>streak-bar}}{{/with}}
+<div class="exercise-badge">
+    <div class="skill-status" data-id="{{name}}">
+
+        <span class="pan-to simple-button action-gradient" data-id="name" style="display:none;"><img src="/images/map-target.png" title="Show in map" alt="Show in map"></span>
+
+        <h4 class="skill-bar-title">
+            {{#with states}}{{> small-exercise-icon}}{{/with}}
+            <a href="{{url}}" class="visited-no-recolor {{#if disabled}}disabled{{/if}}">{{display_name}}</a>
+            <img class="exercise-goal-icon" style="display: none" src="/images/flag.png">
+        </h4>
+        {{{skill-bar progress 0 states}}}
+    </div>
 </div>
