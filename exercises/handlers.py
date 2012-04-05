@@ -17,6 +17,9 @@ class ViewExerciseDeprecated(request_handler.RequestHandler):
     @user_util.open_access
     def get(self, exid=None):
 
+        if not exid:
+            exid = self.request_string("exid")
+
         exercise = models.Exercise.get_by_name(exid)
 
         if not exercise:
