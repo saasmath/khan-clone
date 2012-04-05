@@ -57,7 +57,8 @@ class CredentialedUser(db.Model):
             self.credential_version = new_cred_version
             db.put([new_cred, self])
             
-        if db.is_in_transaction():
+        # The Remote API doesn't support queries inside transactions
+        if db.is_in_transaction() or 'remote' in os.environ["SERVER_SOFTWARE"]:
             txn()
         else:
             db.run_in_transaction(txn)
