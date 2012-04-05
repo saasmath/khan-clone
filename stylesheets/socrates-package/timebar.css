@@ -27,12 +27,29 @@
 	text-align: center;
 	font-family: Courier;
 	font-weight: bold;
-	font-size: 18px;
+	font-size: 16px;
 	line-height: 18px;
 	border-radius: 4px;
+}
+
+.event.complete a.icon {
+	background-color: #70C448;
+	color: #fff;
+}
+
+.event a.icon:before {
+	content: "?";
+}
+
+.event.complete a.icon:before {
+	content: "✓";
 }
 
 .event a.icon:hover {
 	text-decoration: none;
 	color: #000;
+}
+
+.event.complete a.icon:hover {
+	color: #fff;
 }

@@ -150,6 +150,10 @@ Socrates.InputText = Backbone.View.extend({
 });
 
 Socrates.Bookmark = Backbone.Model.extend({
+    defaults: {
+        complete: false
+    },
+
     seconds: function() {
         return Socrates.Question.timeToSeconds(this.get("time"));
     },
@@ -575,6 +579,8 @@ Socrates.QuestionView = Backbone.View.extend({
 
         // tell the user if they got it right or wrong
         if (response.correct) {
+            this.model.set({"complete": true});
+
             this.$(".submit-area .alert-error").hide();
             this.$(".submit-area .alert-success").show();
 
@@ -627,6 +633,10 @@ Socrates.MasterView = Backbone.View.extend({
 Socrates.Nav = Backbone.View.extend({
     template: Templates.get("socrates.socrates-nav"),
 
+    initialize: function() {
+        this.model.bind("change", this.render, this);
+    },
+
     // todo(dmnd) remove this if it's no longer needed
     bookmarksJson: function() {
         // render list of toplevel items only
@@ -657,8 +667,8 @@ Socrates.Nav = Backbone.View.extend({
                     title: question.get("title"),
                     time: question.get("time"),
                     slug: question.slug(),
-                    nested: [],
-                    pc: question.seconds() / this.options.videoDuration * 100
+                    pc: question.seconds() / this.options.videoDuration * 100,
+                    complete: question.get("complete") ? "complete" : ""
                 };
             }, this);
     },

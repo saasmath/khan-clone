@@ -1,8 +1,8 @@
 <div class="timebar">
 	{{#each questions}}
-	<span class="event" style="left: {{pc}}%">
+	<span class="event {{complete}}" style="left: {{pc}}%">
 		<div class="stem"></div>
-		<a href="#{{slug}}" class="icon" title="{{time}}">?</a>
+		<a href="#{{slug}}" class="icon" title="{{time}}"></a>
 	</span>
 	{{/each}}
 </div>
