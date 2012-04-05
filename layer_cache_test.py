@@ -1,121 +1,156 @@
 #!/user/bin/env python
 
-import testutil
+from agar.test import BaseTest
 import layer_cache
 import request_cache as cachepy
 from google.appengine.api import memcache
+from google.appengine.ext import db
+from google.appengine.api import apiproxy_stub
+from google.appengine.ext import testbed
 
-class LayerCacheTest(testutil.GAEModelTestCase):
-    
-    def test_memcache(self):
-        ''' A basic test to make sure memcache is working
-        '''
-        @layer_cache.cache(layer=layer_cache.Layers.Memcache)
-        def func1(result):
-            return result
+class LayerCacheTest(BaseTest):
 
-        func1("a")
-        self.assertEqual("a", func1("b"))
-       
-    def test_large_memcache(self):
-        ''' This test will test something that will make use of multiple chunks
-        '''
+    def setUp(self):
+        # big_string is bigger than the 1MB memcache and datastore limits and
+        # so chunks should get used
+        self.big_string = "a"*1000000+"b"*1000000
+        
+        # huge_string is bigger than the 32MB limit for api requests that 
+        # memcache.set_multi would hit
+        self.huge_string = "a"*34000000
+
+        self.key = "__layer_cache_layer_cache_test.func__"
+        super(LayerCacheTest, self).setUp()
+
+class LayerCacheMemcacheTest(LayerCacheTest):
+
+    def setUp(self):
         @layer_cache.cache(layer=layer_cache.Layers.Memcache,
                            compress_chunks=False)
-        def func2(result):
+        def func(result):
             return result
 
-        func2("a"*1000000+"b"*1000000)
-        self.assertEqual(2000000, len(func2("a")))
-    
+        self.cache_func=func
+        super(LayerCacheMemcacheTest, self).setUp()
 
-    def test_missing_chunk(self):
+    def test_memcache_should_return_cached_result(self):
+        ''' A basic test to make sure memcache layer is working '''
+        self.cache_func("a")
+        self.assertEqual("a", self.cache_func("b"))
+
+    def test_large_memcache_should_chunk_and_return_cached_result(self):
+        ''' This test will test something that will make use of multiple chunks
+        '''
+        self.cache_func(self.big_string)
+        self.assertIsNotNone(memcache.get(self.key + "__chunk0__"))
+        self.assertEqualTruncateError(self.big_string, self.cache_func("a"))
+
+    def test_should_throw_out_result_on_missing_chunk_and_reexecute(self):
         ''' This will test that results are recalculated when chunk is missing
         '''
 
-        @layer_cache.cache(layer=layer_cache.Layers.Memcache, 
-                           compress_chunks=False)
-        def func3(result):
-            return result
-
-        func3("a"*1000000+"b"*1000000)
+        self.cache_func(self.big_string)
         # deleting the 2nd chunk ... next time we get it pickle.loads should 
         # throw an error and the target func will be rexecuted
-        memcache.delete("__layer_cache_layer_cache_test.func3____chunk2__")
-        self.assertEqual(1, len(func3("a")))
+        memcache.delete(self.key + "__chunk1__")
+        self.assertEqualTruncateError("a", self.cache_func("a"))
 
-    def test_corrupted_chunk(self):
+    def test_should_throw_out_result_when_wrong_chunk_is_read(self):
         ''' Tests to make sure results are recalculated when a chunk is corrupt 
         
         If ChunkedResult in a race condition read from a previous version of a
         key then depickling should fail.  This will test that it failed silently
         and that the results are then recalculated.
         '''
-        @layer_cache.cache(layer=layer_cache.Layers.Memcache, 
-                           compress_chunks=False)
-        def func4(result):
-            return result
 
-        func4("a"*1000000+"b"*1000000)
-        # deleting the 2nd chunk ... next time we get it pickle.loads should 
+        self.cache_func(self.big_string)
+        # overwriting the 1st chunk ... next time we get it pickle.loads should 
         # throw an error and the target func will be rexecuted
-        memcache.set("__layer_cache_layer_cache_test.func4____chunk0__", 
-                     "depickle fail")
-        self.assertEqual(1, len(func4("a")))
+        memcache.set(self.key + "__chunk0__", "depickle fail")
+        self.assertEqualTruncateError("a", self.cache_func("a"))
     
-    def test_huge_memcache(self):
-        ''' This will test setting a value > 32 MB 
-            Currently commented out because it takes too long
-        '''
-        return
+    def test_huge_memcache_set_should_fail_gracefully_and_reexecute(self):
+        ''' This will test to see if seeting a huge value fails gracefully '''
 
-        @layer_cache.cache(layer=layer_cache.Layers.Memcache,
-                           compress_chunks=False)
-        def func5(result):
+        self.cache_func(self.huge_string)
+        self.assertEqualTruncateError("a", self.cache_func("a"))
+    
+    def test_use_chunks_parameters_forces_chunking_for_small_size(self):
+        '''Test whether use_chunks parameter works correctly
+ 
+        Checks to make sure it saves a ChunkedResult regardless of size
+        '''
+        @layer_cache.cache(layer=layer_cache.Layers.Memcache, use_chunks=True)
+        def func(result):
             return result
 
-        func5("a"*33000000)
-        self.assertEqual(33000000, len(func5("a")))
+        func("a")
+        self.assertIsInstance(memcache.get(self.key), layer_cache.ChunkedResult)
+
     
-    
-    def test_datastore(self):
+class LayerCacheDatastoreTest(LayerCacheTest):
+
+    def setUp(self):
+        @layer_cache.cache(layer=layer_cache.Layers.Datastore,
+                           compress_chunks=False)
+        def func(result):
+            return result
+
+        self.cache_func = func
+        super(LayerCacheDatastoreTest, self).setUp()
+
+    def test_datastore_should_return_cached_result(self):
         ''' Basic sanity check to make sure we can read/write to datastore  
         '''
-        @layer_cache.cache(layer=layer_cache.Layers.Datastore,
-                           compress_chunks=False)
-        def func6(result):
-            return result
+        self.cache_func("a")
+        
+        # asserting that we are not using chunks
+        self.assertNotIsInstance(layer_cache.KeyValueCache.get(self.key, None),
+            layer_cache.ChunkedResult)
 
-        func6("a")
-        self.assertEqual("a", func6("b"))
+        self.assertEqual("a", self.cache_func("b"))
     
-    def test_large_datastore(self):
+    def test_large_datastore_should_chunk_and_return_cached_result(self):
         ''' Test that the datastore works with Chunked Results '''
         
-        @layer_cache.cache(layer=layer_cache.Layers.Datastore,
-                           compress_chunks=False)
-        def func7(result):
-            return result
+        self.cache_func(self.big_string)
 
-        func7("a"*1000000+"b"*1000000)
-        self.assertEqual(2000000, len(func7("a")))
-    
-    def test_huge_datastore(self):
-        ''' This will test setting a value > 32 MB in the datastore 
-        Currently commented out because it takes too long
+        # asserting that it is using chunks
+        self.assertIsInstance(layer_cache.KeyValueCache.get(self.key, None),
+            layer_cache.ChunkedResult)
+        
+        # asserting that it is returning the cached result
+        self.assertEqualTruncateError(self.big_string, self.cache_func("a"))
+
+    def test_chunked_result_deletion_leaves_no_chunks_behind(self):
+        ''' This will test that all chunks are deleted
         '''
-        return
+        self.cache_func(self.big_string)
+        layer_cache.ChunkedResult.delete(
+            self.key, 
+            namespace=None,
+            cache_class=layer_cache.KeyValueCache)
 
-        @layer_cache.cache(layer=layer_cache.Layers.Datastore,
-                           compress_chunks=False)
-        def func8(result):
-            return result
+        # deleting the 2nd chunk ... next time we get it pickle.loads should 
+        # throw an error and the target func will be rexecuted
+        values = layer_cache.KeyValueCache.get_multi([
+            self.key, 
+            self.key + "__chunk1__", 
+            self.key + "__chunk2__", 
+            self.key + "__chunk3__"], namespace=None)
 
-        func8("a"*33000000)
-        self.assertEqual(33000000, len(func8("a")))
-    
-    def test_bubble_up_memcache_save(self):
-        ''' Tests if missing entries in memcache gets added to higher levels
+        # assert that all entries are now gone
+        self.assertEqual(0, len(values))
+
+        # assert that we will now recalculate target
+        self.assertEqualTruncateError("a", self.cache_func("a"))
+
+  
+  
+class LayerCacheLayerTest(LayerCacheTest):
+        
+    def test_missing_inapp_cache_gets_repopulated_when_read_from_memcache(self):
+        ''' Tests if missing inapp cache gets repopulated from memcache
         
         This will make sure that if something is missing from inAppMemory
         in layercache that it will correctly save it with the values from
@@ -126,25 +161,24 @@ class LayerCacheTest(testutil.GAEModelTestCase):
         @layer_cache.cache(layer=layer_cache.Layers.Memcache | 
                                  layer_cache.Layers.InAppMemory,
                            compress_chunks=False)
-        def func9(result):
+        def func(result):
             return result
 
-        func9("a"*1000000+"b"*1000000)
+        func(self.big_string)
         cachepy.flush()
         
         # make sure cachepy's value is gone
-        self.assertEqual(type(None), 
-                type(cachepy.get("__layer_cache_layer_cache_test.func9__")))
+        self.assertIsNone(cachepy.get(self.key))
                 
-        # make sure we are still able to get the value from datastore
-        self.assertEqual(2000000, len(func9("a")))
+        # make sure we are still able to get the value from memcache
+        self.assertEqualTruncateError(self.big_string, func("a"))
         
         # make sure cachepy has been filled again
-        self.assertEqual(2000000, 
-                    len(cachepy.get("__layer_cache_layer_cache_test.func9__")))
+        self.assertEqualTruncateError(self.big_string, 
+            cachepy.get(self.key))
 
-    def test_bubble_up_datastore_save(self):
-        ''' Tests if missing entries in datastore gets added to higher levels
+    def test_missing_inapp_and_memcache_get_repopulated_from_datastore(self):
+        ''' Tests if result from datastore resaves data to higher levels
          
         This will make sure that if something is missing from a higher level
         in layercache that it will correctly save it with the values from
@@ -156,110 +190,69 @@ class LayerCacheTest(testutil.GAEModelTestCase):
                                  layer_cache.Layers.Datastore |
                                  layer_cache.Layers.InAppMemory,
                            compress_chunks=False)
-        def func10(result):
+        def func(result):
             return result
 
-        func10("a"*1000000+"b"*1000000)
+        func(self.big_string)
         cachepy.flush()
         # make sure cachepy is flushed
-        self.assertEqual(type(None), 
-            type(cachepy.get("__layer_cache_layer_cache_test.func10__")))
+        self.assertIsNone(cachepy.get(self.key))
         
         # force removal from memcache
-        memcache.delete("__layer_cache_layer_cache_test.func10__")
+        memcache.delete(self.key)
 
         # make sure removal worked
-        self.assertEqual(type(None),
-            type(memcache.get("__layer_cache_layer_cache_test.func10__")))
+        self.assertIsNone(memcache.get(self.key))
         
         # make sure we are still able to get the value from datastore
-        self.assertEqual(2000000, len(func10("a")))
+        self.assertEqualTruncateError(self.big_string, func("a"))
         # make sure cachepy has been filled again
-        self.assertEqual(2000000, 
-            len(cachepy.get("__layer_cache_layer_cache_test.func10__")))
+        self.assertEqualTruncateError(self.big_string, 
+            cachepy.get(self.key))
 
         # make sure memcache value has been readded
-        self.assertTrue(
-            isinstance(memcache.get("__layer_cache_layer_cache_test.func10__"),
-                       layer_cache.ChunkedResult))
-    
-    def test_compress_large_memcache(self):
-        ''' This test will test that compressing is working
-        '''
+        self.assertIsInstance(
+            memcache.get(self.key),
+            layer_cache.ChunkedResult)
+
+class LayerCacheCompressionTest(LayerCacheTest):
+
+    def setUp(self):
         @layer_cache.cache(layer=layer_cache.Layers.Memcache)
-        def func11(result):
+        def func(result):
             return result
 
-        func11("a"*1000000+"b"*1000000)
+        self.cache_func = func
+        super(LayerCacheCompressionTest, self).setUp()
+
+
+    def test_with_compression_should_save_in_just_one_chunk(self):
+        ''' This test will test that compressing is working
+        '''
+        self.cache_func(self.big_string)
         
         # make sure cache is being used by checking to make sure it is the same
         # length as previous value
-        self.assertEqual(2000000, len(func11("a")))
+        self.assertEqualTruncateError(self.big_string, self.cache_func("a"))
 
         # check to make sure that only one memcache item got created
         # if compression wasn't working than 4 keys would be set including the
         # following key
-        self.assertEqual(type(None), 
-            type(memcache.get(
-                "__layer_cache_layer_cache_test.func11____chunk1__")))
+        self.assertIsNone(memcache.get(self.key + "__chunk1__"))
 
-    def test_use_chunks(self):
-        '''Test whether use_chunks parameter works correctly
- 
-        Checks to make sure it saves a ChunkedResult regardless of size
-        '''
-        @layer_cache.cache(layer=layer_cache.Layers.Memcache, use_chunks=True)
-        def func12(result):
-            return result
-
-        func12("a")
-        self.assertTrue(isinstance( 
-            memcache.get("__layer_cache_layer_cache_test.func12__"),
-            layer_cache.ChunkedResult))
-
-    def test_corrupted_uncompressible_chunk(self):
+    def test_corrupted_uncompressible_chunk_should_reexecute_target(self):
         '''Tests whether decompression fails silently if data is corrupt. 
 
         It does an assert to see the results are recalculated when a chunk gets 
         somehow corrupted causing decompression to fail.
         '''
-        @layer_cache.cache(layer=layer_cache.Layers.Memcache)
-        def func13(result):
-            return result
 
-        func13("stuff")
+        self.cache_func("stuff")
         # overwriting key value ... next time we get it decompress should 
         # throw an error and the target func will be rexecuted
-        memcache.set("__layer_cache_layer_cache_test.func13__", 
+        memcache.set(self.key, 
                      layer_cache.ChunkedResult(data = "decompress fail"))
-        self.assertEqual(1, len(func13("a")))
+        self.assertEqual("a", self.cache_func("a"))
     
-    def test_delete_datastore_chunks(self):
-        ''' This will test that all chunks are deleted
-        '''
-        @layer_cache.cache(layer=layer_cache.Layers.Datastore, 
-                           compress_chunks=False)
-        def func14(result):
-            return result
-
-        func14("a"*1000000+"b"*1000000)
-        layer_cache.ChunkedResult.delete(
-            "__layer_cache_layer_cache_test.func14__", 
-            namespace=None,
-            cache_class=layer_cache.KeyValueCache)
-
-        # deleting the 2nd chunk ... next time we get it pickle.loads should 
-        # throw an error and the target func will be rexecuted
-        values = layer_cache.KeyValueCache.get_multi([
-            "__layer_cache_layer_cache_test.func14__", 
-            "__layer_cache_layer_cache_test.func14__1", 
-            "__layer_cache_layer_cache_test.func14__2", 
-            "__layer_cache_layer_cache_test.func14__3"], namespace=None)
-
-        # assert that all entries are now gone
-        self.assertEqual(0, len(values))
-
-        # assert that we will now recalculate target
-        self.assertEqual(1, len(func14("a")))
 
 

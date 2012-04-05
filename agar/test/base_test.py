@@ -227,12 +227,17 @@ class BaseTest(unittest2.TestCase):
 
     def assertEqualTruncateError(self, a, b):
         maxlen=100
-        assert a == b, "%s(%i): '%s%s' != %s(%i): '%s%s'" % (
-            type(a),
-            len(a),
-            str(a)[:maxlen], 
-            "..." if len(str(a)) > maxlen else '', 
-            type(b),
-            len(b),
-            str(b)[:maxlen], 
-            "..." if len(str(b)) > maxlen else "")
+        assert a == b, "%s != %s" % (self.truncateValue(a), 
+                                     self.truncateValue(b))
+
+    def truncateValue(self, a):
+        max_length=100
+        str_a = str(a)
+        if str_a <= max_length:
+            return str_a
+        else:
+            return "%s(%i): '%s...%s'" % (
+                a.__class__.__name__, 
+                len(a), 
+                str_a[:max_length/2], 
+                str_a[-max_length/2:])

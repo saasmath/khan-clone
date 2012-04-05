@@ -130,8 +130,10 @@ else:
 # layer_cache.enable()
 
 # 100000 is max for both datastore and memcache - ChunkedResult overhead
-MAX_SIZE_OF_CACHE_CHUNKS = 999900 
-MAX_NUM_CACHE_CHUNKS = 32
+MAX_SIZE_OF_CACHE_CHUNKS = 999900
+
+# memcache has 32MB limit for set_multi (this is 32MB - ChunkedResult overhead)
+MAX_SIZE = 33300000 
 
 # Expire after 25 days by default
 DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS = 60 * 60 * 24 * 25 
@@ -227,7 +229,7 @@ def layer_cache_check_set_return(
                     
                     if layer & Layers.Memcache:
                         # Since the result in the datastore needed to be chunked
-                        # We will need to use ChunkedResult for memcache as well
+                        # we will need to use ChunkedResult for memcache as well
                         ChunkedResult.set(key, result, expiration, namespace, 
                                           cache_class=memcache)
                 else:
@@ -388,7 +390,12 @@ class ChunkedResult():
         if compress:
             result = zlib.compress(result)
         
-        size = len(result)    
+        size = len(result)
+        if size > MAX_SIZE:
+            logging.warning("Trying to cache %s of %i bytes (%i bytes is max)" % 
+                            (key, size, MAX_SIZE))
+            return
+            
         # if now that we have compressed the item it can fit within a single
         # 1MB object don't use the chunk_list, and it will save us from having
         # to do an extra round-trip on the gets
