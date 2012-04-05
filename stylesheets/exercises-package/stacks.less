@@ -495,12 +495,19 @@
         .opacity(0);
         .transition(opacity 0.2s ease-in-out);
     }
+    .lte8 .exercises-header .streak-transition .expl-image {
+        visibility: visible;
+        display: none;
+    }
         .exercises-header .streak-transition .expl-image img {
             width: 100%;
         }
         .exercises-header .streak-transition.hover .expl-image {
             visibility: visible;
             .opacity(100);
+        }
+        .lte8 .exercises-header .streak-transition.hover .expl-image {
+            display: block;
         }
 
 .exercises-header .streak-transition .expl-image:before,
