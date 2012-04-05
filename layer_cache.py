@@ -7,6 +7,7 @@ import datetime
 import logging
 import pickle
 import zlib
+import os
 
 from google.appengine.api import memcache
 from google.appengine.ext import db
@@ -134,6 +135,10 @@ MAX_SIZE_OF_CACHE_CHUNKS = 999900
 
 # memcache has 32MB limit for set_multi (this is 32MB - ChunkedResult overhead)
 MAX_SIZE = 33300000 
+
+# a random string of this length is prepended for to each chunk for values that 
+# need to be chunked
+CHUNK_GENERATION_LENGTH = 16
 
 # Expire after 25 days by default
 DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS = 60 * 60 * 24 * 25 
@@ -374,12 +379,17 @@ class ChunkedResult():
     in chunks.
     '''
 
-    def __init__(self, chunk_list=None, data=None, compress=True):
-        ''' Stores info on the data to be stored. Either chunk_list is set 
-        or data but not both
+    def __init__(self, 
+                 chunk_list=None, 
+                 generation=None, 
+                 data=None, 
+                 compress=True):
+        ''' Stores info on the data to be stored. Either chunk_list and 
+        generation is set or data but not both
 
         Arguments:
             chunk_list: listing out the keys of the chunks that store the data 
+            generation: a random key to assure all chunks are from the same set
             data:  for the case in which the compressed value could fit in a 
                    single chunk, then data will store the compressed result
             compress: boolean saying whether we should compress the result
@@ -387,8 +397,11 @@ class ChunkedResult():
         '''
         assert ((chunk_list or data) and not (chunk_list and data)), ( 
                 "Either chunk_list or data must be set")
-        self.chunk_list = chunk_list
-        self.data = data
+        if chunk_list:
+            self.chunk_list = chunk_list
+            self.generation = generation
+        else: 
+            self.data = data
         self.compress = compress
         
     @staticmethod
@@ -421,14 +434,16 @@ class ChunkedResult():
                                     
         mapping = {}
         chunk_list = []
-        
+        generation = os.urandom(CHUNK_GENERATION_LENGTH) 
         for i, pos in enumerate(range(0, size, MAX_SIZE_OF_CACHE_CHUNKS)):
-            chunk = result[pos : pos + MAX_SIZE_OF_CACHE_CHUNKS]                           
+            chunk = generation + result[pos : pos + MAX_SIZE_OF_CACHE_CHUNKS]                           
             chunk_key = key + "__chunk%i__" % i
             mapping[chunk_key] = chunk
             chunk_list.append(chunk_key)
 
-        mapping[key] = ChunkedResult(chunk_list=chunk_list, compress=compress)
+        mapping[key] = ChunkedResult(chunk_list=chunk_list, 
+                                     generation= generation, 
+                                     compress=compress)
         
         # Note: set_multi is not atomic so when we get we will need to make sure 
         # that all the keys are there and are part of the same set_multi 
@@ -454,7 +469,7 @@ class ChunkedResult():
         cache_class for all items in its chunk_list, combines them together and
         returns the descompressed and depickled result
         '''
-        if self.chunk_list:
+        if hasattr(self, "chunk_list"):
             chunked_results = cache_class.get_multi(self.chunk_list, 
                                                     namespace=namespace)
             self.data = ""
@@ -463,24 +478,37 @@ class ChunkedResult():
                     # if a chunk is missing then it is impossible to depickle
                     # so target func will need to be re-executed
                     return None
-                self.data += chunked_results[chunk_key]          
+
+                # It is possible that the results come some from a new value of
+                # a cached item and some from an old version of the cached item
+                # as set_multi is not atomic.  By adding a random generation 
+                # string to the beginning of each chunk we can be sure they are 
+                # all part of the same set, by checking if that string matches
+                # the one in the index
+                chunk_result = chunked_results[chunk_key]
+                chunk_generation = chunk_result[:CHUNK_GENERATION_LENGTH]
+                if chunk_generation != self.generation:
+                    logging.warning("wrong chunk read for %s" % chunk_key)
+                    return
+
+                self.data += chunk_result[CHUNK_GENERATION_LENGTH:]          
             
         if self.compress:
             try:
                 self.data = zlib.decompress(self.data)
             except zlib.error:
-                # It is possible that we get results some from a new value of a 
-                # cached item and some from an old value of a cached item, and 
-                # hence decompression will fail, as set_multi is not atomic   
+                # If for some reason the data coming back is corrupted so it 
+                # can't be decompressed, we return None in order to recaclulate 
+                # the target function
                 logging.warning("could not decompress ChunkedResult from cache")
                 return None
              
         try:
             return pickle.loads(self.data)
         except Exception:
-            # It is possible that we get results some from a new value of a 
-            # cached item and some from an old value of a cached item, and 
-            # hence depickle will fail, as set_multi is not atomic   
+            # If for some reason the data coming back is corrupted so it can't
+            # be depickled, we will return None in order to recaclulate the 
+            # target function
             logging.warning("could not depickle ChunkedResult from cache")
             return None
         

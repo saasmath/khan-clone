@@ -37,7 +37,7 @@ class GAEModelTestCase(unittest.TestCase):
     def truncateValue(self, a):
         max_length=100
         str_a = str(a)
-        if str_a <= max_length:
+        if len(str_a) <= max_length:
             return str_a
         else:
             return "%s(%i): '%s...%s'" % (
