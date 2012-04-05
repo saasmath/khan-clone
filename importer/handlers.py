@@ -158,6 +158,7 @@ class ImportHandler(request_handler.RequestHandler):
         self.response.write("\n\n")
 
     def setup_oauth(self, url="http://www.khanacademy.org"):
+        # TODO(csilvers): rewrite this to not use code with "Test" in the name!
         self.client = TestOAuthClient(url, secrets.ka_api_consumer_key,
             secrets.ka_api_consumer_secret)
 
