@@ -1,5 +1,6 @@
 import os
 
+
 # provides full path to files in packages
 def resolve_files(default_path, packages, suffix):
     for package_name in packages:

@@ -1,10 +1,12 @@
 import time
 
+
 def serializeMapCoords(lat, lng, zoom):
     return "%s:%s:%s:%s" % (lat, lng, zoom, int(time.time() * 1000))
 
+
 def deserializeMapCoords(s=False):
-    coords = {'lat':0, 'lng':0, 'zoom':0, 'when':0}
+    coords = {'lat': 0, 'lng': 0, 'zoom': 0, 'when': 0}
     if (not s):
         return coords
 
@@ -21,4 +23,3 @@ def deserializeMapCoords(s=False):
         return coords
 
     return coords
-
