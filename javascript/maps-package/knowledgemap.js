@@ -491,7 +491,9 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
             $("#" + this.container + " .map-canvas").animate({marginRight: leftMap + "px", left: leftMap + "px"},
                     500,
                     function() {
-                        google.maps.event.trigger(self.knowledgeMap, "resize");
+                        if (self.knowledgeMap && self.knowledgeMap.map) {
+                            google.maps.event.trigger(self.knowledgeMap.map, "resize");
+                        }
                     }
             );
         }
