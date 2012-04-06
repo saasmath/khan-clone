@@ -111,7 +111,7 @@ def start_dev_appserver():
 
     # Wait for the server to start up
     time.sleep(1)          # it *definitely* takes at least a second
-    for i in xrange(40):   # wait for 8 seconds, until we give up
+    for _ in xrange(40):   # wait for 8 seconds, until we give up
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         try:
             sock.connect(('', dev_appserver_port))
@@ -126,7 +126,7 @@ def start_dev_appserver():
 
 
 def stop_dev_appserver():
-    global dev_appserver_url, _tmpdir, _pid
+    global appserver_url, _tmpdir, _pid
 
     # Try very hard to kill the dev_appserver process.
     if _pid:
@@ -146,4 +146,4 @@ def stop_dev_appserver():
         _tmpdir = None
 
     # We're done tearing down!
-    dev_appserver_url = None
+    appserver_url = None
