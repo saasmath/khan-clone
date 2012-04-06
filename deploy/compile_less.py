@@ -38,10 +38,13 @@ def compile_template(dir_path, file_name):
 
 
 def compile_less(packages, root_dir):
-    for _, package_path, files in js_css_packages.resolve_files(root_dir, packages, ".css"):
+    for _, package_path, files in js_css_packages.resolve_files(
+            root_dir, packages, ".css"):
         less_files = [f for f in files if f.endswith(".less")]
         if len(less_files) > 1:
-            raise Exception("Only one less file allowed per package: see https://sites.google.com/a/khanacademy.org/forge/technical/less-stylesheets")
+            raise Exception("Only one less file allowed per package: " +
+            "see https://sites.google.com/a/khanacademy.org" +
+            "/forge/technical/less-stylesheets")
         elif less_files:
             compile_template(package_path, less_files[0])
 
