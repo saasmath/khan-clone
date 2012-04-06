@@ -1204,7 +1204,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
         """
 
-        if self.is_pre_phantom():
+        if self.is_pre_phantom:
             return False
 
         value = self.email
