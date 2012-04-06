@@ -971,7 +971,7 @@ var Profile = {
 
                     $("#tab-content-questions")
                         .append(template(context))
-                        .find("span.timeago").timeago();
+                        .find("div.timeago").timeago();
 
                     var jelUnread = $("#tab-content-questions").find(".unread");
                     if (jelUnread.length !== 0) {

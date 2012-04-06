@@ -1150,6 +1150,13 @@ li.profile-tab {
 #tab-content-questions .question .discussion-link:hover {
     color: #005987;
 }
+#tab-content-questions .question .timeago {
+    float: right;
+    padding-left: 20px;
+    color: #AAA;
+    font-size: 12px;
+    line-height: 25px; /* Base aligns the timestamp with the video title*/
+}
 .settings-iframe {
     height: 400px;
     width: 640px;
