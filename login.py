@@ -335,7 +335,7 @@ class PostLogin(request_handler.RequestHandler):
                 # Look for a matching UnverifiedUser with the same e-mail
                 # to see if the user used Google login to verify.
                 unverified_user = models.UnverifiedUser.get_for_value(
-                        current_google_user.email())
+                        email_now_verified)
                 if unverified_user:
                     unverified_user.delete()
 
