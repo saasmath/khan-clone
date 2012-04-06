@@ -155,11 +155,11 @@ class TopicExerciseBadge(Badge):
 
     @property
     def compact_icon_src(self):
-        return "/images/power-mode/badges/%s-60x60.png?4" % self.icon_filename
+        return "/images/power-mode/badges/%s-60x60.png?5" % self.icon_filename
 
     @property
     def icon_src(self):
-        return "/images/power-mode/badges/%s-40x40.png?4" % self.icon_filename
+        return "/images/power-mode/badges/%s-40x40.png?5" % self.icon_filename
 
 
 class TopicExerciseBadgeType(db.Model):
