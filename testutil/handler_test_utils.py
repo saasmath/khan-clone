@@ -119,7 +119,7 @@ def start_dev_appserver():
     appserver_url = 'http://localhost:%d' % dev_appserver_port
 
 def stop_dev_appserver():
-    global dev_appserver_url, _tmp, _pid
+    global dev_appserver_url, _tmpdir, _pid
 
     # Try very hard to kill the dev_appserver process.
     if _pid:
