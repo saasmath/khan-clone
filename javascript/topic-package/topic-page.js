@@ -74,18 +74,37 @@
                     selectedTopic = videosByTopic[subtopicID] || null;
                 }
 
+                var analyticsParams;
+
                 if (selectedTopic) {
-                    selectedTopic.view = selectedTopic.view || new TopicPage.ContentTopicView({ model: selectedTopic });
+                    selectedTopic.view = selectedTopic.view || new TopicPage.ContentTopicView({ model: selectedTopic, viewCount: 0 });
                     selectedTopic.view.show();
                     selectedTopicID = selectedTopic.id;
+
+                    analyticsParams = {
+                        "Topic Title": selectedTopic.title,
+                        "Topic Type": "Subtopic",
+                        "Topic View Count": selectedTopic.view.options.viewCount
+                    };
                 } else {
                     if (rootPageTopic.childVideos) {
-                        rootTopicView = rootTopicView || new TopicPage.ContentTopicView({ model: rootPageTopic.childVideos });
+                        rootTopicView = rootTopicView || new TopicPage.ContentTopicView({ model: rootPageTopic.childVideos, viewCount: 0 });
+                        analyticsParams = {
+                            "Topic Title": rootPageTopic.title,
+                            "Topic Type": "Content topic",
+                        };
                     } else {
-                        rootTopicView = rootTopicView || new TopicPage.RootTopicView({ model: rootPageTopic });
+                        rootTopicView = rootTopicView || new TopicPage.RootTopicView({ model: rootPageTopic, viewCount: 0 });
+                        analyticsParams = {
+                            "Topic Title": rootPageTopic.title,
+                            "Topic Type": "Supertopic",
+                        };
                     }
                     rootTopicView.show();
+                    analyticsParams["Topic View Count"] = rootTopicView.options.viewCount;
                 }
+
+                Analytics.trackSingleEvent("Topic Page View", analyticsParams);
 
                 $(".topic-page-content .nav-pane")
                     .find("li.selected")
@@ -124,6 +143,8 @@
                         .detach()
                         .end()
                     .append(this.el);
+
+                this.options.viewCount++;
             }
         }),
 
@@ -138,7 +159,7 @@
                     if (idx > 1) {
                         subtopic.notFirst = true;
                     }
-                    subtopic.descriptionTruncateLength = (subtopic.title.length > 25) ? 38 : 76;
+                    subtopic.descriptionTruncateLength = (subtopic.title.length > 28) ? 38 : 68;
                 });
                 $(this.el).html(this.template(this.model));
                 VideoControls.initThumbnailHover($(this.el));
@@ -150,6 +171,8 @@
                         .detach()
                         .end()
                     .append(this.el);
+
+                this.options.viewCount++;
             }
         })
     };
