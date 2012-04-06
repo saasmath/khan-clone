@@ -106,7 +106,8 @@ a.main-video-link:hover {
 }
 
 .topic-page-content > .container > .nav-pane h2 {
-    font-size: 22pt;
+    font-family: "MuseoSans500", sans-serif;
+    font-size: 25px;
     line-height: 32px;
     margin: 10px 0px;
 }
@@ -144,8 +145,9 @@ a.main-video-link:hover {
     width: 291px;
     font-weight: normal;
     font-size: 16px;
-    padding: 4px 8px;
+    padding: 8px 8px;
     padding-right: 20px;
+    line-height: 18px;
 }
 .topic-page-content > .container > .nav-pane > ul > li > a > .right-arrow {
     border-color: transparent transparent transparent black;
@@ -166,7 +168,7 @@ a.main-video-link:hover {
     border-top: solid 1px #ccc;
     border-bottom: solid 1px #ccc;
     border-right: solid 1px #fff;
-    padding: 3px 21px 3px 7px;
+    padding: 7px 21px 7px 7px;
 }
 .topic-page-content > .container > .nav-pane > ul > li.selected > a > .right-arrow {
     right: 9px;
@@ -207,6 +209,7 @@ a.main-video-link:hover {
 }
 .topic-page-content > .container > .content-pane .vid-progress {
     padding-left: 14px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .content-pane div.main-header {
@@ -257,7 +260,8 @@ a.main-video-link:hover {
     vertical-align: top;
 }
 .content-pane div.main-header .topic-info .topic-title {
-    font-size: 16pt;
+    font-family: "MuseoSans500", sans-serif;
+    font-size: 20px;
     margin: 30px 0 12px 0;
 }
 .content-pane div.main-header .topic-info .topic-desc {
@@ -277,22 +281,11 @@ a.main-video-link:hover {
     background-size: 300px 234px;
 }
 
-.content-pane div.main-header .topic-info a.call-to-action {
-    position: absolute;
-    right: 350px;
-    top: 138px;
-    display: inline-block;
-    font-size: 16px;
-    text-decoration: none;
-    text-align: center;
-    padding: 5px 20px;
-    font-family: "MuseoSans500", Helvetica, Arial, sans-serif;
-}
-
 .content-pane div.main-header .topic-video {
     display: inline-block;
     width: 316px;
     vertical-align: top;
+    padding-left: 14px;
 }
 .content-pane div.main-header .topic-video a {
     display: block;
@@ -301,12 +294,14 @@ a.main-video-link:hover {
 }
 
 .content-pane div.subtopics-list {
-    margin-left: -10px;
+    margin-left: 4px;
 }
 
 .content-pane .subtopic-header {
-    font-size: 16pt;
+    font-family: "MuseoSans500", sans-serif;
+    font-size: 20px;
     margin: 22px 0 12px 0;
+    padding-left: 14px;
 }
 .content-pane div.subtopics-list .subtopic {
     float: left;
@@ -323,7 +318,7 @@ a.main-video-link:hover {
 }
 .content-pane div.subtopics-list a.subtopic-link:hover {
     background-color: #ebf1df;
-    color: #356700;
+    color: #000;
     text-decoration: none;
 }
 .content-pane div.subtopics-list .thumbnail-link {
@@ -345,26 +340,36 @@ a.main-video-link:hover {
 }
 
 .content-pane div.subtopics-list .topic-info {
+    position: relative;
     display: inline-block;
     width: 230px;
+    height: 68px;
     padding-top: 10px;
     padding-bottom: 20px;
     vertical-align: top;
 }
 .content-pane div.subtopics-list .topic-info .topic-title {
-    font-size: 12pt;
+    font-family: "MuseoSans700", sans-serif;
+    font-size: 16px;
     font-weight: bold;
 }
 .content-pane div.subtopics-list .topic-info .topic-description {
-    color: #777;
+    font-size: 12px;
+    line-height: 14px;
+    color: #666;
 }
 .content-pane div.subtopics-list .topic-info .topic-video-count {
+    position: absolute;
     font-size: 10pt;
+    left: 0px;
+    bottom: 0px;
 }
 
 .content-pane div.videos-list .videos-header {
-    font-size: 16pt;
+    font-family: "MuseoSans500", sans-serif;
+    font-size: 20px;
     margin: 22px 0 12px 0;
+    padding-left: 14px;
 }
 .content-pane div.videos-list ol {
     float: left;
@@ -374,11 +379,12 @@ a.main-video-link:hover {
     width: 400px;
 }
 .content-pane div.videos-list ol > li > a {
-    font-family: "MuseoSans300", sans-serif;
     font-size: 11pt;
     color: #356700;
     width: 380px;
     display: inline-block;
+    margin-left: -8px;
+    padding-left: 8px;
 }
 .content-pane div.videos-list ol > li > a:hover {
     background-color: #ebf1df;
@@ -387,6 +393,6 @@ a.main-video-link:hover {
 .content-pane div.videos-list ol > li > a > .vid-progress {
     display: block;
     line-height: 18px;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: 6px;
+    padding-bottom: 6px;
 }
