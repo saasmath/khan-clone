@@ -1441,7 +1441,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
         # Allow clients to override
         prop_values.update(**kwds)
-
+        
         # Forcefully override with important items.
         user = users.User(email)
         key_name = UserData.key_for(user_id)

@@ -633,15 +633,15 @@ class CompleteSignup(request_handler.RequestHandler):
             # TODO(benkomalo): handle storage for FB users. Right now their
             # "email" value is a URI like http://facebookid.ka.org/1234
             email = user_data.email
-            nickname = user_data.nickname
             if user_data.has_sendable_email():
                 values['email'] = email
 
-                if email.split('@')[0] == nickname:
-                    # The user's "nickname" property defaults to the user part
-                    # of their e-mail. Encourage them to use a real name and
-                    # leave the name field blank in that case.
-                    nickname = ""
+            nickname = user_data.nickname
+            if email.find('@') != -1 and email.split('@')[0] == nickname:
+                # The user's "nickname" property defaults to the user part of
+                # their e-mail. Encourage them to use a real name and leave
+                # the name field blank in that case.
+                nickname = ""
 
             values['nickname'] = nickname
             values['gender'] = user_data.gender
