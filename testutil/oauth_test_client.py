@@ -36,7 +36,6 @@ from google.appengine.ext.remote_api import remote_api_stub
 # This import needs to happen first to avoid problems with circular
 # imports.  Sigh.
 import models
-import api.auth
 from oauth_provider import consts
 from oauth_provider import models_oauth
 from oauth_provider import oauth
