@@ -2264,10 +2264,17 @@ def preload_default_version_data(version_number, run_code):
     autocomplete.topic_title_dicts(version.number)
     logging.info("preloaded topic autocomplete")
 
+    # Preload topic pages
+    for topic in Topic.get_all_topics(version=version):
+        topic.get_topic_page_data()
+    logging.info("preloaded topic pages")
+
     # Preload topic browser
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
-    logging.info("preloaded topic_browser")
+    templatetags.topic_browser_data(version_number=version.number, show_topic_pages=False)
+    templatetags.topic_browser_data(version_number=version.number, show_topic_pages=True)
+    logging.info("preloaded topic_browsers")
 
     # Sync all topic exercise badges with upcoming version
     topic_exercise_badges.sync_with_topic_version(version)
@@ -2661,7 +2668,7 @@ class Topic(Searchable, db.Model):
         return ret
 
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_topic_page_data_%s_v%s" % (self.key(), Setting.topic_tree_version()))
+        "topic_get_topic_page_data_%s" % self.key())
     def get_topic_page_data(self):
         """ Retrieve the listing of subtopics and videos for this topic.
             Used on the topic page. """
@@ -2742,7 +2749,7 @@ class Topic(Searchable, db.Model):
 
     # Gets the data we need for the video player
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_play_data_%s_v%s" % (self.key(), Setting.topic_tree_version()),
+        "topic_get_play_data_%s" % self.key(),
         layer=layer_cache.Layers.Memcache)
     def get_play_data(self):
 
