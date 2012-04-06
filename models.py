@@ -5015,6 +5015,7 @@ def commit_problem_log(problem_log_source, user_data=None):
                 suggested = problem_log_source.suggested,
                 ip_address = problem_log_source.ip_address,
                 review_mode = problem_log_source.review_mode,
+                topic_mode = problem_log_source.topic_mode,
         )
 
         problem_log.count_hints = max(problem_log.count_hints, problem_log_source.count_hints)
