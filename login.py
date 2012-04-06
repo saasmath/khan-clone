@@ -285,6 +285,25 @@ class PostLogin(request_handler.RequestHandler):
         if current_google_user:
             if current_google_user.email() != user_data.email:
                 user_data.user_email = current_google_user.email()
+        elif user_data.is_facebook_user:
+            # Facebook can give us the user's e-mail if the user granted
+            # us permission to see it.
+            profile = facebook_util.get_profile_from_cookies()
+            fb_email = profile and profile.get("email", "")
+            if fb_email:
+                # We have to be careful - we haven't always asked for emails
+                # from facebook users, so getting an e-mail after the fact
+                # may result in a collision with an existing Google or Khan
+                # account. In those cases, we silently drop the e-mail.
+                existing_user = models.UserData.get_from_user_input_email(fb_email)
+
+                if (existing_user and
+                        existing_user.user_id != user_data.user_id):
+                    logging.error("FB user gave us e-mail and it "
+                                  "corresponds to an existing account. "
+                                  "Ignoring e-mail value.")
+                else:
+                    user_data.user_email = fb_email
 
         # If the user has a public profile, we stop "syncing" their username
         # from Facebook, as they now have an opportunity to set it themself
@@ -302,7 +321,10 @@ class PostLogin(request_handler.RequestHandler):
 
         complete_signup = self.request_bool("completesignup", default=False)
         if first_time:
-            if current_google_user:
+            email_now_verified = None
+            if user_data.has_sendable_email():
+                email_now_verified = user_data.email
+
                 # Look for a matching UnverifiedUser with the same e-mail
                 # to see if the user used Google login to verify.
                 unverified_user = models.UnverifiedUser.get_for_value(
