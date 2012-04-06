@@ -17,13 +17,8 @@ def feedback_query(target_key):
 
 @request_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video)
 @protobuf_decode
-@unpickle
-@base64_decode
-@decompress
-@layer_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video, layer=layer_cache.Layers.Blobstore)
-@compress
-@base64_encode
-@pickle
+@layer_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video,
+                                layer=layer_cache.Layers.Datastore)
 @protobuf_encode
 def get_feedback_for_video(video):
     return feedback_query(video.key()).fetch(1000)
