@@ -47,7 +47,6 @@ class MetaQuestion(object):
     and notifications count.
     
     TODO(marcia): I am awful at naming things, help!
-    TODO(marcia): Do not send viewer_user_data back in json
     """
     @staticmethod
     def from_question(question, viewer_user_data):
@@ -73,40 +72,32 @@ class MetaQuestion(object):
         meta.qa_expand_key = str(question.key())
         meta.content = question.content
 
-        meta.has_unread = False
-
-        meta.viewer_user_data = viewer_user_data
-
-        answerer_user_ids, last_date = MetaQuestion.get_answer_data(
-                question,
-                viewer_user_data)
-
-        meta.answerer_count = len(answerer_user_ids)
-        meta.last_date = last_date
+        meta.set_answer_data(question, viewer_user_data)
 
         return meta
 
     def mark_has_unread(self):
         self.has_unread = True
 
-    @staticmethod
-    def get_answer_data(question, viewer_user_data):
-        """ Get answer data for the question relative to the viewer,
-        such as who has answered and when the last update was
+    def set_answer_data(self, question, viewer_user_data):
+        """ Set answerer count and last date as seen by the specified viewer
         """
         query = util_discussion.feedback_query(question.key())
+        self.answerer_count = 0
+        self.last_date = question.date
 
-        viewable_answers = [answer for answer in query if
-                not answer.appears_as_deleted_to(viewer_user_data)]
+        # We assume all answers have been read until we see a notification
+        self.has_unread = False
 
-        answerer_user_ids = set(answer.author_user_id for answer
-                in viewable_answers)
+        if query.count():
+            viewable_answers = [answer for answer in query if
+                    not answer.appears_as_deleted_to(viewer_user_data)]
 
-        dates = [answer.date for answer in viewable_answers]
-        dates.append(question.date)
-        most_recent_date = max(dates)
+            answerer_user_ids = set(answer.author_user_id for answer
+                    in viewable_answers)
 
-        return (answerer_user_ids, most_recent_date)
+            self.answerer_count = len(answerer_user_ids)
+            self.last_date = max([answer.date for answer in viewable_answers])
 
 
 class VideoFeedbackNotificationList(request_handler.RequestHandler):
