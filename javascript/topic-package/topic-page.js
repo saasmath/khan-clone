@@ -138,6 +138,7 @@
                     if (idx > 1) {
                         subtopic.notFirst = true;
                     }
+                    subtopic.descriptionTruncateLength = (subtopic.title.length > 25) ? 38 : 76;
                 });
                 $(this.el).html(this.template(this.model));
                 VideoControls.initThumbnailHover($(this.el));

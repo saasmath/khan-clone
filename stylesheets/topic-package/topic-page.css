@@ -127,8 +127,7 @@ a.main-video-link:hover {
 }
 .topic-page-content > .container > .nav-pane > ul > li.subheading span {
     color: #000;
-    font-family: MuseoSans300;
-    font-weight: bold;
+    font-family: MuseoSans500;
     font-size: 16px;
     padding: 4px 8px;
     padding-right: 20px;
@@ -349,9 +348,10 @@ a.main-video-link:hover {
     vertical-align: top;
 }
 .content-pane div.subtopics-list .topic-info .topic-title {
-    font-family: "MuseoSans700", sans-serif;
+    font-family: "MuseoSans500", sans-serif;
     font-size: 16px;
-    font-weight: bold;
+    line-height: 18px;
+    padding-bottom: 6px;
 }
 .content-pane div.subtopics-list .topic-info .topic-description {
     font-size: 12px;
