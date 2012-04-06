@@ -201,7 +201,9 @@ a:visited {
 .auth-form .simple-input.birth-month,
 .auth-form .simple-input.birth-day,
 .auth-form .simple-input.birth-year {
-    width: 33.333333%;
+    /* intentionally using the trailing 4 as the rounding works
+     * better given the current values */
+    width: 33.333334%;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
 }

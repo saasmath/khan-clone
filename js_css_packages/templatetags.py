@@ -100,7 +100,6 @@ def js_dynamic_package(package_name):
     return "\n".join(list_js)
 
 def css_package(package_name):
-
     if not use_compressed_packages():
         package = packages.stylesheets[package_name]
     else:
@@ -109,16 +108,22 @@ def css_package(package_name):
 
     list_css = []
     if not use_compressed_packages():
-        for filename in package["files"]:
-            list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
-                % (base_url, filename))
-    elif package_name+'-non-ie' not in packages_compressed.compressed_stylesheets:
+        for filename in package.get("files", []):
+            ext = os.path.splitext(filename)[1]
+            if ext == ".css":
+                list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
+                    % (base_url, filename))
+            elif ext == ".less":
+                list_css.append("<link rel='stylesheet/less' type='text/css' href='%s/%s' />" \
+                    % (base_url, filename))
+
+    elif package_name + '-non-ie' not in packages_compressed.compressed_stylesheets:
         list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
             % (util.static_url(base_url), package["hashed-filename"]))
     else:
         # Thank you Jammit (https://github.com/documentcloud/jammit) for the
         # conditional comments.
-        non_ie_package = packages_compressed.compressed_stylesheets[package_name+'-non-ie']
+        non_ie_package = packages_compressed.compressed_stylesheets[package_name + '-non-ie']
 
         list_css.append("<!--[if (!IE)|(gte IE 8)]><!-->")
 

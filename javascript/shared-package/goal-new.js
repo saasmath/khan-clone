@@ -305,12 +305,10 @@ var GoalCreator = {
                 }
             });
 
-            $.each(self.knowledgeMap.exerciseRowViews, function(index, exerciseRowView) {
-                if (exercise.name == exerciseRowView.model.get("name"))
-                    exerciseRowView.showGoalIcon(found);
+            $.each(self.knowledgeMap.nodeRowViews, function(index, nodeRowView) {
+                if (exercise.name == nodeRowView.model.get("name"))
+                    nodeRowView.showGoalIcon(found);
             });
-
-            self.knowledgeMap.exerciseMarkerViews[exercise.name].showGoalIcon(found);
         });
     },
 

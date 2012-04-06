@@ -25,6 +25,7 @@ from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph, recent_activity, suggested_activity
+from knowledgemap.layout import MapLayout
 from common_core.models import CommonCoreMap
 from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 from app import App
@@ -32,7 +33,7 @@ from app import App
 from api import route
 from api.decorators import jsonify, jsonp, pickle, compress, decompress, etag,\
     cacheable, cache_with_key_fxn_and_param
-from api.auth.decorators import oauth_required, oauth_optional, open_access, admin_required, developer_required
+import api.auth.decorators
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_unauthorized_response
 
@@ -127,7 +128,7 @@ def get_user_data_coach_from_request():
 @route("/api/v1/topicversion/<version_id>/topics/with_content", methods=["GET"])
 @route("/api/v1/topics/with_content", methods=["GET"])
 @route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
@@ -140,7 +141,7 @@ def content_topics(version_id = None):
 
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @cacheable(caching_age=(60 * 60 * 24 * 60))
 @etag(lambda: models.Setting.topic_tree_version())
 @jsonp
@@ -178,7 +179,7 @@ def topics_library_compact():
     return topic_dict
 
 @route("/api/v1/topicversion/<version_id>/changelist", methods=["GET"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def topic_version_change_list(version_id):
@@ -195,7 +196,7 @@ def topic_version_change_list(version_id):
 
 
 @route("/api/v1/topicversion/<version_id>/deletechange", methods=["POST"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def topic_version_delete_change(version_id):
@@ -220,7 +221,7 @@ def topic_version_delete_change(version_id):
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/videos", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
@@ -246,7 +247,7 @@ def topic_videos(topic_id, version_id = None):
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/exercises", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/exercises", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/exercises", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
@@ -267,8 +268,7 @@ def topic_exercises(topic_id, version_id = None):
     return exercises
 
 @route("/api/v1/topic/<topic_id>/progress", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def topic_progress(topic_id):
@@ -284,7 +284,7 @@ def topic_progress(topic_id):
 
 @route("/api/v1/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/topictree", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @etag(lambda version_id = None: version_id)
 @jsonp
 @decompress
@@ -301,7 +301,7 @@ def topictree(version_id = None):
 
 @route("/api/v1/dev/topictree/problems", methods=["GET"])
 # TODO(james): change to @developer_required once Tom creates interface
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def topic_tree_problems(version_id = "edit"):
@@ -311,7 +311,7 @@ def topic_tree_problems(version_id = "edit"):
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topictree", methods=["GET"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @decompress
 @layer_cache.cache_with_key_fxn(
@@ -329,7 +329,7 @@ def topictree_export(version_id = None, topic_id = "root"):
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["PUT"])
 @route("/api/v1/dev/topictree/init/<publish>", methods=["PUT"])
 @route("/api/v1/dev/topictree", methods=["PUT"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def topictree_import(version_id = "edit", topic_id="root", publish=False):
@@ -344,7 +344,7 @@ def topictree_import(version_id = "edit", topic_id="root", publish=False):
                 _url = "/_ah/queue/deferred_import")
 
 @route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def topictreesearch(version_id, query):
@@ -353,7 +353,7 @@ def topictreesearch(version_id, query):
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["GET"])
 @route("/api/v1/topic/<topic_id>", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @layer_cache.cache_with_key_fxn(
     (lambda topic_id, version_id = None: ("api_topic_%s_%s_%s" % (
@@ -374,8 +374,7 @@ def topic(topic_id, version_id = None):
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["PUT"])
 @route("/api/v1/topic/<topic_id>", methods=["PUT"])
-@developer_required
-@oauth_optional()
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def put_topic(topic_id, version_id = "edit"):
@@ -402,9 +401,31 @@ def put_topic(topic_id, version_id = "edit"):
         "id": topic.id
     }
 
+@route("/api/v1/topicversion/<version_id>/maplayout", methods=["GET"])
+@route("/api/v1/maplayout", methods=["GET"])
+@api.auth.decorators.open_access
+@jsonp
+@jsonify
+def get_maplayout(version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+    return MapLayout.get_for_version(version)
+
+@route("/api/v1/topicversion/<version_id>/maplayout", methods=["PUT"])
+@route("/api/v1/maplayout", methods=["PUT"])
+@api.auth.decorators.developer_required
+@jsonp
+@jsonify
+def put_maplayout(version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    map_layout = MapLayout.get_for_version(version)
+    map_layout.layout = request.json
+    map_layout.put()
+
+    return { "id": map_layout.id }
+
 @route("/api/v1/topicversion/default/id", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_default_topic_version_id():
@@ -412,7 +433,7 @@ def get_default_topic_version_id():
     return default_version.number if default_version else None
 
 @route("/api/v1/dev/task_message", methods=["GET"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def get_topic_admin_task_message():
@@ -448,7 +469,7 @@ def get_content_entity(kind, id, version):
 
 @route("/api/v1/topicversion/<version_id>/topic/<parent_id>/addchild", methods=["POST"])
 @route("/api/v1/topic/<parent_id>/addchild", methods=["POST"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def topic_add_child(parent_id, version_id = "edit"):
@@ -467,7 +488,7 @@ def topic_add_child(parent_id, version_id = "edit"):
 
 @route("/api/v1/topicversion/<version_id>/topic/<parent_id>/deletechild", methods=["POST"])
 @route("/api/v1/topic/<parent_id>/deletechild", methods=["POST"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def topic_delete_child(parent_id, version_id = "edit"):
@@ -485,7 +506,7 @@ def topic_delete_child(parent_id, version_id = "edit"):
 
 @route("/api/v1/topicversion/<version_id>/topic/<old_parent_id>/movechild", methods=["POST"])
 @route("/api/v1/topic/<old_parent_id>/movechild", methods=["POST"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def topic_move_child(old_parent_id, version_id = "edit"):
@@ -510,7 +531,7 @@ def topic_move_child(old_parent_id, version_id = "edit"):
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/ungroup", methods=["POST"])
 @route("/api/v1/topic/<topic_id>/ungroup", methods=["POST"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def topic_ungroup(topic_id, version_id = "edit"):
@@ -526,7 +547,7 @@ def topic_ungroup(topic_id, version_id = "edit"):
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/children", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/children", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @layer_cache.cache_with_key_fxn(
     (lambda topic_id, version_id = None: "api_topic_children_%s_%s_%s" % (
@@ -544,7 +565,7 @@ def topic_children(topic_id, version_id = None):
     return db.get(topic.child_keys)
 
 @route("/api/v1/topicversion/<version_id>/setdefault", methods=["GET"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def topic_children(version_id = None):
@@ -554,7 +575,7 @@ def topic_children(version_id = None):
     return version
 
 @route("/api/v1/topicversion/<version_id>", methods=["GET"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def topic_version(version_id = None):
@@ -562,7 +583,7 @@ def topic_version(version_id = None):
     return version
 
 @route("/api/v1/topicversion/<version_id>", methods=["PUT"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def topic_version(version_id = None):
@@ -582,7 +603,7 @@ def topic_version(version_id = None):
     return {}
 
 @route("/api/v1/topicversions/", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def topic_versions():
@@ -590,7 +611,7 @@ def topic_versions():
     return versions
 
 @route("/api/v1/topicversion/<version_id>/unused_content", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def topic_version_unused_content(version_id = None):
@@ -599,7 +620,7 @@ def topic_version_unused_content(version_id = None):
 
 @route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["GET"])
 @route("/api/v1/url/<int:url_id>", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_url(url_id, version_id=None):
@@ -610,7 +631,7 @@ def get_url(url_id, version_id=None):
 @route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["PUT"])
 @route("/api/v1/url/", methods=["PUT"])
 @route("/api/v1/url/<int:url_id>", methods=["PUT"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def save_url(url_id = None, version_id=None):
@@ -634,7 +655,7 @@ def save_url(url_id = None, version_id=None):
 
 
 @route("/api/v1/videos/<video_id>/explore_url", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_explore_url(video_id):
@@ -645,7 +666,7 @@ def get_explore_url(video_id):
 
 
 @route("/api/v1/videos/<video_id>/explore_url", methods=["PUT"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def set_explore_url(video_id):
@@ -660,7 +681,7 @@ def set_explore_url(video_id):
 
 
 @route("/api/v1/playlists/library", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @etag(lambda: models.Setting.topic_tree_version())
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
@@ -713,7 +734,7 @@ def playlists_library():
 @route("/api/v1/playlists/library/list/fresh", methods=["GET"],
                                                defaults = {"fresh": True})
 @route("/api/v1/playlists/library/list", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
@@ -740,7 +761,7 @@ def playlists_library_list(fresh=False):
     return topics_list
 
 @route("/api/v1/exercises", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_exercises():
@@ -748,7 +769,7 @@ def get_exercises():
 
 @route("/api/v1/topicversion/<version_id>/exercises/<exercise_name>", methods=["GET"])
 @route("/api/v1/exercises/<exercise_name>", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_exercise(exercise_name, version_id = None):
@@ -760,14 +781,14 @@ def get_exercise(exercise_name, version_id = None):
     return exercise
 
 @route("/api/v1/exercises/recent", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def exercise_recent_list():
     return models.Exercise.all().order('-creation_date').fetch(20)
 
 @route("/api/v1/exercises/<exercise_name>/followup_exercises", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def exercise_info(exercise_name):
@@ -775,7 +796,7 @@ def exercise_info(exercise_name):
     return exercise.followup_exercises() if exercise else []
 
 @route("/api/v1/exercises/<exercise_name>/videos", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def exercise_videos(exercise_name):
@@ -787,7 +808,7 @@ def exercise_videos(exercise_name):
 
 @route("/api/v1/topicversion/<version_id>/exercises/<exercise_name>", methods=["POST", "PUT"])
 @route("/api/v1/exercises/<exercise_name>", methods=["PUT","POST"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def exercise_save(exercise_name = None, version_id = "edit"):
@@ -808,7 +829,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
         float(data["seconds_per_fast_problem"]))
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
-                        "summative", "prerequisites", "covers",
+                        "prerequisites", "covers", 
                         "related_videos", "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise,
@@ -824,7 +845,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
 
 @route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["GET"])
 @route("/api/v1/videos/<video_id>", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def video(video_id, version_id = None):
@@ -838,14 +859,15 @@ def video(video_id, version_id = None):
 
 
 @route("/api/v1/videos/recent", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def video_recent_list():
     return models.Video.all().order('-date_added').fetch(20)
 
 @route("/api/v1/videos/<video_id>/download_available", methods=["POST"])
-@oauth_required(require_anointed_consumer=True)
+@api.auth.decorators.developer_required
+@api.auth.decorators.anointed_oauth_consumer_only
 @jsonp
 @jsonify
 def video_download_available(video_id):
@@ -871,7 +893,7 @@ def video_download_available(video_id):
     return video
 
 @route("/api/v1/videos/<video_id>/exercises", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def video_exercises(video_id):
@@ -881,7 +903,7 @@ def video_exercises(video_id):
     return []
 
 @route("/api/v1/videos/<topic_id>/<video_id>/play", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def video_play_data(topic_id, video_id):
@@ -907,7 +929,7 @@ def video_play_data(topic_id, video_id):
     return ret
 
 @route("/api/v1/commoncore", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_cc_map():
@@ -935,7 +957,7 @@ def fully_populated_playlists():
 
 # Fetches data from YouTube if we don't have it already in the datastore
 @route("/api/v1/videos/<youtube_id>/youtubeinfo", methods=["GET"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def get_youtube_info(youtube_id):
@@ -951,7 +973,7 @@ def get_youtube_info(youtube_id):
 @route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["POST", "PUT"])
 @route("/api/v1/videos/", methods=["POST","PUT"])
 @route("/api/v1/videos/<video_id>", methods=["POST","PUT"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def save_video(video_id="", version_id = "edit"):
@@ -1041,7 +1063,7 @@ def get_students_data_from_request(user_data):
     return util_profile.get_students_data(user_data, request.request_string("list_id"))
 
 @route("/api/v1/user", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def user_data_other():
@@ -1055,7 +1077,7 @@ def user_data_other():
     return None
 
 @route("/api/v1/user/username_available", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def is_username_available():
@@ -1068,7 +1090,7 @@ def is_username_available():
         return models.UniqueUsername.is_available_username(username)
 
 @route("/api/v1/user/promo/<promo_name>", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def has_seen_promo(promo_name):
@@ -1076,7 +1098,7 @@ def has_seen_promo(promo_name):
     return models.PromoRecord.has_user_seen_promo(promo_name, user_data.user_id)
 
 @route("/api/v1/user/promo/<promo_name>", methods=["POST"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def mark_promo_as_seen(promo_name):
@@ -1084,7 +1106,7 @@ def mark_promo_as_seen(promo_name):
     return models.PromoRecord.record_promo(promo_name, user_data.user_id)
 
 @route("/api/v1/user/profile", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_user_profile():
@@ -1095,7 +1117,7 @@ def get_user_profile():
     return util_profile.UserProfile.from_user(user_data, current_user_data)
 
 @route("/api/v1/user/profile", methods=["POST", "PUT"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def update_user_profile():
@@ -1151,7 +1173,7 @@ def update_user_profile():
     return result
 
 @route("/api/v1/user/coaches", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @api_disallow_phantoms
 @jsonp
 @jsonify
@@ -1166,7 +1188,7 @@ def get_coaches_and_requesters():
     return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
 
 @route("/api/v1/user/coaches", methods=["PUT"])
-@oauth_required()
+@api.auth.decorators.login_required
 @api_disallow_phantoms
 @jsonp
 @jsonify
@@ -1184,7 +1206,7 @@ def update_coaches_and_requesters():
     return profiles
 
 @route("/api/v1/user/students", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def user_data_student():
@@ -1198,7 +1220,7 @@ def user_data_student():
     return None
 
 @route("/api/v1/user/studentlists", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def get_user_studentlists():
@@ -1219,8 +1241,7 @@ def get_user_studentlists():
     return None
 
 @route("/api/v1/user/studentlists", methods=["POST"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def create_user_studentlist():
@@ -1243,8 +1264,7 @@ def create_user_studentlist():
     return student_list_json
 
 @route("/api/v1/user/studentlists/<list_key>", methods=["DELETE"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def delete_user_studentlist(list_key):
@@ -1273,7 +1293,7 @@ def filter_query_by_request_dates(query, property):
             raise ValueError("Invalid date format sent to dt_end, use ISO 8601 Combined.")
 
 @route("/api/v1/user/videos", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def user_videos_all():
@@ -1295,8 +1315,7 @@ def user_videos_all():
     return None
 
 @route("/api/v1/user/videos/<youtube_id>", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def user_videos_specific(youtube_id):
@@ -1318,8 +1337,8 @@ def user_videos_specific(youtube_id):
 # and http://stackoverflow.com/questions/328281/why-content-length-0-in-post-requests
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["POST"])
 @route("/api/v1/user/videos/<youtube_id>/log_compatability", methods=["GET"])
-@open_access
-@oauth_optional(require_anointed_consumer=True)
+@api.auth.decorators.open_access
+@api.auth.decorators.anointed_oauth_consumer_only
 @api_create_phantom
 @jsonp
 @jsonify
@@ -1367,16 +1386,36 @@ def log_user_video(youtube_id):
 
     return video_log
 
-
-@route("/api/v1/user/exercises", methods=["GET"])
-@open_access
-@oauth_optional()
+@route("/api/v1/user/topic/<topic_id>/exercises/next", methods=["GET"])
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
-def user_exercises_all():
+def topic_next_exercises(topic_id):
+    """ Retrieves the next few suggested user exercises in a specific topic.
+    """
+
+    user_data = models.UserData.current()
+
+    if not user_data:
+        user_data = models.UserData.pre_phantom()
+
+    topic = models.Topic.get_by_id(topic_id)
+    if not topic:
+        return api_invalid_param_response("Could not find topic with id: %s " + topic_id)
+
+    return models.UserExercise.next_in_topic(user_data, topic, queued=request.values.getlist("queued[]"))
+
+@route("/api/v1/user/exercises", methods=["GET"])
+@route("/api/v1/user/topic/<topic_id>/exercises", methods=["GET"])
+@api.auth.decorators.open_access
+@jsonp
+@jsonify
+def user_exercises_list(topic_id = None):
     """ Retrieves the list of exercise models wrapped inside of an object that
     gives information about what sorts of progress and interaction the current
     user has had with it.
+
+    If topic_id is supplied, limits the list to the topic's subset of exercises.
 
     Defaults to a pre-phantom users, in which case the encasing object is
     skeletal and contains little information.
@@ -1385,39 +1424,61 @@ def user_exercises_all():
     user_data = models.UserData.current()
 
     student = get_visible_user_data_from_request(user_data=user_data)
+
     if not student:
         student = models.UserData.pre_phantom()
-    exercises = models.Exercise.get_all_use_cache()
-    user_exercise_graph = models.UserExerciseGraph.get(student)
-    if student.is_pre_phantom:
-        user_exercises = []
-    else:
-        user_exercises = (models.UserExercise.all().
-                          filter("user =", student.user).
-                          fetch(10000))
 
-    user_exercises_dict = dict((user_exercise.exercise, user_exercise)
-                               for user_exercise in user_exercises)
+    exercises = None
+
+    if topic_id:
+
+        # Grab all exercises within a specific topic
+        topic = models.Topic.get_by_id(topic_id)
+
+        if not topic:
+            return api_invalid_param_response("Could not find topic with id: %s " + topic_id)
+
+        exercises = topic.get_exercises(include_descendants=True)
+
+    else:
+
+        # Grab all exercises
+        exercises = models.Exercise.get_all_use_cache()
+
+    user_exercise_graph = models.UserExerciseGraph.get(student, exercises_allowed=exercises)
+
+    user_exercises_dict = {}
+
+    if not student.is_pre_phantom:
+        user_exercises_dict = dict(
+            (attrs["name"], models.UserExercise.from_dict(attrs, student))
+            for attrs in user_exercise_graph.graph_dicts()
+        )
 
     results = []
+
     for exercise in exercises:
+
         name = exercise.name
+
         if name not in user_exercises_dict:
             user_exercise = models.UserExercise()
             user_exercise.exercise = name
             user_exercise.user = student.user
         else:
             user_exercise = user_exercises_dict[name]
+
         user_exercise.exercise_model = exercise
         user_exercise._user_data = student
         user_exercise._user_exercise_graph = user_exercise_graph
+
         results.append(user_exercise)
 
     return results
 
 # TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/progress/summary", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def get_students_progress_summary():
@@ -1484,8 +1545,7 @@ def get_students_progress_summary():
             'num_students': len(list_students)}
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def user_exercises_specific(exercise_name):
@@ -1544,8 +1604,7 @@ def user_followup_exercises(exercise_name):
     return None
 
 @route("/api/v1/user/exercises/<exercise_name>/followup_exercises", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def api_user_followups(exercise_name):
@@ -1553,7 +1612,7 @@ def api_user_followups(exercise_name):
 
 @route("/api/v1/user/topics", methods=["GET"])
 @route("/api/v1/user/playlists", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def user_playlists_all():
@@ -1570,7 +1629,7 @@ def user_playlists_all():
 
 @route("/api/v1/user/topic/<topic_id>", methods=["GET"])
 @route("/api/v1/user/playlists/<topic_id>", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def user_playlists_specific(topic_id):
@@ -1587,8 +1646,21 @@ def user_playlists_specific(topic_id):
 
     return None
 
+@route("/api/v1/user/exercises/reviews/count", methods=["GET"])
+@api.auth.decorators.open_access
+@jsonp
+@jsonify
+def reviews_count():
+    user_data = models.UserData.current()
+
+    if user_data:
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        return len(user_exercise_graph.review_exercise_names())
+
+    return 0
+
 @route("/api/v1/user/exercises/<exercise_name>/log", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def user_problem_logs(exercise_name):
@@ -1618,8 +1690,7 @@ def user_problem_logs(exercise_name):
 # TODO(david): Factor out duplicated code between attempt_problem_number and
 #     hint_problem_number.
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/attempt", methods=["POST"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @api_create_phantom
 @jsonp
 @jsonify
@@ -1646,7 +1717,7 @@ def attempt_problem_number(exercise_name, problem_number):
                     request.request_int("count_hints", default=0),
                     int(request.request_float("time_taken")),
                     review_mode,
-                    request.request_string("non_summative"),
+                    request.request_bool("topic_mode", default=False),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )
@@ -1664,6 +1735,9 @@ def attempt_problem_number(exercise_name, problem_number):
             user_states = user_exercise_graph.states(exercise.name)
             correct = request.request_bool("complete")
 
+            # Avoid an extra user exercise graph lookup during serialization
+            user_exercise._user_exercise_graph = user_exercise_graph
+
             action_results = {
                 "exercise_state": {
                     "state": [state for state in user_states if user_states[state]],
@@ -1677,10 +1751,6 @@ def attempt_problem_number(exercise_name, problem_number):
             if goals_updated:
                 action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
 
-            if review_mode:
-                action_results['reviews_left'] = (
-                    user_exercise_graph.reviews_left_count() + (1 - correct))
-
             add_action_results(user_exercise, action_results)
             return user_exercise
 
@@ -1688,8 +1758,7 @@ def attempt_problem_number(exercise_name, problem_number):
     return unauthorized_response()
 
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/hint", methods=["POST"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @api_create_phantom
 @jsonp
 @jsonify
@@ -1721,11 +1790,14 @@ def hint_problem_number(exercise_name, problem_number):
                     count_hints,
                     int(request.request_float("time_taken")),
                     review_mode,
-                    request.request_string("non_summative"),
+                    request.request_bool("topic_mode", default=False),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )
 
+            # TODO: this exercise_message_html functionality is currently hidden
+            # from power-mode. Restore it.
+            # https://trello.com/card/restore-you-re-ready-to-move-on-and-struggling-in-action-messages/4f3f43cd45533a1b3a065a1d/34
             user_states = user_exercise_graph.states(exercise.name)
             exercise_message_html = templatetags.exercise_message(exercise,
                     user_exercise_graph, review_mode=review_mode)
@@ -1750,16 +1822,14 @@ def hint_problem_number(exercise_name, problem_number):
 
 # TODO: Remove this route in v2
 @route("/api/v1/user/exercises/<exercise_name>/reset_streak", methods=["POST"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def reset_problem_streak(exercise_name):
     return _attempt_problem_wrong(exercise_name)
 
 @route("/api/v1/user/exercises/<exercise_name>/wrong_attempt", methods=["POST"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def attempt_problem_wrong(exercise_name):
@@ -1774,32 +1844,8 @@ def _attempt_problem_wrong(exercise_name):
 
     return unauthorized_response()
 
-@route("/api/v1/user/exercises/review_problems", methods=["GET"])
-@open_access
-@oauth_optional()
-@jsonp
-@jsonify
-def get_ordered_review_problems():
-    """Retrieves an ordered list of a subset of the upcoming review problems."""
-
-    # TODO(david): This should probably be abstracted away in exercises.py or
-    # models.py (if/when there's more logic here) with a nice interface.
-
-    user_data = get_visible_user_data_from_request()
-
-    if not user_data:
-        return []
-
-    user_exercise_graph = models.UserExerciseGraph.get(user_data)
-    review_exercises = user_exercise_graph.review_exercise_names()
-
-    queued_exercises = request.request_string('queued', '').split(',')
-
-    # Only return those exercises that aren't already queued up
-    return filter(lambda ex: ex not in queued_exercises, review_exercises)
-
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def user_video_logs(youtube_id):
@@ -1828,8 +1874,7 @@ def user_video_logs(youtube_id):
 
 # TODO: this should probably not return user data in it.
 @route("/api/v1/badges", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def badges_list():
@@ -1856,14 +1901,14 @@ def badges_list():
     return sorted(filter(lambda badge: not badge.is_hidden(), badges_dict.values()), key=lambda badge: badge.name)
 
 @route("/api/v1/badges/categories", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def badge_categories():
     return badges.BadgeCategory.all()
 
 @route("/api/v1/badges/categories/<category>", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def badge_category(category):
@@ -1871,7 +1916,7 @@ def badge_category(category):
 
 # TODO: the "GET" version of this.
 @route("/api/v1/user/badges/public", methods=["POST", "PUT"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def update_public_user_badges():
@@ -1911,8 +1956,7 @@ def update_public_user_badges():
     return result
 
 @route("/api/v1/user/badges", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_user_badges():
@@ -1951,7 +1995,7 @@ def get_user_badges():
         }
 
 @route("/api/v1/user/activity", methods=["GET"])
-@oauth_required()
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def get_activity():
@@ -1970,7 +2014,7 @@ def get_activity():
 
 # TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])
-@admin_required
+@api.auth.decorators.admin_required
 @jsonp
 @jsonify
 def add_developer():
@@ -1985,7 +2029,7 @@ def add_developer():
     return True
 
 @route("/api/v1/developers/remove", methods=["POST"])
-@admin_required
+@api.auth.decorators.admin_required
 @jsonp
 @jsonify
 def remove_developer():
@@ -2000,7 +2044,7 @@ def remove_developer():
     return True
 
 @route("/api/v1/coworkers/add", methods=["POST"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def add_coworker():
@@ -2019,7 +2063,7 @@ def add_coworker():
     return True
 
 @route("/api/v1/coworkers/remove", methods=["POST"])
-@developer_required
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def remove_coworker():
@@ -2038,7 +2082,7 @@ def remove_coworker():
     return True
 
 @route("/api/v1/autocomplete", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def autocomplete():
@@ -2081,16 +2125,14 @@ def autocomplete():
     }
 
 @route("/api/v1/dev/backupmodels", methods=["GET"])
-@developer_required
-@oauth_required()
+@api.auth.decorators.developer_required
 @jsonify
 def backupmodels():
     """Return the names of all models that inherit from models.BackupModel."""
     return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
 
 @route("/api/v1/dev/protobufquery", methods=["GET"])
-@developer_required
-@oauth_required()
+@api.auth.decorators.developer_required
 @pickle
 def protobuf_query():
     """Return the results of a GQL query as pickled protocol buffer objects
@@ -2117,8 +2159,7 @@ def protobuf_query():
                db.GqlQuery(query))
 
 @route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
-@developer_required
-@oauth_required()
+@api.auth.decorators.developer_required
 @pickle
 def protobuf_entities(entity):
     """Return up to 'max' entities last altered between 'dt_start' and 'dt_end'.
@@ -2142,8 +2183,7 @@ def protobuf_entities(entity):
                query.fetch(request.request_int("max", default=500)))
 
 @route("/api/v1/dev/problems", methods=["GET"])
-@developer_required
-@oauth_required()
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def problem_logs():
@@ -2153,8 +2193,7 @@ def problem_logs():
     return problem_log_query.fetch(request.request_int("max", default=500))
 
 @route("/api/v1/dev/videos", methods=["GET"])
-@developer_required
-@oauth_required()
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def video_logs():
@@ -2164,8 +2203,7 @@ def video_logs():
     return video_log_query.fetch(request.request_int("max", default=500))
 
 @route("/api/v1/dev/users", methods=["GET"])
-@developer_required
-@oauth_required()
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def user_data():
@@ -2176,8 +2214,7 @@ def user_data():
 
 # TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/progressreport", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_student_progress_report():
@@ -2195,8 +2232,7 @@ def get_student_progress_report():
         user_data_coach, students)
 
 @route("/api/v1/user/goals", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_user_goals():
@@ -2206,8 +2242,7 @@ def get_user_goals():
     return [g.get_visible_data() for g in goals]
 
 @route("/api/v1/user/goals/current", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_user_current_goals():
@@ -2218,8 +2253,7 @@ def get_user_current_goals():
 
 # TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/goals", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_student_goals():
@@ -2252,8 +2286,7 @@ def get_student_goals():
     return return_data
 
 @route("/api/v1/user/goals", methods=["POST"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @api_create_phantom
 @jsonp
 @jsonify
@@ -2324,8 +2357,7 @@ def create_user_goal():
 
 
 @route("/api/v1/user/goals/<int:id>", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_user_goal(id):
@@ -2342,8 +2374,7 @@ def get_user_goal(id):
 
 
 @route("/api/v1/user/goals/<int:id>", methods=["PUT"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def put_user_goal(id):
@@ -2372,8 +2403,7 @@ def put_user_goal(id):
 
 
 @route("/api/v1/user/goals/<int:id>", methods=["DELETE"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def delete_user_goal(id):
@@ -2391,8 +2421,7 @@ def delete_user_goal(id):
     return {}
 
 @route("/api/v1/user/goals", methods=["DELETE"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def delete_user_goals():
@@ -2409,8 +2438,7 @@ def delete_user_goals():
     return "Goals deleted"
 
 @route("/api/v1/avatars", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_avatars():
@@ -2427,7 +2455,7 @@ def get_avatars():
     return result
 
 @route("/api/v1/dev/version", methods=["GET"])
-@open_access
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_version_id():
@@ -2435,7 +2463,7 @@ def get_version_id():
 
 
 @route("/api/v1/parentsignup", methods=["POST", "PUT"])
-@open_access
+@api.auth.decorators.open_access
 @jsonify
 def signup_parent():
     email = request.request_string("email")

@@ -145,8 +145,9 @@ class Feedback(db.Model):
 
         if self.is_type(FeedbackType.Answer):
             question = self.question()
-            question.recalculate_score()
-            question.put()
+            if question:
+                question.recalculate_score()
+                question.put()
 
     def recalculate_votes(self):
         self.sum_votes = FeedbackVote.count_votes(self)

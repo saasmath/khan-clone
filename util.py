@@ -17,7 +17,6 @@ import facebook_util
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies, \
     is_phantom_id
 
-from api.auth.google_util import get_google_user_id_and_email_from_oauth_map
 from api.auth.auth_util import current_oauth_map, allow_cookie_based_auth
 import uid
 import urlparse
@@ -36,14 +35,7 @@ def get_current_user_id():
     return user_id
 
 def get_current_user_id_from_oauth_map(oauth_map):
-    user_id = None
-
-    if oauth_map.uses_google():
-        user_id = get_google_user_id_and_email_from_oauth_map(oauth_map)[0]
-    elif oauth_map.uses_facebook():
-        user_id = facebook_util.get_facebook_user_id_from_oauth_map(oauth_map)
-
-    return user_id
+    return oauth_map.get_user_id()
 
 # get_current_user_from_cookies_unsafe is labeled unsafe because it should
 # never be used in our JSONP-enabled API. All calling code should just use get_current_user_id.

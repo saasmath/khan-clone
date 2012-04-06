@@ -11,6 +11,7 @@ from google.appengine.ext import testbed
 from google.appengine.datastore import datastore_stub_util
 import request_cache as cachepy
 
+
 class GAEModelTestCase(unittest.TestCase):
     """ A test case that stubs out appengine's persistence layers in setUp.
 

@@ -457,7 +457,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         self.response.write(self.render_jinja2_template_to_string(template_name, template_values))
 
     def render_jinja2_template_to_string(self, template_name, template_values):
-        return shared_jinja.get().render_template(template_name, **template_values)
+        return shared_jinja.template_to_string(template_name, template_values)
 
     def render_json(self, obj, camel_cased=False):
         json_string = jsonify(obj, camel_cased=camel_cased)

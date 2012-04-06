@@ -17,6 +17,7 @@ import models_badges
 import last_action_cache
 
 import custom_badges
+import topic_exercise_badges
 import streak_badges
 import timed_problem_badges
 import exercise_completion_badges
@@ -38,7 +39,7 @@ import request_handler
 import user_util
 
 # Authoritative list of all badges
-@layer_cache.cache()
+@layer_cache.cache_with_key_fxn(lambda: "all_badges:%s" % models.Setting.topic_tree_version())
 def all_badges():
     list_badges = [
         exercise_completion_count_badges.GettingStartedBadge(),
@@ -135,10 +136,14 @@ def all_badges():
 
     ]
 
+    # Add custom badges and topic exercise badges, which both correspond
+    # to datastore entities, to the collection of all badges.
     list_badges.extend(custom_badges.CustomBadge.all())
+    list_badges.extend(topic_exercise_badges.TopicExerciseBadge.all())
+
     return list_badges
 
-@layer_cache.cache()
+@layer_cache.cache_with_key_fxn(lambda: "all_badges_dict:%s" % models.Setting.topic_tree_version())
 def all_badges_dict():
     dict_badges = {}
     for badge in all_badges():

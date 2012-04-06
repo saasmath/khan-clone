@@ -118,6 +118,8 @@ def file_size_report():
         for file in files:
             if file in packages.transformations:
                 file = packages.transformations[file]
+                if not file:
+                    continue
             file_path = os.path.normpath(os.path.join(path, file))
             file_path_min = file_path[:-len(suffix)] + '.min' + suffix
             popen_results([uglify_path, '-b', '-i', '0', '-nc', '-o', file_path_min, file_path])
@@ -244,9 +246,8 @@ def minify_package(path, path_combined, suffix):
 
     return path_compressed
 
-def remove_images_from_line(filename):
-    filename = filename.group(0)
 
+def data_uri_for_file(filename):
     ext = os.path.splitext(filename)[1][1:].lower()
     if ext == 'jpg':
         ext = 'jpeg'
@@ -258,10 +259,11 @@ def remove_images_from_line(filename):
         with open(filename) as img:
             f = StringIO.StringIO()
             f.write(img.read())
-            return '\'data:image/%s;base64,%s\'' % \
+            return 'data:image/%s;base64,%s' % \
                 (ext, base64.b64encode(f.getvalue()))
 
     return filename
+
 
 def remove_images(path, path_combined, suffix):
     if suffix != '.css': # don't touch js (yes, this is redundant)
@@ -273,7 +275,6 @@ def remove_images(path, path_combined, suffix):
     new_file = open(path_without_urls, 'w')
 
     r = re.compile('/\*! *data-uri\(\'?/images/(\S+)\.(png|gif|GIF|jpg)\'?\) *\*/')
-    rs = re.compile('/\*! *data-uri\(\'?data:image/(?:png|gif|jpg);base64,[0-9A-Za-z=/+]+\'?\) *\*/')
     with open(path_combined) as f:
         for line in f:
             if r.search(line):
@@ -283,10 +284,12 @@ def remove_images(path, path_combined, suffix):
                     #             |         |
                     #         i.group(1) i.group(2)
                     urlpath = '/images/%s.%s' % (i.group(1), i.group(2))
-                    line = re.sub(urlpath, remove_images_from_line, line)
+                    r_urlpath = r"url\('?%s(?:\?[^\)]+?)?'?\)" % re.escape(urlpath)
+                    data = data_uri_for_file(urlpath)
+                    line = re.sub(r_urlpath, "url('%s')" % data, line)
 
                 # remove the data-uri comments
-                line = rs.sub('', line)
+                line = r.sub('', line)
             new_file.write(line)
 
     new_file.close()
@@ -328,6 +331,8 @@ def combine_package(path, files, suffix):
     for static_filename in files:
         if static_filename in packages.transformations:
             static_filename = packages.transformations[static_filename]
+            if not static_filename:
+                continue
 
         path_static = os.path.join(path, static_filename)
         print "   ...adding %s" % path_static

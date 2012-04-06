@@ -1,17 +1,21 @@
 from __future__ import absolute_import
 
-from app import App
-
 import base64
 import datetime
 import hashlib
 import hmac
 import logging
+
+from app import App
 from auth.models import UserNonce
 
+
 _FORMAT = "%Y%j%H%M%S"
+
+
 def _to_timestamp(dt):
     return "%s.%s" % (dt.strftime(_FORMAT), dt.microsecond)
+
 
 def _from_timestamp(s):
     if not s:
@@ -24,12 +28,14 @@ def _from_timestamp(s):
         return None
     return result
 
+
 class BaseSecureToken(object):
     """ A base secure token used to identify and authenticate a user.
 
     Note that instances may be created that are invalid (it may be expired
     or an external revocation process may have invalidated it).
-    Clients must check is_valid() to ensure the contents of the token are valid.
+    Clients must check is_valid() to ensure the contents of the token are
+    valid.
 
     Different token types may be created by extending and having subclasses
     override the method to generate the token signature.
@@ -41,12 +47,12 @@ class BaseSecureToken(object):
         self.timestamp = timestamp
         self.signature = signature
         self._value_internal = None
-        
+
     @staticmethod
     def make_token_signature(user_data, timestamp):
         """ Subclasses should override this so to return a unique signature
         a user given a particular token type.
-        
+
         This may alter state for the user_data, so subclasses
         may define behavior such that subsequent calls to
         make_token_signature may return varying results. To ensure a signature
@@ -71,14 +77,15 @@ class BaseSecureToken(object):
         otherwise. Note that this essentially only checks well-formedness,
         and the token itself may be expired or invalid so clients must call
         is_valid or equivalent to verify.
-        
+
         """
 
         try:
             contents = base64.b64decode(token_value)
         except TypeError:
             # Not proper base64 encoded value.
-            logging.info("Tried to decode auth token that isn't base64 encoded")
+            logging.info("Tried to decode auth token that isn't " +
+                         "base64 encoded")
             return None
 
         parts = contents.split("\n")
@@ -94,11 +101,11 @@ class BaseSecureToken(object):
 
     def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
         """ Determines whether or not the specified token is expired.
-        
+
         Note that tokens encapsulate timestamp on creation, so the application
         may change the expiry lengths at any time and invalidate historical
         tokens with such changes.
-        
+
         """
 
         dt = _from_timestamp(self.timestamp)
@@ -115,17 +122,17 @@ class BaseSecureToken(object):
 
     def is_authentic(self, user_data):
         """ Determines if the token is valid for a given user.
-        
+
         Users may invalidate all existing auth tokens by changing his/her
         password.
-        
+
         """
 
         if self.user_id != user_data.user_id:
             return False
 
         return self.validate_signature_for(user_data)
-    
+
     def is_valid(self, user_data,
                  time_to_expiry=DEFAULT_EXPIRY, clock=None):
         return (not self.is_expired(time_to_expiry, clock) and
@@ -133,17 +140,19 @@ class BaseSecureToken(object):
 
     def __str__(self):
         return self.value
-    
+
     def __unicode__(self):
         return self.value
-    
+
     @property
     def value(self):
         if self._value_internal is None:
-            self._value_internal = base64.b64encode("\n".join([self.user_id,
-                                                               self.timestamp,
-                                                               self.signature]))
+            self._value_internal = base64.b64encode(
+                    "\n".join([self.user_id,
+                               self.timestamp,
+                               self.signature]))
         return self._value_internal
+
 
 class AuthToken(BaseSecureToken):
     """ A secure token used to authenticate a user that has a password set.
@@ -151,14 +160,14 @@ class AuthToken(BaseSecureToken):
     Note that instances may be created that are invalid (e.g. it may be expired
     or the user may have changed her password). Clients must check
     is_valid() to ensure the contents of the token are valid.
-    
+
     """
 
     @staticmethod
     def make_token_signature(user_data, timestamp):
         """ Generates a signature to be embedded inside of an auth token.
-    	This signature serves two goals. The first is to validate the rest of
-    	the contents of the token, much like a simple hash. The second is to
+        This signature serves two goals. The first is to validate the rest of
+        the contents of the token, much like a simple hash. The second is to
         also encode a unique user-specific string that can be invalidated if
         all existing tokens of the given type need to be invalidated.
 
@@ -171,7 +180,7 @@ class AuthToken(BaseSecureToken):
                 ])
         secret = App.token_recipe_key
         return hmac.new(secret, payload, hashlib.sha256).hexdigest()
-    
+
     @staticmethod
     def get_user_for_value(token_value, id_to_model):
         """ Retrieves a user_data object given a token_value, if it is valid.
@@ -179,12 +188,12 @@ class AuthToken(BaseSecureToken):
 
         This attempts to be somewhat model-agnostic and requires clients
         to specify the getter to retrieve the model given a user_id
-        
+
         """
-        
+
         if not token_value:
             return None
-        
+
         token = AuthToken.for_value(token_value)
         if not token:
             return None
@@ -192,6 +201,7 @@ class AuthToken(BaseSecureToken):
         if user_data and token.is_valid(user_data):
             return user_data
         return None
+
 
 class TransferAuthToken(BaseSecureToken):
     """ A short-lived authentication token that can be minted for signed
@@ -226,7 +236,53 @@ class TransferAuthToken(BaseSecureToken):
                 self.timestamp
                 ])
         secret = App.token_recipe_key
-        expected =  hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        expected = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        return expected == self.signature
+
+    # Force a short expiry for these tokens.
+    DEFAULT_EXPIRY = datetime.timedelta(hours=1)
+
+    def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
+        dt = _from_timestamp(self.timestamp)
+        now = (clock or datetime.datetime).utcnow()
+        return not dt or (now - dt) > time_to_expiry
+
+
+class PasswordResetToken(BaseSecureToken):
+    """ A short-lived token used to allow users to reset a password on her
+    account.
+
+    """
+
+    @staticmethod
+    def make_token_signature(user_data, timestamp):
+        if not user_data.credential_version:
+            raise "Can't make password reset token for user w/no password."
+
+        nonce = UserNonce.make_for(user_data, "pw_reset").value
+        payload = "\n".join([
+                user_data.user_id,
+                nonce,
+                user_data.credential_version,
+                timestamp
+                ])
+        secret = App.token_recipe_key
+        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+    def validate_signature_for(self, user_data):
+        nonce_entity = UserNonce.get_for(user_data, "pw_reset")
+        if nonce_entity is None:
+            return False
+
+        nonce = nonce_entity.value
+        payload = "\n".join([
+                user_data.user_id,
+                nonce,
+                user_data.credential_version,
+                self.timestamp
+                ])
+        secret = App.token_recipe_key
+        expected = hmac.new(secret, payload, hashlib.sha256).hexdigest()
         return expected == self.signature
 
     # Force a short expiry for these tokens.

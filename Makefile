@@ -6,6 +6,19 @@ clean:
 	   --exclude 'deploy/node_modules'
 	cd khan-exercises && git clean -xdf
 
+# Install dependencies required for development.
+install_deps:
+	pip install -r requirements.txt
+
+# Attempt to update (abort if uncommitted changes found).
+safeupdate:
+	hg pull
+	hg update -c
+
+# Update to the latest source and installed dependencies.
+# Run this as a cron job to keep your source tree up-to-date.
+refresh: safeupdate install_deps ;
+
 # Run unittests.  If COVERAGE is set, run them in coverage mode.
 COVERAGE_OMIT = *_test.py
 COVERAGE_OMIT += */google_appengine/*
@@ -61,3 +74,6 @@ js:
 css:
 	python deploy/compress.py css
 
+# Package less stylesheets
+less:
+	python deploy/compile_less.py
