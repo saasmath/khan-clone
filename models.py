@@ -40,6 +40,7 @@ from counters import user_counter
 from facebook_util import is_facebook_user_id, FACEBOOK_ID_PREFIX
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
 from decorators import clamp, synchronized_with_memcache
+from phantom_users import phantom_util
 import base64, os
 
 from image_cache import ImageCache
@@ -1261,9 +1262,12 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
     @property
     def email(self):
-        """ Unlike key_email below, this email property
-        represents the user's current email address and
-        can be displayed to users.
+        """ Unlike key_email below, this email property represents the user's
+        current email address and can be displayed to users.
+
+        Note that for some users, this field can be a URI and not an actual
+        e-mail address.
+
         """
         return self.user_email
 
@@ -1277,6 +1281,19 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         property.
         """
         return self.user.email()
+    
+    def has_sendable_email(self):
+        """ Returns whether or not this user's email property corresponds to
+        an actual e-mail that we can send mail to.
+
+        """
+
+        if self.is_pre_phantom:
+            return False
+
+        value = self.email
+        return (not is_facebook_user_id(value) and
+                not phantom_util.is_phantom_id(value))
 
     @property
     def badge_counts(self):
@@ -1452,17 +1469,22 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
         return user_data
 
-    # Avoid an extra DB call in the (fairly often) case that the requested email
-    # is the email of the currently logged-in user
     @staticmethod
-    def get_possibly_current_user(email):
-        if not email:
+    def get_possibly_current_user(identifier):
+        """ Returns a UserData object corresponding to the identifier
+        (key_email or user_id value), using the request cache for the
+        current-logged in user if the identifier matches.
+        
+        """
+
+        if not identifier:
             return None
 
         user_data_current = UserData.current()
-        if user_data_current and user_data_current.user_email == email:
+        if user_data_current and user_data_current.key_email == identifier:
             return user_data_current
-        return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
+        return (UserData.get_from_user_id(identifier) or
+                UserData.get_from_db_key_email(identifier))
 
     @classmethod
     def key_for(cls, user_id):
