@@ -82,3 +82,14 @@ Handlebars.registerHelper("commafy", function(numPoints) {
     // From KhanUtil.commafy in math-format.js
     return numPoints.toString().replace(/(\d)(?=(\d{3})+$)/g, "$1,");
 });
+
+// Truncates the text and removes all HTML tags
+Handlebars.registerHelper("ellipsis", function(text, length) {
+    var textStripped = text.replace(/(<([^>]+)>)/ig,"");
+    if (textStripped.length < length) {
+        return textStripped;
+    } else {
+        return textStripped.substr(0, length-3) + "...";
+    }
+});
+
