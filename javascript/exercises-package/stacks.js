@@ -473,7 +473,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
             var r = Math.random();
             var nextEgg = _.find(jel.filter(".egg"), function(elt){
                 var p = $(elt).data("prob");
-                return (r > p[0]) && (r <= p[1]);
+                return (r >= p[0]) && (r < p[1]);
             });
 
             // fade out thisMessage and display egg || nextMessage
