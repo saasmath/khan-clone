@@ -969,8 +969,25 @@ var Profile = {
                     // Then reverse to get newest to oldest
                     context.reverse();
 
-                    $("#tab-content-questions").append(template(context))
+                    $("#tab-content-questions")
+                        .append(template(context))
                         .find("span.timeago").timeago();
+
+                    var jelUnread = $("#tab-content-questions").find(".unread");
+                    if (jelUnread.length !== 0) {
+                        jelUnread.animate({
+                                "background-color": "#FFF"
+                            }, 1000);
+
+                        // Clear notifications upon viewing them in question list
+                        $.ajax({
+                            type: "DELETE",
+                            url: "/api/v1/user/notifications",
+                            data: {
+                                email: email
+                            }
+                        });
+                    }
                 }
             });
         } else {
