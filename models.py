@@ -325,7 +325,9 @@ class Exercise(db.Model):
             return Exercise._get_all_use_cache_safe()
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda * args, **kwargs: "all_exercises_unsafe_%s" % Setting.cached_exercises_date())
+    @layer_cache.cache_with_key_fxn(
+        lambda * args, **kwargs: "all_exercises_unsafe_%s" % 
+            Setting.cached_exercises_date())
     def _get_all_use_cache_unsafe():
         query = Exercise.all_unsafe().order('h_position')
         return query.fetch(1000) # TODO(Ben) this limit is tenuous
@@ -335,7 +337,9 @@ class Exercise(db.Model):
         return filter(lambda exercise: exercise.live, Exercise._get_all_use_cache_unsafe())
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda * args, **kwargs: "all_exercises_dict_unsafe_%s" % Setting.cached_exercises_date())
+    @layer_cache.cache_with_key_fxn(
+        lambda * args, **kwargs: "all_exercises_dict_unsafe_%s" % 
+            Setting.cached_exercises_date())
     def _get_dict_use_cache_unsafe():
         exercises = Exercise._get_all_use_cache_unsafe()
         dict_exercises = {}
@@ -2003,7 +2007,8 @@ class TopicVersion(db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda :
         "TopicVersion.get_all_content_keys_%s" %
-        Setting.cached_content_add_date())
+        Setting.cached_content_add_date(),
+        layer=layer_cache.Layers.Memcache)
     def get_all_content_keys():
         video_keys = Video.all(keys_only=True).fetch(100000)
         exercise_keys = Exercise.all(keys_only=True).fetch(100000)
@@ -2259,10 +2264,17 @@ def preload_default_version_data(version_number, run_code):
     autocomplete.topic_title_dicts(version.number)
     logging.info("preloaded topic autocomplete")
 
+    # Preload topic pages
+    for topic in Topic.get_all_topics(version=version):
+        topic.get_topic_page_data()
+    logging.info("preloaded topic pages")
+
     # Preload topic browser
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
-    logging.info("preloaded topic_browser")
+    templatetags.topic_browser_data(version_number=version.number, show_topic_pages=False)
+    templatetags.topic_browser_data(version_number=version.number, show_topic_pages=True)
+    logging.info("preloaded topic_browsers")
 
     # Sync all topic exercise badges with upcoming version
     topic_exercise_badges.sync_with_topic_version(version)
@@ -2601,6 +2613,10 @@ class Topic(Searchable, db.Model):
         return '/#%s' % self.id
 
     @property
+    def topic_page_url(self):
+         return '/%s' % self.get_extended_slug()
+
+    @property
     def ka_url(self):
         return util.absolute_url(self.relative_url)
 
@@ -2626,6 +2642,83 @@ class Topic(Searchable, db.Model):
 			})
         return self
 
+    def get_library_data(self, node_dict=None):
+        from homepage import thumbnail_link_dict
+
+        if node_dict:
+            children = [ node_dict[c] for c in self.child_keys if c in node_dict ]
+        else:
+            children = db.get(self.child_keys)
+
+        (thumbnail_video, thumbnail_topic) = self.get_first_video_and_topic()
+
+        ret = {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "children": [{
+                "url": "/%s/v/%s" % (self.get_extended_slug(), v.readable_id),
+                "key_id": v.key().id(),
+                "title": v.title
+            } for v in children if v.__class__.__name__ == "Video"],
+            "child_count": len([v for v in children if v.__class__.__name__ == "Video"]),
+            "thumbnail_link": thumbnail_link_dict(video=thumbnail_video, parent_topic=thumbnail_topic),
+        }
+
+        return ret
+
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_topic_page_data_%s" % self.key())
+    def get_topic_page_data(self):
+        """ Retrieve the listing of subtopics and videos for this topic.
+            Used on the topic page. """
+        from homepage import thumbnail_link_dict
+
+        (marquee_video, subtopic) = self.get_first_video_and_topic()
+
+        tree = self.make_tree(types=["Video"])
+
+        # If there are child videos, child topics are ignored.
+        # There is no support for mixed topic/video containers.
+        video_child_keys = [v for v in self.child_keys if v.kind() == "Video"]
+        if not video_child_keys:
+            # Fetch child topics
+            topic_child_keys = [t for t in self.child_keys if t.kind() == "Topic"]
+            topic_children = filter(lambda t: t.has_children_of_type(["Video"]),
+                                    db.get(topic_child_keys))
+
+            # Fetch the descendent videos
+            node_keys = []
+            for subtopic in topic_children:
+                videos = filter(lambda v: v.kind() == "Video", subtopic.child_keys)
+                if videos:
+                    node_keys.extend(videos)
+
+            nodes = db.get(node_keys)
+            node_dict = dict((node.key(), node) for node in nodes)
+
+            # Get the subtopic video data
+            subtopics = [t.get_library_data(node_dict=node_dict) for t in topic_children]
+            child_videos = None
+        else:
+            # Fetch the child videos
+            nodes = db.get(video_child_keys)
+            node_dict = dict((node.key(), node) for node in nodes)
+
+            # Get the topic video data
+            subtopics = None
+            child_videos = self.get_library_data(node_dict=node_dict)
+
+        topic_info = {
+            "topic": self,
+            "marquee_video": thumbnail_link_dict(video=marquee_video, parent_topic=subtopic),
+            "subtopics": subtopics,
+            "child_videos": child_videos,
+            "extended_slug": self.get_extended_slug(),
+        }
+
+        return topic_info
+
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
 
@@ -2646,8 +2739,7 @@ class Topic(Searchable, db.Model):
 
     # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_extended_slug_%s" % self.key(),
-        layer=layer_cache.Layers.Memcache)
+        "topic_extended_slug_%s" % self.key())
     def get_extended_slug(self):
         parent_ids = [topic.id for topic in db.get(self.ancestor_keys)]
         parent_ids.reverse()
@@ -2695,8 +2787,8 @@ class Topic(Searchable, db.Model):
         } for v in Topic.get_cached_videos_for_topic(self)]
 
         ancestor_topics = [{
-            "title": topic.title,
-            "url": (topic.relative_url if topic.id in Topic._super_topic_ids
+            "title": topic.title, 
+            "url": (topic.topic_page_url if topic.id in Topic._super_topic_ids 
                     or topic.has_content() else None)
             }
             for topic in db.get(self.ancestor_keys)][0:-1]
@@ -2705,7 +2797,7 @@ class Topic(Searchable, db.Model):
         return {
             'id': self.id,
             'title': self.title,
-            'url': self.relative_url,
+            'url': self.topic_page_url,
             'extended_slug': self.get_extended_slug(),
             'ancestor_topics': ancestor_topics,
             'top_level_topic': db.get(self.ancestor_keys[-2]).id if len(self.ancestor_keys) > 1 else self.id,
@@ -3160,7 +3252,7 @@ class Topic(Searchable, db.Model):
     lambda self, types=[], include_hidden=False:
             "topic.make_tree_%s_%s_%s" % (
             self.key(), types, include_hidden),
-            layer=layer_cache.Layers.Blobstore)
+            layer=layer_cache.Layers.Memcache)
     def make_tree(self, types=[], include_hidden=False):
         if include_hidden:
             nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
@@ -3343,7 +3435,7 @@ class Topic(Searchable, db.Model):
             (str(version.number) + str(version.updated_on))  if version
             else Setting.topic_tree_version(),
             include_hidden),
-        layer=layer_cache.Layers.Blobstore)
+        layer=layer_cache.Layers.Memcache)
     def get_filled_rolled_up_top_level_topics(types=None, version=None, include_hidden=False):
         if types is None:
             types = []
@@ -3956,7 +4048,8 @@ class Url(db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda :
         "Url.get_all_%s" %
-        Setting.cached_content_add_date())
+        Setting.cached_content_add_date(),
+        layer=layer_cache.Layers.Memcache)
     def get_all():
         return Url.all().fetch(100000)
 
@@ -4114,7 +4207,7 @@ class Video(Searchable, db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(
         lambda : "Video.get_all_%s" % (Setting.cached_content_add_date()),
-        layer=layer_cache.Layers.Blobstore)
+        layer=layer_cache.Layers.Memcache)
     def get_all():
         return Video.all().fetch(100000)
 

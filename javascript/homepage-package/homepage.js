@@ -7,44 +7,8 @@ var Homepage = {
     },
 
     initPlaceholder: function(youtube_id) {
-
         var jelPlaceholder = $("#main-video-placeholder");
-
-        // Once the youtube player is all loaded and ready, clicking the play
-        // button will play inline.
-        $(VideoControls).one("playerready", function() {
-
-            // Before any playing, unveil and play the real youtube player
-            $(VideoControls).one("beforeplay", function() {
-
-                // Use .left to unhide the player without causing any
-                // re-rendering or "pop"-in of the player.
-                $(".player-loading-wrapper").css("left", 0);
-
-                jelPlaceholder.find(".youtube-play").css("visibility", "hidden");
-
-            });
-
-            jelPlaceholder.click(function(e) {
-
-                VideoControls.play();
-                e.preventDefault();
-
-            });
-
-        });
-
-        // Start loading the youtube player immediately,
-        // and insert it wrapped in a hidden container
-        var template = Templates.get("shared.youtube-player");
-
-        jelPlaceholder
-            .parents("#main-video-link")
-                .after(
-                    $(template({"youtubeId": youtube_id}))
-                        .wrap("<div class='player-loading-wrapper'/>")
-                        .parent()
-            );
+        VideoControls.initPlaceholder(jelPlaceholder, {"youtubeId": youtube_id});
     },
 
     initWaypoints: function() {
