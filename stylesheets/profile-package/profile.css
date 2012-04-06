@@ -854,9 +854,8 @@ a[rel="goals"] {
 a[rel="community coaches"] {
     background: transparent url(/images/profile-icons/user-silhouette.png) no-repeat 4px 50%;
 }
-/* TODO(marcia): Replace with actual icon. */
 a[rel="community questions"] {
-    background: transparent url(/images/profile-icons/user-silhouette.png) no-repeat 4px 50%;
+    background: transparent url(/images/profile-icons/discussions.png) no-repeat 4px 50%;
 }
 li.profile-tab {
     margin-bottom: 10px;
