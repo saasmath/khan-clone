@@ -424,7 +424,6 @@ class ChunkedResult():
         ''' disabling this code for now as when datastore pickles ChunkedResult
         its value can tripple in size.
         if size < MAX_SIZE_OF_CACHE_CHUNKS:
-            print "size after compression is now %i" % size
             return cache_class.set(key, 
                                    ChunkedResult(data=result, 
                                                  compress=compress),
