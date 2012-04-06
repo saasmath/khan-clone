@@ -99,9 +99,14 @@ def start_dev_appserver():
             ('--blobstore_path=%s'
              % os.path.join(_tmpdir, 'blobs')),
             _tmpdir]
-    # TODO(csilvers): redirect stdout/stderr somewhere so the output
-    #                 isn't so noisy?  Maybe to a cStringIO object.
-    _pid = subprocess.Popen(args).pid
+    # Its output is noisy, but useful, so store it in tmpdir.  Third
+    # arg to open() uses line-buffering so the output is available.
+    dev_appserver_file = os.path.join(_tmpdir, 'dev_appserver.log')
+    dev_appserver_output = open(dev_appserver_file, 'w', 1)
+    print 'NOTE: Starting dev_appserver.py; output in %s' % dev_appserver_file
+    _pid = subprocess.Popen(args,
+                            stdout=dev_appserver_output,
+                            stderr=subprocess.STDOUT).pid
 
     # Wait for the server to start up
     time.sleep(1)          # it *definitely* takes at least a second
