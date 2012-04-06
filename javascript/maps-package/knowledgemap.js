@@ -1,452 +1,47 @@
 function KnowledgeMapInitGlobals() {
+
     window.KnowledgeMapGlobals = {
+
         colors: {
             blue: "#0080C9",
             green: "#8EBE4F",
             red: "#E35D04",
             gray: "#FFFFFF"
         },
-        icons: {
-                Exercise: {
-                        Proficient: "/images/node-complete.png?" + KA_VERSION,
-                        Review: "/images/node-review.png?" + KA_VERSION,
-                        Suggested: "/images/node-suggested.png?" + KA_VERSION,
-                        Normal: "/images/node-not-started.png?" + KA_VERSION
-                          },
-                Summative: {
-                        Normal: "/images/node-challenge-not-started.png?" + KA_VERSION,
-                        Proficient: "/images/node-challenge-complete.png?" + KA_VERSION,
-                        Suggested: "/images/node-challenge-suggested.png?" + KA_VERSION
-                           }
+
+        iconClasses: {
+            exercise: {
+                Proficient: "node-complete",
+                Review: "node-review",
+                Suggested: "node-suggested",
+                Normal: "node-not-started"
+            }
         },
-        coordsHome: { lat: -0.064844, lng: 0.736268, zoom: 9, when: 0 },
+
+        coordsHome: { lat: -2.064844, lng: 0.736268, zoom: 6, when: 0 },
         latMin: 90,
         latMax: -90,
         lngMin: 180,
         lngMax: -180,
         nodeSpacing: {lat: 0.392, lng: 0.35},
         options: {
-                    getTileUrl: function(coord, zoom) {
-                        // Sky tiles example from
-                        // http://gmaps-samples-v3.googlecode.com/svn/trunk/planetary-maptypes/planetary-maptypes.html
-                        return KnowledgeMapGlobals.getHorizontallyRepeatingTileUrl(coord, zoom,
-                                function(coord, zoom) {
-                                  return "/images/map-tiles/field_" +
-                                     Math.floor(Math.random() * 4 + 1) + ".jpg";
-                                });
-                    },
-                    tileSize: new google.maps.Size(256, 256),
-                    maxZoom: 10,
-                    minZoom: 7,
-                    isPng: false
+            getTileUrl: function(coord, zoom) {
+                // Sky tiles example from
+                // http://gmaps-samples-v3.googlecode.com/svn/trunk/planetary-maptypes/planetary-maptypes.html
+                return "/images/map-tiles/field_" + Math.floor(Math.random() * 4 + 1) + ".jpg";
+            },
+            tileSize: new google.maps.Size(256, 256),
+            maxZoom: 9,
+            minZoom: 6,
+            isPng: false
         },
-        getHorizontallyRepeatingTileUrl: function(coord, zoom, urlfunc) {
 
-            // From http://gmaps-samples-v3.googlecode.com/svn/trunk/planetary-maptypes/planetary-maptypes.html
-            var y = coord.y;
-            var x = coord.x;
-
-            // tile range in one direction range is dependent on zoom level
-            // 0 = 1 tile, 1 = 2 tiles, 2 = 4 tiles, 3 = 8 tiles, etc
-            var tileRange = 1 << zoom;
-
-            // don't repeat across y-axis (vertically)
-            if (y < 0 || y >= tileRange) {
-                return null;
-            }
-
-            // repeat across x-axis
-            if (x < 0 || x >= tileRange) {
-                x = (x % tileRange + tileRange) % tileRange;
-            }
-
-            return urlfunc({x: x, y: y}, zoom);
+        xyToLatLng: function(x, y) {
+            return new google.maps.LatLng(
+                    -1 * (y - 1) * KnowledgeMapGlobals.nodeSpacing.lat, x * KnowledgeMapGlobals.nodeSpacing.lng
+            );
         }
     };
-
-    window.KnowledgeMapExercise = Backbone.Model.extend({
-        initialize: function() {
-            var s_prefix = this.get("summative") ? "node-challenge" : "node";
-
-            if (this.get("status") == "Suggested") {
-                this.set({"isSuggested": true, "badgeIcon": "/images/" + s_prefix + "-suggested.png?" + KA_VERSION});
-            } else if (this.get("status") == "Review") {
-                this.set({"isSuggested": true, "isReview": true, "badgeIcon": "/images/node-review.png?" + KA_VERSION});
-            } else if (this.get("status") == "Proficient") {
-                this.set({"isSuggested": false, "badgeIcon": "/images/" + s_prefix + "-complete.png?" + KA_VERSION});
-            } else {
-                this.set({"isSuggested": false, "badgeIcon": "/images/" + s_prefix + "-not-started.png?" + KA_VERSION});
-            }
-
-            this.set({
-                inAllList: false,
-                lowercaseName: this.get("display_name").toLowerCase()
-            });
-
-            var milestones = [];
-            for (var milestone = 0; milestone < this.get("num_milestones") - 1; milestone++) {
-                milestones.push({
-                    "left": Math.round((milestone + 1) * (228 / this.get("num_milestones")))
-                });
-            }
-            this.set({"streakBar": {
-                "proficient": this.get("progress") >= 1,
-                "suggested": (this.get("status") == "Suggested" || (this.get("progress") < 1 && this.get("progress") > 0)),
-                "progressDisplay": this.get("progress_display"),
-                "maxWidth": 228,
-                "width": Math.min(1.0, this.get("progress")) * 228,
-                "milestones": []
-            }});
-        },
-
-        url: function() {
-            return "/exercise/" + this.get("name");
-        },
-
-        adminUrl: function() {
-            return "/editexercise?name=" + this.get("name");
-        }
-    });
-
-    window.ExerciseRowView = Backbone.View.extend({
-        initialize: function() {
-            this.visible = false;
-            this.nodeName = this.model.get("name");
-            this.parent = this.options.parent;
-        },
-
-        events: {
-            "click .exercise-title": "onBadgeClick",
-            "click .proficient-badge": "onBadgeClick",
-            "click .exercise-show": "onShowExerciseClick"
-        },
-
-        inflate: function() {
-            if (this.inflated)
-                return;
-
-            var template = Templates.get(this.options.admin ? "shared.knowledgemap-admin-exercise" : "shared.knowledgemap-exercise");
-            var context = this.model.toJSON();
-            if (this.options.admin) {
-                context.url = this.model.adminUrl();
-            } else {
-                context.url = this.model.url();
-            }
-
-            context.disabled = this.model.get("invalidForGoal") || false;
-
-            var newContent = $(template(context));
-            var self = this;
-            newContent.hover(
-                function() {self.onBadgeMouseover(self.nodeName, newContent);},
-                function() {self.onBadgeMouseout(self.nodeName, newContent);}
-            );
-
-            this.el.replaceWith(newContent);
-            this.el = newContent;
-            this.inflated = true;
-            this.delegateEvents();
-        },
-
-        onBadgeClick: function(evt) {
-            // give the parent a chance to handle this exercise click. If it
-            // doesn't, we'll just follow the anchor href
-            return this.parent.nodeClickHandler(this.model, evt);
-        },
-
-        onBadgeMouseover: function(node_name, element) {
-            this.parent.highlightNode(node_name, true);
-
-            element.find(".exercise-show").show();
-        },
-
-        onBadgeMouseout: function(node_name, element) {
-            this.parent.highlightNode(node_name, false);
-
-            element.find(".exercise-show").hide();
-        },
-
-        onShowExerciseClick: function() {
-            this.parent.panToNode(this.nodeName);
-            this.parent.highlightNode(this.nodeName, true);
-        },
-
-        showGoalIcon: function(visible) {
-            if (visible)
-                this.el.find(".exercise-goal-icon").show();
-            else
-                this.el.find(".exercise-goal-icon").hide();
-        }
-    });
-    window.ExerciseMarkerView = Backbone.View.extend({
-        initialize: function() {
-            var exercise = this.model;
-            this.nodeName = exercise.get("name");
-            this.filtered = false;
-            this.goalIconVisible = false;
-            this.parent = this.options.parent;
-
-            var iconSet = KnowledgeMapGlobals.icons[exercise.get("summative") ? "Summative" : "Exercise"];
-            this.iconUrl = iconSet[exercise.get("status")];
-            if (!this.iconUrl) this.iconUrl = iconSet.Normal;
-
-            this.updateElement(this.el);
-        },
-        updateElement: function(el) {
-            this.el = el;
-            this.zoom = this.parent.map.getZoom();
-            var self = this;
-
-            this.el.click(
-                    function(evt) {return self.onNodeClick(evt);}
-                ).hover(
-                    function() {return self.onNodeMouseover();},
-                    function() {return self.onNodeMouseout();}
-                );
-
-            var iconOptions = this.getIconOptions();
-            this.el.find("img.node-icon").attr("src", iconOptions.url);
-            this.el.attr("class", this.getLabelClass());
-
-            if (this.parent.admin)
-                this.el.attr("href", this.model.adminUrl());
-            else
-                this.el.attr("href", this.model.url());
-
-            if (this.goalIconVisible)
-                this.el.find(".exercise-goal-icon").show();
-            else
-                this.el.find(".exercise-goal-icon").hide();
-        },
-
-        getIconOptions: function() {
-
-            var iconUrlCacheKey = this.iconUrl + "@" + this.zoom;
-
-            if (!this.parent.iconCache) this.parent.iconCache = {};
-            if (!this.parent.iconCache[iconUrlCacheKey])
-            {
-                var url = this.iconUrl;
-
-                if (!this.model.get("summative") && this.zoom <= KnowledgeMapGlobals.options.minZoom)
-                {
-                    url = this.iconUrl.replace(".png", "-star.png");
-                }
-
-                this.parent.iconCache[iconUrlCacheKey] = {url: url};
-            }
-            return this.parent.iconCache[iconUrlCacheKey];
-        },
-
-        getLabelClass: function() {
-            var classText = "nodeLabel nodeLabel" + this.model.get("status");
-            var visible = !this.model.get("summative") || this.zoom == KnowledgeMapGlobals.options.minZoom;
-            if (this.model.get("summative") && visible) this.zoom = KnowledgeMapGlobals.options.maxZoom - 1;
-
-            if (this.model.get("summative")) classText += " nodeLabelSummative";
-            classText += (visible ? "" : " nodeLabelHidden");
-            classText += (" nodeLabelZoom" + this.zoom);
-            classText += (this.filtered ? " nodeLabelFiltered" : "");
-            classText += (this.model.get("invalidForGoal") ? " goalNodeInvalid" : "");
-
-            return classText;
-        },
-
-        setFiltered: function(filtered, bounds) {
-            if (filtered != this.filtered) {
-                this.filtered = filtered;
-            }
-
-            var updateAppearance;
-            if (bounds) {
-                // only update appearance of nodes that are currently on screen
-                var node = this.parent.dictNodes[this.nodeName];
-                updateAppearance = bounds.contains(node.latLng);
-            }
-            else {
-                updateAppearance = true;
-            }
-
-            // if we're in the window, update
-            if (updateAppearance) {
-                this.updateAppearance();
-            }
-        },
-
-        updateAppearance: function() {
-            // set class for css to apply styles
-            if (this.filtered) {
-                this.el.addClass("nodeLabelFiltered");
-            } else {
-                this.el.removeClass("nodeLabelFiltered");
-            }
-
-            // perf hack: instead of changing css opacity, set a whole new image
-            var img = this.el.find('img.node-icon');
-            var url = img.attr('src');
-
-            // don't adjust images of stars when zoomed out
-            if (url.indexOf("-star.png") >= 0) return;
-
-            // normalize
-            if (url.indexOf("faded") >= 0) {
-                url = url.replace("-faded.png", ".png");
-            }
-
-            if (this.filtered) {
-                img.attr('src', url.replace(".png", "-faded.png"));
-            } else {
-                img.attr('src', url);
-            }
-        },
-
-        showGoalIcon: function(visible) {
-            if (visible != this.goalIconVisible) {
-                this.goalIconVisible = visible;
-                if (this.goalIconVisible)
-                    this.el.find(".exercise-goal-icon").show();
-                else
-                    this.el.find(".exercise-goal-icon").hide();
-            }
-        },
-
-        setHighlight: function(highlight) {
-            if (highlight)
-                this.el.addClass("nodeLabelHighlight");
-            else
-                this.el.removeClass("nodeLabelHighlight");
-        },
-
-        onNodeClick: function(evt) {
-            var self = this;
-
-            if (!this.model.get("summative") && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
-                return;
-
-            if (this.parent.admin)
-            {
-                if (evt.shiftKey)
-                {
-                    if (this.nodeName in this.parent.selectedNodes)
-                    {
-                        delete this.parent.selectedNodes[this.nodeName];
-                        this.parent.highlightNode(this.nodeName, false);
-                    }
-                    else
-                    {
-                        this.parent.selectedNodes[this.nodeName] = true;
-                        this.parent.highlightNode(this.nodeName, true);
-                    }
-                }
-                else
-                {
-                    $.each(this.parent.selectedNodes, function(node_name) {
-                        self.parent.highlightNode(node_name, false);
-                    });
-                    this.parent.selectedNodes = { };
-                    this.parent.selectedNodes[this.nodeName] = true;
-                    this.parent.highlightNode(this.nodeName, true);
-                }
-
-                //Unbind other keydowns to prevent a spawn of hell
-                $(document).unbind("keydown");
-
-                // If keydown is an arrow key
-                $(document).keydown(function(e) {
-                    var delta_v = 0, delta_h = 0;
-
-                    if (e.keyCode == 37) {
-                        delta_v = -1; // Left
-                    }
-                    if (e.keyCode == 38) {
-                        delta_h = -1; // Up
-                    }
-                    if (e.keyCode == 39) {
-                        delta_v = 1; // Right
-                    }
-                    if (e.keyCode == 40) {
-                        delta_h = 1; // Down
-                    }
-
-                    if (delta_v != 0 || delta_h != 0) {
-                        var id_array = [];
-
-                        $.each(self.parent.selectedNodes, function(node_name) {
-                            var actual_node = self.parent.dictNodes[node_name];
-
-                            actual_node.v_position = parseInt(actual_node.v_position) + delta_v;
-                            actual_node.h_position = parseInt(actual_node.h_position) + delta_h;
-
-                            id_array.push(node_name);
-                        });
-                        $.post("/moveexercisemapnodes", { exercises: id_array.join(","), delta_h: delta_h, delta_v: delta_v });
-
-                        var zoom = self.parent.map.getZoom();
-                        self.parent.markers = [];
-
-                        $.each(self.parent.dictEdges, function(key, rgTargets) { // this loop lets us update the edges wand will remove the old edges
-                            for (var ix = 0; ix < rgTargets.length; ix++) {
-                                var line = rgTargets[ix].line;
-                                if (line != null) {
-                                    line.setMap(null);
-                                }
-                            }
-                        });
-                        self.parent.overlay.setMap(null);
-                        self.parent.layoutGraph();
-                        self.parent.drawOverlay();
-
-                        setTimeout(function() {
-                                $.each(self.parent.selectedNodes, function(node_name) {
-                                    self.parent.highlightNode(node_name, true);
-                                });
-                            }, 100);
-
-                        return false;
-                    }
-                });
-
-                evt.preventDefault();
-            }
-            else
-            {
-                return this.parent.nodeClickHandler(this.model, evt);
-            }
-        },
-
-        onNodeMouseover: function() {
-            if (!this.model.get("summative") && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
-                return;
-            if (this.nodeName in this.parent.selectedNodes)
-                return;
-
-            $(".exercise-badge[data-id=\"" + this.parent.escapeSelector(this.nodeName) + "\"]").addClass("exercise-badge-hover");
-            this.parent.highlightNode(this.nodeName, true);
-        },
-
-        onNodeMouseout: function() {
-            if (!this.model.get("summative") && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
-                return;
-            if (this.nodeName in this.parent.selectedNodes)
-                return;
-
-            $(".exercise-badge[data-id=\"" + this.parent.escapeSelector(this.nodeName) + "\"]").removeClass("exercise-badge-hover");
-            this.parent.highlightNode(this.nodeName, false);
-        }
-    }, {
-        extendBounds: function(bounds, dlat, dlng) {
-            dlat = dlat || KnowledgeMapGlobals.nodeSpacing.lat;
-            dlng = dlat || KnowledgeMapGlobals.nodeSpacing.lng;
-
-            var ne = bounds.getNorthEast();
-            var nee = new google.maps.LatLng(ne.lat() + dlat, ne.lng() + dlng);
-
-            var sw = bounds.getSouthWest();
-            var swe = new google.maps.LatLng(sw.lat() - dlat, sw.lng() - dlng);
-
-            return new google.maps.LatLngBounds(swe, nee);
-        }
-    });
 }
 
 function KnowledgeMapDrawer(container, knowledgeMap) {
@@ -465,7 +60,7 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
     this.isExpanded = function() {
         var sCSSLeft = $("#" + this.container + " .dashboard-drawer").css("left").toLowerCase();
-        return sCSSLeft == "0px" || sCSSLeft == "auto" || sCSSLeft == "";
+        return sCSSLeft === "0px" || sCSSLeft === "auto" || sCSSLeft === "";
     };
 
     this.toggle = function() {
@@ -509,10 +104,10 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
         jelMapContent.height(newHeight);
 
-
-        // Account for padding in the dashboard drawer
+        // Account for padding in the dashboard drawer and review link
+        var adjustment = 20 + $("#dashboard-review-exercises").height();
         var jelDrawerInner = $(".dashboard-drawer-inner", context);
-        jelDrawerInner.height(jelDrawerInner.height() - 20);
+        jelDrawerInner.height(jelDrawerInner.height() - adjustment);
 
         self.triggerResize();
     };
@@ -542,7 +137,6 @@ function KnowledgeMap(params) {
 
     var self = this;
 
-    this.selectedNodes = {};
     // This handler exists as a hook to override what happens when an
     // exercise node is clicked. By default, it does nothing.
     this.nodeClickHandler = function(exercise, evt) {
@@ -551,15 +145,14 @@ function KnowledgeMap(params) {
     this.updateFilterTimout = null;
 
     // Models
-    this.exerciseModels = []; // list of exercises in displayed order
-    this.exercisesByName = {}; // fast access to exercises by name
+    this.modelsByName = {}; // fast access to Exercise and Topic models by name
+    this.topicPolylineModels = []; // polylines for topics connections
     this.filterSettings = new Backbone.Model({"filterText": "---", "userShowAll": false});
     this.numSuggestedExercises = 0;
-    this.numRecentExercises = 0;
 
     // Views
-    this.exerciseRowViews = [];
-    this.exerciseMarkerViews = {};
+    this.nodeRowViews = [];
+    this.nodeMarkerViews = {};
 
     // Map
     this.map = null;
@@ -567,10 +160,12 @@ function KnowledgeMap(params) {
     this.dictNodes = {};
     this.dictEdges = {};
     this.markers = [];
+    this.topicPolylines = [];
     this.latLngBounds = null;
     this.fFirstDraw = true;
     this.fCenterChanged = false;
     this.fZoomChanged = false;
+    this.fDragging = false;
 
     this.admin = !!params.admin;
     this.newGoal = !!params.newGoal;
@@ -591,23 +186,43 @@ function KnowledgeMap(params) {
 
         Handlebars.registerPartial("knowledgemap-exercise", Templates.get("shared.knowledgemap-exercise")); // TomY TODO do this automatically?
 
+        // Initial setup of topic list
+        if (params.topic_graph_json) {
+            _.map(params.topic_graph_json.topics, function(dict) {
+                dict.admin = this.admin;
+
+                // Index nodes by name
+                var topic = new KnowledgeMapModels.Topic(dict);
+                this.modelsByName[topic.get("name")] = topic;
+                return topic;
+
+            }, this);
+
+            this.topicPolylineModels = _.map(params.topic_graph_json.polylines, function(dict) {
+                return new KnowledgeMapModels.Polyline(dict);
+            });
+        }
+
         // Initial setup of exercise list from embedded data
-        this.exerciseModels = _.map(graph_dict_data, function(exercise) {
+        _.map(params.graph_dict_data, function(dict) {
             var invalidForGoal = (
-                exercise.goal_req ||
-                exercise.status === "Proficient" ||
-                exercise.status === "Review"
+                dict.goal_req ||
+                dict.status === "Proficient" ||
+                dict.status === "Review"
             );
 
             if (self.newGoal && invalidForGoal) {
-                exercise.invalidForGoal = true;
+                dict.invalidForGoal = true;
             }
 
-            return new KnowledgeMapExercise(exercise);
-        });
-        this.exercisesByName = _.indexBy(this.exerciseModels, function(ex) {
-            return ex.get("name");
-        });
+            dict.admin = this.admin;
+
+            // Index nodes by name
+            var exercise = new KnowledgeMapModels.Exercise(dict);
+            this.modelsByName[exercise.get("name")] = exercise;
+            return exercise;
+
+        }, this);
 
         this.initSidebar();
         this.initMap();
@@ -616,50 +231,36 @@ function KnowledgeMap(params) {
 
     this.initSidebar = function() {
         var suggestedExercisesContent = this.admin ? null : this.getElement("suggested-exercises-content");
-        var recentExercisesContent = this.admin ? null : this.getElement("recent-exercises-content");
         var allExercisesContent = this.getElement("all-exercises-content");
 
         // ensure blank elements take up the right amount of space
         var createEl = function() {
-            return $("<div>", {'class': 'exercise-badge'});
+            return $("<div>", {"class": "exercise-badge"});
         };
 
-        _.each(this.exercisesByName, function(exerciseModel) {
-            // Create views
-            var element;
-            if (exerciseModel.get("isSuggested")) {
-                if (!params.hideReview || !exerciseModel.get("isReview")) {
-                    element = createEl();
-                    element.appendTo(suggestedExercisesContent);
-                    this.exerciseRowViews.push(new ExerciseRowView({
-                        model: exerciseModel,
-                        el: element,
-                        type: "suggested",
-                        admin: this.admin,
-                        parent: this
-                    }));
-                    this.numSuggestedExercises++;
-                }
-            }
+        _.each(this.modelsByName, function(model) {
 
-            if (exerciseModel.get("recent")) {
+            // Create views
+            var element,
+                viewType = model.viewType();
+
+            if (model.get("isSuggested")) {
                 element = createEl();
-                element.appendTo(recentExercisesContent);
-                this.exerciseRowViews.push(new ExerciseRowView({
-                    model: exerciseModel,
+                element.appendTo(suggestedExercisesContent);
+                this.nodeRowViews.push(new viewType({
+                    model: model,
                     el: element,
-                    type: "recent",
+                    type: "suggested",
                     admin: this.admin,
                     parent: this
                 }));
-
-                this.numRecentExercises++;
+                this.numSuggestedExercises++;
             }
 
             element = createEl();
             element.appendTo(allExercisesContent);
-            this.exerciseRowViews.push(new ExerciseRowView({
-                model: exerciseModel,
+            this.nodeRowViews.push(new viewType({
+                model: model,
                 el: element,
                 type: "all",
                 admin: this.admin,
@@ -676,7 +277,7 @@ function KnowledgeMap(params) {
         var handler = function(evt) {
             // as doFilter is running while elements are detached, dimensions
             // will not work. Record the dimensions before we call it.
-            var row = _.find(this.exerciseRowViews, function(row) { return row.visible; });
+            var row = _.find(this.nodeRowViews, function(row) { return row.visible; });
 
             var rowHeight;
             if (row) {
@@ -700,7 +301,7 @@ function KnowledgeMap(params) {
     this.queryRowsRendered = false;
     this.inflateVisible = function(evt) {
         if (this.queryRowsRendered) return;
-        _.each(this.exerciseRowViews, function(rowView) {
+        _.each(this.nodeRowViews, function(rowView) {
             if (rowView.visible && !rowView.inflated) {
                 rowView.inflate();
             }
@@ -727,9 +328,10 @@ function KnowledgeMap(params) {
         var filterText = this.filterSettings.get("filterText");
         var bounds = this.map.getBounds();
         if (bounds)
-            bounds = ExerciseMarkerView.extendBounds(bounds);
+            bounds = KnowledgeMapViews.NodeMarker.extendBounds(bounds);
 
-        _.each(this.exerciseRowViews, function(row) {
+        _.each(this.nodeRowViews, function(row) {
+
             var exerciseName = row.model.get("lowercaseName");
 
             // single letter filters have lots of matches, so require exercise
@@ -764,8 +366,8 @@ function KnowledgeMap(params) {
             }
 
             // filter the item off the map view
-            if (row.options.type == "all" && this.exerciseMarkerViews[row.nodeName]) {
-                this.exerciseMarkerViews[row.nodeName].setFiltered(!filterMatches, bounds);
+            if (row.options.type == "all" && this.nodeMarkerViews[row.nodeName]) {
+                this.nodeMarkerViews[row.nodeName].setFiltered(!filterMatches, bounds);
             }
         }, this);
 
@@ -775,11 +377,11 @@ function KnowledgeMap(params) {
     };
 
     this.initMap = function() {
-        _.each(this.exercisesByName, function(exerciseModel) {
+        _.each(this.modelsByName, function(model) {
             // Update map graph
-            this.addNode(exerciseModel.toJSON());
-            _.each(exerciseModel.get("prereqs"), function(prereq) {
-                this.addEdge(exerciseModel.get("name"), prereq, exerciseModel.get("summative"));
+            this.addNode(model.toJSON());
+            _.each(model.get("prereqs"), function(prereq) {
+                this.addEdge(model.get("name"), prereq);
             }, this);
         }, this);
 
@@ -798,12 +400,18 @@ function KnowledgeMap(params) {
         var coords = $.extend({}, KnowledgeMapGlobals.coordsHome);
 
         // overwrite defaults with localStorage values (if any)
-        var localCoords = $.parseJSON( window.localStorage[ "map_coords:"+USERNAME ] || "{}" );
+        var localCoords = $.parseJSON(window.localStorage["map_coords:" + USERNAME] || "{}");
         $.extend(coords, localCoords);
 
         // prefer server values if they're more fresh
-        if (params.mapCoords && params.mapCoords.when > coords.when){
+        if (params.mapCoords && params.mapCoords.when > coords.when) {
             coords = params.mapCoords;
+        }
+
+        if (this.newGoal || this.admin) {
+            // Goal and admin UIs always start at exercise-level, for now, until
+            // topics are supported.
+            coords.zoom = KnowledgeMapGlobals.options.maxZoom - 1;
         }
 
         this.map.setCenter(new google.maps.LatLng(coords.lat, coords.lng));
@@ -816,11 +424,14 @@ function KnowledgeMap(params) {
             new google.maps.LatLng(KnowledgeMapGlobals.latMin, KnowledgeMapGlobals.lngMin),
             new google.maps.LatLng(KnowledgeMapGlobals.latMax, KnowledgeMapGlobals.lngMax));
 
-        _.bindAll(this, "onCenterChange", "onIdle", "onClick", "finishRenderingNodes");
+        _.bindAll(this, "onCenterChange", "onIdle", "finishRenderingNodes", "onDragStart", "onDragEnd");
         google.maps.event.addListener(this.map, "center_changed", this.onCenterChange);
         google.maps.event.addListener(this.map, "idle", this.onIdle);
-        google.maps.event.addListener(this.map, "click", this.onClick);
         google.maps.event.addListener(this.map, "center_changed", this.finishRenderingNodes);
+        google.maps.event.addListener(this.map, "dragstart", this.onDragStart);
+        google.maps.event.addListener(this.map, "dragend", this.onDragEnd);
+
+        this.delegateNodeEvents();
 
         this.giveNasaCredit();
         $(window).on("beforeunload", $.proxy(this.saveMapCoords, this));
@@ -830,14 +441,37 @@ function KnowledgeMap(params) {
         this.nodeClickHandler = handler;
     };
 
+    /**
+     * Delegate all node event listeners to the map's outer container,
+     * which never changes. This protects us from needing to reattach
+     * node event handlers every time nodes are redrawn due to
+     * zoom and pan, which makes for a faster map.
+     */
+    this.delegateNodeEvents = function() {
+
+        var callViewHandler = function(handler) {
+            return function(evt) {
+                var view = self.nodeMarkerViews[$(this).attr("data-id")];
+                if (view) {
+                    view[handler](evt);
+                }
+            };
+        };
+
+        $(".dashboard-map").delegate(".nodeLabel", {
+            "click": callViewHandler("click"),
+            "mouseenter": callViewHandler("mouseenter"),
+            "mouseleave": callViewHandler("mouseleave")
+        });
+
+    };
+
     this.panToNode = function(dataID) {
         var node = this.dictNodes[dataID];
 
         // Set appropriate zoom level if necessary
-        if (node.summative && this.map.getZoom() > KnowledgeMapGlobals.options.minZoom)
-            this.map.setZoom(KnowledgeMapGlobals.options.minZoom);
-        else if (!node.summative && this.map.getZoom() == KnowledgeMapGlobals.options.minZoom)
-            this.map.setZoom(KnowledgeMapGlobals.options.minZoom + 1);
+        if (this.map.getZoom() != node.preferredZoom)
+            this.map.setZoom(node.preferredZoom);
 
         // Move the node to the center of the view
         this.map.panTo(node.latLng);
@@ -871,6 +505,12 @@ function KnowledgeMap(params) {
                 self.drawEdge(self.dictNodes[key], rgTargets[ix], zoom);
             }
         });
+
+        this.drawTopicPolylines();
+    };
+
+    this.getMapClass = function() {
+        return "dashboard-map zoom" + this.map.getZoom();
     };
 
     this.drawOverlay = function() {
@@ -878,30 +518,40 @@ function KnowledgeMap(params) {
         this.overlay = new com.redfin.FastMarkerOverlay(this.map, this.markers);
         this.overlay.drawOriginal = this.overlay.draw;
         this.overlay.draw = function() {
-            this.drawOriginal();
 
-            var jrgNodes = $(self.containerID).find(".nodeLabel");
+            this.drawOriginal();
 
             if (!self.fFirstDraw)
             {
-                self.onZoomChange(jrgNodes);
+                self.onZoomChange();
             }
 
-            jrgNodes.each(function() {
-                var exerciseName = $(this).attr("data-id");
-                var exercise = self.exercisesByName[exerciseName];
-                var view = self.exerciseMarkerViews[exerciseName];
-                if (view) {
-                    view.updateElement($(this));
-                } else {
-                    view = new ExerciseMarkerView({
-                        model: exercise,
-                        el: $(this),
-                        parent: self
+            $(self.containerID)
+                .find(".dashboard-map")
+                    .attr("class", self.getMapClass())
+                    .end()
+                .find(".nodeLabel")
+                    .each(function() {
+
+                        var jel = $(this),
+                            exerciseName = jel.attr("data-id"),
+                            view = self.nodeMarkerViews[exerciseName];
+
+                        if (view) {
+
+                            view.updateElement(jel);
+
+                        } else {
+
+                            view = new KnowledgeMapViews.NodeMarker({
+                                model: self.modelsByName[exerciseName],
+                                el: $(this),
+                                parent: self
+                            });
+                            self.nodeMarkerViews[exerciseName] = view;
+
+                        }
                     });
-                    self.exerciseMarkerViews[exerciseName] = view;
-                }
-            });
 
             self.fFirstDraw = false;
         };
@@ -911,10 +561,10 @@ function KnowledgeMap(params) {
         this.dictNodes[node.name] = node;
     };
 
-    this.addEdge = function(source, target, summative) {
+    this.addEdge = function(source, target) {
         if (!this.dictEdges[source]) this.dictEdges[source] = [];
         var rg = this.dictEdges[source];
-        rg[rg.length] = {"target": target, "summative": summative};
+        rg[rg.length] = {"target": target};
     };
 
     this.nodeStatusCount = function(status) {
@@ -924,6 +574,25 @@ function KnowledgeMap(params) {
             if (arguments[ix].status == status) c++;
         }
         return c;
+    };
+
+    this.drawTopicPolylines = function() {
+
+        var visible = this.map.getZoom() == KnowledgeMapGlobals.options.minZoom;
+
+        this.topicPolylines = _.map(this.topicPolylineModels, function(polylineModel) {
+
+            return new google.maps.Polyline({
+                path: polylineModel.get("latLngPath"),
+                strokeColor: KnowledgeMapGlobals.colors.gray,
+                strokeOpacity: 0.48,
+                strokeWeight: 1.0,
+                clickable: false,
+                map: visible ? this.map : null
+            });
+
+        }, this);
+
     };
 
     this.drawEdge = function(nodeSource, edgeTarget, zoom) {
@@ -943,25 +612,16 @@ function KnowledgeMap(params) {
         var countReview = this.nodeStatusCount("Review", nodeSource, nodeTarget);
 
         var color = KnowledgeMapGlobals.colors.gray;
-        var weight = 1.0;
         var opacity = 0.48;
 
         if (countProficient == 2)
         {
             color = KnowledgeMapGlobals.colors.blue;
-            weight = 5.0;
             opacity = 1.0;
         }
         else if (countProficient == 1 && countSuggested == 1)
         {
             color = KnowledgeMapGlobals.colors.green;
-            weight = 5.0;
-            opacity = 1.0;
-        }
-        else if (countReview > 0)
-        {
-            color = KnowledgeMapGlobals.colors.red;
-            weight = 5.0;
             opacity = 1.0;
         }
 
@@ -969,7 +629,7 @@ function KnowledgeMap(params) {
             path: coordinates,
             strokeColor: color,
             strokeOpacity: opacity,
-            strokeWeight: weight,
+            strokeWeight: 1.0,
             clickable: false,
             map: this.getMapForEdge(edgeTarget, zoom)
         });
@@ -977,36 +637,38 @@ function KnowledgeMap(params) {
 
     this.drawMarker = function(node, zoom) {
 
-        var lat = -1 * (node.h_position - 1) * KnowledgeMapGlobals.nodeSpacing.lat;
-        var lng = (node.v_position - 1) * KnowledgeMapGlobals.nodeSpacing.lng;
+        node.latLng = KnowledgeMapGlobals.xyToLatLng(node.x, node.y);
 
-        node.latLng = new google.maps.LatLng(lat, lng);
+        var lat = node.latLng.lat(),
+            lng = node.latLng.lng();
 
         if (lat < KnowledgeMapGlobals.latMin) KnowledgeMapGlobals.latMin = lat;
         if (lat > KnowledgeMapGlobals.latMax) KnowledgeMapGlobals.latMax = lat;
         if (lng < KnowledgeMapGlobals.lngMin) KnowledgeMapGlobals.lngMin = lng;
         if (lng > KnowledgeMapGlobals.lngMax) KnowledgeMapGlobals.lngMax = lng;
 
-        var marker = new com.redfin.FastMarker(
-                "marker-" + node.name,
-                node.latLng,
-                [   "<a data-id='" + node.name + "' class='nodeLabel'>" +
-                    "<img class='node-icon' src=''/>" +
-                    "<img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/>" +
-                    "<div>" + node.display_name + "</div></a>"],
-                "",
-                node.summative ? 2 : 1,
-                0, 0);
+        var html = [];
+        html.push("<a href='", node.url, "' data-id='", node.name, "' class='", node.className, "'>");
+        if (node.nodeType === "exercise") {
+            var classes = KnowledgeMapGlobals.iconClasses.exercise;
+            var iconClass = classes[node.status] || classes.Normal;
+            html.push("<div class='node-icon ", iconClass, "'></div>");
+        } else {
+            html.push("<img class='node-icon' src='", node.iconUrl, "'>");
+        }
+        html.push("<div class='node-text'>", node.display_name, "</div></a>");
+
+        var marker = new com.redfin.FastMarker("marker-" + node.name, node.latLng, html, "", 1, 0, 0);
 
         this.markers[this.markers.length] = marker;
     };
 
     this.getMapForEdge = function(edge, zoom) {
-        return ((zoom == KnowledgeMapGlobals.options.minZoom) == edge.summative) ? this.map : null;
+        return (zoom != KnowledgeMapGlobals.options.minZoom) ? this.map : null;
     };
 
     this.highlightNode = function(node_name, highlight) {
-        var markerView = this.exerciseMarkerViews[node_name];
+        var markerView = this.nodeMarkerViews[node_name];
         if (markerView)
             markerView.setHighlight(highlight);
     };
@@ -1020,6 +682,7 @@ function KnowledgeMap(params) {
 
         this.fZoomChanged = true;
 
+        // Set visibility of exercise-level polylines
         var self = this;
         $.each(this.dictEdges, function(idx, rgTargets) {
             for (var ix = 0; ix < rgTargets.length; ix++)
@@ -1031,9 +694,19 @@ function KnowledgeMap(params) {
                 if (line.getMap() != map) line.setMap(map);
             }
         });
+
+        // Set visibility of topic-level polylines
+        _.each(this.topicPolylines, function(polyline) {
+            var visible = zoom === KnowledgeMapGlobals.options.minZoom;
+
+            if (visible !== !!(polyline.getMap())) {
+                polyline.setMap(visible ? this.map : null);
+            }
+        }, this);
+
     };
 
-    this.getMapCoords = function(){
+    this.getMapCoords = function() {
         var center = this.map.getCenter();
 
         var coords = {
@@ -1047,9 +720,29 @@ function KnowledgeMap(params) {
 
     };
 
-    this.saveMapCoords = function(){
+    this.saveMapCoords = function() {
+
+        if (this.newGoal) {
+            // Don't persist K.M. position when creating new goal
+            return;
+        }
+
         // TODO this may not work, could post synchronously to fix, but it's not critical
         $.post("/savemapcoords", this.getMapCoords());
+    };
+
+    this.onDragStart = function() {
+        this.fDragging = true;
+    };
+
+    this.onDragEnd = function() {
+        // Turn off dragging flag after this event and
+        // any click event associated w/ the current mouseclick
+        // are done firing.
+        setTimeout($.proxy(function() {
+                this.fDragging = false;
+            }, this),
+        1);
     };
 
     this.onIdle = function() {
@@ -1057,22 +750,18 @@ function KnowledgeMap(params) {
         if (!this.fCenterChanged && !this.fZoomChanged)
             return;
 
+        if (this.newGoal) {
+            // Don't persist K.M. position when creating new goal
+            return;
+        }
+
         // Panning by 0 pixels forces a redraw of our map's markers
         // in case they aren't being rendered at the correct size.
         this.map.panBy(0, 0);
 
-        if (window.localStorage && window.JSON){
+        if (window.localStorage && window.JSON) {
             var pos = this.getMapCoords();
-            window.localStorage[ "map_coords:"+USERNAME ] = JSON.stringify(pos);
-        }
-    };
-
-    this.onClick = function() {
-        if (this.admin) {
-            $.each(this.selectedNodes, function(node_name) {
-                self.highlightNode(self.dictNodes[node_name], false);
-            });
-            self.selectedNodes = { };
+            window.localStorage["map_coords:" + USERNAME] = JSON.stringify(pos);
         }
     };
 
@@ -1081,9 +770,9 @@ function KnowledgeMap(params) {
         if (this.queryNodesRendered) return;
         this.queryNodesRendered = true;
 
-        _.each(this.exerciseRowViews, function(row) {
-            if (row.options.type == "all" && this.exerciseMarkerViews[row.nodeName]) {
-                this.exerciseMarkerViews[row.nodeName].updateAppearance();
+        _.each(this.nodeRowViews, function(row) {
+            if (row.options.type == "all" && this.nodeMarkerViews[row.nodeName]) {
+                this.nodeMarkerViews[row.nodeName].updateAppearance();
             }
         }, this);
     };
@@ -1149,27 +838,29 @@ function KnowledgeMap(params) {
     };
 
     this.postUpdateFilter = function() {
-        var counts = { "suggested": 0, "recent": 0, "all": 0 };
+        var counts = { "suggested": 0, "all": 0 };
         var filterText = self.filterSettings.get("filterText");
 
-        $.each(self.exerciseRowViews, function(idx, exerciseRowView) {
-            if (exerciseRowView.visible)
-                counts[exerciseRowView.options.type]++;
+        $.each(self.nodeRowViews, function(idx, nodeRowView) {
+            if (nodeRowView.visible)
+                counts[nodeRowView.options.type]++;
         });
 
-        if (filterText && counts.all == 0) {
+        if (filterText && counts.all === 0) {
             self.getElement("exercise-no-results").show();
         } else {
             self.getElement("exercise-no-results").hide();
         }
 
+        // TODO: would be cool to do all this hiding/showing w/ one or two
+        // classes on an outer container.
         if (filterText) {
             self.getElement("dashboard-filter-clear").show();
             if (!self.admin) {
                 self.getElement("hide-on-dashboard-filter").hide();
                 self.getElement("exercise-all-exercises").hide();
             }
-            self.getElement("dashboard-all-exercises").find(".exercise-filter-count").html("(Showing " + counts.all + " of " + graph_dict_data.length + ")").show();
+            self.getElement("dashboard-all-exercises").find(".exercise-filter-count").html("(Showing " + counts.all + " of " + self.nodeRowViews.length + ")").show();
         } else {
             self.getElement("dashboard-filter-clear").hide();
             self.getElement("dashboard-all-exercises").find(".exercise-filter-count").hide();
@@ -1190,7 +881,7 @@ function KnowledgeMap(params) {
         else
             el = $("." + id);
         this.elementTable[id] = el;
-        if (el.length == 0)
+        if (el.length === 0)
             throw new Error('Missing element: "' + id + '" in container "' + this.containerID + '"');
         return el;
     };

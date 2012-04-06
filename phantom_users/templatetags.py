@@ -12,34 +12,3 @@ def login_notifications_html(login_notifications, user_data, continue_url="/"):
     context = {"login_notification": login_notification, "continue": continue_url, "user_data":user_data}
     return shared_jinja.get().render_template("phantom_users/notifications.html", **context)
 
-def badge_info(user_data):
-    counts_dict = {}
-    if user_data:
-        counts_dict = util_badges.get_badge_counts(user_data)
-    else:
-        counts_dict = badges.BadgeCategory.empty_count_dict()
-
-    sum_counts = 0
-    for key in counts_dict:
-        sum_counts += counts_dict[key]
-
-    context = {
-            "sum": sum_counts,
-            "bronze": counts_dict[badges.BadgeCategory.BRONZE],
-            "silver": counts_dict[badges.BadgeCategory.SILVER],
-            "gold": counts_dict[badges.BadgeCategory.GOLD],
-            "platinum": counts_dict[badges.BadgeCategory.PLATINUM],
-            "diamond": counts_dict[badges.BadgeCategory.DIAMOND],
-            "master": counts_dict[badges.BadgeCategory.MASTER],
-            "user": user_data,
-    }
-    return shared_jinja.get().render_template("phantom_users/badge_counts.html", **context)
-    
-def point_info(user_data):
-    if user_data:
-        points = user_data.points
-    else:
-        points = 0
-    context = {"points": points}
-    return shared_jinja.get().render_template("phantom_users/user_points.html", **context)
-

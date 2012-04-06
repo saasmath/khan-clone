@@ -25,6 +25,10 @@ Handlebars.registerHelper("repeat", function(n, options) {
     return ret;
 });
 
+Handlebars.registerHelper("pluralize", function(num) {
+    return (num === 1) ? "" : "s";
+});
+
 Handlebars.registerHelper("reverseEach", function(context, block) {
     var result = "";
     for (var i = context.length - 1; i >= 0; i--) {
@@ -32,6 +36,26 @@ Handlebars.registerHelper("reverseEach", function(context, block) {
     }
     return result;
 });
+
+/**
+ * Render an exercise skill-bar with specified ending position and optional
+ * starting position, exercise states, and whether or not proficiency was just
+ * earned and should be animated.
+ */
+Handlebars.registerPartial("small-exercise-icon", Templates.get("shared.small-exercise-icon"));
+Handlebars.registerHelper("skill-bar", function(end, start, exerciseStates, justEarnedProficiency) {
+
+    var template = Templates.get("shared.skill-bar"),
+        context = _.extend({
+                start: parseFloat(start) || 0,
+                end: parseFloat(end) || 0,
+                justEarnedProficiency: !!(justEarnedProficiency)
+            }, 
+            exerciseStates);
+    
+    return template(context);
+
+}); 
 
 /**
  * Return a bingo redirect url
@@ -43,6 +67,10 @@ Handlebars.registerHelper("toBingoHref", function(destination) {
     var conversionNames = _.toArray(arguments).slice(1, arguments.length - 1);
 
     return gae_bingo.create_redirect_url.call(null, destination, conversionNames);
+});
+
+Handlebars.registerHelper("multiply", function(num1, num2){
+    return (num1 * num2)
 });
 
 Handlebars.registerHelper("toLoginRedirectHref", function(destination) {
@@ -64,5 +92,3 @@ Handlebars.registerHelper("ellipsis", function(text, length) {
         return textStripped.substr(0, length-3) + "...";
     }
 });
-
-Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));

@@ -103,7 +103,7 @@ _layout_version = 1
         )
 def library_content_html(ajax=False, version_number=None):
     """" Returns the HTML for the structure of the topics as they will be
-    populated ont he homepage. Does not actually contain the list of video
+    populated on the homepage. Does not actually contain the list of video
     names as those are filled in later asynchronously via the cache.
     """
     if version_number:
@@ -147,42 +147,6 @@ def library_content_html(ajax=False, version_number=None):
     }
 
     html = shared_jinja.get().render_template("library_content_template.html", **template_values)
-
-    return html
-
-@layer_cache.cache_with_key_fxn(
-        lambda topic_id, version_number=None: 
-        "library_topic_page_%s_v%s" % (
-        topic_id,
-        version_number if version_number else Setting.topic_tree_version()),
-        layer=layer_cache.Layers.Memcache
-        )
-def library_topic_html(topic_id, version_number=None):
-    """" Returns the HTML for the topics on a topic page, including
-    the video list.
-    """
-
-    if version_number:
-        version = TopicVersion.get_by_number(version_number)
-    else:
-        version = TopicVersion.get_default_version()
-
-    root_topic = Topic.get_by_id(topic_id, version=version)
-    tree = root_topic.make_tree(types=["Topics", "Video", "Url"])
-    topics = flatten_tree(tree)
-
-    template_values = {
-        'topics': topics,
-        'root_topic': root_topic,
-        'ajax': False,
-        'version_date': str(version.made_default_on),
-        'version_id': version.number
-    }
-
-    if root_topic.has_content() or root_topic.id in Topic._super_topic_ids:
-        html = shared_jinja.get().render_template("library_content_template.html", **template_values)
-    else:
-        html = shared_jinja.get().render_template("library_condensed_template.html", **template_values)
 
     return html
 
