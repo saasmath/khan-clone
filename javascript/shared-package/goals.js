@@ -162,13 +162,13 @@ var Goal = Backbone.Model.extend({
     },
 
     defaultExerciseProcessGoalAttrs_: {
-        title: "Complete Five Exercises",
+        title: "Complete Five Skills",
         objectives: [
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" }
         ]
     },
 
@@ -259,8 +259,8 @@ var GoalCollection = Backbone.Collection.extend({
     findActiveGoal: function() {
         var matchingGoal = null;
 
-        if (window.location.pathname.indexOf("/exercise") === 0 && window.userExerciseName) {
-            matchingGoal = this.findGoalWithObjective(userExerciseName,
+        if (window.location.pathname.indexOf("/exercise") === 0 && typeof Exercises !== "undefined" && Exercises.exercise) {
+            matchingGoal = this.findGoalWithObjective(Exercises.exercise.name,
                 "GoalObjectiveExerciseProficiency",
                 "GoalObjectiveAnyExerciseProficiency");
         } else if (window.location.pathname.indexOf("/video") === 0 &&

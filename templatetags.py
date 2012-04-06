@@ -89,31 +89,6 @@ def user_points(user_data):
 
     return {"points": points}
 
-def streak_bar(user_exercise_dict):
-    progress = user_exercise_dict["progress"]
-
-    bar_max_width = 228
-    bar_width = min(1.0, progress) * bar_max_width
-
-    levels = []
-    if user_exercise_dict["summative"]:
-        c_levels = user_exercise_dict["num_milestones"]
-        level_offset = bar_max_width / float(c_levels)
-        for ix in range(c_levels - 1):
-            levels.append(math.ceil((ix + 1) * level_offset) + 1)
-
-    template_values = {
-        "is_suggested": user_exercise_dict["suggested"],
-        "is_proficient": user_exercise_dict["proficient"],
-        "float_progress": progress,
-        "progress": models.UserExercise.to_progress_display(progress),
-        "bar_width": bar_width,
-        "bar_max_width": bar_max_width,
-        "levels": levels
-    }
-
-    return shared_jinja.get().render_template("streak_bar.html", **template_values)
-
 @layer_cache.cache_with_key_fxn(lambda browser_id, version_number=None:
     "Templatetags.topic_browser_%s_%s" % (
     browser_id, 
@@ -237,7 +212,6 @@ def topic_browser_get_topics(tree, level=0):
                 "has_divider": True,
                 "title": child.title
             })
-
             item_list += topic_browser_get_topics(child, level=level + 1)
 
             needs_divider = True

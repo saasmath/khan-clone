@@ -1,16 +1,14 @@
 {% import 'macros/exercises.html' as exercise_macros %}
 
 <script>
-var graph_dict_data = {{ graph_dict_data }};
-
 function createGoalInitialize() {
     var mapParams = {
         'mapCoords': {{ map_coords }},
         'admin': false,
-        'hideReview': true,
         'hideDrawer': true,
         'newGoal': true,
-        'container': 'goal-choose-exercises'
+        'container': 'goal-choose-exercises',
+        'graph_dict_data': {{ graph_dict_data }}
     };
     var knowledgeMap = new KnowledgeMap(mapParams);
     GoalCreator.init(knowledgeMap);
@@ -36,7 +34,7 @@ function createGoalInitialize() {
 
 <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
     <div class="objective-type-picker clearfix">
-        <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
+        <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose skills (<span id="goal-exercise-count">0</span> selected)</a>
         <a href="javascript:GoalCreator.showVideos();" class="simple-button action-gradient" id="show-vid-btn">Choose videos (<span id="goal-video-count">0</span> selected)</a>
     </div>
     <div id="goal-spacer"></div>

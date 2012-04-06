@@ -149,7 +149,9 @@
 ./discussion/util_discussion.py
 ./discussion/voting.py
 ./exercise_statistics.py
-./exercises.py
+./exercises/__init__.py
+./exercises/file_contents.py
+./exercises/handlers.py
 ./exercisestats/__init__.py
 ./exercisestats/models.py
 ./exercisestats/number_trivia.py

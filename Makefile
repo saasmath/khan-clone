@@ -73,3 +73,7 @@ js:
 # Compress css
 css:
 	python deploy/compress.py css
+
+# Package less stylesheets
+less:
+	python deploy/compile_less.py

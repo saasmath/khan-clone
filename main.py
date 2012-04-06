@@ -21,7 +21,7 @@ from gae_mini_profiler import profiler
 from gae_bingo.middleware import GAEBingoWSGIMiddleware
 import autocomplete
 import coaches
-import knowledgemap
+import knowledgemap.handlers
 import youtube_sync
 import warmup
 import library
@@ -615,7 +615,7 @@ application = webapp2.WSGIApplication([
     ('/about/downloads', util_about.ViewDownloads),
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
-    ('/exercisedashboard', exercises.ViewAllExercises),
+    ('/exercisedashboard', knowledgemap.handlers.ViewKnowledgeMap),
 
     ('/stories/submit', stories.SubmitStory),
     ('/stories/?.*', stories.ViewStories),
@@ -630,15 +630,17 @@ application = webapp2.WSGIApplication([
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
-    ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
-    ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
-    ('/review', exercises.ViewExercise),
+    ('/(.*)/e', exercises.ViewExercise),
+    ('/(.*)/e/([^/]*)', exercises.ViewExercise),
+    ('/exercise/(.+)', exercises.ViewExerciseDeprecated), # /exercise/addition_1
+    ('/topicexercise/(.+)', exercises.ViewTopicExerciseDeprecated), # /topicexercise/addition_and_subtraction
+    ('/exercises', exercises.ViewExerciseDeprecated), # /exercises?exid=addition_1
+    ('/(review)', exercises.ViewExercise),
 
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
-    ('/viewexercisesonmap', exercises.ViewAllExercises),
+    ('/viewexercisesonmap', knowledgemap.handlers.ViewKnowledgeMap),
     ('/editexercise', exercises.EditExercise),
     ('/updateexercise', exercises.UpdateExercise),
-    ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
     ('/video/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/v/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
@@ -646,8 +648,7 @@ application = webapp2.WSGIApplication([
     ('/(.*)/v/([^/]*)', ViewVideo),
     ('/reportissue', ReportIssue),
     ('/search', Search),
-    ('/savemapcoords', knowledgemap.SaveMapCoords),
-    ('/saveexpandedallexercises', knowledgemap.SaveExpandedAllExercises),
+    ('/savemapcoords', knowledgemap.handlers.SaveMapCoords),
     ('/crash', Crash),
 
     ('/image_cache/(.+)', ImageCache),
