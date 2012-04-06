@@ -396,7 +396,7 @@ class ChunkedResult():
             compress: boolean saying whether we should compress the result
                       before storing and decompressing afterwards  
         '''
-        assert (bool(chunk_list and generation) ^ bool(data)), ("Either " +
+        assert (bool(chunk_list and generation) ^ bool(data)), ("Either " 
                 "chunk_list+generation or data must be set, but not both")
         if chunk_list:
             self.chunk_list = chunk_list
@@ -489,7 +489,7 @@ class ChunkedResult():
                 chunk_result = chunked_results[chunk_key]
                 chunk_generation = chunk_result[:CHUNK_GENERATION_LENGTH]
                 if chunk_generation != self.generation:
-                    logging.warning("invalid chunk: wrong generation string" +
+                    logging.warning("invalid chunk: wrong generation string" 
                                     " in chunk %s" % chunk_key)
                     return None
 
