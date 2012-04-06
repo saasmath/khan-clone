@@ -93,5 +93,3 @@ Handlebars.registerHelper("ellipsis", function(text, length) {
     }
 });
 
-Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
-
