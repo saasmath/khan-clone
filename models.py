@@ -2529,8 +2529,7 @@ class Topic(Searchable, db.Model):
         return ret
 
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_topic_page_data_%s" % self.key(),
-        layer=layer_cache.Layers.Memcache)
+        "topic_get_topic_page_data_%s_v%s" % (self.key(), Setting.topic_tree_version()))
     def get_topic_page_data(self):
         """ Retrieve the listing of subtopics and videos for this topic.
             Used on the topic page. """
@@ -2540,9 +2539,11 @@ class Topic(Searchable, db.Model):
 
         tree = self.make_tree(types=["Video"])
 
-        # Fetch child topics
+        # If there are child videos, child topics are ignored.
+        # There is no support for mixed topic/video containers.
         video_child_keys = [v for v in self.child_keys if v.kind() == "Video"]
         if not video_child_keys:
+            # Fetch child topics
             topic_child_keys = [t for t in self.child_keys if t.kind() == "Topic"]
             topic_children = filter(lambda t: t.has_children_of_type(["Video"]),
                                     db.get(topic_child_keys))
@@ -2557,12 +2558,15 @@ class Topic(Searchable, db.Model):
             nodes = db.get(node_keys)
             node_dict = dict((node.key(), node) for node in nodes)
 
+            # Get the subtopic video data
             subtopics = [t.get_library_data(node_dict=node_dict) for t in topic_children]
             child_videos = None
         else:
+            # Fetch the child videos
             nodes = db.get(video_child_keys)
             node_dict = dict((node.key(), node) for node in nodes)
 
+            # Get the topic video data
             subtopics = None
             child_videos = self.get_library_data(node_dict=node_dict)
 
@@ -2606,7 +2610,7 @@ class Topic(Searchable, db.Model):
 
     # Gets the data we need for the video player
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_play_data_%s" % self.key(),
+        "topic_get_play_data_%s_v%s" % (self.key(), Setting.topic_tree_version()),
         layer=layer_cache.Layers.Memcache)
     def get_play_data(self):
 

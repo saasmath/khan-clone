@@ -131,7 +131,9 @@ class TopicPage(request_handler.RequestHandler):
 
             if topic:
                 # Begin topic pages A/B test
-                show_topic_pages = ab_test("Show topic pages", ["show", "hide"], ["topic_pages_view_page", "topic_pages_started_video", "topic_pages_completed_video"])
+                show_topic_pages = ab_test("Show topic pages", ["show", "hide"],
+                    ["topic_pages_view_page", "topic_pages_started_video",
+                     "topic_pages_completed_video"])
                 if show_topic_pages == "hide":
                     self.redirect("/#%s" % topic.id)
                 bingo("topic_pages_view_page")
