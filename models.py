@@ -2601,6 +2601,10 @@ class Topic(Searchable, db.Model):
         return '/#%s' % self.id
 
     @property
+    def topic_page_url(self):
+         return '/%s' % self.get_extended_slug()
+
+    @property
     def ka_url(self):
         return util.absolute_url(self.relative_url)
 
@@ -2626,6 +2630,83 @@ class Topic(Searchable, db.Model):
 			})
         return self
 
+    def get_library_data(self, node_dict=None):
+        from homepage import thumbnail_link_dict
+
+        if node_dict:
+            children = [ node_dict[c] for c in self.child_keys if c in node_dict ]
+        else:
+            children = db.get(self.child_keys)
+
+        (thumbnail_video, thumbnail_topic) = self.get_first_video_and_topic()
+
+        ret = {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "children": [{
+                "url": "/%s/v/%s" % (self.get_extended_slug(), v.readable_id),
+                "key_id": v.key().id(),
+                "title": v.title
+            } for v in children if v.__class__.__name__ == "Video"],
+            "child_count": len([v for v in children if v.__class__.__name__ == "Video"]),
+            "thumbnail_link": thumbnail_link_dict(video=thumbnail_video, parent_topic=thumbnail_topic),
+        }
+
+        return ret
+
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_topic_page_data_%s_v%s" % (self.key(), Setting.topic_tree_version()))
+    def get_topic_page_data(self):
+        """ Retrieve the listing of subtopics and videos for this topic.
+            Used on the topic page. """
+        from homepage import thumbnail_link_dict
+
+        (marquee_video, subtopic) = self.get_first_video_and_topic()
+
+        tree = self.make_tree(types=["Video"])
+
+        # If there are child videos, child topics are ignored.
+        # There is no support for mixed topic/video containers.
+        video_child_keys = [v for v in self.child_keys if v.kind() == "Video"]
+        if not video_child_keys:
+            # Fetch child topics
+            topic_child_keys = [t for t in self.child_keys if t.kind() == "Topic"]
+            topic_children = filter(lambda t: t.has_children_of_type(["Video"]),
+                                    db.get(topic_child_keys))
+
+            # Fetch the descendent videos
+            node_keys = []
+            for subtopic in topic_children:
+                videos = filter(lambda v: v.kind() == "Video", subtopic.child_keys)
+                if videos:
+                    node_keys.extend(videos)
+
+            nodes = db.get(node_keys)
+            node_dict = dict((node.key(), node) for node in nodes)
+
+            # Get the subtopic video data
+            subtopics = [t.get_library_data(node_dict=node_dict) for t in topic_children]
+            child_videos = None
+        else:
+            # Fetch the child videos
+            nodes = db.get(video_child_keys)
+            node_dict = dict((node.key(), node) for node in nodes)
+
+            # Get the topic video data
+            subtopics = None
+            child_videos = self.get_library_data(node_dict=node_dict)
+
+        topic_info = {
+            "topic": self,
+            "marquee_video": thumbnail_link_dict(video=marquee_video, parent_topic=subtopic),
+            "subtopics": subtopics,
+            "child_videos": child_videos,
+            "extended_slug": self.get_extended_slug(),
+        }
+
+        return topic_info
+
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
 
@@ -2646,8 +2727,7 @@ class Topic(Searchable, db.Model):
 
     # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_extended_slug_%s" % self.key(),
-        layer=layer_cache.Layers.Memcache)
+        "topic_extended_slug_%s" % self.key())
     def get_extended_slug(self):
         parent_ids = [topic.id for topic in db.get(self.ancestor_keys)]
         parent_ids.reverse()
@@ -2657,7 +2737,7 @@ class Topic(Searchable, db.Model):
 
     # Gets the data we need for the video player
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_play_data_%s" % self.key(),
+        "topic_get_play_data_%s_v%s" % (self.key(), Setting.topic_tree_version()),
         layer=layer_cache.Layers.Memcache)
     def get_play_data(self):
 
@@ -2695,8 +2775,8 @@ class Topic(Searchable, db.Model):
         } for v in Topic.get_cached_videos_for_topic(self)]
 
         ancestor_topics = [{
-            "title": topic.title,
-            "url": (topic.relative_url if topic.id in Topic._super_topic_ids
+            "title": topic.title, 
+            "url": (topic.topic_page_url if topic.id in Topic._super_topic_ids 
                     or topic.has_content() else None)
             }
             for topic in db.get(self.ancestor_keys)][0:-1]
@@ -2705,7 +2785,7 @@ class Topic(Searchable, db.Model):
         return {
             'id': self.id,
             'title': self.title,
-            'url': self.relative_url,
+            'url': self.topic_page_url,
             'extended_slug': self.get_extended_slug(),
             'ancestor_topics': ancestor_topics,
             'top_level_topic': db.get(self.ancestor_keys[-2]).id if len(self.ancestor_keys) > 1 else self.id,

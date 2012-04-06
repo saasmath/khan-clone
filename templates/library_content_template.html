@@ -14,7 +14,7 @@
                     {% if topic.depth %}
                         <h2 class='subtopic-{{ topic.depth }}-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.homepage_title|escape}}</h2>
                     {% else %}
-                        <h2 class='topic-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.homepage_title|escape}}</h2>
+                        <h2 class='topic-heading {% if loop.first %}topic-heading-first{% endif %} {% if root_topic and topic.id == root_topic.id %}root-topic{% endif %}'>{{topic.homepage_title|escape}}</h2>
                     {% endif %}
                     <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="mobile-only"></a>
                 </div>
@@ -50,6 +50,8 @@
                 </div>
                 {% endif %}
             </div>
+
+            {% if root_topic and topic.id == root_topic.id %}<div class="topic-spacer"></div>{% endif %}
 
             {% if topic.subtopics %}
                 {{loop(topic.subtopics)}}

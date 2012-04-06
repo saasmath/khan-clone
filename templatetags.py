@@ -158,7 +158,7 @@ def topic_browser_tree(tree, level=0):
 
     return s
 
-def topic_browser_get_topics(tree, level=0):
+def topic_browser_get_topics(tree, level=0, show_topic_pages=False):
     """ Return a two-level tree of topics that we use to build the
         topic browser in the page header. """
 
@@ -183,7 +183,7 @@ def topic_browser_get_topics(tree, level=0):
             # Show leaf node as a link
             item_list.append({
                 "level": level,
-                "href": child.relative_url,
+                "href": child.topic_page_url if show_topic_pages else child.relative_url,
                 "title": child.title,
                 "has_divider": needs_divider
             })
@@ -193,7 +193,7 @@ def topic_browser_get_topics(tree, level=0):
         elif level == 0:
 
             # First level gets a popup menu for children
-            child_list = topic_browser_get_topics(child, level=level + 1)
+            child_list = topic_browser_get_topics(child, level=level + 1, show_topic_pages=show_topic_pages)
 
             item_list.append({
                 "level": level,
@@ -212,7 +212,8 @@ def topic_browser_get_topics(tree, level=0):
                 "has_divider": True,
                 "title": child.title
             })
-            item_list += topic_browser_get_topics(child, level=level + 1)
+
+            item_list += topic_browser_get_topics(child, level=level + 1, show_topic_pages=show_topic_pages)
 
             needs_divider = True
 
@@ -220,10 +221,12 @@ def topic_browser_get_topics(tree, level=0):
 
     return item_list
 
-@layer_cache.cache_with_key_fxn(lambda version_number=None:
-    "Templatetags.topic_browser_data_%s" % (
-    version_number if version_number else models.Setting.topic_tree_version()))
-def topic_browser_data(version_number=None):
+@layer_cache.cache_with_key_fxn(lambda version_number=None, show_topic_pages=False:
+    "Templatetags.topic_browser_data_%s_%s_v1" % (
+    version_number if version_number else models.Setting.topic_tree_version(),
+    "ST" if show_topic_pages else "HT"
+    ))
+def topic_browser_data(version_number=None, show_topic_pages=False):
     """ Returns the JSON data necessary to render the topic browser embedded
         in the page header on the client. """
 
@@ -237,7 +240,7 @@ def topic_browser_data(version_number=None):
         return ""
 
     tree = root.make_tree(types = ["Topics"])
-    topics_list = topic_browser_get_topics(tree)
+    topics_list = topic_browser_get_topics(tree, show_topic_pages=show_topic_pages)
 
     return apijsonify.jsonify(topics_list)
 
