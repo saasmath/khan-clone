@@ -49,12 +49,6 @@ def open_access(method):
     return wrapper
 
 
-@request_cache.cache()
-def is_curent_user_demo_user():
-    user_data = models.UserData.current()
-    return user_data and user_data.is_demo
-
-
 # TODO(csilvers): add login_required, with
 # is_current_user_logged_in: users.is_current_user_admin() or user_data is not None and also 'not user_data.is_demo'.  If user_data.is_demo, do:
 #    self.redirect(util.create_logout_url(self.request.uri))

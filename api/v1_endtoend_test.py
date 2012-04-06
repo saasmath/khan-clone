@@ -28,11 +28,5 @@ class V1EndToEndTest(unittest.TestCase):
             handler_test_utils.appserver_url + path)
 
     def testUser(self):
-        """Test that the result is json and has the appropriate fields."""
         r = self.fetch('/api/v1/user')    
         self.assertTrue("user_id" in r, r)
-
-    def testPlaylists(self):
-        r = self.fetch('/api/v1/playlists')
-        print 'playlists', r
-
