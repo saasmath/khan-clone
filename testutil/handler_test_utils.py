@@ -24,7 +24,7 @@ Note that these end-to-end tests are quite slow, since it's not a fast
 operation to create a dev_appserver instance!
 
 dev_appserver.py must be on your path.  The tests you run here must be
-run via toosl/runtests.py, so the appengine path can be set up
+run via tools/runtests.py, so the appengine path can be set up
 correctly.
 
 Also note that the dev_appserver instance, by default, is created in a
