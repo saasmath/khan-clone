@@ -19,6 +19,7 @@ import models
 import os
 import re
 import request_handler
+import shared_jinja
 import uid
 import user_util
 import util
@@ -420,6 +421,8 @@ class Signup(request_handler.RequestHandler):
             return
 
         existing_google_user_detected = False
+        resend_detected = False
+
         if values['email']:
             email = values['email']
 
@@ -442,10 +445,7 @@ class Signup(request_handler.RequestHandler):
                     # No full user account detected, but have they tried to
                     # signup before and still haven't verified their e-mail?
                     existing = models.UnverifiedUser.get_for_value(email)
-                    if existing is not None:
-                        # TODO(benkomalo): do something nicer here and present
-                        # call to action for re-sending verification e-mail
-                        errors['email'] = "Looks like you've already tried signing up."
+                    resend_detected = existing is not None
         else:
             errors['email'] = "Please enter your email."
             
@@ -465,17 +465,18 @@ class Signup(request_handler.RequestHandler):
         unverified_user = models.UnverifiedUser.get_or_insert_for_value(
                 email,
                 birthdate)
-        verification_link = CompleteSignup.build_link(unverified_user)
-
-        self.send_verification_email(email, verification_link)
+        Signup.send_verification_email(unverified_user)
         
         response_json = {
                 'success': True,
                 'email': email,
+                'resend_detected': resend_detected,
                 'existing_google_user_detected': existing_google_user_detected,
                 }
         
         if App.is_dev_server:
+            # Send down the verification token so the client can easily 
+            # create a link to test with.
             response_json['token'] = unverified_user.randstring
 
         # TODO(benkomalo): since users are now blocked from further access
@@ -485,12 +486,16 @@ class Signup(request_handler.RequestHandler):
         #    registering, for example)
         self.render_json(response_json, camel_cased=True)
 
-    def send_verification_email(self, recipient, verification_link):
+    @staticmethod
+    def send_verification_email(unverified_user):
+        recipient = unverified_user.email
+        verification_link = CompleteSignup.build_link(unverified_user)
+
         template_values = {
                 'verification_link': verification_link,
             }
 
-        body = self.render_jinja2_template_to_string(
+        body = shared_jinja.template_to_string(
                 'verification-email-text-only.html',
                 template_values)
 
@@ -627,9 +632,18 @@ class CompleteSignup(request_handler.RequestHandler):
 
             # TODO(benkomalo): handle storage for FB users. Right now their
             # "email" value is a URI like http://facebookid.ka.org/1234
+            email = user_data.email
             if not user_data.is_facebook_user:
-                values['email'] = user_data.email
-            values['nickname'] = user_data.nickname
+                values['email'] = email
+            
+            nickname = user_data.nickname
+            if email.find('@') != -1 and email.split('@')[0] == nickname:
+                # The user's "nickname" property defaults to the user part of
+                # their e-mail. Encourage them to use a real name and leave
+                # the name field blank in that case.
+                nickname = ""
+
+            values['nickname'] = nickname
             values['gender'] = user_data.gender
             values['username'] = user_data.username
 

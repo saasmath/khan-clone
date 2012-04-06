@@ -8,7 +8,7 @@ var FocusGraph = {
             // Exercise legend in the upper left
             var exerciseLegend = {
                 type: "pie",
-                name: "Exercises",
+                name: "Skills",
                 cursor: "",
                 size: "20%",
                 innerSize: "13%",
@@ -20,7 +20,7 @@ var FocusGraph = {
                 },
                 data: [
                         {
-                            name: "Exercises",
+                            name: "Skills",
                             fLegend: true,
                             y: 100,
                             color: "silver"
@@ -33,7 +33,7 @@ var FocusGraph = {
             // Exercise graph in the center
             var exerciseFocus = {
                 type: "pie",
-                name: "Exercise Focus",
+                name: "Skill Focus",
                 innerSize: "55%",
                 size: "85%"
             };
@@ -42,7 +42,7 @@ var FocusGraph = {
                     events: {
                         click: function() {
                             Profile.router.navigate(
-                                    "/vital-statistics/exercise-problems/" + this.exid,
+                                    "/vital-statistics/problems/" + this.exid,
                                     true);
                         }
                     }
@@ -50,7 +50,7 @@ var FocusGraph = {
             }
             exerciseFocus.data = _.map(this.segmentData.dictExerciseSeconds, function(segment, key) {
                 var proficientText = segment["proficient"] ? (", <b>" + this.star + "Proficient</b>") : "",
-                    tooltip = "<b>" + segment["exerciseTitle"] + "</b> (exercise" + proficientText + ")";
+                    tooltip = "<b>" + segment["exerciseTitle"] + "</b> (skill" + proficientText + ")";
 
                 return {
                     name: "<b>" + segment["exerciseTitle"] + (segment["proficient"] ? " " + this.star : "") + "</b>",

@@ -25,6 +25,7 @@ from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph, recent_activity, suggested_activity
+from knowledgemap.layout import MapLayout
 from common_core.models import CommonCoreMap
 from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 from app import App
@@ -399,6 +400,29 @@ def put_topic(topic_id, version_id = "edit"):
     return {
         "id": topic.id
     }
+
+@route("/api/v1/topicversion/<version_id>/maplayout", methods=["GET"])
+@route("/api/v1/maplayout", methods=["GET"])
+@api.auth.decorators.open_access
+@jsonp
+@jsonify
+def get_maplayout(version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+    return MapLayout.get_for_version(version)
+
+@route("/api/v1/topicversion/<version_id>/maplayout", methods=["PUT"])
+@route("/api/v1/maplayout", methods=["PUT"])
+@api.auth.decorators.developer_required
+@jsonp
+@jsonify
+def put_maplayout(version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    map_layout = MapLayout.get_for_version(version)
+    map_layout.layout = request.json
+    map_layout.put()
+
+    return { "id": map_layout.id }
 
 @route("/api/v1/topicversion/default/id", methods=["GET"])
 @api.auth.decorators.open_access
@@ -805,7 +829,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
         float(data["seconds_per_fast_problem"]))
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
-                        "summative", "prerequisites", "covers",
+                        "prerequisites", "covers", 
                         "related_videos", "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise,
@@ -1362,15 +1386,36 @@ def log_user_video(youtube_id):
 
     return video_log
 
-
-@route("/api/v1/user/exercises", methods=["GET"])
+@route("/api/v1/user/topic/<topic_id>/exercises/next", methods=["GET"])
 @api.auth.decorators.open_access
 @jsonp
 @jsonify
-def user_exercises_all():
+def topic_next_exercises(topic_id):
+    """ Retrieves the next few suggested user exercises in a specific topic.
+    """
+
+    user_data = models.UserData.current()
+
+    if not user_data:
+        user_data = models.UserData.pre_phantom()
+
+    topic = models.Topic.get_by_id(topic_id)
+    if not topic:
+        return api_invalid_param_response("Could not find topic with id: %s " + topic_id)
+
+    return models.UserExercise.next_in_topic(user_data, topic, queued=request.values.getlist("queued[]"))
+
+@route("/api/v1/user/exercises", methods=["GET"])
+@route("/api/v1/user/topic/<topic_id>/exercises", methods=["GET"])
+@api.auth.decorators.open_access
+@jsonp
+@jsonify
+def user_exercises_list(topic_id = None):
     """ Retrieves the list of exercise models wrapped inside of an object that
     gives information about what sorts of progress and interaction the current
     user has had with it.
+
+    If topic_id is supplied, limits the list to the topic's subset of exercises.
 
     Defaults to a pre-phantom users, in which case the encasing object is
     skeletal and contains little information.
@@ -1379,32 +1424,54 @@ def user_exercises_all():
     user_data = models.UserData.current()
 
     student = get_visible_user_data_from_request(user_data=user_data)
+
     if not student:
         student = models.UserData.pre_phantom()
-    exercises = models.Exercise.get_all_use_cache()
-    user_exercise_graph = models.UserExerciseGraph.get(student)
-    if student.is_pre_phantom:
-        user_exercises = []
-    else:
-        user_exercises = (models.UserExercise.all().
-                          filter("user =", student.user).
-                          fetch(10000))
 
-    user_exercises_dict = dict((user_exercise.exercise, user_exercise)
-                               for user_exercise in user_exercises)
+    exercises = None
+
+    if topic_id:
+
+        # Grab all exercises within a specific topic
+        topic = models.Topic.get_by_id(topic_id)
+
+        if not topic:
+            return api_invalid_param_response("Could not find topic with id: %s " + topic_id)
+
+        exercises = topic.get_exercises(include_descendants=True)
+
+    else:
+
+        # Grab all exercises
+        exercises = models.Exercise.get_all_use_cache()
+
+    user_exercise_graph = models.UserExerciseGraph.get(student, exercises_allowed=exercises)
+
+    user_exercises_dict = {}
+
+    if not student.is_pre_phantom:
+        user_exercises_dict = dict(
+            (attrs["name"], models.UserExercise.from_dict(attrs, student))
+            for attrs in user_exercise_graph.graph_dicts()
+        )
 
     results = []
+
     for exercise in exercises:
+
         name = exercise.name
+
         if name not in user_exercises_dict:
             user_exercise = models.UserExercise()
             user_exercise.exercise = name
             user_exercise.user = student.user
         else:
             user_exercise = user_exercises_dict[name]
+
         user_exercise.exercise_model = exercise
         user_exercise._user_data = student
         user_exercise._user_exercise_graph = user_exercise_graph
+
         results.append(user_exercise)
 
     return results
@@ -1579,6 +1646,19 @@ def user_playlists_specific(topic_id):
 
     return None
 
+@route("/api/v1/user/exercises/reviews/count", methods=["GET"])
+@api.auth.decorators.open_access
+@jsonp
+@jsonify
+def reviews_count():
+    user_data = models.UserData.current()
+
+    if user_data:
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        return len(user_exercise_graph.review_exercise_names())
+
+    return 0
+
 @route("/api/v1/user/exercises/<exercise_name>/log", methods=["GET"])
 @api.auth.decorators.login_required
 @jsonp
@@ -1637,7 +1717,7 @@ def attempt_problem_number(exercise_name, problem_number):
                     request.request_int("count_hints", default=0),
                     int(request.request_float("time_taken")),
                     review_mode,
-                    request.request_string("non_summative"),
+                    request.request_bool("topic_mode", default=False),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )
@@ -1655,6 +1735,9 @@ def attempt_problem_number(exercise_name, problem_number):
             user_states = user_exercise_graph.states(exercise.name)
             correct = request.request_bool("complete")
 
+            # Avoid an extra user exercise graph lookup during serialization
+            user_exercise._user_exercise_graph = user_exercise_graph
+
             action_results = {
                 "exercise_state": {
                     "state": [state for state in user_states if user_states[state]],
@@ -1667,10 +1750,6 @@ def attempt_problem_number(exercise_name, problem_number):
 
             if goals_updated:
                 action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
-
-            if review_mode:
-                action_results['reviews_left'] = (
-                    user_exercise_graph.reviews_left_count() + (1 - correct))
 
             add_action_results(user_exercise, action_results)
             return user_exercise
@@ -1711,11 +1790,14 @@ def hint_problem_number(exercise_name, problem_number):
                     count_hints,
                     int(request.request_float("time_taken")),
                     review_mode,
-                    request.request_string("non_summative"),
+                    request.request_bool("topic_mode", default=False),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )
 
+            # TODO: this exercise_message_html functionality is currently hidden
+            # from power-mode. Restore it.
+            # https://trello.com/card/restore-you-re-ready-to-move-on-and-struggling-in-action-messages/4f3f43cd45533a1b3a065a1d/34
             user_states = user_exercise_graph.states(exercise.name)
             exercise_message_html = templatetags.exercise_message(exercise,
                     user_exercise_graph, review_mode=review_mode)
@@ -1761,29 +1843,6 @@ def _attempt_problem_wrong(exercise_name):
         return make_wrong_attempt(user_data, user_exercise)
 
     return unauthorized_response()
-
-@route("/api/v1/user/exercises/review_problems", methods=["GET"])
-@api.auth.decorators.open_access
-@jsonp
-@jsonify
-def get_ordered_review_problems():
-    """Retrieves an ordered list of a subset of the upcoming review problems."""
-
-    # TODO(david): This should probably be abstracted away in exercises.py or
-    # models.py (if/when there's more logic here) with a nice interface.
-
-    user_data = get_visible_user_data_from_request()
-
-    if not user_data:
-        return []
-
-    user_exercise_graph = models.UserExerciseGraph.get(user_data)
-    review_exercises = user_exercise_graph.review_exercise_names()
-
-    queued_exercises = request.request_string('queued', '').split(',')
-
-    # Only return those exercises that aren't already queued up
-    return filter(lambda ex: ex not in queued_exercises, review_exercises)
 
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
 @api.auth.decorators.login_required

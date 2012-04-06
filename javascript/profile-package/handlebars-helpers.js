@@ -2,10 +2,6 @@ Handlebars.registerHelper("encodeURIComponent", function(str) {
     return encodeURIComponent(str);
 });
 
-Handlebars.registerHelper("pluralize", function(num) {
-    return (num === 1) ? "" : "s";
-});
-
 /**
  * Convert number of seconds to a time phrase for recent activity video entries.
  * Stolen from templatefilters.py

@@ -17,7 +17,9 @@
       <div id="all-badges">
         <h2 style="display: block; margin-left: 10px;">Possible Badges</h2>
         {{#each badges}}
-          {{> badge}}
+          {{#unless isRetired}}
+            {{> badge}}
+          {{/unless}}
         {{/each}}
       </div>
       <div class="clear"></div>

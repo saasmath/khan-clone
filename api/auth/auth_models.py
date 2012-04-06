@@ -66,41 +66,43 @@ class OAuthMap(db.Model):
 
         return append_url_params(self.callback_url, params_callback)
 
-    def _get_authenticated_user_info(self, id_only=False):
-        """ Gets the UserData or user_id for this OAuthMap, if it's still
-        valid.
+    def _get_authenticated_user_info(self):
+        """ Gets the UserData and user_id for this OAuthMap, if it's still
+        valid. Returns (None, None) if no valid user is found.
         
         """
 
         from models import UserData
 
-        user_id = None
-        email = None
-
-        if self.uses_google():
-            user_id, email = get_google_user_id_and_email_from_oauth_map(self)
-        elif self.uses_facebook():
-            user_id = get_facebook_user_id_from_oauth_map(self)
-            email = user_id
-        elif self.uses_password():
+        if self.uses_password():
             user_data = auth.tokens.AuthToken.get_user_for_value(
                     self.khan_auth_token, UserData.get_from_user_id)
             # Note that we can't "create" a user by username/password logins
-            # via the oauth flow.
-            if not id_only:
-                return user_data
-            elif user_data:
-                user_id, email = user_data.user_id, user_data.email
+            # via the oauth flow, since the signup process for setting a KA
+            # account is more involved than just setting a user_id.
+            if user_data:
+                return (user_data, user_data.user_id)
+            else:
+                return (None, None)
 
-        if id_only:
-            return user_id
+        else:
+            user_id = None
+            email = None
+            user_data = None
+            if self.uses_google():
+                user_id, email = get_google_user_id_and_email_from_oauth_map(self)
+            elif self.uses_facebook():
+                user_id = get_facebook_user_id_from_oauth_map(self)
+                email = user_id
 
-        return (UserData.get_from_user_id(user_id) or
-                UserData.get_from_db_key_email(email) or
-                UserData.insert_for(user_id, email))
+            if user_id:
+                user_data = (UserData.get_from_user_id(user_id) or
+                             UserData.get_from_db_key_email(email) or
+                             UserData.insert_for(user_id, email))
+            return (user_data, user_id)
 
     def get_user_id(self):
-        """ Returns the authenticated UserData for this OAuthMap
+        """ Returns the authenticated user_id for this OAuthMap
         if this OAuthMap still refers to an authenticated user.
 
         If the OAuth process is incomplete, or the credentials have been
@@ -108,10 +110,10 @@ class OAuthMap(db.Model):
         reason, this will return None
 
         """
-        return self._get_authenticated_user_info(id_only=True)
+        return self._get_authenticated_user_info()[1]
 
     def get_user_data(self):
-        """ Returns the authenticated user_id for the user for this OAuthMap
+        """ Returns the authenticated UserData for the user for this OAuthMap
         if this OAuthMap still refers to an authenticated user.
 
         If the OAuth process is incomplete, or the credentials have been
@@ -119,7 +121,7 @@ class OAuthMap(db.Model):
         reason, this will return None
 
         """
-        return self._get_authenticated_user_info(id_only=False)
+        return self._get_authenticated_user_info()[0]
 
     @staticmethod
     def if_not_expired(oauth_map):

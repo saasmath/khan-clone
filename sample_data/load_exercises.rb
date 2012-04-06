@@ -26,7 +26,6 @@ resp = Net::HTTP.get_response(exercise_endpoint)
 
 @exercises.each_with_index do |ex, exi|
   name = ex["name"]
-  summative = ex["summative"]
   h_position = ex["h_position"]
   v_position = ex["v_position"]
   short_display_name = ex["short_display_name"]
@@ -35,7 +34,6 @@ resp = Net::HTTP.get_response(exercise_endpoint)
 
   params = {
     "name" => name,
-    "summative" => summative ? "1" : "",
     "h_position" => h_position,
     "v_position" => v_position,
     "short_display_name" => short_display_name,

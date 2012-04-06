@@ -86,16 +86,24 @@ def add_next_topic(topics, next_topic=None):
                     topic.next_is_subtopic = True
                 topic.next = topics[i+1]
 
+
+# A number to increment if the layout of the page, as expected by the client
+# side JS changes, and the JS is changed to update it. This version is
+# independent of topic content version, and is to do with code versions
+_layout_version = 1
+
+
 @layer_cache.cache_with_key_fxn(
-        lambda ajax=False, version_number=None: 
-        "library_content_by_topic_%s_v%s" % (
-        "ajax" if ajax else "inline", 
-        version_number if version_number else Setting.topic_tree_version()),
+        lambda ajax=False, version_number=None:
+        "library_content_by_topic_%s_v%s.%s" % (
+        "ajax" if ajax else "inline",
+        version_number if version_number else Setting.topic_tree_version(),
+        _layout_version),
         layer=layer_cache.Layers.Memcache
         )
 def library_content_html(ajax=False, version_number=None):
     """" Returns the HTML for the structure of the topics as they will be
-    populated ont he homepage. Does not actually contain the list of video
+    populated on the homepage. Does not actually contain the list of video
     names as those are filled in later asynchronously via the cache.
     """
     if version_number:

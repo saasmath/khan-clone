@@ -7,6 +7,7 @@ try:
 except ImportError:
     import unittest
 
+
 class HashingTests(unittest.TestCase):
     def setUp(self):
         super(HashingTests, self).setUp()
@@ -40,4 +41,3 @@ class HashingTests(unittest.TestCase):
             hash = hash_password(pw, salt)
             self.assertTrue(validate_password(pw, salt, hash))
             self.assertFalse(validate_password(pw + 'x', salt, hash))
-

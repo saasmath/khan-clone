@@ -8,7 +8,7 @@
             {% if loop.first and topic.depth == 0%}
                 <div class="clear desktop-only"><a name="{{ topic.standalone_title|slugify|escape }}" id="{{ topic.standalone_title|slugify|escape }}">&nbsp;</a></div>
             {% endif %}
-            <div data-role="page" id="{{ topic.id }}" data-theme="b">
+            <div data-role="page" id="{{ topic.id }}-container" data-theme="b">
                 <div data-role="header" class="library-content-header">
                     <a href="#" data-rel="back" data-icon="arrow-l" class="mobile-only">Back</a>
                     {% if topic.depth %}
@@ -44,7 +44,7 @@
     
                     <div class="clear desktop-only{% if topic.next_is_subtopic %} subtopic-jump-fix{% endif %}{% if topic.subtopics %} first{% endif %}">
                     {% if topic.next %}
-                        <a name="{{ topic.next.id|slugify|escape }}" id="{{ topic.next.id|slugify|escape }}">&nbsp;</a>
+                        <a name="{{ topic.next.id|slugify|escape }}">&nbsp;</a>
                     {% endif %}
                     </div>
                 </div>

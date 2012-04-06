@@ -1,21 +1,14 @@
-import os
-import logging
-
 from google.appengine.ext import db
 from mapreduce import control
 from mapreduce import operation as op
-
-from collections import defaultdict
 
 import models
 import models_discussion
 import notification
 import util_discussion
 import user_util
-import app
 import util
 import request_handler
-import privileges
 import voting
 from phantom_users.phantom_util import disallow_phantoms
 from rate_limiter import FlagRateLimiter

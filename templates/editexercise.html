@@ -190,9 +190,6 @@
                             </select><br/>
 
                             <em>This exercise will be suggested once these prereqs are completed.</em><br/>
-                            {% if main_exercise.summative %}
-                            <em><strong>Summative exercises</strong> will generate problems from all prereqs.</em></br>
-                            {% endif %}
                         </td>
                     </tr>
 
@@ -212,7 +209,6 @@
                         </td>
                     </tr>
 
-                    {% if not main_exercise.summative %}
                     <tr>
                         <td style="font-weight:bold;">Related Videos</td>
                         <td style="padding-bottom:9px;">
@@ -221,8 +217,6 @@
                             <input id="related-videos-input" style="width:200px;" type="text" placeholder="- Add related video -" value='' class="placeholder" />
                         </td>
                     </tr>
-                    {% endif %}
-
 
                     <tr>
                         <td style="font-weight:bold;">Description</td>

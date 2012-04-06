@@ -48,6 +48,37 @@ var KA_TEST = {
     },
 
     /**
+     * Run a collection of test fxns and return true only if all fxns return true.
+     * document.write any failures.
+     *
+     * This gross little thing will be replaced by jsunit.
+     */
+    run: function(tests) {
+        var pass = true;
+
+        _.each(tests, function(test, ix) {
+
+            var passTest = false,
+                num = ix + 1;
+
+            try {
+                passTest = test();
+            } catch (e) {
+                document.write("Error during test " + num + ": " + e.toString() + "<br>");
+            }
+
+            if (!passTest) {
+                document.write("Failed test " + num + "<br>");
+            }
+
+            pass = pass && passTest;
+
+        });
+
+        return pass;
+    },
+
+    /**
      * The list of templates that need to be loaded still.
      */
     outstandingTemplates: [],
