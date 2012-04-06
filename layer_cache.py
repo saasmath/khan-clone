@@ -136,7 +136,7 @@ MAX_SIZE_OF_CACHE_CHUNKS = 999900
 # memcache has 32MB limit for set_multi (this is 32MB - ChunkedResult overhead)
 MAX_SIZE = 33300000 
 
-# a random string of this length is prepended for to each chunk for values that 
+# a random string of this length is prepended to each chunk for values that 
 # need to be chunked
 CHUNK_GENERATION_LENGTH = 16
 
@@ -384,19 +384,20 @@ class ChunkedResult():
                  generation=None, 
                  data=None, 
                  compress=True):
-        ''' Stores info on the data to be stored. Either chunk_list and 
-        generation is set or data but not both
+        ''' Stores info on the data to be stored. Either chunk_list+generation 
+        or data is set, but not both
 
         Arguments:
             chunk_list: listing out the keys of the chunks that store the data 
-            generation: a random key to assure all chunks are from the same set
+            generation: a random string that gets prepend to all chunks to make
+                        sure that they are all from the same set
             data:  for the case in which the compressed value could fit in a 
                    single chunk, then data will store the compressed result
             compress: boolean saying whether we should compress the result
                       before storing and decompressing afterwards  
         '''
-        assert ((chunk_list or data) and not (chunk_list and data)), ( 
-                "Either chunk_list or data must be set")
+        assert (bool(chunk_list and generation) ^ bool(data)), ("Either " +
+                "chunk_list+generation or data must be set, but not both")
         if chunk_list:
             self.chunk_list = chunk_list
             self.generation = generation
@@ -488,8 +489,9 @@ class ChunkedResult():
                 chunk_result = chunked_results[chunk_key]
                 chunk_generation = chunk_result[:CHUNK_GENERATION_LENGTH]
                 if chunk_generation != self.generation:
-                    logging.warning("wrong chunk read for %s" % chunk_key)
-                    return
+                    logging.warning("invalid chunk: wrong generation string" +
+                                    " in chunk %s" % chunk_key)
+                    return None
 
                 self.data += chunk_result[CHUNK_GENERATION_LENGTH:]          
             

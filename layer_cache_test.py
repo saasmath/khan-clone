@@ -58,7 +58,7 @@ class LayerCacheMemcacheTest(LayerCacheTest):
         self.cache_func(self.big_string)
         # overwriting the 1st chunk ... next time we get it pickle.loads should 
         # throw an error and the target func will be rexecuted
-        memcache.set(self.key + "__chunk1__", "depickle fail")
+        memcache.set(self.key + "__chunk1__", "bad generation string")
         self.assertEqualTruncateError("a", self.cache_func("a"))
     
     def test_huge_memcache_set_should_fail_gracefully_and_reexecute(self):
