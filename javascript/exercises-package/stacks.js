@@ -106,12 +106,10 @@ Exercises.StackCollection = Backbone.Collection.extend({
     stats: function() {
 
         var totalLeaves = this.reduce(function(sum, card) {
-            var leavesEarned = card.get("leavesEarned")
             // Don't count the fourth leaf for now. We're showing it in a different
             // way at the end of the stack. TODO (jasonrr/kamens) remove 4th leaf 
             // altogether if we keep this implementation
-            var countedLeaves = leavesEarned <= 3 ? leavesEarned : leavesEarned - 1;
-            return countedLeaves + sum;
+            return Math.min(3, card.get("leavesEarned")) + sum;
         }, 0);
 
         var longestStreak = this.longestStreak(
