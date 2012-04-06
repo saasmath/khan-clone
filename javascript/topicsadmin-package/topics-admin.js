@@ -1464,9 +1464,6 @@ TopicTreeEditor.CreateExerciseView = Backbone.View.extend({
         var self = this;
         var name = $(this.el).find("input[name=\"name\"]").val();
         var exercise = new Exercise({ name: name });
-        if ($(this.el).find("input[name=\"summative\"]").is(":checked")) {
-            exercise.set({ summative: true });
-        }
 
         exercise.save({}, {
             success: function() {

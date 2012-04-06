@@ -16,13 +16,13 @@ from api.auth.xsrf import ensure_xsrf_cookie
 
 ITEMS_PER_SET = 4
 
-def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
+def thumbnail_link_dict(video = None, exercise = None, thumb_url = None, parent_topic = None):
 
     link_dict = None
 
     if video:
         link_dict = {
-            "href": "/video/%s" % video.readable_id,
+            "href": ("/video/%s" % video.readable_id) if not parent_topic else ("/%s/v/%s" % (parent_topic.get_extended_slug(), video.readable_id)),
             "thumb_urls": models.Video.youtube_thumbnail_urls(video.youtube_id),
             "title": video.title,
             "desc_html": templatetags.video_name_and_progress(video),
@@ -49,7 +49,7 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
 
     if link_dict:
 
-        if len(link_dict["teaser_html"]) > 60:
+        if link_dict["teaser_html"] and len(link_dict["teaser_html"]) > 60:
             link_dict["teaser_html"] = link_dict["teaser_html"][:60] + "&hellip;"
 
         return link_dict
@@ -198,7 +198,6 @@ class ViewHomePage(request_handler.RequestHandler):
                             'DVD_list': DVD_list,
                             'is_mobile_allowed': True,
                             'approx_vid_count': models.Video.approx_count(),
-                            'exercise_count': models.Exercise.get_count(),
                             'link_heat': self.request_bool("heat", default=False),
                             'version_number': version_number,
                             'donate_button_test': donate_button_test,

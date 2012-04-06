@@ -129,6 +129,8 @@ a.simple-link:hover { text-decoration: underline; }
         font-size: 19px;
     }
 
+/* End of basic typography */
+
 hr {
     background: #CCC;
     border: none;
@@ -146,6 +148,7 @@ hr {
 
 /* A simple 3D button style */
 .simple-button {
+    font-family: inherit; /* input[type=button] won't inherit by default */
     color: #333 !important;
     cursor: pointer !important;
     border: 1px solid #ccc;
@@ -186,7 +189,7 @@ input.simple-button {
     outline: 2px solid #333;
 }
 
-.simple-button:active, 
+.simple-button:active,
 .simple-button.toggled {
     -webkit-box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5);
     -moz-box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -386,10 +389,15 @@ input.simple-button {
   display: block;
   height: 50px;
 }
-/* End of basic typography */
 
 /* Links in the header and footer don't change color when visited. */
-a:link, header a:visited, footer a:visited, .visited-no-recolor a:visited {
+a:link,
+a:visited,
+header a:visited,
+footer a:visited,
+.visited-no-recolor a:visited,
+a.visited-no-recolor:visited
+ {
     color: #005987;
     text-decoration: none;
 }
@@ -1424,11 +1432,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     overflow: hidden;
     position: relative;
 }
-    .dark #container {
-        -webkit-box-shadow: 0 -2px 0 #1A222C;
-        -moz-box-shadow: 0 -2px 0 #1A222C;
-        box-shadow: 0 -2px 0 #1A222C;
-    }
     #container.dashboard {
         background: #fff;
         border-left: 1px solid #ddd;
@@ -1514,35 +1517,24 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
           border-left: 5px solid #C7E5f7;
         }
 
-    .exercise-show {
+    .exercise-badge {
+        position: relative;
+    }
+        .exercise-badge .topic-exercise-image {
+            margin: -1px 5px 0 0;
+        }
+        .exercise-badge .skill-bar {
+            height: 6px;
+        }
+    .pan-to {
         position: absolute;
-        padding: 5px 5px;
-        left: 282px;
-        top: 5px;
+        padding: 1px;
         line-height: 1px;
         z-index:20;
-    }
-    .exercise-show:hover {
-        top: 6px;
+        top: -2px;
     }
 
-    .exercise-goal-wrapper {
-        position: absolute;
-        left: 0px;
-        top: 0px;
-        width: 80px;
-    }
     .exercise-goal-icon {
-        position: absolute;
-        right: 2px;
-        top: 2px;
-        width: 12px;
-        height: 12px;
-    }
-    .nodeLabelZoom7 .exercise-goal-icon,
-    .nodeLabelZoom8 .exercise-goal-icon,
-    .nodeLabelZoom9 .exercise-goal-icon,
-    .nodeLabelZoom10 .exercise-goal-icon {
         width: 12px;
         height: 12px;
     }
@@ -1639,7 +1631,7 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
         #container .dashboard-header .dashboard-title .dashboard-icon {
             position: relative;
             top: 1px;
-            width: 16px;
+            width: 18px;
             height: 16px;
         }
 
@@ -1670,7 +1662,7 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
         margin-top: 2px;
     }
 
-.exercise-filter-count,.exercise-all-exercises {
+.exercise-filter-count {
     font-size: 11px;
     color: #444;
 }
@@ -1681,42 +1673,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
 .exercise-sublist:first-child {
     margin-top: 0px;
 }
-.exercise-badge {
-    background: #f3f3f3;
-    margin-bottom: 5px;
-    margin-left: 1px;
-    position: relative;
-    width: 320px;
-    height: 79px;
-    cursor: pointer;
-    border: 1px solid #ddd;
-
-    -webkit-border-radius: 10px;
-    -moz-border-radius: 10px;
-    border-radius: 10px;
-}
-    .drawer-hoverable .exercise-badge:hover, .drawer-hoverable .exercise-badge-hover {
-        -webkit-box-shadow: 0 0 3px #666;
-        -moz-box-shadow: 0 0 3px #666;
-        box-shadow: 0 0 3px #666;
-        border: 1px solid #aaa;
-    }
-    .drawer-hoverable .exercise-badge:hover .exercise-title a,
-    .drawer-hoverable .exercise-badge-hover .exercise-title a {
-        text-decoration: underline;
-    }
-    .exercise-badge .energy-points-badge {
-        padding: 0;
-		width: 48px;
-		height: 20px;
-        line-height: 19px;
-        position: absolute;
-        left: 265px;
-        top: 5px;
-    }
-    .exercise-badge .energy-points-badge{
-      display:none;
-    }
 
     /* TODO(david): Move review CSS into its own file */
     #dashboard-review-exercises {
@@ -1811,79 +1767,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     }
     /* End review stuff to move outta here */
 
-    .exercise-badge .exercise-title {
-        font-weight: bold;
-        position: absolute;
-        left: 87px;
-        top: 8px;
-        font-size: larger;
-        width: 170px;
-    }
-        .exercise-badge .exercise-title a {
-            color: #006699;
-        }
-        .exercise-badge .exercise-title a:hover {
-            color: #006699;
-        }
-
-        .exercise-badge .exercise-title #current-exercise {
-          position: relative;
-        }
-
-        .exercise-badge .exercise-title #next-exercises {
-            height: 42px;
-            overflow: hidden;
-            position: absolute;
-            top: 21px;
-        }
-
-        .exercise-badge .exercise-title #next-exercises p {
-            margin: 0 0;
-            line-height: 1.2em;
-            color: #777;
-        }
-
-        .exercise-badge .exercise-title .gradient-overlay {
-          position: absolute;
-          height: 42px;
-          z-index: 1;
-          background: url(/images/x-repeating-sprites.1.png) repeat-x;
-          background-position: 0px -282px;
-          width: 100%;
-        }
-
-    .exercise-badge #streak-bar-container{
-      /* the streak bar container on the dashboard */
-      position:absolute;
-      bottom:2px; left:85px;
-      width:228px;
-    }
-
-    .streak-bar {
-        /* the dashboard streak bar doesn't use a generated gradient*/
-        background-image: url(/images/non-repeating-sprites.4.png);
-        background-position: -10px -730px;
-        width: 100%;
-        height: 30px;
-        line-height: 18px;
-    }
-    .streak-bar.proficient {
-        -webkit-box-shadow: 0 0 12px rgba(0, 128, 201, 0.7);
-        -moz-box-shadow: 0 0 12px rgba(0, 128, 201, 0.7);
-        box-shadow: 0 0 12px rgba(0, 128, 201, 0.7);
-        background-color: rgba(0, 128, 201, 0.4);
-        height: 25px;
-    }
-    .single-exercise .streak-bar.proficient {
-        -webkit-box-shadow: 0 0 15px rgba(0, 128, 201, 0.7);
-        -moz-box-shadow: 0 0 15px rgba(0, 128, 201, 0.7);
-        box-shadow: 0 0 15px rgba(0, 128, 201, 0.7);
-        height: 30px;
-    }
-    .streak-bar-challenge {
-        background: url(/images/streak-meter-empty-challenge.png) no-repeat;
-    }
-
 .achievement-badge-counts {
     text-decoration: none;
 }
@@ -1972,6 +1855,9 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
         clear: left;
         width: 45px;
     }
+    .achievement-badge .achievement-desc .badge-context-retired {
+        color: red;
+    }
     .achievement-badge .achievement-desc {
         font-size: 11px;
         line-height: 13px;
@@ -1993,6 +1879,13 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
         height: 40px;
         margin: 5px 0 0 5px;
         float: left;
+    }
+    .achievement-badge.category-5 #badge-icon {
+        -webkit-border-radius: 20px;
+        -moz-border-radius: 20px;
+        -ms-border-radius: 20px;
+        -o-border-radius: 20px;
+        border-radius: 20px;
     }
     .achievement-badge.category-0 #badge-icon {
         margin-top: 1px;
@@ -2069,123 +1962,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     border: 1px solid #ccc;
     border-top: none;
 }
-.exercise-badge.single-exercise {
-    background: #fff;
-    border: 1px solid #C6D1AD;
-    border-top: 1px solid #C6D1AD;
-    cursor: auto;
-    height: 75px;
-    margin: 0;
-    min-width: 887px;
-    width: auto;
-    padding-left: 5px;
-
-    -webkit-border-radius: 0;
-    -moz-border-radius: 0;
-    border-radius: 0;
-
-    -webkit-box-shadow: none !important;
-    -moz-box-shadow: none;
-    box-shadow: none !important;
-}
-    .exercise-badge.single-exercise:hover {
-        -webkit-box-shadow:none;
-        -moz-box-shadow: none;
-        box-shadow: none;
-    }
-
-.exercise-badge.single-exercise .proficient-badge {
-    padding: 0 3px;
-}
-    .exercise-badge.single-exercise .proficient-badge img {
-        position: relative;
-        top: 6px;
-        width: 60px;
-        height: 62px;
-    }
-
-a.proficient-badge {
-    display: block;
-    position:relative;
-    z-index:10;
-}
-
-a.proficient-badge.disabled {
-    cursor: not-allowed;
-}
-
-.exercise-badge.single-exercise .energy-points-badge {
-    left: auto;
-    right: 5px;
-    top: 22px;
-    height:21px;
-    padding-top: 1px;
-    display:none;
-}
-.exercise-badge.single-exercise .exercise-title {
-    font-size:18px;
-    top: 6px;
-    left: 75px;
-    width: 550px;
-}
-
-.exercise-badge.single-exercise #streak-bar-container{
-  width:325px;
-  position:absolute;
-  right:10px; left:auto; top:20px;
-}
-
-.exercise-badge.single-exercise .streak-bar {
-    position:relative;
-    width:325px;
-    background-image:-webkit-gradient(linear, left top, right top, from(#eee), to(#ccc));
-    background-image: -moz-linear-gradient( left, #eee, #ccc );
-    background-image: -o-linear-gradient( left, #eee, #ccc );
-    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#eeeeee', endColorstr='#cccccc');
-    background-position:0 0;
-    border:1px solid rgb(204,204,204);
-    z-index:10;
-}
-
-.exercise-badge.single-exercise .streak-bar .energy-points-badge{
-  position:absolute;
-  top:-10px; right:-5px;
-  z-index:10; display:none;
-}
-
-.exercise-badge.single-exercise .related-content,
-.exercise-badge.single-exercise .summative-help {
-    bottom: 7px;
-    left: 75px;
-    position: absolute;
-    width: 535px;
-    line-height: 13px;
-}
-    .exercise-badge.single-exercise .related-content .related-content-title {
-        float: left;
-        margin-right: 3px;
-    }
-    .exercise-badge.single-exercise .related-content .clear {
-        display: none;
-    }
-    .exercise-badge.single-exercise .related-content .video-energy-points {
-        display: none;
-    }
-    .exercise-badge.single-exercise .related-content ul.related-video-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: inline;
-    }
-        .exercise-badge.single-exercise .related-content ul.related-video-list li {
-            float: left;
-        }
-        .exercise-badge.single-exercise .related-content ul.related-video-list li span.separator {
-            padding-right: 5px;
-        }
-        .exercise-badge.single-exercise .related-content ul.related-video-list li.related-video-extended {
-            display: none;
-        }
 
 #review-mode-title {
     position: absolute;
@@ -2340,7 +2116,6 @@ a.proficient-badge.disabled {
 }
 
 #extras.single-exercise {
-    text-align: right;
     margin: 6px 0 10px;
     padding-right: 10px;
 }
@@ -2395,7 +2170,7 @@ a.proficient-badge.disabled {
     width: 27%;
     margin-right: 10px;
 }
-    #answer_area .info-box {
+    .info-box {
         background: #eee;
         border: 1px solid #ccc;
         border-bottom: 1px solid #aaa;
@@ -2410,35 +2185,36 @@ a.proficient-badge.disabled {
         -moz-box-shadow: 0 1px 2px #ccc;
         -webkit-box-shadow: 0 1px 2px #ccc;
     }
-    #answer_area .info-box table {
+    .info-box table {
         border-collapse: collapse;
     }
-    #answer_area .info-box .info-box-header, #answer_area .info-box .info-box-subheader {
+    .info-box .info-box-header, .info-box .info-box-subheader {
         color: #777;
         display: block;
         font-size: 18px;
-        line-height: 150%;
+        line-height: 100%;
+        margin-bottom: 10px;
         font-weight: bold;
         text-shadow: 0 1px 0 #fff;
     }
-    #answer_area .info-box .info-box-subheader {
+    .info-box .info-box-subheader {
         line-height: 200%;
         font-size: 14px;
         color: #333;
     }
-    #answer_area .info-box .related-content-title {
+    .info-box .related-content-title {
         display: none;
     }
-    #answer_area .info-box #related-video-list {
+    .info-box #related-video-list {
         padding: 0;
         margin: 0;
         list-style: none;
     }
-        #answer_area .info-box #related-video-list li {
+        .info-box #related-video-list li {
             display: block;
             margin: 0 0 5px 0;
         }
-        #answer_area .info-box #related-video-list a {
+        .info-box #related-video-list a {
             display: block;
             float: left;
             margin: 0;
@@ -2446,22 +2222,22 @@ a.proficient-badge.disabled {
             overflow: hidden;
             text-overflow: ellipsis;
         }
-            #answer_area .info-box #related-video-list a .video-title {
+            .info-box #related-video-list a .video-title {
                 white-space: nowrap;
             }
-        #answer_area .info-box #related-video-list .separator {
+        .info-box #related-video-list .separator {
             display: none;
         }
-        #answer_area .info-box #related-video-list .related-videos-more {
+        .info-box #related-video-list .related-videos-more {
             float: none;
             clear:both;
         }
-            #answer_area .info-box #related-video-list .related-videos-more a {
+            .info-box #related-video-list .related-videos-more a {
                 float: none;
                 display: inline;
             }
         /* Energy points badge look. Should be used wherever we display energy points */
-        #answer_area .info-box #related-video-list .video-energy-points,
+        .info-box #related-video-list .video-energy-points,
         .video_extra_links .video-energy-points,
         #user-info .energy-points-badge,
         #profile-header #high-level-stats .energy-points-badge,
@@ -2486,19 +2262,19 @@ a.proficient-badge.disabled {
             font-size: 11px;
             cursor: pointer;
         }
-    #answer_area .info-box .info-box-sub-description {
+    .info-box .info-box-sub-description {
         display: block;
         color: #777;
         margin-bottom: 10px;
     }
-        #answer_area .info-box .info-box-sub-description strong {
+        .info-box .info-box-sub-description strong {
             color: #444;
             font-style: italic;
         }
-    #answer_area .info-box #check-answer-results #feedback {
+    .info-box #check-answer-results #feedback {
         padding: 10px 0 5px;
     }
-    #answer_area .info-box input#answer {
+    .info-box input#answer {
         width: 100px;
     }
     .exercise.button, #answer_area input.button {
@@ -3612,7 +3388,7 @@ a.nodeLabel:hover {
     text-decoration: none;
 }
 
-.nodeLabel div {
+.node-text {
     color: white;
     font-family: "Lucida Grande", "Arial", sans-serif;
     font-size: 12px;
@@ -3624,89 +3400,135 @@ a.nodeLabel:hover {
     background: rgba(0, 0, 0, 0.5);
 }
 
-.nodeLabelHidden {
-    display: none;
-}
-.nodeLabelFiltered div {
+.nodeLabelFiltered .node-text {
     color: #444;
 }
-.nodeLabelProficient div {
-}
-.nodeLabelReview div {
-}
-.nodeLabelSuggested div {
+
+.node-icon {
+    display: inline-block;
 }
 
-.nodeLabelZoom10 {
+.node-icon.node-complete    { background: url(/images/node-complete.png?glove);    /*! data-uri(/images/node-complete.png) */ }
+.node-icon.node-review      { background: url(/images/node-review.png?glove);      /*! data-uri(/images/node-review.png) */ }
+.node-icon.node-suggested   { background: url(/images/node-suggested.png?glove);   /*! data-uri(/images/node-suggested.png) */ }
+.node-icon.node-not-started { background: url(/images/node-not-started.png?glove); /*! data-uri(/images/node-not-started.png) */ }
+
+.nodeLabelFiltered .node-icon.node-complete    { background: url(/images/node-complete-faded.png?glove);    /*! data-uri(/images/node-complete-faded.png) */ }
+.nodeLabelFiltered .node-icon.node-review      { background: url(/images/node-review-faded.png?glove);      /*! data-uri(/images/node-review-faded.png) */ }
+.nodeLabelFiltered .node-icon.node-suggested   { background: url(/images/node-suggested-faded.png?glove);   /*! data-uri(/images/node-suggested-faded.png) */ }
+.nodeLabelFiltered .node-icon.node-not-started { background: url(/images/node-not-started-faded.png?glove); /*! data-uri(/images/node-not-started-faded.png) */ }
+
+.zoom10 .nodeLabel {
     position: relative;
     left: -40px;
     top: -40px;
 }
-.nodeLabelZoom10 img {
-    width: 80px;
-    height: 80px;
-}
+    .zoom10 .nodeLabel .node-icon {
+        width: 80px;
+        height: 80px;
+    }
 
-.nodeLabelZoom9 {
+.zoom6 .nodeLabel,
+.zoom7 .nodeLabel.topic,
+.zoom9 .nodeLabel {
     position: relative;
     left: -40px;
     top: -20px;
 }
-.nodeLabelZoom9 img {
+.zoom7 .nodeLabel.exercise {
+    cursor: inherit;
+    position: relative;
+    left: -5px;
+    top: -5px;
+}
+
+.zoom6 .nodeLabel .node-icon,
+.zoom7 .nodeLabel.topic .node-icon,
+.zoom9 .nodeLabel .node-icon {
     width: 40px;
     height: 40px;
 }
-.lte7 .nodeLabelZoom9 img {
-    margin-left: 20px;
+
+.zoom9 .nodeLabel.exercise .node-icon.node-complete    { background: url(/images/node-complete-40.png?glove);    /*! data-uri(/images/node-complete-40.png) */ }
+.zoom9 .nodeLabel.exercise .node-icon.node-review      { background: url(/images/node-review-40.png?glove);      /*! data-uri(/images/node-review-40.png) */ }
+.zoom9 .nodeLabel.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-40.png?glove);   /*! data-uri(/images/node-suggested-40.png) */ }
+.zoom9 .nodeLabel.exercise .node-icon.node-not-started { background: url(/images/node-not-started-40.png?glove); /*! data-uri(/images/node-not-started-40.png) */ }
+
+.zoom9 .nodeLabelFiltered.exercise .node-icon.node-complete    { background: url(/images/node-complete-40-faded.png?glove);    /*! data-uri(/images/node-complete-40-faded.png) */ }
+.zoom9 .nodeLabelFiltered.exercise .node-icon.node-review      { background: url(/images/node-review-40-faded.png?glove);      /*! data-uri(/images/node-review-40-faded.png) */ }
+.zoom9 .nodeLabelFiltered.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-40-faded.png?glove);   /*! data-uri(/images/node-suggested-40-faded.png) */ }
+.zoom9 .nodeLabelFiltered.exercise .node-icon.node-not-started { background: url(/images/node-not-started-40-faded.png?glove); /*! data-uri(/images/node-not-started-40-faded.png) */ }
+
+.zoom7 .nodeLabel.exercise .node-icon {
+    width: 10px;
+    height: 10px
+}
+.zoom7 .nodeLabel.exercise .node-text {
+    display: none;
 }
 
-.nodeLabelZoom8 {
+.zoom7 .nodeLabel.exercise .node-icon.node-complete    { background: url(/images/node-complete-10.png?glove);    /*! data-uri(/images/node-complete-10.png) */ }
+.zoom7 .nodeLabel.exercise .node-icon.node-review      { background: url(/images/node-review-10.png?glove);      /*! data-uri(/images/node-review-10.png) */ }
+.zoom7 .nodeLabel.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-10.png?glove);   /*! data-uri(/images/node-suggested-10.png) */ }
+.zoom7 .nodeLabel.exercise .node-icon.node-not-started { background: url(/images/node-not-started-10.png?glove); /*! data-uri(/images/node-not-started-10.png) */ }
+
+.zoom7 .nodeLabelFiltered.exercise .node-icon.node-complete    { background: url(/images/node-complete-10-faded.png?glove);    /*! data-uri(/images/node-complete-10-faded.png) */ }
+.zoom7 .nodeLabelFiltered.exercise .node-icon.node-review      { background: url(/images/node-review-10-faded.png?glove);      /*! data-uri(/images/node-review-10-faded.png) */ }
+.zoom7 .nodeLabelFiltered.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-10-faded.png?glove);   /*! data-uri(/images/node-suggested-10-faded.png) */ }
+.zoom7 .nodeLabelFiltered.exercise .node-icon.node-not-started { background: url(/images/node-not-started-10-faded.png?glove); /*! data-uri(/images/node-not-started-10-faded.png) */ }
+
+.lte7 .zoom6 .nodeLabel .node-icon,
+.lte7 .zoom7 .nodeLabel.topic .node-icon,
+.lte7 .zoom9 .nodeLabel .node-icon {
+    margin-left: 20px;
+}
+.lte7 .zoom7 .nodeLabel.exercise .node-icon {
+    margin-left: 5px;
+}
+
+.zoom8 .nodeLabel {
     position: relative;
     left: -30px;
     top: -13px;
 }
-.nodeLabelZoom8 div {
+.zoom8 .nodeLabel .node-text {
     font-size: 9px;
     width: 60px;
 }
-.nodeLabelZoom8 img {
+.zoom8 .nodeLabel .node-icon {
     width: 26px;
     height: 26px;
 }
-.lte7 .nodeLabelZoom8 img {
+.lte7 .zoom8 .nodeLabel .node-icon {
     margin-left: 18px;
 }
 
-.nodeLabelZoom7 {
-    position: relative;
-    left: -41px;
-    top: -7px;
-    cursor: inherit;
-}
-.nodeLabelZoom7 div {
-    visibility: hidden;
-}
-.nodeLabelZoom7 img {
-    width: 10px;
-    height: 10px;
-}
-.lte7 .nodeLabelZoom7 img {
-    margin-left: 35px;
+.zoom8 .nodeLabel.exercise .node-icon.node-complete    { background: url(/images/node-complete-26.png?glove);    /*! data-uri(/images/node-complete-26.png) */ }
+.zoom8 .nodeLabel.exercise .node-icon.node-review      { background: url(/images/node-review-26.png?glove);      /*! data-uri(/images/node-review-26.png) */ }
+.zoom8 .nodeLabel.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-26.png?glove);   /*! data-uri(/images/node-suggested-26.png) */ }
+.zoom8 .nodeLabel.exercise .node-icon.node-not-started { background: url(/images/node-not-started-26.png?glove); /*! data-uri(/images/node-not-started-26.png) */ }
+
+.zoom8 .nodeLabelFiltered.exercise .node-icon.node-complete    { background: url(/images/node-complete-26-faded.png?glove);    /*! data-uri(/images/node-complete-26-faded.png) */ }
+.zoom8 .nodeLabelFiltered.exercise .node-icon.node-review      { background: url(/images/node-review-26-faded.png?glove);      /*! data-uri(/images/node-review-26-faded.png) */ }
+.zoom8 .nodeLabelFiltered.exercise .node-icon.node-suggested   { background: url(/images/node-suggested-26-faded.png?glove);   /*! data-uri(/images/node-suggested-26-faded.png) */ }
+.zoom8 .nodeLabelFiltered.exercise .node-icon.node-not-started { background: url(/images/node-not-started-26-faded.png?glove); /*! data-uri(/images/node-not-started-26-faded.png) */ }
+
+.zoom6 .nodeLabel.exercise {
+    display: none;
 }
 
-.nodeLabelHighlight div {
+.zoom8 .nodeLabel.topic,
+.zoom9 .nodeLabel.topic,
+.zoom10 .nodeLabel.topic {
+    display: none;
+}
+
+.nodeLabelHighlight .node-text {
     -webkit-box-shadow: 0 0 10px yellow;
     -moz-box-shadow: 0 0 10px yellow;
     box-shadow: 0 0 10px yellow;
     border: 1px solid #aaa;
     background-color: black;
-}
-.nodeLabelSummative div {
-    visibility: visible;
-    font-size: 12px;
-    background-color: black;
-    z-index: 1000;
-    position: relative;
 }
 
 .creditLabel {
@@ -3945,15 +3767,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     }
 
 @media screen and (min-width: 1200px) {
-    .dark #homepage, .dark #contribute, .dark #container, .dark #page_sub_nav, .dark #container .exercise-badge.single-exercise {
-        -moz-border-radius-topleft: 4px;
-        -moz-border-radius-topright: 4px;
-        -webkit-border-top-left-radius: 4px;
-        -webkit-border-top-right-radius: 4px;
-        border-top-left-radius: 4px;
-        border-top-right-radius: 4px;
-    }
-    .dark #page-container, .dark #page-container-inner {
+   .dark #page-container, .dark #page-container-inner {
         background-position-y: 107px;
     }
 }
@@ -4047,31 +3861,31 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background: url(/images/email-button-24.png) no-repeat;
 }
 
-.search-topics span.highlighted {
-    font-weight: bold;
-}
-.search-topics div.matching-topic {
+div.topic-condensed {
     width: 620px;
-    margin-left: 20px;
 }
-.search-topics .matching-topic h2 {
+.topic-condensed .topic-description {
+    margin-bottom: 5px;
+}
+.topic-condensed h2 {
     padding-top: 20px;
     font-weight: bold;
     text-decoration: underline;
     margin-bottom: 5px;
 }
-.search-topics .matching-topic .topic-description {
-    margin-bottom: 5px;
-}
-.search-topics .matching-topic ul {
+.topic-condensed ul {
     margin-left: 20px;
 }
-.search-topics .matching-topic li {
+.topic-condensed li {
     float: left;
     width: 300px;
     list-style-type: none;
     margin-top: 0px;
     margin-bottom: 0px;
+}
+
+.search-topics span.highlighted {
+    font-weight: bold;
 }
 
 .searchresult-counts {
@@ -4081,6 +3895,13 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     margin-top: 38px;
     margin-bottom: 5px;
     font-size: 18px
+}
+.search-topics div.topic-condensed {
+    margin-left: 20px;
+}
+.search-topics .topic-condensed li {
+    margin-top: 0px;
+    margin-bottom: 0px;
 }
 .search-topics .videos {
     margin-left: 0px;

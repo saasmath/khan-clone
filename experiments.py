@@ -103,4 +103,3 @@ class InteractiveTranscriptExperiment(object):
                        InteractiveTranscriptExperiment._ab_test_alternatives,
                        InteractiveTranscriptExperiment._conversion_names,
                        InteractiveTranscriptExperiment._conversion_types)
-        

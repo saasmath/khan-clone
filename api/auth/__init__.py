@@ -89,27 +89,23 @@ def request_token_callback(provider, oauth_map_id):
 @decorators.manual_access_checking
 def authorize_token():
 
-    oauth_server, oauth_request = initialize_server_request(request)
-
-    if oauth_server is None:
-        return oauth_error_response(OAuthError('Invalid request parameters.'))
-
     try:
+        oauth_server, oauth_request = initialize_server_request(request)
+
+        if oauth_server is None:
+            raise OAuthError('Invalid request parameters.')
+
         # get the request token
         token = oauth_server.fetch_request_token(oauth_request)
-    except OAuthError, e:
-        return oauth_error_response(e)
 
-    oauth_map = OAuthMap.get_from_request_token(token.key_)
-    if not oauth_map:
-        raise OAuthError("Unable to find oauth_map from request token during authorization.")
+        oauth_map = OAuthMap.get_from_request_token(token.key_)
+        if not oauth_map:
+            raise OAuthError("Unable to find oauth_map from request token during authorization.")
 
-    # Get user from oauth map using either FB or Google access token
-    user_data = oauth_map.get_user_data()
-    if not user_data:
-        return oauth_error_response(OAuthError("User not logged in during authorize_token process."))
-
-    try:
+        # Get user from oauth map using either FB or Google access token
+        user_data = oauth_map.get_user_data()
+        if not user_data:
+            raise OAuthError("User not logged in during authorize_token process.")
         # For now we don't require user intervention to authorize our tokens,
         # since the user already authorized FB/Google. If we need to do this
         # for security reasons later, there's no reason we can't.

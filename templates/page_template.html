@@ -34,9 +34,9 @@
         <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
         {%- endif %}
         <meta name="description" content="{% block meta_description -%}
-        Khan Academy is on a mission to provide a free world-class education to anyone anywhere. With over 2,600 videos covering everything from arithmetic to physics, finance, and history and 200 practice exercises, we're helping students learn whatever they want, whenever they want, at their own pace.
+        With a library of over 3,000 videos covering everything from arithmetic to physics, finance, and history and hundreds of skills to practice, we're on a mission to help you learn what you want, when you want, at your own pace.
         {%- endblock %}" />
-        <meta name="keywords" content="{% block meta_keywords %}khan academy, learn, videos, lectures, practice, exercises{% endblock %}" />
+        <meta name="keywords" content="{% block meta_keywords %}khan academy, learn, videos, lectures, practice, exercises, skills{% endblock %}" />
         {# Allows the KA FB Page Admins to see the KA stats for FB Like in FB insights START -#}
         <meta property="fb:page_id" content="159403248441" />
         {# Allows the KA FB Page Admins to see the KA stats for FB Like in FB insights END -#}
@@ -55,7 +55,7 @@
         {# End Google+ -#}
 
         <meta property="og:description"
-              content="Khan Academy is on a mission to provide a free world-class education to anyone anywhere. With over 2,600 videos covering everything from arithmetic to physics, finance, and history and 200 practice exercises, we're helping students learn whatever they want, whenever they want, at their own pace."/>
+              content="With a library of over 3,000 videos covering everything from arithmetic to physics, finance, and history and hundreds of skills to practice, we're on a mission to help you learn what you want, when you want, at your own pace."/>
         <link rel="shortcut icon" href="/favicon.ico?leaf">
         <link rel="apple-touch-icon" href="/images/apple-touch-icon.png"/>
 
@@ -275,7 +275,7 @@
     {% if watch_topic_browser_enabled %}
     <script type="text/javascript">
     HeaderTopicBrowser.init();
-    HeaderTopicBrowser.setData({{ templatetags.topic_browser_data() }});
+    HeaderTopicBrowser.setData({{ templatetags.topic_browser_data(show_topic_pages=show_topic_pages) }});
     </script>
     {% endif %}
 

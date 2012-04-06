@@ -98,12 +98,10 @@ _layout_version = 1
         "library_content_by_topic_%s_v%s.%s" % (
         "ajax" if ajax else "inline",
         version_number if version_number else Setting.topic_tree_version(),
-        _layout_version),
-        layer=layer_cache.Layers.Memcache
-        )
+        _layout_version))
 def library_content_html(ajax=False, version_number=None):
     """" Returns the HTML for the structure of the topics as they will be
-    populated ont he homepage. Does not actually contain the list of video
+    populated on the homepage. Does not actually contain the list of video
     names as those are filled in later asynchronously via the cache.
     """
     if version_number:

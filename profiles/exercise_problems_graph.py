@@ -2,7 +2,6 @@ import models
 import util
 import logging
 from templatefilters import seconds_to_time_string
-from exercises import exercise_contents
 
 class ProblemPoint:
     def __init__(self, problem_log, current_sha1):
@@ -10,8 +9,6 @@ class ProblemPoint:
         self.time_done = problem_log.time_done
         self.correct = problem_log.correct
         self.count_hints = problem_log.count_hints
-        self.exercise_non_summative = problem_log.exercise_non_summative
-        self.exercise_non_summative_display_name = models.Exercise.to_display_name(problem_log.exercise_non_summative)
         self.dt = problem_log.time_done
         self.problem_number = max(problem_log.problem_number, 1)
         self.video_point = None
@@ -60,7 +57,7 @@ def exercise_problems_graph_context(user_data_student, exid):
 
     user_exercise = user_data_student.get_or_insert_exercise(exercise)
 
-    sha1 = exercise_contents(exercise)[4]
+    sha1 = exercise.sha1
 
     related_videos = exercise.related_videos_query()
     video_list = []
