@@ -1159,8 +1159,21 @@ def update_user_profile():
 def get_user_questions():
     """ Get data associated with a user's questions and unread answers
     """
+    # TODO(marcia): Support the email param and not just use current
     user_data = models.UserData.current()
     return notification.get_questions_data(user_data)
+
+@route("/api/v1/user/notifications", methods=["DELETE"])
+@oauth_required()
+@api_disallow_phantoms
+@jsonp
+@jsonify
+def clear_user_notifications():
+    """ Clear the user's notifications
+    """
+    # TODO(marcia): Support the email param and not just use current
+    user_data = models.UserData.current()
+    notification.clear_notifications_for_user_data(user_data)
 
 @route("/api/v1/user/coaches", methods=["GET"])
 @oauth_required()

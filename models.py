@@ -1806,8 +1806,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         if self.count_feedback_notification == -1:
             # There is a FeedbackNotification for each unread answer
             notification_query = models_discussion.FeedbackNotification.gql(
-                    "WHERE user = :1",
-                    self.user)
+                    "WHERE user = :1", self.user)
 
             question_keys = set(n.feedback.question_key() for n in notification_query)
 

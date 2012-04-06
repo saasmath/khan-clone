@@ -198,8 +198,27 @@ class Feedback(db.Model):
         return [q for q in query if q.is_type(FeedbackType.Question)]
 
 class FeedbackNotification(db.Model):
+    """ A FeedbackNotification entity is created for each answer to a
+    question, unless the question and answer authors are the same user
+    """
+    # The answer that provoked a notification
     feedback = db.ReferenceProperty(Feedback)
+
+    # The question author and recipient of the notification
     user = db.UserProperty()
+
+    @staticmethod
+    def clear_for_user_data(recipient_user_data):
+        """ Delete the FeedbackNotifications for the specified recipient
+        """
+        notifications = FeedbackNotification.gql(
+                "WHERE user = :1", recipient_user_data.user)
+
+        if notifications.count():
+            db.delete(notifications)
+            recipient_user_data.count_feedback_notification = 0
+            recipient_user_data.put()
+
 
 class FeedbackVote(db.Model):
     DOWN = -1

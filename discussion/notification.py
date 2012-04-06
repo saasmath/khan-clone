@@ -36,6 +36,11 @@ def get_questions_data(user_data):
 
     return dict_meta_questions.values()
 
+def clear_notifications_for_user_data(user_data):
+    """ Clear the user's notifications
+    """
+    models_discussion.FeedbackNotification.clear_for_user_data(user_data)
+
 
 class MetaQuestion(object):
     """ Data associated with a user's question, including the target video
