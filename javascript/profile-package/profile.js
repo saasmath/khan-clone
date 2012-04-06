@@ -980,13 +980,15 @@ var Profile = {
                             }, 1000);
 
                         // Clear notifications upon viewing them in question list
-                        $.ajax({
-                            type: "DELETE",
-                            url: "/api/v1/user/notifications",
-                            data: {
-                                email: email
-                            }
-                        });
+                        // STOPSHIP(marcia): Uncomment below
+
+                        // $.ajax({
+                        //     type: "DELETE",
+                        //     url: "/api/v1/user/notifications",
+                        //     data: {
+                        //         email: email
+                        //     }
+                        // });
                     }
                 }
             });

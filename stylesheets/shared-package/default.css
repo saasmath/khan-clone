@@ -916,7 +916,6 @@ footer {
         padding: 5px 5px;
     }
     #top-header #top-header-links span.username_and_notification span.user-name { vertical-align:baseline; }
-    #top-header #top-header-links span.username_and_notification span.user-notification { vertical-align:baseline; }
     #top-header #top-header-links span.username_and_notification_shift { left: 12px; }
     #top-header #user-info img { position:relative; top:-1px; }
 
@@ -924,9 +923,6 @@ footer {
         width: 16px;
         height: 16px;
         padding: 0 4px;
-    }
-    #top-header #user-info a.notification_link img {
-        position: relative;
     }
     #top-header #user-info .dropdown {
         padding: 5px 0 5px 0;
@@ -964,19 +960,35 @@ footer {
     #top-header #user-info .dropdown-menu li > a:hover {
         color: #fff;
     }
-    #top-header #top-header-links .page_links a.notification_link {
-        border-bottom: 0;
-    }
-
-    #top-header #top-header-links a.notification_link span.notification_bubble {
-        float: none;
-
+    #top-header #top-header-links .user-notification {
         position: relative;
-        top: 9px;
-        left: -9px;
+        padding: 5px 2px 0 2px;
+        display: inline-block;
+    }
+    #top-header #top-header-links .user-notification:hover {
+        /* TODO(marcia): Use a more reasonable color */
+        background-color: yellow;
+    }
+    #top-header #top-header-links .notification-bubble {
+        position: absolute;
+        right: 0px;
+        top: 0px;
 
-        opacity: 0.75;
-        filter:alpha(opacity=75);
+        padding: 0 3px;
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+        -webkit-box-shadow: 0 1px 0px #888;
+        -moz-box-shadow: 0 1px 0px #888;
+        box-shadow: 0 1px 0px #888;
+
+        background-color: #2D5900;
+        color: #FFF;
+
+        line-height: 15px;
+        font-size: 10px;
+        font-weight: bold;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     }
     #login-menu .fb_button, #login-menu .fb_button_rtl {
         background-image: none;
@@ -2465,7 +2477,6 @@ a.proficient-badge.disabled {
         .video_extra_links .video-energy-points,
         #user-info .energy-points-badge,
         #profile-header #high-level-stats .energy-points-badge,
-        #top-header a.notification_link span.notification_bubble,
         .energy-points-badge {
             background: #005987;
             float: right;

@@ -43,9 +43,9 @@
     {% set count = 0 %}
 {% endif %}
 {% if count %}
-<span class="user-notification">
-    <a class="notification_link" href="/discussion/videofeedbacknotificationlist" title="{{ count }} new answers to your questions"><img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
-</span>
+<a class="user-notification" href="/discussion/videofeedbacknotificationlist" title="{{ count }} discussion notification{{count|pluralize}}">
+    <img src="{{ "/images/discussions-hi-16px.png"|static_url }}" class="icon"><span class="notification-bubble">{{ count }}</span>
+</a>
 {% endif %}
 <span class="dropdown">
     <span class="username_and_notification dropdown-toggle">
