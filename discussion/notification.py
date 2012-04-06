@@ -77,11 +77,11 @@ class MetaQuestion(object):
 
         meta.viewer_user_data = viewer_user_data
 
-        user_ids, last_date = MetaQuestion.get_answer_data(
+        answerer_user_ids, last_date = MetaQuestion.get_answer_data(
                 question,
                 viewer_user_data)
 
-        meta.answerer_count = len(user_ids)
+        meta.answerer_count = len(answerer_user_ids)
         meta.last_date = last_date
 
         return meta
@@ -91,19 +91,22 @@ class MetaQuestion(object):
 
     @staticmethod
     def get_answer_data(question, viewer_user_data):
-        answerer_user_ids = set()
+        """ Get answer data for the question relative to the viewer,
+        such as who has answered and when the last update was
+        """
         query = util_discussion.feedback_query(question.key())
-        last_date = question.date
 
-        for answer in query:
-            if not answer.appears_as_deleted_to(viewer_user_data):
-                if last_date < answer.date:
-                    last_date = answer.date
+        viewable_answers = [answer for answer in query if
+                not answer.appears_as_deleted_to(viewer_user_data)]
 
-                if answer.author_user_id not in answerer_user_ids:
-                    answerer_user_ids.add(answer.author_user_id)
+        answerer_user_ids = set(answer.author_user_id for answer
+                in viewable_answers)
 
-        return (answerer_user_ids, last_date)
+        dates = [answer.date for answer in viewable_answers]
+        dates.append(question.date)
+        most_recent_date = max(dates)
+
+        return (answerer_user_ids, most_recent_date)
 
 
 class VideoFeedbackNotificationList(request_handler.RequestHandler):
