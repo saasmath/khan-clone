@@ -92,3 +92,6 @@ Handlebars.registerHelper("ellipsis", function(text, length) {
         return textStripped.substr(0, length-3) + "...";
     }
 });
+
+Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
+

@@ -73,7 +73,6 @@ import redirects
 import robots
 from importer.handlers import ImportHandler
 
-from library import library_topic_html
 from gae_bingo.gae_bingo import bingo, ab_test
 
 class VideoDataTest(request_handler.RequestHandler):
