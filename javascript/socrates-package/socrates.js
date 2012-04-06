@@ -663,11 +663,12 @@ Socrates.Nav = Backbone.View.extend({
         return this.model.
             filter(function(i) {return i.constructor == Socrates.Question;}).
             map(function(question) {
+                var pc = question.seconds() / this.options.videoDuration * 100;
                 return {
                     title: question.get("title"),
                     time: question.get("time"),
                     slug: question.slug(),
-                    pc: question.seconds() / this.options.videoDuration * 100,
+                    percentage: pc,
                     complete: question.get("complete") ? "complete" : ""
                 };
             }, this);
