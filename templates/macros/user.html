@@ -43,7 +43,7 @@
     {% set count = 0 %}
 {% endif %}
 {% if count %}
-<a class="user-notification" href="/discussion/videofeedbacknotificationlist" title="{{ count }} discussion notification{{count|pluralize}}">
+<a class="user-notification" href="{{profile_root}}/questions" title="{{ count }} discussion notification{{count|pluralize}}">
     <img src="{{ "/images/discussions-hi-16px.png"|static_url }}" class="icon"><span class="notification-bubble">{{ count }}</span>
 </a>
 {% endif %}
