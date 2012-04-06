@@ -1,31 +1,33 @@
-from api import jsonify
-from google.appengine.api import mail
 
-from app import App
-from auth import age_util
-from counters import user_counter
-from google.appengine.api import users
-from models import UserData
-from notifications import UserNotifier
-from phantom_users.phantom_util import get_phantom_user_id_from_cookies
+import datetime
+import logging
+import os
+import re
+
+from google.appengine.api import mail, users
 
 import auth.cookies
 import auth.passwords
-from auth.tokens import AuthToken, TransferAuthToken
 import cookie_util
-import datetime
-import logging
+import facebook_util
 import models
-import os
-import re
 import request_handler
 import shared_jinja
 import uid
 import user_util
 import util
-from api.auth.auth_models import OAuthMap
+
+from api import jsonify
 from api.auth import auth_util
-import facebook_util
+from api.auth.auth_models import OAuthMap
+from app import App
+from auth import age_util
+from auth.tokens import AuthToken, TransferAuthToken
+from counters import user_counter
+from models import UserData
+from notifications import UserNotifier
+from phantom_users.phantom_util import get_phantom_user_id_from_cookies
+
 
 class Login(request_handler.RequestHandler):
     @user_util.open_access
@@ -37,7 +39,7 @@ class Login(request_handler.RequestHandler):
             #self.render_login_legacy()
         else:
             self.render_login_outer()
-            
+
     def request_continue_url(self, key="continue", default="/"):
         cont = super(Login, self).request_continue_url(key, default)
 
@@ -84,7 +86,7 @@ class Login(request_handler.RequestHandler):
                            }
 
         self.render_jinja2_template('login.html', template_values)
-        
+
 
     def render_login_form(self, identifier=None, errors=None):
         """ Renders the form with the username/password fields. This is
@@ -168,7 +170,7 @@ class MobileOAuthLogin(request_handler.RequestHandler):
             "anointed": self.request_bool("an", default=False),
             "view": self.request_string("view", default=""),
             "error": error,
-            
+
             # TODO(benkomalo): remove this when auth stabilizes
             "use_new": True, #self.request_bool("use_new", default=False),
         })
@@ -177,7 +179,7 @@ class MobileOAuthLogin(request_handler.RequestHandler):
     def post(self):
         """ POST submissions are for username/password based logins to
         acquire an OAuth access token.
-        
+
         """
 
         identifier = self.request_string('identifier')
@@ -191,7 +193,7 @@ class MobileOAuthLogin(request_handler.RequestHandler):
             # TODO(benkomalo): IP-based throttling of failed logins?
             self.render_login_page("Your login or password is incorrect.")
             return
-        
+
         # Successful login - convert to an OAuth access_token
         oauth_map_id = self.request_string("oauth_map_id", default="")
         oauth_map = OAuthMap.get_by_id_safe(oauth_map_id)
@@ -228,9 +230,9 @@ class PostLogin(request_handler.RequestHandler):
         """ Checks to see if a valid auth token is specified as a param
         in the request, so it can be converted into a cookie
         and used as the identifier for the current and future requests.
-        
+
         """
-        
+
         auth_stamp = self.request_string("auth")
         if auth_stamp:
             # If an auth stamp is provided, it means they logged in using
@@ -255,7 +257,7 @@ class PostLogin(request_handler.RequestHandler):
         # Always delete phantom user cookies on login
         self.delete_cookie('ureg_id')
         self.redirect(cont)
-        
+
     @user_util.manual_access_checking
     def get(self):
         cont = self.request_continue_url()
@@ -297,7 +299,7 @@ class PostLogin(request_handler.RequestHandler):
 
         user_data.last_login = datetime.datetime.utcnow()
         user_data.put()
-            
+
         complete_signup = self.request_bool("completesignup", default=False)
         if first_time:
             if current_google_user:
@@ -415,7 +417,7 @@ class Signup(request_handler.RequestHandler):
             # unfortunately. Set an under-13 cookie so they can't try again.
             Logout.delete_all_identifying_cookies(self)
             auth.cookies.set_under13_cookie(self)
-            
+
             # TODO(benkomalo): investigate how reliable setting cookies from
             # a jQuery POST is going to be
             self.render_json({"under13": True})
@@ -449,7 +451,7 @@ class Signup(request_handler.RequestHandler):
                     resend_detected = existing is not None
         else:
             errors['email'] = "Please enter your email."
-            
+
         if existing_google_user_detected:
             # TODO(benkomalo): just deny signing up with username/password for
             # existing users with a Google login. In the future, we can show
@@ -467,15 +469,15 @@ class Signup(request_handler.RequestHandler):
                 email,
                 birthdate)
         Signup.send_verification_email(unverified_user)
-        
+
         response_json = {
                 'success': True,
                 'email': email,
                 'resend_detected': resend_detected,
                 }
-        
+
         if App.is_dev_server:
-            # Send down the verification token so the client can easily 
+            # Send down the verification token so the client can easily
             # create a link to test with.
             response_json['token'] = unverified_user.randstring
 
@@ -548,7 +550,7 @@ class CompleteSignup(request_handler.RequestHandler):
             return self.render_form()
         else:
             return self.render_outer()
-        
+
     def render_outer(self):
         """ Renders the second part of the user signup step, after the user
         has verified ownership of their e-mail account.
@@ -556,12 +558,12 @@ class CompleteSignup(request_handler.RequestHandler):
         The request URI must include a valid token from an UnverifiedUser, and
         can be made via build_link(), or be made by a user without an existing
         password set.
-        
+
         Note that the contents are actually rendered in an iframe so it
         can be sent over https (generated in render_form).
 
         """
-        valid_token, unverified_user = self.resolve_token()
+        (valid_token, _) = self.resolve_token()
         user_data = UserData.current()
         if valid_token and user_data:
             if not user_data.is_phantom:
@@ -758,7 +760,7 @@ class CompleteSignup(request_handler.RequestHandler):
                     # an existing user due to an ID collision. Try again.
                     user_data = None
                 num_tries += 1
-                
+
             if not user_data:
                 logging.error("Tried several times to create a new user " +
                               "unsuccessfully")
@@ -779,7 +781,7 @@ class CompleteSignup(request_handler.RequestHandler):
 
 class PasswordChange(request_handler.RequestHandler):
     """ Handler for changing a user's password.
-    
+
     This must always be rendered in an https form. If a request is made to
     render the form in HTTP, this handler will automatically redirect to
     the HTTPS version with a transfer_token to identify the user in HTTPS.
@@ -792,7 +794,7 @@ class PasswordChange(request_handler.RequestHandler):
         if self.request.scheme != "https" and not App.is_dev_server:
             self.redirect(self.secure_url_with_token(self.request.uri))
             return
-        
+
         if self.request_bool("success", default=False):
             self.render_form(message="Password changed", success=True)
         else:
@@ -804,7 +806,7 @@ class PasswordChange(request_handler.RequestHandler):
                                     {'message': message or "",
                                      'success': success,
                                      'transfer_token': transfer_token_value})
-        
+
     def secure_url_with_token(self, url):
         user_data = UserData.current()
         if not user_data:
@@ -857,7 +859,7 @@ class PasswordChange(request_handler.RequestHandler):
 
 def _resolve_user_in_https_frame(handler):
     """ Determines the current logged in user for the HTTPS request.
-    
+
     This has logic in additional to UserData.current(), since it should also
     accept TransferAuthTokens, since HTTPS requests may not have normal HTTP
     cookies sent.
