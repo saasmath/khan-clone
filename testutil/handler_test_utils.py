@@ -50,6 +50,7 @@ appserver_url = None
 _tmpdir = None
 _pid = None
 
+
 def start_dev_appserver():
     """Starts up a dev-appserver instance on an unused port."""
     global appserver_url, _tmpdir, _pid
@@ -122,6 +123,7 @@ def start_dev_appserver():
     # Set the useful variables for subclasses to use
     global appserver_url
     appserver_url = 'http://localhost:%d' % dev_appserver_port
+
 
 def stop_dev_appserver():
     global dev_appserver_url, _tmpdir, _pid
