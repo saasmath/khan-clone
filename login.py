@@ -25,6 +25,7 @@ import user_util
 import util
 from api.auth.auth_models import OAuthMap
 from api.auth import auth_util
+import facebook_util
 
 class Login(request_handler.RequestHandler):
     @user_util.open_access
@@ -250,6 +251,11 @@ class PostLogin(request_handler.RequestHandler):
                     return True
         return False
 
+    def _finish_and_redirect(self, cont):
+        # Always delete phantom user cookies on login
+        self.delete_cookie('ureg_id')
+        self.redirect(cont)
+        
     @user_util.manual_access_checking
     def get(self):
         cont = self.request_continue_url()
@@ -257,69 +263,66 @@ class PostLogin(request_handler.RequestHandler):
         self.consume_auth_token()
 
         user_data = UserData.current()
-        if user_data:
+        if not user_data:
+            # Nobody is logged in - clear any expired Facebook cookies
+            # that may be hanging around.
+            facebook_util.delete_fb_cookies(self)
 
-            first_time = not user_data.last_login
+            logging.critical(("Missing UserData during PostLogin, " +
+                              "with id: %s, cookies: (%s), google user: %s") %
+                             (util.get_current_user_id(),
+                              os.environ.get('HTTP_COOKIE', ''),
+                              users.get_current_user()))
+            self._finish_and_redirect(cont)
+            return
 
-            # Update email address if it has changed
-            current_google_user = users.get_current_user()
-            if current_google_user:
-                if current_google_user.email() != user_data.email:
-                    user_data.user_email = current_google_user.email()
+        first_time = not user_data.last_login
 
-            # If the user has a public profile, we stop "syncing" their username
-            # from Facebook, as they now have an opportunity to set it themself
-            if not user_data.username:
-                user_data.update_nickname()
+        # Update email address if it has changed
+        current_google_user = users.get_current_user()
+        if current_google_user:
+            if current_google_user.email() != user_data.email:
+                user_data.user_email = current_google_user.email()
 
-            # Set developer and moderator to True if user is admin
-            if ((not user_data.developer or not user_data.moderator) and
-                    users.is_current_user_admin()):
-                user_data.developer = True
-                user_data.moderator = True
+        # If the user has a public profile, we stop "syncing" their username
+        # from Facebook, as they now have an opportunity to set it themself
+        if not user_data.username:
+            user_data.update_nickname()
 
-            user_data.last_login = datetime.datetime.utcnow()
-            user_data.put()
+        # Set developer and moderator to True if user is admin
+        if ((not user_data.developer or not user_data.moderator) and
+                users.is_current_user_admin()):
+            user_data.developer = True
+            user_data.moderator = True
+
+        user_data.last_login = datetime.datetime.utcnow()
+        user_data.put()
             
-            complete_signup = self.request_bool("completesignup", default=False)
-            if first_time:
-                if current_google_user:
-                    # Look for a matching UnverifiedUser with the same e-mail
-                    # to see if the user used Google login to verify.
-                    unverified_user = models.UnverifiedUser.get_for_value(
-                            current_google_user.email())
-                    if unverified_user:
-                        unverified_user.delete()
+        complete_signup = self.request_bool("completesignup", default=False)
+        if first_time:
+            if current_google_user:
+                # Look for a matching UnverifiedUser with the same e-mail
+                # to see if the user used Google login to verify.
+                unverified_user = models.UnverifiedUser.get_for_value(
+                        current_google_user.email())
+                if unverified_user:
+                    unverified_user.delete()
 
-                # Note that we can only migrate phantom users right now if this
-                # login is not going to lead to a "/completesignup" page, which
-                # indicates the user has to finish more information in the
-                # signup phase.
-                if not complete_signup:
-                    # If user is brand new and has 0 points, migrate data.
-                    phantom_id = get_phantom_user_id_from_cookies()
-                    if phantom_id:
-                        phantom_data = UserData.get_from_db_key_email(phantom_id)
-                        if _upgrade_phantom_into(phantom_data, user_data):
-                            cont = "/newaccount?continue=%s" % cont
-            if complete_signup:
-                cont = "/completesignup"
+            # Note that we can only migrate phantom users right now if this
+            # login is not going to lead to a "/completesignup" page, which
+            # indicates the user has to finish more information in the
+            # signup phase.
+            if not complete_signup:
+                # If user is brand new and has 0 points, migrate data.
+                phantom_id = get_phantom_user_id_from_cookies()
+                if phantom_id:
+                    phantom_data = UserData.get_from_db_key_email(phantom_id)
+                    if _upgrade_phantom_into(phantom_data, user_data):
+                        cont = "/newaccount?continue=%s" % cont
+        if complete_signup:
+            cont = "/completesignup"
 
-        else:
-
-            # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
-            if App.facebook_app_id:
-                self.delete_cookie("fbsr_" + App.facebook_app_id)
-                self.delete_cookie("fbm_" + App.facebook_app_id)
-
-            logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
-                    util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
-                )
-            )
-
-        # Always delete phantom user cookies on login
-        self.delete_cookie('ureg_id')
-        self.redirect(cont)
+        self._finish_and_redirect(cont)
 
 class Logout(request_handler.RequestHandler):
     @staticmethod
@@ -331,9 +334,7 @@ class Logout(request_handler.RequestHandler):
         handler.delete_cookie('session')
 
         # Delete Facebook cookie, which sets ithandler both on "www.ka.org" and ".www.ka.org"
-        if App.facebook_app_id:
-            handler.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
-            handler.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+        facebook_util.delete_fb_cookies(handler)
 
     @user_util.open_access
     def get(self):

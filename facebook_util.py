@@ -41,6 +41,15 @@ def get_facebook_nickname(user_id):
 def get_current_facebook_user_id_from_cookies():
     return get_user_id_from_profile(get_profile_from_cookies())
 
+def delete_fb_cookies(handler):
+    """ Given the request handler, have it send headers to delete all FB cookies
+    associated with Khan Academy. """
+    if App.facebook_app_id:
+        # Note that Facebook also sets cookies on ".www.khanacademy.org"
+        # and "www.khanacademy.org" so we need to clear both.
+        handler.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
+        handler.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+
 def get_facebook_user_id_from_oauth_map(oauth_map):
     if oauth_map:
         return get_user_id_from_profile(get_profile_from_fb_token(oauth_map.facebook_access_token))
