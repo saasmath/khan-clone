@@ -637,28 +637,6 @@ Socrates.Nav = Backbone.View.extend({
         this.model.bind("change", this.render, this);
     },
 
-    // todo(dmnd) remove this if it's no longer needed
-    bookmarksJson: function() {
-        // render list of toplevel items only
-        var sections = [];
-        this.model.each(function(item) {
-            var json = {
-                title: item.get("title"),
-                time: item.get("time"),
-                slug: item.slug(),
-                nested: []
-            };
-
-            if (item.get("nested")) {
-                _.last(sections).nested.push(json);
-            } else {
-                sections.push(json);
-            }
-        }, this);
-
-        return sections;
-    },
-
     questionsJson: function() {
         return this.model.
             filter(function(i) {return i.constructor == Socrates.Question;}).
