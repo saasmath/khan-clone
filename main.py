@@ -147,7 +147,9 @@ class TopicPage(request_handler.RequestHandler):
                 TopicPage.show_topic(self, topic)
                 return
 
-        self.abort(404)
+        # error(404) sets the status code to 404. Be aware that execution continues
+        # after the .error call.
+        self.error(404)
     
 
 # New video view handler.
