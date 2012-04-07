@@ -106,7 +106,10 @@ Exercises.StackCollection = Backbone.Collection.extend({
     stats: function() {
 
         var totalLeaves = this.reduce(function(sum, card) {
-            return card.get("leavesEarned") + sum;
+            // Don't count the fourth leaf for now. We're showing it in a different
+            // way at the end of the stack. TODO (jasonrr/kamens) remove 4th leaf 
+            // altogether if we keep this implementation
+            return Math.min(3, card.get("leavesEarned")) + sum;
         }, 0);
 
         var longestStreak = this.longestStreak(
@@ -454,18 +457,40 @@ Exercises.CurrentCardView = Backbone.View.extend({
         }, 500);
 
         // Fade in/out our various pieces of "calculating progress" text
-        var fadeInNextText = function(jel) {
+        var fadeInNextText = function(jel, egg) {
 
+            // allows the loop to recycle when the nextMessage === []
+            var messages = $(".calc-text-spin span")
             if (!jel || !jel.length) {
-                jel = $(".current-card-contents .calc-text-spin span").first();
+                jel = messages;
             }
 
-            jel.fadeIn(600, function() {
-                jel.delay(1000).fadeOut(600, function() {
-                    fadeInNextText(jel.next("span"));
+            // display either jel or the egg if it was passed in
+            var thisMessage = (egg == null) ? jel.first() : $(egg);
+            var nextMessage = jel.next("span:not(.egg)");
+
+            // send egg as second parameter if a tiny die lands just so
+            var r = Math.random();
+            var nextEgg = _.find(jel.filter(".egg"), function(elt){
+                var p = $(elt).data("prob");
+                return (r >= p[0]) && (r < p[1]);
+            });
+
+            // fade out thisMessage and display egg || nextMessage
+            thisMessage.fadeIn(600, function() {
+                thisMessage.delay(1000).fadeOut(600, function() {
+                    fadeInNextText(nextMessage, nextEgg);
                 });
             });
         };
+
+        // recalculate cumulative probabilities for each egg
+        var eggs = $(".calc-text-spin span.egg");
+        for (var i = 0, head = 0; i < eggs.length; i+=1){
+            tail = head + $(eggs[i]).data("prob");
+            $(eggs[i]).data("prob", [head, tail]);
+            head = tail;
+        }
 
         fadeInNextText();
 

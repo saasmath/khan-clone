@@ -421,8 +421,12 @@ class ChunkedResult():
         # if now that we have compressed the item it can fit within a single
         # 1MB object don't use the chunk_list, and it will save us from having
         # to do an extra round-trip on the gets
-        if size < MAX_SIZE_OF_CACHE_CHUNKS:
-            return cache_class.set(key, 
+        # disabling this code for now as when datastore pickles ChunkedResult
+        # its value can triple in size.
+        # TODO(james): Figure out a workaround, or remove
+        if False:
+            if size < MAX_SIZE_OF_CACHE_CHUNKS:
+                return cache_class.set(key, 
                                    ChunkedResult(data=result, 
                                                  compress=compress),
                                    time=time,

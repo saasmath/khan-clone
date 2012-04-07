@@ -58,17 +58,17 @@
 
         SubTopicRouter: Backbone.Router.extend({
             routes: {
-                "*subtopicID": "subtopic"
+                "*subtopicID": "showSubtopic"
             },
 
-            subtopic: function(subtopicID) {
+            showSubtopic: function(subtopicID) {
                 var selectedTopicID = '';
-                if (subtopicID.charAt(0) == '/') {
+                if (subtopicID.charAt(0) === '/') {
                     subtopicID = subtopicID.substr(1);
                 }
 
                 KAConsole.log("Switching to subtopic: " + subtopicID);
-                if (subtopicID == "") {
+                if (subtopicID === "") {
                     selectedTopic = null;
                 } else {
                     selectedTopic = videosByTopic[subtopicID] || null;
