@@ -5,6 +5,8 @@ import request_cache as cachepy
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from testutil import GAEModelTestCase
+import unittest
+
 
 class LayerCacheTest(GAEModelTestCase):
 
