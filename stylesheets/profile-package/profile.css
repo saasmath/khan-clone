@@ -1137,9 +1137,12 @@ li.profile-tab {
 
 #tab-content-questions .graph-picker {
     margin-bottom: 0;
+    margin-left: -10px;
+    padding-left: 10px;
 }
 #tab-content-questions .question {
-    padding: 10px 0 10px 10px;
+    line-height: 18px;
+    padding: 10px;
     border-bottom: 1px solid #CCC;
     color: #777;
 }
@@ -1152,9 +1155,8 @@ li.profile-tab {
 #tab-content-questions .question .timeago {
     float: right;
     padding-left: 20px;
-    color: #AAA;
+    color: #BBB;
     font-size: 12px;
-    line-height: 25px; /* Base aligns the timestamp with the video title*/
 }
 .settings-iframe {
     height: 400px;

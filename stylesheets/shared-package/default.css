@@ -966,15 +966,14 @@ footer {
         display: inline-block;
     }
     #top-header #top-header-links .user-notification:hover {
-        /* TODO(marcia): Use a more reasonable color */
-        background-color: yellow;
+        background-color: #E7f5C4;
     }
     #top-header #top-header-links .notification-bubble {
         position: absolute;
         right: 0px;
         top: 0px;
 
-        padding: 0 3px;
+        padding: 0 2px;
         -webkit-border-radius: 3px;
         -moz-border-radius: 3px;
         border-radius: 3px;
@@ -985,7 +984,7 @@ footer {
         background-color: #2D5900;
         color: #FFF;
 
-        line-height: 15px;
+        line-height: 13px;
         font-size: 10px;
         font-weight: bold;
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
