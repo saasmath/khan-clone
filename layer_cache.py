@@ -12,7 +12,8 @@ import os
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.runtime.apiproxy_errors import RequestTooLargeError
-
+from google.appengine.api.datastore_errors import BadRequestError
+                                            
 from app import App
 import request_cache
 
@@ -286,13 +287,18 @@ def layer_cache_check_set_return(
                 try:
                     KeyValueCache.set(key, result, time=expiration, 
                                       namespace=namespace)
-                except RequestTooLargeError, e:
-                    # The result was too big to store in datastore. Going to  
-                    # chunk it and try again
-                    ChunkedResult.set(key, result, time=expiration, 
-                                  namespace=namespace,
-                                  compress=compress_chunks, 
-                                  cache_class=KeyValueCache)  
+                except (RequestTooLargeError, BadRequestError), e:
+                    if (isinstance(e, RequestTooLargeError) or 
+                        str(e).startswith("string property value is too long")):
+
+                        # The result was too big to store in datastore. Going to  
+                        # chunk it and try again
+                        ChunkedResult.set(key, result, time=expiration, 
+                                          namespace=namespace,
+                                          compress=compress_chunks, 
+                                          cache_class=KeyValueCache)  
+                    else:
+                        raise
             else:
                 # use_chunks parameter was explicitly set, not going to even 
                 # bother trying to put it in KeyValueCache directly
