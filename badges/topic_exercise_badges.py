@@ -150,16 +150,16 @@ class TopicExerciseBadge(Badge):
         """ Returns the icon src for a special, "completed!" version of this
         topic badge to be used on the knowledge map only, for now.
         """
-        return ("/images/power-mode/badges/%s-completed-40x40.png?4" %
+        return ("/images/power-mode/badges/%s-completed-40x40.png?6" %
                 self.icon_filename)
 
     @property
     def compact_icon_src(self):
-        return "/images/power-mode/badges/%s-60x60.png?5" % self.icon_filename
+        return "/images/power-mode/badges/%s-60x60.png?6" % self.icon_filename
 
     @property
     def icon_src(self):
-        return "/images/power-mode/badges/%s-40x40.png?5" % self.icon_filename
+        return "/images/power-mode/badges/%s-40x40.png?6" % self.icon_filename
 
 
 class TopicExerciseBadgeType(db.Model):
