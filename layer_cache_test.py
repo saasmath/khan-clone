@@ -201,7 +201,7 @@ class LayerCacheCompressionTest(LayerCacheTest):
         self.cache_func = func
         super(LayerCacheCompressionTest, self).setUp()
 
-
+    @unittest.skip("Code has been commented, see TODO(james) in layer_cache")
     def test_with_compression_should_save_in_just_one_chunk(self):
         self.cache_func(self.big_string)
         
