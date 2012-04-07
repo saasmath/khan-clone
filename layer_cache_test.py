@@ -11,14 +11,15 @@ class LayerCacheTest(GAEModelTestCase):
     def setUp(self):
         # big_string is bigger than the 1MB memcache and datastore limits and
         # so chunks should get used
-        self.big_string = "a"*1000000+"b"*1000000
+        self.big_string = "a" * 1000000 + "b" * 1000000
         
         # huge_string is bigger than the 32MB limit for api requests that 
         # memcache.set_multi would hit
-        self.huge_string = "a"*34000000
+        self.huge_string = "a" * 34000000
 
         self.key = "__layer_cache_layer_cache_test.func__"
         super(LayerCacheTest, self).setUp()
+
 
 class LayerCacheMemcacheTest(LayerCacheTest):
 
@@ -28,7 +29,7 @@ class LayerCacheMemcacheTest(LayerCacheTest):
         def func(result):
             return result
 
-        self.cache_func=func
+        self.cache_func = func
         super(LayerCacheMemcacheTest, self).setUp()
 
     def test_memcache_should_return_cached_result(self):
@@ -51,8 +52,8 @@ class LayerCacheMemcacheTest(LayerCacheTest):
         ''' Tests to make sure results are recalculated when a chunk is corrupt 
         
         If ChunkedResult in a race condition read from a previous version of a
-        key then depickling should fail.  This will test that it failed silently
-        and that the results are then recalculated.
+        key then depickling should fail.  This will test that it failed
+        silently and that the results are then recalculated.
         '''
 
         self.cache_func(self.big_string)
@@ -71,7 +72,8 @@ class LayerCacheMemcacheTest(LayerCacheTest):
             return result
 
         func("a")
-        self.assertIsInstance(memcache.get(self.key), layer_cache.ChunkedResult)
+        self.assertIsInstance(memcache.get(self.key),
+                              layer_cache.ChunkedResult)
 
     
 class LayerCacheDatastoreTest(LayerCacheTest):
@@ -126,10 +128,9 @@ class LayerCacheDatastoreTest(LayerCacheTest):
         self.assertEqualTruncateError("a", self.cache_func("a"))
 
   
-  
 class LayerCacheLayerTest(LayerCacheTest):
         
-    def test_missing_inapp_cache_gets_repopulated_when_read_from_memcache(self):
+    def test_repopulate_missing_inapp_cache_when_reading_from_memcache(self):
         ''' Tests if missing inapp cache gets repopulated from memcache
         
         It performs the checks on large values that will make use of the 
@@ -191,6 +192,7 @@ class LayerCacheLayerTest(LayerCacheTest):
             memcache.get(self.key),
             layer_cache.ChunkedResult)
 
+
 class LayerCacheCompressionTest(LayerCacheTest):
 
     def setUp(self):
@@ -225,8 +227,5 @@ class LayerCacheCompressionTest(LayerCacheTest):
         # overwriting key value ... next time we get it decompress should 
         # throw an error and the target func will be rexecuted
         memcache.set(self.key, 
-                     layer_cache.ChunkedResult(data = "decompress fail"))
+                     layer_cache.ChunkedResult(data="decompress fail"))
         self.assertEqual("a", self.cache_func("a"))
-    
-
-
