@@ -17,6 +17,7 @@ except ImportError:
 def setUpModule():
     handler_test_utils.start_dev_appserver()
 
+
 def tearDownModule():
     handler_test_utils.stop_dev_appserver()
 
