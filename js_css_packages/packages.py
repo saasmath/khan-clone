@@ -329,6 +329,14 @@ javascript = {
         ]
     },
 
+    "kmap_editor": {
+        "files": [
+            "../../khan-exercises/utils/raphael.js",
+            "../topicsadmin-package/jquery.ui.draggable.js",
+            "kmap-editor.js",
+        ]
+    },
+
     "highcharts": {
         "files": [
             "highcharts.js"
@@ -437,6 +445,11 @@ stylesheets = {
     "bootstrap": {
         "files": [
             "bootstrap.css"
+        ]
+    },
+    "kmap_editor": {
+        "files": [
+            "kmap_editor.css"
         ]
     }
 }

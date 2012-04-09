@@ -54,6 +54,7 @@ import api.jsonify
 import labs
 import socrates
 import labs.explorations
+import kmap_editor
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, Topic
@@ -672,6 +673,7 @@ application = webapp2.WSGIApplication([
     ('/admin/unisubs/import', unisubs.ImportHandler),
 
     ('/devadmin', devpanel.Panel),
+    ('/devadmin/maplayout', kmap_editor.MapLayoutEditor),
     ('/devadmin/emailchange', devpanel.MergeUsers),
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),

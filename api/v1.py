@@ -829,7 +829,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
         float(data["seconds_per_fast_problem"]))
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
-                        "prerequisites", "covers", 
+                        "prerequisites", "covers", "seconds_per_fast_problem",
                         "related_videos", "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise,
