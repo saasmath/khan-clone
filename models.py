@@ -1368,9 +1368,9 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         if user_id:
             # Once we have rekeyed legacy entities,
             # we will be able to simplify this.
-            return  UserData.get_from_user_id(user_id) or \
-                    UserData.get_from_db_key_email(email) or \
-                    UserData.insert_for(user_id, email)
+            return (UserData.get_from_user_id(user_id) or
+                    UserData.get_from_db_key_email(email) or
+                    UserData.insert_for(user_id, email))
         return None
 
     @staticmethod
@@ -1472,19 +1472,28 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     @staticmethod
     def get_possibly_current_user(identifier):
         """ Returns a UserData object corresponding to the identifier
-        (key_email or user_id value), using the request cache for the
-        current-logged in user if the identifier matches.
-        
+        using the request cache for the current-logged in user if
+        the identifier matches.
+
+        Arguments:
+            identifier: A string representing either the user_id,
+            or user email for the user (searched in that order).
+            Note that this is the user visible e-mail, not the email used in
+            the db User property, as most user-visible operations should
+            use that field as parameters and not the db key email.
+
         """
 
         if not identifier:
             return None
 
         user_data_current = UserData.current()
-        if user_data_current and user_data_current.key_email == identifier:
+        if (user_data_current and
+                (user_data_current.user_id == identifier or
+                 user_data_current.email == identifier)):
             return user_data_current
         return (UserData.get_from_user_id(identifier) or
-                UserData.get_from_db_key_email(identifier))
+                UserData.get_from_user_input_email(identifier))
 
     @classmethod
     def key_for(cls, user_id):
