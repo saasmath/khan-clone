@@ -37,7 +37,7 @@ COVERAGE_OMIT += webapp2_extras/*
 check:
 	if test -n "$(COVERAGE)"; then  \
 	   coverage run --omit="`echo '$(COVERAGE_OMIT)' | tr ' '  ,`" \
-	      tools/runtests.py --xml && \
+	      tools/runtests.py --max-size="$(MAX_TEST_SIZE)" --xml && \
 	   coverage xml && \
 	   coverage html; \
 	else \

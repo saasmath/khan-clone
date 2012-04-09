@@ -1,19 +1,25 @@
 from __future__ import absolute_import
 from __future__ import with_statement
-from importer.handlers import AutoNowDisabled
+
 from datetime import timedelta
 import time
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
-import unittest2
-from google.appengine.ext import testbed
 from google.appengine.ext import db
+from google.appengine.ext import testbed
+
+from importer.handlers import AutoNowDisabled
+from testutil import testsize
 
 
 class TestModel(db.Model):
     updated_on = db.DateTimeProperty(auto_now=True)
 
 
-class UpdatedOnTest(unittest2.TestCase):
+class UpdatedOnTest(unittest.TestCase):
     def setUp(self):
         self.testbed = testbed.Testbed()
         self.testbed.activate()
@@ -22,6 +28,7 @@ class UpdatedOnTest(unittest2.TestCase):
     def tearDown(self):
         self.testbed.deactivate()
 
+    @testsize.medium()
     def test_auto_now(self):
         t = TestModel()
         dt_before_put = t.updated_on
@@ -43,6 +50,7 @@ class UpdatedOnTest(unittest2.TestCase):
 
         self.assertGreater(dt_after_delayed_put - dt_after_read, timedelta(0, 1, 0))
 
+    @testsize.medium()
     def test_auto_now_disabled(self):
         t = TestModel()
         t.put()
