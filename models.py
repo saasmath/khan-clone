@@ -2266,7 +2266,7 @@ def preload_default_version_data(version_number, run_code):
 
     # Preload topic pages
     for topic in Topic.get_all_topics(version=version):
-        topic.get_topic_page_data()
+        topic.get_topic_page_json()
     logging.info("preloaded topic pages")
 
     # Preload topic browser
@@ -2669,8 +2669,9 @@ class Topic(Searchable, db.Model):
         return ret
 
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_topic_page_data_%s" % self.key())
-    def get_topic_page_data(self):
+        "topic_get_topic_page_json_%s_v1" % self.key(),
+        layer=layer_cache.Layers.InAppMemory | layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
+    def get_topic_page_json(self):
         from homepage import thumbnail_link_dict
 
         (marquee_video, subtopic) = self.get_first_video_and_topic()
@@ -2716,7 +2717,7 @@ class Topic(Searchable, db.Model):
             "extended_slug": self.get_extended_slug(),
         }
 
-        return topic_info
+        return jsonify(topic_info, camel_cased=True)
 
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
