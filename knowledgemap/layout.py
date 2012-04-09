@@ -13,6 +13,7 @@ import urllib2
 
 NUM_SUGGESTED_TOPICS = 2
 
+
 def update_from_live(edit_version):
     ''' imports the latest version of the knowledgemap layout from the live
     site into the edit_version
@@ -31,6 +32,7 @@ def update_from_live(edit_version):
     map_layout.layout = knowledge_map
     map_layout.put()
     logging.info("finished putting knowledge map layout")
+
 
 def topics_layout(user_data, user_exercise_graph):
     """ Return topics layout data with per-user topic completion
