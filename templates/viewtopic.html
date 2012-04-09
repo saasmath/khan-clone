@@ -8,6 +8,10 @@
 {% block meta_description %}{{ main_topic.description }}{% endblock %}
 
 {% block pagecss %}
+
+{{ js_css_packages.css_package("topic") }}
+{{ js_css_packages.css_package("video") }}
+
 <style>
 	#page_sub_nav { display: none; }
 	td { vertical-align: top; }
@@ -16,6 +20,7 @@
     #library-content .library-content-list p.topic-desc { display: block; width: 500px; }
     #library-content .topic-spacer { display: block; margin-bottom: 30px; }
 </style>
+
 {% endblock pagecss %}
 
 {% block pagecontent %}
@@ -53,9 +58,7 @@
 
 {% block bottompagescript %}
     {{ js_css_packages.js_package("topic") }}
-    {{ js_css_packages.css_package("topic") }}
     {{ js_css_packages.js_package("video") }}
-    {{ js_css_packages.css_package("video") }}
     <script type="text/javascript">
       $(function() {
         TopicPage.init("{{ main_topic.id }}");
