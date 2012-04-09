@@ -406,7 +406,7 @@ def put_topic(topic_id, version_id = "edit"):
 @api.auth.decorators.open_access
 @jsonp
 @jsonify
-def get_maplayout(version_id = "edit"):
+def get_maplayout(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return MapLayout.get_for_version(version)
 
