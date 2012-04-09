@@ -37,6 +37,8 @@ parser.add_option('-p', '--password', default=None,
 parser.add_option('-q', '--quiet', action='store_true', default=False,
     help="Don't print as much")
 parser.add_option('--secure', action='store_true', default=False)
+parser.add_option('-i', '--input', default="repl_eval.py",
+    help="file containing initial commands to evaluate")
 options, args = parser.parse_args()
 
 # quickly connect to production
@@ -104,8 +106,15 @@ sendline('sys.path.insert(0, "%s")' % repdir)
 # but this does
 p.expect(prompt)
 
-# useful imports
-p.sendline('from models import *')
+if options.input:
+    try:
+        with open(options.input) as f:
+            for line in f:
+                p.sendline(line.rstrip())
+    except e:
+        if options.input != parser.defaults["input"]:
+            raise e
+
 
 # set up initial winsize
 rows, cols = map(int, os.popen('stty size', 'r').read().split())
