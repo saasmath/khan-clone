@@ -1,11 +1,13 @@
-#!/user/bin/env python
-
 import layer_cache
 import request_cache as cachepy
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from testutil import GAEModelTestCase
-import unittest
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 
 class LayerCacheTest(GAEModelTestCase):
