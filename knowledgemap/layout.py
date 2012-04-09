@@ -29,7 +29,6 @@ def update_from_live(edit_version):
         logging.exception("Failed to fetch knowledgemap layout from "
                           "khanacademy.org")
 
-    logging.info(knowledge_map)
     map_layout = MapLayout.get_for_version(edit_version)
     map_layout.layout = map_layout_live
     map_layout.put()
