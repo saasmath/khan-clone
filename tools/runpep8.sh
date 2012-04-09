@@ -8,6 +8,8 @@
 # The blacklist should live in the same directory as this script.
 blacklist=`dirname "$0"`/runpep8_blacklist.txt
 
+# W291 trailing whitespace
+# W293 blank line contains whitespace
 pep8_args="-r --ignore=W291,W293"
 
 # To generate the blacklist:

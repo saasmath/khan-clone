@@ -108,11 +108,8 @@ class TopicPage(request_handler.RequestHandler):
             handler.redirect("/", True)
             return
 
-        topic_info = topic.get_topic_page_data()
-
         template_values = {
-            "main_topic": topic,
-            "main_topic_info": topic_info
+            "main_topic": topic
         }
         handler.render_jinja2_template('viewtopic.html', template_values)
 
@@ -130,9 +127,12 @@ class TopicPage(request_handler.RequestHandler):
 
             if topic:
                 # Begin topic pages A/B test
-                show_topic_pages = ab_test("Show topic pages", ["show", "hide"],
-                    ["topic_pages_view_page", "topic_pages_started_video",
-                     "topic_pages_completed_video"])
+                if user_util.is_current_user_developer():
+                    show_topic_pages = "show"
+                else:
+                    show_topic_pages = ab_test("Show topic pages", ["show", "hide"],
+                        ["topic_pages_view_page", "topic_pages_started_video",
+                         "topic_pages_completed_video"])
                 if show_topic_pages == "hide":
                     self.redirect("/#%s" % topic.id)
                 bingo("topic_pages_view_page")
