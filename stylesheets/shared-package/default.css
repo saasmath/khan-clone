@@ -930,10 +930,10 @@ footer {
     #top-header #user-info .username_and_notification .user-avatar {
         width: 16px;
         height: 16px;
-        padding: 0 4px;
+        padding: 0 4px 0 0;
     }
     #top-header #user-info .dropdown {
-        padding: 5px 0 5px 0;
+        padding: 9px 0 5px 0;
     }
     #top-header #user-info .dropdown .caret {
         margin-top: 13px;
@@ -970,7 +970,8 @@ footer {
     }
     #top-header #top-header-links .user-notification {
         position: relative;
-        padding: 5px 2px 0 2px;
+        margin: 0 0 0 3px;
+        padding: 5px 5px 0 5px;
         display: inline-block;
     }
     #top-header #top-header-links .user-notification:hover {
