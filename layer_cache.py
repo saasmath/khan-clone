@@ -610,7 +610,7 @@ class KeyValueCache(db.Model):
             
             # check to see if we need to pickle the results
             pickled = False
-            if not isinstance(value, basestring):
+            if not isinstance(value, str):
                 pickled = True
                 value = pickle.dumps(value)
 

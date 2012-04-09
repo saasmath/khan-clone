@@ -99,6 +99,12 @@ class LayerCacheDatastoreTest(LayerCacheTest):
             layer_cache.ChunkedResult)
 
         self.assertEqual("a", self.cache_func("b"))
+
+    def test_layer_cache_sets_and_gets_unicode_datastore(self):
+        self.cache_func(u"a")
+        
+        # asserting cached value gets read correctly
+        self.assertEqual(u"a", self.cache_func("b"))
     
     def test_large_datastore_should_chunk_and_return_cached_result(self):        
         self.cache_func(self.big_string)

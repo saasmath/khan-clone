@@ -56,7 +56,7 @@ def discover_sdk_path():
     sys.path.append(app_engine_path)
 
 
-def main(test_spec, should_write_xml):
+def main(test_spec, should_write_xml, max_size):
     if 'SERVER_SOFTWARE' not in os.environ:
         os.environ['SERVER_SOFTWARE'] = 'Development'
     if 'CURRENT_VERSION' not in os.environ:
@@ -68,6 +68,9 @@ def main(test_spec, should_write_xml):
     sys.path.insert(0, top_project_dir)
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages"))
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages/flask.zip"))
+
+    from testutil import testsize
+    testsize.set_max_size(max_size)
 
     loader = unittest.loader.TestLoader()
     if not os.path.exists(test_spec):
@@ -85,12 +88,19 @@ def main(test_spec, should_write_xml):
     result = runner.run(suite)
     return not result.wasSuccessful()
 
+
 if __name__ == '__main__':
     parser = optparse.OptionParser(USAGE)
     parser.add_option('--sdk', dest='sdk', metavar='SDK_PATH',
                       help='path to the App Engine SDK')
+    parser.add_option('--max-size', dest='max_size', metavar='SIZE',
+                      choices=['small', 'medium', 'large'],
+                      default='medium',
+                      help='run tests this size or smaller ("small", '
+                           '"medium", "large")')
     parser.add_option('--xml', dest='xml', action='store_true',
                       help='write xUnit XML')
+
     options, args = parser.parse_args()
 
     if len(args) == 1:
@@ -103,5 +113,5 @@ if __name__ == '__main__':
     else:
         discover_sdk_path()
 
-    result = main(TEST_SPEC, options.xml)
+    result = main(TEST_SPEC, options.xml, options.max_size)
     sys.exit(result)

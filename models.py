@@ -2266,7 +2266,7 @@ def preload_default_version_data(version_number, run_code):
 
     # Preload topic pages
     for topic in Topic.get_all_topics(version=version):
-        topic.get_topic_page_data()
+        topic.get_topic_page_json()
     logging.info("preloaded topic pages")
 
     # Preload topic browser
@@ -2587,6 +2587,7 @@ class Topic(Searchable, db.Model):
     title = db.StringProperty(required=True) # title used when viewing topic in a tree structure
     standalone_title = db.StringProperty() # title used when on its own
     id = db.StringProperty(required=True) # this is the slug, or readable_id - the one used to refer to the topic in urls and in the api
+    extended_slug = db.StringProperty(indexed=False) # this is the URI path for this topic, i.e. "math/algebra"
     description = db.TextProperty(indexed=False)
     parent_keys = db.ListProperty(db.Key) # to be able to access the parent without having to resort to a query - parent_keys is used to be able to hold more than one parent if we ever want that
     ancestor_keys = db.ListProperty(db.Key) # to be able to quickly get all descendants
@@ -2668,10 +2669,9 @@ class Topic(Searchable, db.Model):
         return ret
 
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_topic_page_data_%s" % self.key())
-    def get_topic_page_data(self):
-        """ Retrieve the listing of subtopics and videos for this topic.
-            Used on the topic page. """
+        "topic_get_topic_page_json_%s_v1" % self.key(),
+        layer=layer_cache.Layers.InAppMemory | layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
+    def get_topic_page_json(self):
         from homepage import thumbnail_link_dict
 
         (marquee_video, subtopic) = self.get_first_video_and_topic()
@@ -2717,7 +2717,7 @@ class Topic(Searchable, db.Model):
             "extended_slug": self.get_extended_slug(),
         }
 
-        return topic_info
+        return jsonify(topic_info, camel_cased=True)
 
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
@@ -2738,14 +2738,21 @@ class Topic(Searchable, db.Model):
         return any(child_key.kind() in types for child_key in self.child_keys)
 
     # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
-    @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_extended_slug_%s" % self.key())
     def get_extended_slug(self):
+        if self.extended_slug:
+            return self.extended_slug
+
         parent_ids = [topic.id for topic in db.get(self.ancestor_keys)]
         parent_ids.reverse()
         if len(parent_ids) > 1:
-            return "%s/%s" % ('/'.join(parent_ids[1:]), self.id)
-        return self.id
+            slug = "%s/%s" % ('/'.join(parent_ids[1:]), self.id)
+        else:
+            slug = self.id
+
+        self.extended_slug = slug
+        self.put()
+
+        return slug
 
     # Gets the data we need for the video player
     @layer_cache.cache_with_key_fxn(lambda self:

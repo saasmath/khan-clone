@@ -19,7 +19,9 @@ safeupdate:
 # Run this as a cron job to keep your source tree up-to-date.
 refresh: safeupdate install_deps ;
 
-# Run unittests.  If COVERAGE is set, run them in coverage mode.
+# Run unittests.  If COVERAGE is set, run them in coverage mode.  If
+# MAX_TEST_SIZE is set, only tests of this size or smaller are run.
+MAX_TEST_SIZE = medium
 COVERAGE_OMIT = *_test.py
 COVERAGE_OMIT += */google_appengine/*
 COVERAGE_OMIT += agar/*
@@ -39,8 +41,12 @@ check:
 	   coverage xml && \
 	   coverage html; \
 	else \
-	   python tools/runtests.py; \
+	   python tools/runtests.py --max-size="$(MAX_TEST_SIZE)"; \
 	fi
+
+# Run the subset of unittests that are fast
+quickcheck:
+	$(MAKE) MAX_TEST_SIZE=small check
 
 # Run lint checks
 lint:

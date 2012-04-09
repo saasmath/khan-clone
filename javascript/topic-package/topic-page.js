@@ -15,10 +15,23 @@
     var videosDict = {};
     
     window.TopicPage = {
-        init: function(rootPath, rootTopic) {
+        init: function(topicID) {
+            $.ajax({
+                url: "/api/v1/topic/" + topicID + "/topic-page?casing=camel",
+                dataType: "json",
+                success: function(rootTopic) {
+                    rootPath = "/" + rootTopic.extendedSlug;
+                    TopicPage.finishInit(rootPath, rootTopic);
+                }
+            });
+        },
+        finishInit: function(rootPath, rootTopic) {
             var self = this;
 
             rootPageTopic = rootTopic;
+
+            var navTemplate = Templates.get("topic.subtopic-nav");
+            $(".nav-pane > ul").replaceWith($(navTemplate({topicInfo: rootTopic})));
 
             // TODO(tomyedwab): Temporary, should move this to a shared lib 
             Handlebars.registerPartial("youtube-player", Templates.get("shared.youtube-player"));
