@@ -24,8 +24,8 @@ pip install pexpect
 
 parser = optparse.OptionParser()
 parser.add_option('--prod', action='store_true',
-    help="shortcut to automatically set server and app options to connect to"
-        "production. Be careful!")
+    help="shortcut to automatically set server and app options to connect to" \
+        " production. Be careful!")
 parser.add_option('-s', '--server', default='localhost:8080',
     help="host and port to connect to")
 parser.add_option('-a', '--app', default='dev~khan-academy',
@@ -37,6 +37,8 @@ parser.add_option('-p', '--password', default=None,
 parser.add_option('-q', '--quiet', action='store_true', default=False,
     help="Don't print as much")
 parser.add_option('--secure', action='store_true', default=False)
+parser.add_option('-i', '--input', default="repl_eval.py",
+    help="file containing initial commands to evaluate")
 options, args = parser.parse_args()
 
 # quickly connect to production
@@ -96,7 +98,7 @@ if index == 0:  # we were prompted for email/pass
 repdir = os.path.dirname(os.path.abspath(__file__))
 pwd = os.getcwd()
 if not pwd.startswith(repdir):
-    print "NOTE: Your pwd is not inside the repo path."
+    print "NOTE: Your pwd is not inside the repo path. " \
     "Imports still come from the repo path."
 
 # for some reason this does not echo
@@ -104,8 +106,15 @@ sendline('sys.path.insert(0, "%s")' % repdir)
 # but this does
 p.expect(prompt)
 
-# useful imports
-p.sendline('from models import *')
+if options.input:
+    try:
+        with open(options.input) as f:
+            for line in f:
+                p.sendline(line.rstrip())
+    except e:
+        if options.input != parser.defaults["input"]:
+            raise e
+
 
 # set up initial winsize
 rows, cols = map(int, os.popen('stty size', 'r').read().split())
