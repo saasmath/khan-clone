@@ -24,8 +24,8 @@ pip install pexpect
 
 parser = optparse.OptionParser()
 parser.add_option('--prod', action='store_true',
-    help="shortcut to automatically set server and app options to connect to"
-        "production. Be careful!")
+    help="shortcut to automatically set server and app options to connect to" \
+        " production. Be careful!")
 parser.add_option('-s', '--server', default='localhost:8080',
     help="host and port to connect to")
 parser.add_option('-a', '--app', default='dev~khan-academy',
@@ -98,7 +98,7 @@ if index == 0:  # we were prompted for email/pass
 repdir = os.path.dirname(os.path.abspath(__file__))
 pwd = os.getcwd()
 if not pwd.startswith(repdir):
-    print "NOTE: Your pwd is not inside the repo path."
+    print "NOTE: Your pwd is not inside the repo path. " \
     "Imports still come from the repo path."
 
 # for some reason this does not echo
