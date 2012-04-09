@@ -15,10 +15,11 @@ def feedback_query(target_key):
     query.order('-date')
     return query
 
+# STOPSHIP(marcia): Uncomment the layer cache line, pending issue #10461
 @request_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video)
 @protobuf_decode
-@layer_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video,
-                                layer=layer_cache.Layers.Datastore)
+# @layer_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video,
+                                # layer=layer_cache.Layers.Datastore)
 @protobuf_encode
 def get_feedback_for_video(video):
     return feedback_query(video.key()).fetch(1000)
