@@ -183,6 +183,13 @@ a.main-video-link:hover {
     padding-left: 16px;
 }
 
+.topic-page-content > .container > .content-pane .topic-loading {
+    font-family: MuseoSans300;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 36px 0;
+}
+
 .topic-page-content > .container > .content-pane .title {
     font-family: MuseoSans300;
     color: #333;

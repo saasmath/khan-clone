@@ -401,6 +401,25 @@ def put_topic(topic_id, version_id = "edit"):
         "id": topic.id
     }
 
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/topic-page", methods=["GET"])
+@route("/api/v1/topic/<topic_id>/topic-page", methods=["GET"])
+@api.auth.decorators.open_access
+@cacheable(caching_age=(60 * 60 * 24 * 60))
+@etag(lambda(topic_id): "%s_v%s" % (topic_id, models.Setting.topic_tree_version()))
+@jsonp
+@jsonify
+def get_topic_page_data(topic_id, version_id = "default"):
+    """ Retrieve the listing of subtopics and videos for this topic.
+        Used on the topic page. """
+    version = models.TopicVersion.get_by_id(version_id)
+
+    topic = models.Topic.get_by_id(topic_id, version)
+
+    if not topic:
+        return {}
+
+    return topic.get_topic_page_data()
+
 @route("/api/v1/topicversion/<version_id>/maplayout", methods=["GET"])
 @route("/api/v1/maplayout", methods=["GET"])
 @api.auth.decorators.open_access

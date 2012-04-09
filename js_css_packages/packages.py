@@ -106,6 +106,7 @@ javascript = {
         "files": [
             "content-topic-videos.handlebars",
             "root-topic-view.handlebars",
+            "subtopic-nav.handlebars",
             "topic-page.js",
         ]
     },

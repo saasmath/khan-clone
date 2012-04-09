@@ -2587,6 +2587,7 @@ class Topic(Searchable, db.Model):
     title = db.StringProperty(required=True) # title used when viewing topic in a tree structure
     standalone_title = db.StringProperty() # title used when on its own
     id = db.StringProperty(required=True) # this is the slug, or readable_id - the one used to refer to the topic in urls and in the api
+    extended_slug = db.StringProperty(indexed=False) # this is the URI path for this topic, i.e. "math/algebra"
     description = db.TextProperty(indexed=False)
     parent_keys = db.ListProperty(db.Key) # to be able to access the parent without having to resort to a query - parent_keys is used to be able to hold more than one parent if we ever want that
     ancestor_keys = db.ListProperty(db.Key) # to be able to quickly get all descendants
@@ -2670,8 +2671,6 @@ class Topic(Searchable, db.Model):
     @layer_cache.cache_with_key_fxn(lambda self:
         "topic_get_topic_page_data_%s" % self.key())
     def get_topic_page_data(self):
-        """ Retrieve the listing of subtopics and videos for this topic.
-            Used on the topic page. """
         from homepage import thumbnail_link_dict
 
         (marquee_video, subtopic) = self.get_first_video_and_topic()
@@ -2738,14 +2737,21 @@ class Topic(Searchable, db.Model):
         return any(child_key.kind() in types for child_key in self.child_keys)
 
     # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
-    @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_extended_slug_%s" % self.key())
     def get_extended_slug(self):
+        if self.extended_slug:
+            return self.extended_slug
+
         parent_ids = [topic.id for topic in db.get(self.ancestor_keys)]
         parent_ids.reverse()
         if len(parent_ids) > 1:
-            return "%s/%s" % ('/'.join(parent_ids[1:]), self.id)
-        return self.id
+            slug = "%s/%s" % ('/'.join(parent_ids[1:]), self.id)
+        else:
+            slug = self.id
+
+        self.extended_slug = slug
+        self.put()
+
+        return slug
 
     # Gets the data we need for the video player
     @layer_cache.cache_with_key_fxn(lambda self:
