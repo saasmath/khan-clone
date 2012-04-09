@@ -63,7 +63,7 @@ var KMapEditor = {
             }
         });
         // If there's no edit maplayout, copy the default maplayout
-        if (editMapLayout.layout == null) {
+        if (editMapLayout == null || editMapLayout.layout == null) {
             $.extend(true, KMapEditor.editMap, defaultMapLayout.layout);
         } else {
             KMapEditor.editMap = editMapLayout.layout;
