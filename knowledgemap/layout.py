@@ -9,9 +9,28 @@ from google.appengine.ext import db
 import object_property
 import models
 import logging
+import urllib2
 
 NUM_SUGGESTED_TOPICS = 2
 
+def update_from_live(edit_version):
+    ''' imports the latest version of the knowledgemap layout from the live
+    site into the edit_version
+    '''
+    logging.info("importing knowledge map layout")
+    request = urllib2.Request("http://www.khanacademy.org/api/v1/maplayout")
+    try:
+        opener = urllib2.build_opener()
+        f = opener.open(request)
+        knowledge_map = json.load(f)
+
+    except urllib2.URLError, e:
+        logging.exception("Failed to fetch content from khanacademy.org")
+
+    map_layout = MapLayout.get_for_version(edit_version)
+    map_layout.layout = knowledge_map
+    map_layout.put()
+    logging.info("finished putting knowledge map layout")
 
 def topics_layout(user_data, user_exercise_graph):
     """ Return topics layout data with per-user topic completion
