@@ -45,19 +45,24 @@ if options.prod:
     # secure doesn't seem to work
     # options.secure = True
     if options.email == 'test@example.com':
-        options.email = None
+        try:
+            import secrets_dev
+            options.email = secrets_dev.app_engine_username
+            options.password = secrets_dev.app_engine_password
+        except Exception:
+            options.email = None
 
     print ('\033[31m' + "ACHTUNG! GEFAHR!" + '\033[0m' +
         " You are connecting to the live site. Be careful!")
 
-def prompt_and_send(default=None, prompt=None):
+def prompt_and_send(default=None, prompt=None, silent=False):
     if default is None:
         default = raw_input(prompt)
-    sendline(default)
+    sendline(default, silent)
     return default
 
-def sendline(s):
-    if not options.quiet:
+def sendline(s, silent=False):
+    if not (options.quiet or silent):
         print s
     p.sendline(s)
 
@@ -81,7 +86,7 @@ if index == 0: # we were prompted for email/pass
 
     p.expect('Password:')
     prompt_and_send(prompt='Password for %s:' % options.email,
-        default=options.password)
+        default=options.password, silent=True)
     p.expect(prompt)
 
 repdir = os.path.dirname(os.path.abspath(__file__))
