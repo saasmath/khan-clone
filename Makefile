@@ -20,6 +20,8 @@ safeupdate:
 refresh: safeupdate install_deps ;
 
 # Run unittests.  If COVERAGE is set, run them in coverage mode.
+# If TEST_SIZE is set, it is passed along to the test runner.
+TEST_SIZE =
 COVERAGE_OMIT = *_test.py
 COVERAGE_OMIT += */google_appengine/*
 COVERAGE_OMIT += agar/*
@@ -39,8 +41,12 @@ check:
 	   coverage xml && \
 	   coverage html; \
 	else \
-	   python tools/runtests.py; \
+	   python tools/runtests.py --size="$(TEST_SIZE)"; \
 	fi
+
+# Run the subset of unittests that are fast
+quickcheck:
+	$(MAKE) TEST_SIZE=small check
 
 # Run lint checks
 lint:

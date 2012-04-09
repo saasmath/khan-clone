@@ -19,6 +19,7 @@ class SubmitStory(request_handler.RequestHandler):
 
         story = self.request_string("story")
         name = self.request_string("name")
+        email = self.request_string("email")
         share_allowed = self.request_bool("share")
 
         if len(story) == 0:
@@ -28,18 +29,19 @@ class SubmitStory(request_handler.RequestHandler):
 
         if name:
             subject += " (by \"%s\")" % name
-
+            subject += " (from \"%s\")" % email
+            
         if share_allowed:
             subject += " (sharing with others allowed)"
         else:
             subject += " (sharing with others *NOT* allowed)"
-
-        if not App.is_dev_server:
+	if not App.is_dev_server:
             mail.send_mail( \
                     sender = FROM_EMAIL, \
                     to = TO_EMAIL, \
                     subject = subject, \
-                    body = story)
+                    body = story 
+                    )
 
 class ViewStories(request_handler.RequestHandler):
     @user_util.open_access

@@ -202,6 +202,13 @@ class MobileOAuthLogin(request_handler.RequestHandler):
         oauth_map.khan_auth_token = AuthToken.for_user(user_data).value
         oauth_map.put()
 
+        # Flush the "apply phase" of the above put() to ensure that subsequent
+        # retrievals of this OAuthmap returns fresh data. GAE's HRD can
+        # otherwise take a second or two to propagate the data, and the
+        # following authorize endpoint redirect below could happen quicker
+        # than that in some cases.
+        oauth_map = OAuthMap.get(oauth_map.key())
+
         # Need to redirect back to the http authorize endpoint
         return auth_util.authorize_token_redirect(oauth_map, force_http=True)
 

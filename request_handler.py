@@ -441,14 +441,15 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             if goals_data:
                 template_values['global_goals'] = jsonify(goals_data)
 
-        # A/B test to show topic browser in the header (disabled on mobile)
-        if self.is_mobile_capable():
-            template_values['watch_topic_browser_enabled'] = False
-        else:
-            show_topic_browser = ab_test("Show topic browser in header", ["show", "hide"], ["topic_browser_clicked_link", "topic_browser_started_video", "topic_browser_completed_video"])
-            template_values['watch_topic_browser_enabled'] = (show_topic_browser == "show")
-            analytics_bingo = {"name": "Bingo: Header topic browser (fixed)", "value": show_topic_browser}
-            template_values['analytics_bingo'] = analytics_bingo
+        # Disable topic browser in the header on mobile devices
+        template_values['watch_topic_browser_enabled'] = not self.is_mobile_capable()
+
+        # Begin topic pages A/B test
+        show_topic_pages = ab_test("Show topic pages", ["show", "hide"], ["topic_pages_view_page", "topic_pages_started_video", "topic_pages_completed_video"])
+        template_values['show_topic_pages'] = (show_topic_pages == "show")
+        analytics_bingo = {"name": "Bingo: Topic pages", "value": show_topic_pages}
+        template_values['analytics_bingo'] = analytics_bingo
+        # End topic pages A/B test
 
         return template_values
 

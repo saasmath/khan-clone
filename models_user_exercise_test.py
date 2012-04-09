@@ -66,7 +66,8 @@ class UserDataCoachTest(BaseTest):
 
         uexs = set(uex.exercise for uex in
             models.UserExercise.next_in_topic(self.student, self.topic))
-        children = set([e.name for e in self.exercises if 'c1' in e.prerequisites])
+        children = set(
+                [e.name for e in self.exercises if 'c1' in e.prerequisites])
         self.assertTrue(len(children.intersection(uexs)) > 0)
 
     def test_returns_max_exercises(self):

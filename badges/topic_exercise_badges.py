@@ -7,11 +7,12 @@ import models
 from badges import Badge, BadgeCategory
 from templatefilters import slugify
 
+
 def sync_with_topic_version(version):
-    """ Syncs state of all TopicExerciseBadges with the specified TopicVersion's topic tree.
-    This'll add new badges for any new topics that have exercises, retire badges associated
-    with topics that no longer contain exercises, and keep all constituent exercise names
-    up-to-date.
+    """ Syncs state of all TopicExerciseBadges with the specified
+    TopicVersion's topic tree. This'll add new badges for any new topics
+    that have exercises, retire badges associated with topics that no longer
+    contain exercises, and keep all constituent exercise names up-to-date.
     """
 
     # Get all topics with live exercises as direct children
@@ -19,22 +20,26 @@ def sync_with_topic_version(version):
 
     entities_to_put = []
 
-    # Make sure there is a TopicExerciseBadgeType for every topic that contains exercises
+    # Make sure there is a TopicExerciseBadgeType for every topic
+    # that contains exercises
     for topic in topics:
 
         badge_type = TopicExerciseBadgeType.get_or_insert_for_topic(topic)
 
-        # If we didn't succeed in creation, bail hard so we can figure out what's going on
+        # If we didn't succeed in creation, bail hard so we can
+        # figure out what's going on
         if not badge_type:
-            raise Exception("Failed to create TopicExerciseBadgeType for topic: %s" % topic.standalone_title)
+            raise Exception("Failed to create TopicExerciseBadgeType: %s" %
+                    topic.standalone_title)
 
         # Get all required exercise names for this topic
         exercise_names_required = [ex.name for ex in topic.children]
 
-        # If the badge needs its required exercises updated or 
+        # If the badge needs its required exercises updated or
         # was previously retired, update it.
-        if (badge_type.retired or 
-                set(exercise_names_required) != set(badge_type.exercise_names_required)):
+        if (badge_type.retired or
+                set(exercise_names_required) !=
+                set(badge_type.exercise_names_required)):
 
             badge_type.retired = False
             badge_type.exercise_names_required = exercise_names_required
@@ -43,10 +48,12 @@ def sync_with_topic_version(version):
     for badge_type in TopicExerciseBadgeType.all():
 
         # Make sure each TopicExerciseBadgeType has a corresponding topic...
-        exists = any(t for t in topics if t.key().name() == badge_type.topic_key_name)
+        exists = any(
+                t for t in topics
+                if t.key().name() == badge_type.topic_key_name)
 
-        # ...if it doesn't, it may've been created by an old topic that has since been removed.
-        # In this case, retire the badge.
+        # ...if it doesn't, it may've been created by an old topic
+        # that has since been removed. In this case, retire the badge.
         if not exists:
             badge_type.retired = True
             entities_to_put.append(badge_type)
@@ -54,9 +61,10 @@ def sync_with_topic_version(version):
     if entities_to_put:
         db.put(entities_to_put)
 
+
 class TopicExerciseBadge(Badge):
-    """ TopicExerciseBadge represents a single challenge patch for achieving proficiency
-    in all constituent exercises of a Topic.
+    """ TopicExerciseBadge represents a single challenge patch for
+    achieving proficiency in all constituent exercises of a Topic.
 
     TopicExerciseBadges are constructed by the data stored in
     TopicExerciseBadgeType datastore entities.
@@ -64,26 +72,27 @@ class TopicExerciseBadge(Badge):
 
     @staticmethod
     def all():
-        badges = [TopicExerciseBadge(badge_type) for badge_type in TopicExerciseBadgeType.all()]
-        return sorted(badges, key=lambda badge: badge.topic_standalone_title.lower())
+        badges = [TopicExerciseBadge(t) for t in TopicExerciseBadgeType.all()]
+        return sorted(badges, key=lambda b: b.topic_standalone_title.lower())
 
     @staticmethod
     def name_for_topic_key_name(topic_key_name):
         return "topic_exercise_%s" % topic_key_name
 
-    def __init__(self, topic_exercise_badge_type):
+    def __init__(self, badge_type):
         Badge.__init__(self)
 
         # Set topic-specific properties
-        self.topic_standalone_title = topic_exercise_badge_type.topic_standalone_title
-        self.exercise_names_required = topic_exercise_badge_type.exercise_names_required
+        self.topic_standalone_title = badge_type.topic_standalone_title
+        self.exercise_names_required = badge_type.exercise_names_required
 
         # Set typical badge properties
-        self.name = TopicExerciseBadge.name_for_topic_key_name(topic_exercise_badge_type.topic_key_name)
+        self.name = TopicExerciseBadge.name_for_topic_key_name(
+                badge_type.topic_key_name)
         self.description = self.topic_standalone_title
         self.points = 0
         self.badge_category = BadgeCategory.MASTER
-        self.is_retired = topic_exercise_badge_type.retired
+        self.is_retired = badge_type.retired
         self.is_hidden_if_unknown = self.is_retired
 
     def is_satisfied_by(self, *args, **kwargs):
@@ -109,17 +118,20 @@ class TopicExerciseBadge(Badge):
         return True
 
     def extended_description(self):
-        return "Achieve proficiency in all skills in %s" % self.topic_standalone_title
+        return ("Achieve proficiency in all skills in %s" %
+                self.topic_standalone_title)
 
     @property
     def icon_filename(self):
         """ Some topics will have custom icons pre-prepared, and some won't.
-        To add a custom icon to a topic, add the topic's name to TOPICS_WITH_CUSTOM_ICONS
-        below. Those without will use a default icon.
+        To add a custom icon to a topic, add the topic's name to
+        TOPICS_WITH_CUSTOM_ICONS below. Those without will use a default icon.
 
         Custom icon location and format:
-        40x40px: /images/power-mode/badges/[lowercase-alphanumeric-and-dashes-only topic title]-40x40.png
-        60x60px: /images/power-mode/badges/[lowercase-alphanumeric-and-dashes-only topic title]-60x60.png
+        40x40px: /images/power-mode/badges/
+                    [lowercase-alphanumeric-dashes-only topic title]-40x40.png
+        60x60px: /images/power-mode/badges/
+                    [lowercase-alphanumeric-dashes-only topic title]-60x60.png
 
         See /images/power-mode/badges/readme
         """
@@ -135,18 +147,20 @@ class TopicExerciseBadge(Badge):
 
     @property
     def completed_icon_src(self):
-        """ Returns the icon src for a special, "completed!" version of this topic badge
-        to be used on the knowledge map only, for now.
+        """ Returns the icon src for a special, "completed!" version of this
+        topic badge to be used on the knowledge map only, for now.
         """
-        return "/images/power-mode/badges/%s-completed-40x40.png?4" % self.icon_filename
+        return ("/images/power-mode/badges/%s-completed-40x40.png?6" %
+                self.icon_filename)
 
     @property
     def compact_icon_src(self):
-        return "/images/power-mode/badges/%s-60x60.png?4" % self.icon_filename
+        return "/images/power-mode/badges/%s-60x60.png?6" % self.icon_filename
 
     @property
     def icon_src(self):
-        return "/images/power-mode/badges/%s-40x40.png?4" % self.icon_filename
+        return "/images/power-mode/badges/%s-40x40.png?6" % self.icon_filename
+
 
 class TopicExerciseBadgeType(db.Model):
     """ Every time we publish a new topic tree,
@@ -174,9 +188,9 @@ class TopicExerciseBadgeType(db.Model):
 
         if not topic_badge_type:
             topic_badge_type = TopicExerciseBadgeType.get_or_insert(
-                    key_name = key_name,
-                    topic_key_name = topic.key().name(),
-                    topic_standalone_title = topic.standalone_title,
+                    key_name=key_name,
+                    topic_key_name=topic.key().name(),
+                    topic_standalone_title=topic.standalone_title,
                     )
 
         return topic_badge_type
