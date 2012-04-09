@@ -12,7 +12,7 @@ from api.auth.auth_models import OAuthMap
 from api.auth.auth_util import oauth_error_response, append_url_params, requested_oauth_callback, access_token_response, custom_scheme_redirect, set_current_oauth_map_in_session
 from api.auth.google_util import google_request_token_handler
 from api.auth.facebook_utils import facebook_request_token_handler
-from api.auth.decorators import oauth_required, open_access, manual_access_checking
+from api.auth import decorators
 
 from oauth_provider.oauth import OAuthError
 from oauth_provider.utils import initialize_server_request
@@ -28,7 +28,7 @@ from oauth_provider.stores import check_valid_callback
 # Flask-friendly version of oauth_providers.oauth_request.RequestTokenHandler that
 # hands off to Google/Facebook to gather the appropriate request tokens.
 @route("/api/auth/request_token", methods=["GET", "POST"])
-@open_access
+@decorators.manual_access_checking
 def request_token():
 
     oauth_server, oauth_request = initialize_server_request(request)
@@ -69,7 +69,7 @@ def request_token():
     return redirect(chooser_url)
 
 @route("/api/auth/request_token_callback/<provider>/<oauth_map_id>", methods=["GET"])
-@open_access
+@decorators.manual_access_checking
 def request_token_callback(provider, oauth_map_id):
 
     oauth_map = OAuthMap.get_by_id_safe(oauth_map_id)
@@ -86,30 +86,26 @@ def request_token_callback(provider, oauth_map_id):
 # Flask-friendly version of oauth_providers.oauth_request.AuthorizeHandler that doesn't
 # require user authorization for our side of the OAuth. Just log in, and we'll authorize.
 @route("/api/auth/authorize", methods=["GET", "POST"])
-@manual_access_checking
+@decorators.manual_access_checking
 def authorize_token():
 
-    oauth_server, oauth_request = initialize_server_request(request)
-
-    if oauth_server is None:
-        return oauth_error_response(OAuthError('Invalid request parameters.'))
-
     try:
+        oauth_server, oauth_request = initialize_server_request(request)
+
+        if oauth_server is None:
+            raise OAuthError('Invalid request parameters.')
+
         # get the request token
         token = oauth_server.fetch_request_token(oauth_request)
-    except OAuthError, e:
-        return oauth_error_response(e)
 
-    oauth_map = OAuthMap.get_from_request_token(token.key_)
-    if not oauth_map:
-        raise OAuthError("Unable to find oauth_map from request token during authorization.")
+        oauth_map = OAuthMap.get_from_request_token(token.key_)
+        if not oauth_map:
+            raise OAuthError("Unable to find oauth_map from request token during authorization.")
 
-    # Get user from oauth map using either FB or Google access token
-    user_data = oauth_map.get_user_data()
-    if not user_data:
-        return oauth_error_response(OAuthError("User not logged in during authorize_token process."))
-
-    try:
+        # Get user from oauth map using either FB or Google access token
+        user_data = oauth_map.get_user_data()
+        if not user_data:
+            raise OAuthError("User not logged in during authorize_token process.")
         # For now we don't require user intervention to authorize our tokens,
         # since the user already authorized FB/Google. If we need to do this
         # for security reasons later, there's no reason we can't.
@@ -128,7 +124,7 @@ def authorize_token():
 # that creates our access token and then hands off to Google/Facebook to let them
 # create theirs before associating the two.
 @route("/api/auth/access_token", methods=["GET", "POST"])
-@manual_access_checking
+@decorators.manual_access_checking
 def access_token():
 
     oauth_server, oauth_request = initialize_server_request(request)
@@ -161,14 +157,15 @@ def access_token():
 # If user doesn't supply an oauth_callback parameter, we'll send 'em here
 # when redirecting after request_token creation and authorization.
 @route("/api/auth/default_callback", methods=["GET"])
-@open_access
+@decorators.open_access
 def default_callback():
     return "OK"
 
 # Use OAuth token to login via session cookie
 # TODO(csilvers): have oauth-authentication only just for this file.
 @route("/api/auth/token_to_session", methods=["GET"])
-@oauth_required(require_anointed_consumer=True)
+@decorators.manual_access_checking
+@decorators.anointed_oauth_consumer_only
 def token_to_session():
     set_current_oauth_map_in_session()
     return redirect(request.request_continue_url())

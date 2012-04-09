@@ -162,13 +162,13 @@ var Goal = Backbone.Model.extend({
     },
 
     defaultExerciseProcessGoalAttrs_: {
-        title: "Complete Five Exercises",
+        title: "Complete Five Skills",
         objectives: [
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" }
         ]
     },
 
@@ -259,8 +259,8 @@ var GoalCollection = Backbone.Collection.extend({
     findActiveGoal: function() {
         var matchingGoal = null;
 
-        if (window.location.pathname.indexOf("/exercise") === 0 && window.userExerciseName) {
-            matchingGoal = this.findGoalWithObjective(userExerciseName,
+        if (window.location.pathname.indexOf("/exercise") === 0 && typeof Exercises !== "undefined" && Exercises.exercise) {
+            matchingGoal = this.findGoalWithObjective(Exercises.exercise.name,
                 "GoalObjectiveExerciseProficiency",
                 "GoalObjectiveAnyExerciseProficiency");
         } else if (window.location.pathname.indexOf("/video") === 0 &&
@@ -692,7 +692,7 @@ var NewCustomGoalDialog = Backbone.View.extend({
 
     load: function() {
         if (!dynamicPackageLoader.packageLoaded("maps")) {
-            $('<script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false&callback=finishLoadingMapsPackage" type="text/javascript"></script>').appendTo(document);
+            $('<script src="http://maps.google.com/maps/api/js?v=3.8&sensor=false&callback=finishLoadingMapsPackage" type="text/javascript"></script>').appendTo(document);
         }
         return $.ajax({url: "/goals/new", type: "GET", dataType: "html"})
             .done($.proxy(function(html) {

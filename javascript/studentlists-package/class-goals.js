@@ -40,9 +40,9 @@ _.extend(ClassProfile, {
                         objective.objectiveID = idx3;
                         var base = student.profile_root + "/vital-statistics";
                         if (objective.type === "GoalObjectiveExerciseProficiency") {
-                            objective.url = base + "/exercise-problems/" + objective.internal_id;
+                            objective.url = base + "/problems/" + objective.internal_id;
                         } else if (objective.type === "GoalObjectiveAnyExerciseProficiency") {
-                            objective.url = base + "/exercise-progress";
+                            objective.url = base + "/skill-progress";
                         } else {
                             objective.url = base + "/activity";
                         }
@@ -103,7 +103,7 @@ _.extend(ClassProfile, {
                     $(this).click(function() {
                         // TODO: awkward turtle, replace with normal href action
                         window.location = goalViewModel.student.profile_root
-                                            + "/vital-statistics/exercise-problems/"
+                                            + "/vital-statistics/problems/"
                                             + goalObjective.internal_id;
                     });
                 } else {

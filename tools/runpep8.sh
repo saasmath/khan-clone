@@ -8,13 +8,21 @@
 # The blacklist should live in the same directory as this script.
 blacklist=`dirname "$0"`/runpep8_blacklist.txt
 
+# W291 trailing whitespace
+# W293 blank line contains whitespace
+pep8_args="-r --ignore=W291,W293"
+
 # To generate the blacklist:
-# find . -name '*.py' -print0 | xargs -0 pep8 -r | cut -d : -f 1 | sort -u
+# $ export LC_ALL=C
+# $ find . -name '*.py' -print0 | xargs -0 pep8 ${pep8_args} | cut -d : -f 1 | sort -u
+# (Note the LC_ALL=C makes the sort independent of locale on the machine
+#  and makes this more consistent across developer machines)
 
 # Lint files not in the blacklist.
+export LC_ALL=C
 find . -name "*.py" \
     | sort -u \
     | comm -23 - "${blacklist}" \
     | tr "\n" "\0" \
-    | xargs -0 pep8 -r
+    | xargs -0 pep8 ${pep8_args} 
 

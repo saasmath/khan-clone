@@ -28,7 +28,6 @@
 ./api/packages/flaskext/wtf/__init__.py
 ./api/packages/flaskext/wtf/file.py
 ./api/packages/flaskext/wtf/html5.py
-./api/packages/flaskext/wtf/recaptcha/__init__.py
 ./api/packages/flaskext/wtf/recaptcha/fields.py
 ./api/packages/flaskext/wtf/recaptcha/validators.py
 ./api/packages/flaskext/wtf/recaptcha/widgets.py
@@ -36,6 +35,7 @@
 ./api/packages/werkzeug/_internal.py
 ./api/packages/werkzeug/contrib/cache.py
 ./api/packages/werkzeug/contrib/fixers.py
+./api/packages/werkzeug/contrib/jsrouting.py
 ./api/packages/werkzeug/contrib/kickstart.py
 ./api/packages/werkzeug/contrib/lint.py
 ./api/packages/werkzeug/contrib/testtools.py
@@ -52,6 +52,7 @@
 ./api/packages/werkzeug/script.py
 ./api/packages/werkzeug/security.py
 ./api/packages/werkzeug/serving.py
+./api/packages/werkzeug/templates.py
 ./api/packages/werkzeug/test.py
 ./api/packages/werkzeug/testapp.py
 ./api/packages/werkzeug/urls.py
@@ -81,16 +82,7 @@
 ./atom/service.py
 ./atom/token_store.py
 ./atom/url.py
-./auth/age_util.py
-./auth/age_util_test.py
-./auth/cookies.py
-./auth/models.py
-./auth/models_test.py
-./auth/passwords.py
-./auth/passwords_test.py
 ./auth/pbkdf2.py
-./auth/tokens.py
-./auth/tokens_test.py
 ./autocomplete.py
 ./avatars/avatars.py
 ./avatars/templatetags.py
@@ -158,7 +150,9 @@
 ./discussion/util_discussion.py
 ./discussion/voting.py
 ./exercise_statistics.py
-./exercises.py
+./exercises/__init__.py
+./exercises/file_contents.py
+./exercises/handlers.py
 ./exercisestats/__init__.py
 ./exercisestats/models.py
 ./exercisestats/number_trivia.py
@@ -379,6 +373,7 @@
 ./jinja2/bccache.py
 ./jinja2/compiler.py
 ./jinja2/debug.py
+./jinja2/defaults.py
 ./jinja2/environment.py
 ./jinja2/ext.py
 ./jinja2/filters.py
@@ -388,6 +383,8 @@
 ./jinja2/optimizer.py
 ./jinja2/parser.py
 ./jinja2/sandbox.py
+./jinja2/tests.py
+./jinja2/testsuite/__init__.py
 ./jinja2/testsuite/api.py
 ./jinja2/testsuite/core_tags.py
 ./jinja2/testsuite/debug.py
@@ -402,10 +399,11 @@
 ./jinja2/testsuite/tests.py
 ./jinja2/utils.py
 ./js_css_packages/packages.py
+./js_css_packages/packages_compressed.py
+./js_css_packages/packages_hash.py
 ./js_css_packages/templatetags.py
 ./khan-exercises/build/close-old-issues.py
 ./khan-exercises/build/kathjax.py
-./knowledgemap.py
 ./labs/__init__.py
 ./labs/explorations.py
 ./layer_cache.py
@@ -468,7 +466,6 @@
 ./offline/unzip.py
 ./offline/upload_individual_videos.py
 ./paypal/__init__.py
-./pep8_exclude.py
 ./phantom_users/cloner.py
 ./phantom_users/phantom_util.py
 ./phantom_users/templatetags.py
@@ -490,7 +487,6 @@
 ./rate_limiter.py
 ./redirects/__init__.py
 ./redirects/models.py
-./repl.py
 ./request_cache.py
 ./request_handler.py
 ./robots.py
@@ -518,4 +514,5 @@
 ./util.py
 ./util_test.py
 ./warmup.py
+./webapp2_extras/jinja2.py
 ./youtube_sync.py

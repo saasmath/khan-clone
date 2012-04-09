@@ -415,7 +415,7 @@ var ClassProfile = {
                 exercise.progress = (exercise.progress*100).toFixed(0);
                 // TODO: awkward turtle, replace w normal href
                 exercise.link = student_row.profile_root
-                                    + "/vital-statistics/exercise-problems/"
+                                    + "/vital-statistics/problems/"
                                     + data.exercise_names[idx2].name;
                 if (exercise.last_done) {
                     exercise.seconds_since_done = ((new Date()).getTime() - Date.parse(exercise.last_done)) / 1000;

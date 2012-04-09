@@ -72,9 +72,6 @@
                     <br/>
 
                     <em>This exercise will be suggested once these prereqs are completed.</em><br/>
-                    {{#if model.summative }}
-                    <em><strong>Summative exercises</strong> will generate problems from all prereqs.</em></br>
-                    {{/if}}
                   {{#if oldValues.prerequisites}}
                     {{#each oldValues.prerequisites}}
                       <span class="old-value">Old value: <input type="text" disabled value="{{ this }}" maxlength="256"/></span><br/>
@@ -100,7 +97,6 @@
                 </td>
             </tr>
 
-            {{#unless model.summative }}
             <tr>
                 <td style="font-weight:bold;">Related Videos</td>
                 <td style="padding-bottom:9px;">
@@ -116,7 +112,6 @@
                   {{/if}}
                 </td>
             </tr>
-            {{/unless}}
 
             <tr>
                 <td style="font-weight:bold;">Description</td>

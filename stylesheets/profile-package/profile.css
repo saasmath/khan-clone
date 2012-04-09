@@ -516,6 +516,13 @@
 
         box-sizing: border-box;
     }
+    .activity-list .skill-bar-container {
+        margin-left: 48px;
+        width: 380px;
+    }
+    .activity-list .skill-bar-container .skill-bar {
+        margin-bottom: 0;
+    }
     .activity-list .activity-image {
         float: left;
         margin-right: 8px;
@@ -594,11 +601,6 @@
     .activity-controls .time {
         color: #999;
         font-style: italic;
-    }
-    .activity-list .streak-bar {
-        height: 10px;
-        margin-left: 48px;
-        margin-top: 4px;
     }
     .description {
         float: left;
@@ -839,10 +841,10 @@ a[rel="vital-statistics activity"] {
 a[rel="vital-statistics focus"] {
     background: transparent url(/images/profile-icons/chart-pie-separate.png) no-repeat 4px 50%;
 }
-a[rel="vital-statistics exercise-progress"] {
+a[rel="vital-statistics skill-progress"] {
     background: transparent url(/images/profile-icons/color-swatch.png) no-repeat 4px 50%;
 }
-a[rel="vital-statistics exercise-progress-over-time"] {
+a[rel="vital-statistics skill-progress-over-time"] {
     background: transparent url(/images/profile-icons/chart-up.png) no-repeat 4px 50%;
 }
 a[rel="achievements"] {

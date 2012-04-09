@@ -51,7 +51,7 @@
         <li>
             {{ profile_macros.class_api_link(user_data_coach, "Progress Report", "progressreport", selected_graph_type, list_id) }}
             <div class="accordion-content">
-                Shows you which exercises your class has worked on and completed.
+                Shows you which skills your class has worked on and completed.
                 <div class="graph-options">
                     <span class="progress-legend exercise-color started">Started</span>
                     <span class="progress-legend exercise-color proficient">Proficient</span>
@@ -63,7 +63,7 @@
         <li>
             {{ profile_macros.class_api_link(user_data_coach, "Progress Summary", "progress/summary", selected_graph_type, list_id) }}
             <p class="accordion-content">
-                Shows you which exercises your class has worked on and completed.
+                Shows you which skills your class has worked on and completed.
             </p>
         </li>
         <li>
@@ -74,9 +74,9 @@
               <span class="instructions">Light blue activity shows normal school hours, and dark blue is outside normal hours.</span>
         </li>
         <li>
-            {{ profile_macros.class_graph_link(user_data_coach, "Exercise Progress Over Time", "classexercisesovertime", selected_graph_type, list_id) }}
-            <div class="accordion-content">Shows how many exercises your students have completed over time.<br /><br />
-                <span class="instructions">Highlight a <a href="#" class="highlight-section show-students-highlight">specific student</a> or a <a href="#" class="highlight-section show-exercises-highlight">specific exercise</a>.</span><br />
+            {{ profile_macros.class_graph_link(user_data_coach, "Skill Progress Over Time", "classexercisesovertime", selected_graph_type, list_id) }}
+            <div class="accordion-content">Shows how many skills your students have completed over time.<br /><br />
+                <span class="instructions">Highlight a <a href="#" class="highlight-section show-students-highlight">specific student</a> or a <a href="#" class="highlight-section show-exercises-highlight">specific skill</a>.</span><br />
 
                 <div id="students-highlight" class="vertical-choice-container" style="display:none;">
                     <ul>
@@ -127,7 +127,7 @@
     </div>
     <div class="filter-block">
       <p>Showing Only
-        <input type="text" id="student-progressreport-search" placeholder="student or exercise" class="search-input simple-input ui-corner-all blur-on-esc"></input>
+        <input type="text" id="student-progressreport-search" placeholder="student or skill" class="search-input simple-input ui-corner-all blur-on-esc"></input>
         <span class="coach-filter-block">
             <input type="checkbox" class="progressreport-filter-check" id="progressreport-struggling" name="struggling" /><label for="progressreport-struggling">Struggling</label></span>
       <span class="coach-filter-block"><input type="checkbox" class="progressreport-filter-check" id="progressreport-recent" name="recent" /><label for="progressreport-recent">Worked on in last:</label>
@@ -143,7 +143,7 @@
     </div>
     <div class="filter-block">
       <p>Showing Only
-        <input type="text" id="student-progresssummary-search" placeholder="exercise name" class="search-input simple-input ui-corner-all blur-on-esc"></input>
+        <input type="text" id="student-progresssummary-search" placeholder="skill name" class="search-input simple-input ui-corner-all blur-on-esc"></input>
     </div>
   </div>
 

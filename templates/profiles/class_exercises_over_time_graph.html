@@ -3,7 +3,7 @@
 {% block graph_content %}
 
 {% if not dict_student_exercises %}
-    <div class="graph-notification">Your students don't have any proficient exercises...yet. Point them to <a href="/exercisedashboard">the exercise dashboard</a>.</div>
+    <div class="graph-notification">Your students aren't proficient in any skills...yet. Point them to <a href="/exercisedashboard">the exercise dashboard</a>.</div>
 {% endif %}
 
 <script>
@@ -169,116 +169,114 @@ var ClassExerciseProgressChart = {
 
 $(document).ready(function() {
 
-    ClassExerciseProgressChart.init();
-
-    chart = new Highcharts.Chart({
-        chart: {
-            renderTo: 'highchart',
-            defaultSeriesType: 'scatter'
-        },
-        credits: {
-            enabled: false
-        },
-        plotOptions: {
-            scatter: {
-                cursor: 'pointer',
-                dashStyle: 'Solid',
-                lineWidth: 1
-            },
-            series: {
-                lineWidth: 1,
-                events: {
-                    legendItemClick: function() { return false; }
-                }, 
-                marker: {
-                    symbol: 'circle',
-                    radius: 4
-                },
-                point: {
-                    events: {
-                        click: function() {
-                             window.location = this.profile_root
-                                                + "/vital-statistics/exercise-problems/"
-                                                + this.name;
+                chart = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'highchart',
+                        defaultSeriesType: 'scatter'
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    plotOptions: {
+                        scatter: {
+                            cursor: 'pointer',
+                            dashStyle: 'Solid',
+                            lineWidth: 1
+                        },
+                        series: {
+                            lineWidth: 1,
+                            events: {
+                                legendItemClick: function() { return false; }
+                            }, 
+                            marker: {
+                                symbol: 'circle',
+                                radius: 4
+                            },
+                            point: {
+                                events: {
+                                    click: function() {
+                                         window.location = this.profile_root
+                                                            + "/vital-statistics/problems/"
+                                                            + this.name;
+                                    }
+                                }
+                            }
                         }
-                    }
-                }
-            }
-        },
-        title: {
-            text: "",
-            x: -20 //center
-        },
-        subtitle: {
-            text: '',
-            x: -20
-        },
-        xAxis: {
-            title: {
-                text: 'Days working on the site'
-            },
-            min: 0,
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        yAxis: {
-            min: 1,
-            title: {
-                text: 'Modules Completed'
-            },
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        tooltip: {
-            formatter: function() {
-                return '<b>' + this.point.nickname + '</b><br/><br/><b>' + this.point.display_name + '</b><br/>' + this.point.dt;
-            }
-        },
-        legend: {
-            enabled: false,
-            layout: 'horizontal',
-            align: 'left',
-            verticalAlign: 'bottom',
-            floating: true,
-            backgroundColor: 'white',
-            shadow: true,
-            x: 60,
-            y: 18,
-            itemHoverStyle: {
-                cursor: 'default',
-                color: '#3E576F'
-            }
-        },
-        series: [
-                {% for key in dict_student_exercises %}
-                {
-                    animation: false,
-                    name: '{{ key|escapejs }}',
-                    email: '{{ dict_student_exercises[key]["email"]|escapejs }}',
-                    data:[
-                    {% for exercise_data in dict_student_exercises[key]["exercises"] %}
-                    { 
-                        dt: '{{ exercise_data.proficient_date|escapejs }}', 
-                        name: '{{ exercise_data.exid|escapejs }}', 
-                        display_name: '{{ exercise_data.display_name()|escapejs }}', 
-                        nickname: '{{ exercise_data.nickname|escapejs }}',
-                        email: '{{ dict_student_exercises[key]["email"]|escapejs }}',
-                        profile_root: '{{ dict_student_exercises[key]["profile_root"]|escapejs }}',
-                        x: {{ exercise_data.days_until_proficient }}, 
-                        y: {{ loop.index }}
-                    }{% if not loop.last %},{% endif %}
-                    {% endfor %}
-                ]}{% if not loop.last %},{% endif %}
-                {% endfor %}
-            ]
-    });
-});
+                    },
+                    title: {
+                        text: "",
+                        x: -20 //center
+                    },
+                    subtitle: {
+                        text: '',
+                        x: -20
+                    },
+                    xAxis: {
+                        title: {
+                            text: 'Days working on the site'
+                        },
+                        min: 0,
+                        plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }]
+                    },
+                    yAxis: {
+                        min: 1,
+                        title: {
+                            text: 'Skills Completed'
+                        },
+                        plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }]
+                    },
+                    tooltip: {
+                        formatter: function() {
+                            return '<b>' + this.point.nickname + '</b><br/><br/><b>' + this.point.display_name + '</b><br/>' + this.point.dt;
+                        }
+                    },
+                    legend: {
+                        enabled: false,
+                        layout: 'horizontal',
+                        align: 'left',
+                        verticalAlign: 'bottom',
+                        floating: true,
+                        backgroundColor: 'white',
+                        shadow: true,
+                        x: 60,
+                        y: 18,
+                        itemHoverStyle: {
+                            cursor: 'default',
+                            color: '#3E576F'
+                        }
+                    },
+                    series: [
+                            {% for key in dict_student_exercises %}
+                            {
+                                animation: false,
+                                name: '{{ key|escapejs }}',
+                                email: '{{ dict_student_exercises[key]["email"]|escapejs }}',
+                                data:[
+                                {% for exercise_data in dict_student_exercises[key]["exercises"] %}
+                                { 
+                                    dt: '{{ exercise_data.proficient_date|escapejs }}', 
+                                    name: '{{ exercise_data.exid|escapejs }}', 
+                                    display_name: '{{ exercise_data.display_name()|escapejs }}', 
+                                    nickname: '{{ exercise_data.nickname|escapejs }}',
+                                    email: '{{ dict_student_exercises[key]["email"]|escapejs }}',
+                                    profile_root: '{{ dict_student_exercises[key]["profile_root"]|escapejs }}',
+                                    x: {{ exercise_data.days_until_proficient }}, 
+                                    y: {{ loop.index }}
+                                }{% if not loop.last %},{% endif %}
+                                {% endfor %}
+                            ]}{% if not loop.last %},{% endif %}
+                            {% endfor %}
+                        ]
+                });
+            });
 
 </script>
 

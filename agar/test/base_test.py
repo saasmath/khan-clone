@@ -224,3 +224,4 @@ class BaseTest(unittest2.TestCase):
         """
         self.assertEqual(items, memcache.get_stats()['items'])
 
+

@@ -60,6 +60,7 @@
                     action="{{templatetags.to_secure_url('/login/mobileoauth')}}">
                 <h3>Login to Khan Academy</h3>
                 <input type="hidden" name="oauth_map_id" value="{{ oauth_map_id|escape }}">
+                <input type="hidden" name="view" value="{{ view|escape }}">
 
                 {# ontouchstart="" is needed to allow the :active pseudoclass to work
                      See http://stackoverflow.com/questions/3885018/active-pseudo-class-doesnt-work-in-mobile-safari #}

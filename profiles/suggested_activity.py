@@ -95,6 +95,11 @@ class SuggestedActivity(object):
     def get_exercises_for(user_data, user_exercise_graph):
         exercise_graph_dicts = user_exercise_graph.suggested_graph_dicts()
 
+        # Favor the exercises you're closest to finishing
+        # TODO: if we stick w/ this and want it everywhere,
+        # move this sorting lower in the suggested_graph_dicts chain.
+        exercise_graph_dicts = sorted(exercise_graph_dicts, key=lambda d: d["progress"], reverse=True)
+
         max_activities = 3
         return [SuggestedActivity.from_exercise(d)
                 for d in exercise_graph_dicts[:max_activities]]

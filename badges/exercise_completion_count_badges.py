@@ -11,7 +11,7 @@ class ExerciseCompletionCountBadge(Badge):
         return len(user_data.all_proficient_exercises) >= self.required_exercises
 
     def extended_description(self):
-        return "Achieve proficiency in any %d exercises" % self.required_exercises
+        return "Achieve proficiency in any %d skills" % self.required_exercises
 
 class GettingStartedBadge(ExerciseCompletionCountBadge):
     def __init__(self):

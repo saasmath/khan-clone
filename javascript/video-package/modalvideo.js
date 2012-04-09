@@ -44,7 +44,7 @@ var ModalVideo = {
                         var youtubeId = $(ev.currentTarget).data("youtube-id");
                         if (youtubeId) {
                             videoModel = _.find(Khan.relatedVideos.videos, function(v) {
-                                return v.youtube_id == youtubeId;
+                                return v.youtubeId == youtubeId;
                             });
                         }
                     }
@@ -65,14 +65,14 @@ var ModalVideo = {
     init: function(video, points) {
         var context = {
             video: video,
-            downloadUrl: video.download_urls && video.download_urls.mp4 || null,
+            downloadUrl: video.downloadUrls && video.downloadUrls.mp4 || null,
             height: 480,
             width: 800,
-            youtubeId: video.youtube_id,
+            youtubeId: video.youtubeId,
             points: points,
             possible_points: 750, // VIDEO_POINTS_BASE in consts.py
             logged_in: !!USERNAME, // phantom users have empty string usernames
-            video_url: Khan.relatedVideos.makeHref(video)
+            video_url: window.Khan && Khan.relatedVideos && Khan.relatedVideos.makeHref(video) || video.relative_url
         };
 
         this.modal = $(this.template(context))
@@ -96,12 +96,12 @@ var ModalVideo = {
     },
 
     show: function(video) {
-        var apiUrl = "/api/v1/user/videos/" + video.youtube_id;
+        var apiUrl = "/api/v1/user/videos/" + video.youtubeId;
         $.ajax(apiUrl, {
             success: $.proxy(function(data) {
                 var points = data ? data.points : 0;
                 this.modal = this.init(video, points);
-                VideoStats.startLoggingProgress(null, video.youtube_id);
+                VideoStats.startLoggingProgress(null, video.youtubeId);
                 this.modal.modal("show");
             }, this)
         });
