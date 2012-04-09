@@ -408,7 +408,7 @@ def put_topic(topic_id, version_id = "edit"):
 @jsonify
 def get_maplayout(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
-    return MapLayout.get_for_version(version)
+    return MapLayout.get_for_version(version).layout
 
 @route("/api/v1/topicversion/<version_id>/maplayout", methods=["PUT"])
 @route("/api/v1/maplayout", methods=["PUT"])
