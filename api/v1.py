@@ -31,6 +31,7 @@ from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 from app import App
 
 from api import route
+from api import v1_utils
 from api.decorators import jsonify, jsonp, pickle, compress, decompress, etag,\
     cacheable, cache_with_key_fxn_and_param
 import api.auth.decorators
@@ -338,7 +339,7 @@ def topictree_import(version_id = "edit", topic_id="root", publish=False):
     logging.info("calling /_ah/queue/deferred_import")
 
     # importing the full topic tree can be too large so pickling and compressing
-    deferred.defer(models.topictree_import_task, version_id, topic_id, publish,
+    deferred.defer(v1_utils.topictree_import_task, version_id, topic_id, publish,
                 zlib.compress(pickle.dumps(request.json)),
                 _queue = "import-queue",
                 _url = "/_ah/queue/deferred_import")
@@ -836,31 +837,7 @@ def exercise_save(exercise_name = None, version_id = "edit"):
     query = models.Exercise.all()
     query.filter('name =', exercise_name)
     exercise = query.get()
-    return exercise_save_data(version, request.json, exercise)
-
-def exercise_save_data(version, data, exercise=None, put_change=True):
-    if "name" not in data:
-        raise Exception("exercise 'name' missing")
-    data["live"] = data["live"] == "true" or data["live"] == True
-    data["v_position"] = int(data["v_position"])
-    data["h_position"] = int(data["h_position"])
-    data["seconds_per_fast_problem"] = (
-        float(data["seconds_per_fast_problem"]))
-
-    changeable_props = ["name", "covers", "h_position", "v_position", "live",
-                        "prerequisites", "covers", 
-                        "related_videos", "short_display_name"]
-    if exercise:
-        return models.VersionContentChange.add_content_change(exercise,
-            version,
-            data,
-            changeable_props)
-    else:
-        return models.VersionContentChange.add_new_content(models.Exercise,
-                                                           version,
-                                                           data,
-                                                           changeable_props,
-                                                           put_change)
+    return v1_utils.exercise_save_data(version, request.json, exercise)
 
 @route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["GET"])
 @route("/api/v1/videos/<video_id>", methods=["GET"])

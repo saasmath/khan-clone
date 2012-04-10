@@ -11,12 +11,22 @@ cat <filename> | fgrep -o -w -e datetime -e logging -e json -e json -e math -e u
 To find out classes that are defined in this file that may be moving
 outside (and thus will also need to be imported) use:
 cat <filename> | fgrep -o -w -e BackupModel -e Setting -e Exercise -e UserExercise -e CoachRequest -e StudentList -e UserVideoCss -e UniqueUsername -e NicknameIndex -e UnverifiedUser -e UserData -e TopicVersion -e VersionContentChange -e Topic -e Url -e Video -e Playlist -e UserPlaylist -e UserTopic -e UserVideo -e VideoLog -e DailyActivityLog -e LogSummaryTypes -e LogSummaryShardConfig -e LogSummary -e ProblemLog -e VideoPlaylist -e ExerciseVideo -e UserExerciseCache -e UserExerciseGraph -e PromoRecord -e VideoSubtitles -e VideoSubtitlesFetchReport -e ParentSignup | sort -u
+
+The remaining circular dependencies
+   exercise_models: exercise_video_models, topic_models, user_models
+
+   topic_models: exercise_models, exercise_video_models, user_models, video_models
+
+   user_models: exercise_models, video_models
+
+   video_models: exercise_video_models, topic_models, user_models
+
+   exercise_video_model: topic_models, video_models, exercise_models
 """
 
 # For backwards-compatibility with folks who do 'import models'.
 from backup_model import *
 from coach_resources.coach_request_model import *
-from coache_resources.student_list_model import *
 from exercise_video_model import *
 from exercises.exercise_models import *
 from obsolete_models import *

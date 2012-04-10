@@ -1,9 +1,10 @@
-"""Holds UserData, UniqueUsername, NicknameIndex, and UnverifiedUser.
+"""Holds UserData, UniqueUsername, NicknameIndex, UnverifiedUser, StudentList.
 
 UserData: database entity holding information about a single registered user
 UniqueUsername: database entity of usernames that've been set on profile pages
 NicknameIndex: database entity allowing search for users by their nicknames
 UnverifiedUser: holds info on users in the midst of the signup process
+StudentList: a list of users associated with a single coach.
 
 A 'user' is an entity that logs into Khan Academy in some way (there
 are also some 'fake' users that do not require logging in, like the
@@ -38,7 +39,6 @@ import templatetags
 import users
 import util
 
-import !! for StudentList
 import !! for UserExercise
 import !! for UserExerciseGraph
 import !! for UserVideo
@@ -1143,4 +1143,37 @@ class UnverifiedUser(db.Model):
     @staticmethod
     def get_for_token(token):
         return UnverifiedUser.all().filter("randstring =", token).get()
+
+
+# TODO(csilvers): move this away from user_models (into some
+# coach-related models file?) once we can remove the circular
+# dependency between StudentList and UserData.
+class StudentList(db.Model):
+    """A list of students associated with a single coach."""
+    name = db.StringProperty()
+    coaches = db.ListProperty(db.Key)
+
+    def delete(self, *args, **kwargs):
+        self.remove_all_students()
+        db.Model.delete(self, *args, **kwargs)
+
+    def remove_all_students(self):
+        students = self.get_students_data()
+        for s in students:
+            s.student_lists.remove(self.key())
+        db.put(students)
+
+    @property
+    def students(self):
+        return UserData.all().filter("student_lists = ", self.key())
+
+    # these methods have the same interface as the methods on UserData
+    def get_students_data(self):
+        return [s for s in self.students]
+
+    @staticmethod
+    def get_for_coach(key):
+        query = StudentList.all()
+        query.filter("coaches = ", key)
+        return query
 

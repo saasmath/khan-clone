@@ -38,6 +38,7 @@ import points
 import search
 import setting_model
 import shared_jinja
+import summary_log_models
 import util
 
 import !! for ExerciseVideo
@@ -45,8 +46,6 @@ import !! for Topic
 import !! for TopicVersion
 import !! for UserData
 import !! for VersionContentChange
-import !! for LogSummary
-import !! for LogSummaryTypes
 
 
 class Video(search.Searchable, db.Model):
@@ -395,7 +394,7 @@ def _commit_video_log(video_log, user_data=None):
 def _commit_log_summary_coaches(activity_log, coaches):
     """Used by our deferred log summary insertion process."""
     for coach in coaches:
-        LogSummary.add_or_update_entry(UserData.get_from_db_key_email(coach), activity_log, classtime.ClassDailyActivitySummary, LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
+        summary_log_models.LogSummary.add_or_update_entry(UserData.get_from_db_key_email(coach), activity_log, classtime.ClassDailyActivitySummary, summary_log_models.LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
 
 
 class VideoLog(BackupModel):
