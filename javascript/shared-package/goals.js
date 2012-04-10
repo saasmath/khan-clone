@@ -194,7 +194,10 @@ var GoalCollection = Backbone.Collection.extend({
     model: Goal,
 
     initialize: function() {
-        this.updateActive();
+        // Since Backbone 0.9 initialize no longer has access to the collection.
+        // So, after creating a GoalCollection, make sure to manually call
+        // updateActive().
+        // See https://github.com/documentcloud/backbone/issues/814
 
         // ensure updateActive is called whenever the collection changes
         this.bind("add", this.updateActive, this);
@@ -723,6 +726,7 @@ var NewCustomGoalDialog = Backbone.View.extend({
 
 $(function() {
     window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
+    window.GoalBook.updateActive();
     APIActionResults.register("updateGoals",
         $.proxy(GoalBook.incrementalUpdate, window.GoalBook));
 
