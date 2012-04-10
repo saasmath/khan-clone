@@ -1285,12 +1285,11 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     @property
     def prettified_user_email(self):
         if self.is_facebook_user:
-            root = "_fb" + self.user_id[len(FACEBOOK_ID_PREFIX):]
+            return "_fb" + self.user_id[len(FACEBOOK_ID_PREFIX):]
         elif self.is_phantom:
-            root = "nouser"
+            return "nouser"
         else:
-            root = "_em" + urllib.quote(self.user_email)
-        return root + "/"
+            return "_em" + urllib.quote(self.user_email)
 
     @staticmethod
     def get_from_url_segment(segment):
