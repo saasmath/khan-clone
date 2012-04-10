@@ -941,9 +941,12 @@ Exercises.SessionStats = Backbone.Model.extend({
             // Add all current proficiency/review/struggling states
             stat.exerciseStates = userExercise.exerciseStates;
 
+            // Add an extra state to be used when proficiency was just earned
+            // during the current stack.
+            stat.exerciseStates.justEarnedProficiency = stat.exerciseStates.proficient && !stat.startProficient;
+
             stat.endTotalDone = userExercise.totalDone;
             stat.end = userExercise.progress;
-            stat.justEarnedProficiency = stat.exerciseStates.proficient && !stat.startProficient;
 
             // Keep start set at the minimum of starting and current progress.
             // We do this b/c we never want to animate backwards progress --
