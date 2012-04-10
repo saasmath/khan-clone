@@ -1,3 +1,5 @@
+# TODO(csilvers): rename this file to something better, and/or break it up.
+
 import re
 import os
 import hashlib
