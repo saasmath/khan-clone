@@ -41,8 +41,9 @@ import util
 import user_util
 import exercise_statistics
 import activity_summary
-import exercises.exercise_util as exercises   # TODO(csilvers): get rid of the 'as'
 import dashboard.handlers
+import exercises.exercise_util
+import exercises.handlers
 import exercisestats.report
 import exercisestats.report_json
 import exercisestats.exercisestats_util
@@ -705,18 +706,18 @@ application = webapp2.WSGIApplication([
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
-    ('/(.*)/e', exercises.ViewExercise),
-    ('/(.*)/e/([^/]*)', exercises.ViewExercise),
-    ('/exercise/(.+)', exercises.ViewExerciseDeprecated), # /exercise/addition_1
-    ('/topicexercise/(.+)', exercises.ViewTopicExerciseDeprecated), # /topicexercise/addition_and_subtraction
-    ('/exercises', exercises.ViewExerciseDeprecated), # /exercises?exid=addition_1
-    ('/(review)', exercises.ViewExercise),
+    ('/(.*)/e', exercises.handlers.ViewExercise),
+    ('/(.*)/e/([^/]*)', exercises.handlers.ViewExercise),
+    ('/exercise/(.+)', exercises.handlers.ViewExerciseDeprecated), # /exercise/addition_1
+    ('/topicexercise/(.+)', exercises.handlers.ViewTopicExerciseDeprecated), # /topicexercise/addition_and_subtraction
+    ('/exercises', exercises.handlers.ViewExerciseDeprecated), # /exercises?exid=addition_1
+    ('/(review)', exercises.handlers.ViewExercise),
 
-    ('/khan-exercises/exercises/.*', exercises.RawExercise),
+    ('/khan-exercises/exercises/.*', exercises.exercise_util.RawExercise),
     ('/viewexercisesonmap', knowledgemap.handlers.ViewKnowledgeMap),
-    ('/editexercise', exercises.EditExercise),
-    ('/updateexercise', exercises.UpdateExercise),
-    ('/admin94040', exercises.ExerciseAdmin),
+    ('/editexercise', exercises.exercise_util.EditExercise),
+    ('/updateexercise', exercises.exercise_util.UpdateExercise),
+    ('/admin94040', exercises.exercise_util.ExerciseAdmin),
     ('/video/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/v/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/video', ViewVideoDeprecated), # Backwards URL compatibility
