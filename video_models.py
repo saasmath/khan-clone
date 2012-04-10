@@ -17,6 +17,7 @@ A 'video' is what's on a Khan page like
 """
 
 import cPickle as pickle
+import datetime
 import logging
 import math
 try:
@@ -29,9 +30,12 @@ from google.appengine.ext import deferred
 
 import app
 import backup_model
+import badges
+import badges.util_badges
 import classtime
 import consts
 import experiments
+import goals.models
 import image_cache
 import layer_cache
 import object_property
@@ -40,6 +44,7 @@ import search
 import setting_model
 import shared_jinja
 import summary_log_models
+import topic_models
 import user_models
 import util
 
@@ -459,7 +464,7 @@ class VideoLog(backup_model.BackupModel):
 
         video_points_previous = points.VideoPointCalculator(user_video)
 
-        action_cache = last_action_cache.LastActionCache.get_for_user_data(user_data)
+        action_cache = badges.last_action_cache.LastActionCache.get_for_user_data(user_data)
 
         last_video_log = action_cache.get_last_video_log()
 
@@ -499,7 +504,7 @@ class VideoLog(backup_model.BackupModel):
 
             first_topic = True
             for topic in video_topics:
-                user_topic = UserTopic.get_for_topic_and_user_data(topic, user_data, insert_if_missing=True)
+                user_topic = topic_models.UserTopic.get_for_topic_and_user_data(topic, user_data, insert_if_missing=True)
                 user_topic.title = topic.standalone_title
                 user_topic.seconds_watched += seconds_watched
                 user_topic.last_watched = datetime.datetime.now()
@@ -510,7 +515,7 @@ class VideoLog(backup_model.BackupModel):
                 if first_topic:
                     action_cache.push_video_log(video_log)
 
-                util_badges.update_with_user_topic(
+                badges.util_badges.update_with_user_topic(
                         user_data,
                         user_topic,
                         include_other_badges=first_topic,
@@ -542,7 +547,7 @@ class VideoLog(backup_model.BackupModel):
             ])
         video_log.is_video_completed = user_video.completed
 
-        goals_updated = GoalList.update_goals(user_data,
+        goals_updated = goals.models.GoalList.update_goals(user_data,
             lambda goal: goal.just_watched_video(user_data, user_video, just_finished_video))
 
         if video_points_received > 0:
