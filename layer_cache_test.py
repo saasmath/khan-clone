@@ -1,8 +1,10 @@
-import layer_cache
-import request_cache as cachepy
 from google.appengine.api import memcache
 from google.appengine.ext import db
+
+import layer_cache
+import request_cache as cachepy
 from testutil import GAEModelTestCase
+from testutil import testsize
 
 try:
     import unittest2 as unittest
@@ -52,6 +54,7 @@ class LayerCacheMemcacheTest(LayerCacheTest):
         memcache.delete(self.key + "__chunk1__")
         self.assertEqualTruncateError("a", self.cache_func("a"))
 
+    @testsize.medium()
     def test_should_throw_out_result_when_wrong_chunk_is_read(self):
         ''' Tests to make sure results are recalculated when a chunk is corrupt 
         
@@ -70,6 +73,7 @@ class LayerCacheMemcacheTest(LayerCacheTest):
         self.cache_func(self.huge_string)
         self.assertEqualTruncateError("a", self.cache_func("a"))
     
+    @testsize.medium()
     def test_use_chunks_parameters_forces_chunking_for_small_size(self):
         @layer_cache.cache(layer=layer_cache.Layers.Memcache, use_chunks=True)
         def func(result):
