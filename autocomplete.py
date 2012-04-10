@@ -1,6 +1,6 @@
 import layer_cache
 import topic_models
-from video_models import Video
+import video_models
 from url_model import Url
 from setting_model import Setting
 
@@ -18,7 +18,7 @@ def video_title_dicts(version_number=None):
         "key": str(video.key()),
         "relative_url": "/video/%s" % video.readable_id,
         "id": video.readable_id
-    }, [v for v in Video.get_all_live(version=version) if v is not None])
+    }, [v for v in video_models.Video.get_all_live(version=version) if v is not None])
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "url_title_dicts_%s" % (

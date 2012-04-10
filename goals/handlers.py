@@ -33,7 +33,7 @@ class CreateNewGoal(request_handler.RequestHandler):
     def get(self):
         user_data = UserData.current()
 
-        from exercises import exercise_graph_dict_json
+        from exercises.exercise_util import exercise_graph_dict_json
 
         context = {
             'graph_dict_data': exercise_graph_dict_json(user_data),

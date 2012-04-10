@@ -17,6 +17,7 @@ from custom_exceptions import MissingVideoException, MissingExerciseException, S
 from app import App
 import cookie_util
 
+import goals.models
 from api.jsonify import jsonify
 from gae_bingo.gae_bingo import ab_test
 
@@ -436,8 +437,8 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             template_values['ga_custom_vars'] = superprops_list[0:4]
 
         if user_data:
-            goals = GoalList.get_current_goals(user_data)
-            goals_data = [g.get_visible_data() for g in goals]
+            user_goals = goals.models.GoalList.get_current_goals(user_data)
+            goals_data = [g.get_visible_data() for g in user_goals]
             if goals_data:
                 template_values['global_goals'] = jsonify(goals_data)
 
@@ -478,5 +479,4 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
 import user_models
 import util
-from goals.models import GoalList
 from gandalf import gandalf

@@ -11,7 +11,7 @@ from templatefilters import timesince_ago, seconds_to_time_string
 import exercise_models
 import util
 import logging
-
+import video_models
 
 class Goal(db.Model):
     # data

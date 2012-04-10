@@ -24,14 +24,14 @@ import accuracy_model
 from api import jsonify   # TODO(csilvers): move out of api/?
 import auth.models
 from auth import age_util
-from badges import util_badges
 from counters import user_counter
 from discussion import models_discussion
+import badges
 import facebook_util
 import gae_bingo.models
 import nicknames
 import object_property
-from phantom_users import util_notify
+import phantom_users
 import points
 import request_cache
 import templatetags
@@ -223,7 +223,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @property
     def badge_counts(self):
-        return util_badges.get_badge_counts(self)
+        return badges.util_badges.get_badge_counts(self)
 
     @property
     def prettified_user_email(self):
@@ -816,7 +816,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
         # Check if we crossed an interval of 2500 points
         if self.points % 2500 > (self.points + points) % 2500:
-            util_notify.update(self, user_exercise=None, threshold=True)
+            phantom_users.util_notify.update(self, user_exercise=None, threshold=True)
         self.points += points
 
     def original_points(self):
