@@ -1,5 +1,3 @@
-from coach_resources.coach_request_model import CoachRequest
-import exercise_models
 try:
     import unittest2 as unittest
 except ImportError:
@@ -11,8 +9,10 @@ from google.appengine.ext import db
 # TODO(benkomalo): move away form using testutil.GAEModelTestCase to agar.test.BaseTest
 import custom_exceptions
 import coaches
+import exercise_models
 import phantom_users.phantom_util
 import testutil
+from coach_resources.coach_request_model import CoachRequest
 from user_models import UserData, UniqueUsername
 from testutil import testsize
 
@@ -413,12 +413,13 @@ class UserConsumptionTest(testutil.GAEModelTestCase):
 
         # Signs up!
         jimmy = UserData.insert_for("justjoinedjimmy@gmail.com",
-                                           email="justjoinedjimmy@gmail.com")
+                                    email="justjoinedjimmy@gmail.com")
         phantom.consume_identity(jimmy)
         
         # Make sure we can still see the old user exercises
         shouldbejimmy = UserData.get_from_user_id("justjoinedjimmy@gmail.com")
-        user_exercises = UserExercise.get_for_user_data(shouldbejimmy).fetch(100)
+        user_exercises = (exercise_models.UserExercise.
+                          get_for_user_data(shouldbejimmy).fetch(100))
         self.assertEqual(len(exercises), len(user_exercises))
         for ue in user_exercises:
             self.assertEqual(7, ue.total_done)
