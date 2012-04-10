@@ -12,11 +12,11 @@
     </div>
   </div>
   <div class="subtopic-header">Topics</div>
+  <div class="subtopic-list-container">
   <div class="subtopics-list first">
     {{#each subtopicsA }}
       <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{else}}first{{/if}}">
         <a class="subtopic-link-and-scroll" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
-          {{#if number}}<div class="number">{{ number }}</div>{{/if}}
           <div class="thumb" style="background-image:url('{{ thumbnailLink.thumbUrls.hq }}')"></div>
         <div class="topic-info">
           <div class="topic-title">{{ title }}</div>
@@ -27,7 +27,7 @@
       </div>
     {{/each}}
   </div>
-  <div class="subtopics-list">
+  <div class="subtopics-list second">
     {{#each subtopicsB }}
       <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{else}}first{{/if}}">
         <a class="subtopic-link-and-scroll" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
@@ -40,5 +40,6 @@
         </a>
       </div>
     {{/each}}
+  </div>
   </div>
 </div>
