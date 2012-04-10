@@ -2,16 +2,10 @@ import datetime
 import logging
 import copy
 
-from google.appengine.api import users
-from google.appengine.ext import deferred
-
-from asynctools import AsyncMultiTask, QueryTask
-
 import util
 import exercise_models
 import video_models
 from summary_log_models import LogSummary, LogSummaryTypes
-import activity_summary
 
 def dt_to_utc(dt, timezone_adjustment):
     return dt - timezone_adjustment
@@ -19,53 +13,7 @@ def dt_to_utc(dt, timezone_adjustment):
 def dt_to_ctz(dt, timezone_adjustment):
     return dt + timezone_adjustment
 
-# bulk loads the entire class data for the day
-def reload_class(user_data_coach, dt_start_utc):
-    students_data = user_data_coach.get_students_data()
-    dt_start_utc1 = datetime.datetime(dt_start_utc.year, dt_start_utc.month, dt_start_utc.day)
-
-    for student_data in students_data:
-        deferred.defer(fill_class_summaries_from_logs, user_data_coach, [student_data], dt_start_utc1)
-
-    if dt_start_utc1 != dt_start_utc:
-        dt_start_utc2 =  dt_start_utc1 + datetime.timedelta(days = 1)
-        for student_data in students_data:
-            deferred.defer(fill_class_summaries_from_logs, user_data_coach, [student_data], dt_start_utc2)
-
-#bulk loader of student data into the LogSummaries where there is one LogSummary per day per coach
-#can get in memory trouble if handling a large class - so break it up and send only one student at a time
-def fill_class_summaries_from_logs(user_data_coach, students_data, dt_start_utc):
-    dt_end_utc = dt_start_utc + datetime.timedelta(days = 1)    
-
-   # Asynchronously grab all student data at once
-    async_queries = []
-    for user_data_student in students_data:
-        query_problem_logs = exercise_models.ProblemLog.get_for_user_data_between_dts(user_data_student, dt_start_utc, dt_end_utc)
-        query_video_logs = video_models.VideoLog.get_for_user_data_between_dts(user_data_student, dt_start_utc, dt_end_utc)
-
-        async_queries.append(query_problem_logs)
-        async_queries.append(query_video_logs)
-
-    # Wait for all queries to finish
-    results = util.async_queries(async_queries, limit=10000)
-
-    for i, user_data_student in enumerate(students_data):
-        logging.info("working on student "+str(user_data_student.user))
-        problem_and_video_logs = []
-
-        problem_logs = results[i * 2].get_result()
-        video_logs = results[i * 2 + 1].get_result()
-        
-        for problem_log in problem_logs:
-            problem_and_video_logs.append(problem_log)
-        for video_log in video_logs:
-            problem_and_video_logs.append(video_log)
-
-        problem_and_video_logs = sorted(problem_and_video_logs, key=lambda log: log.time_started())
-
-        if problem_and_video_logs:       
-            LogSummary.add_or_update_entry(user_data_coach, problem_and_video_logs, ClassDailyActivitySummary, LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
-    
+   
 class ClassTimeAnalyzer:
 
     def __init__(self, timezone_offset = 0, downtime_minutes = 30):
