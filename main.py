@@ -37,7 +37,7 @@ import user_util
 import exercise_statistics
 import activity_summary
 import exercises.exercise_util as exercises   # TODO(csilvers): get rid of the 'as'
-import dashboard
+import dashboard.handlers
 import exercisestats.report
 import exercisestats.report_json
 import exercisestats.exercisestats_util
@@ -837,11 +837,11 @@ application = webapp2.WSGIApplication([
     ('/jobs', RedirectToJobvite),
     ('/jobs/.*', RedirectToJobvite),
 
-    ('/dashboard', dashboard.Dashboard),
-    ('/contentdash', dashboard.ContentDashboard),
-    ('/admin/dashboard/record_statistics', dashboard.RecordStatistics),
-    ('/admin/entitycounts', dashboard.EntityCounts),
-    ('/devadmin/contentcounts', dashboard.ContentCountsCSV),
+    ('/dashboard', dashboard.handlers.Dashboard),
+    ('/contentdash', dashboard.handlers.ContentDashboard),
+    ('/admin/dashboard/record_statistics', dashboard.handlers.RecordStatistics),
+    ('/admin/entitycounts', dashboard.handlers.EntityCounts),
+    ('/devadmin/contentcounts', dashboard.handlers.ContentCountsCSV),
 
     ('/sendtolog', SendToLog),
 
@@ -871,8 +871,8 @@ application = webapp2.WSGIApplication([
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
 
     # Stats about appengine
-    ('/stats/dashboard', dashboard.Dashboard),
-    ('/stats/contentdash', dashboard.ContentDashboard),
+    ('/stats/dashboard', dashboard.handlers.Dashboard),
+    ('/stats/contentdash', dashboard.handlers.ContentDashboard),
     ('/stats/memcache', appengine_stats.MemcacheStatus),
 
     ('/robots.txt', robots.RobotsTxt),
