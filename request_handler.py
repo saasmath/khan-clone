@@ -189,8 +189,8 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
     def handle_exception(self, e, *args):
 
-        title = "Oops. We broke our streak."
-        message_html = "We ran into a problem. It's our fault, and we're working on it."
+        title = "Sorry, we can't find what you're looking for."
+        message_html = "This page doesn't seem to be around. <a href='/'>Head to our homepage</a> instead."
         sub_message_html = "This has been reported to us, and we'll be looking for a fix. If the problem continues, feel free to <a href='/reportissue?type=Defect'>send us a report directly</a>."
 
         if type(e) is CapabilityDisabledError:

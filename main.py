@@ -156,6 +156,7 @@ class TopicPage(request_handler.RequestHandler):
         # error(404) sets the status code to 404. Be aware that execution continues
         # after the .error call.
         self.error(404)
+        raise Exception("Page not found")
     
 
 # New video view handler.
