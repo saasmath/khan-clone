@@ -18,11 +18,9 @@ import base64
 import cPickle as pickle
 import datetime
 import logging
-import math
 import os
 import re
 
-from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import db
 from google.appengine.ext import deferred

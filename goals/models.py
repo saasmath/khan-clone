@@ -11,7 +11,6 @@ from templatefilters import timesince_ago, seconds_to_time_string
 import exercise_models
 import util
 import logging
-import video_models
 
 class Goal(db.Model):
     # data
@@ -436,3 +435,9 @@ class GoalObjectiveAnyVideo(GoalObjective):
         self.video_readable_id = video.readable_id
         self.description = video.title
         return True
+
+
+# TODO(benkomalo): there is a circular import among the models files that
+# needs to be resolved. Avoid this issue for now by including this at the
+# bottom.
+import video_models

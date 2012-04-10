@@ -19,7 +19,6 @@ A 'video' is what's on a Khan page like
 import cPickle as pickle
 import datetime
 import logging
-import math
 try:
     import json                  # python 2.6 and later
 except ImportError:
@@ -30,7 +29,6 @@ from google.appengine.ext import deferred
 
 import app
 import backup_model
-import badges
 import badges.util_badges
 import classtime
 import consts

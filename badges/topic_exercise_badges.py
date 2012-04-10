@@ -1,5 +1,3 @@
-import string
-
 from google.appengine.ext import db
 
 import object_property

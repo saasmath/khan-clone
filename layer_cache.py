@@ -1,7 +1,5 @@
 # the following 3 imports are needed for blobcache
 from __future__ import with_statement
-from google.appengine.api import files
-from google.appengine.ext import blobstore
 
 import datetime
 import logging
