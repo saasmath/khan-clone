@@ -153,6 +153,9 @@
                                 <button type="submit" class="button end-experiment control-experiment" name="action" 
                                     data-alternative-number="{{number}}" data-canonical-name="{{canonical_name}}" data-replace-with="Picking this..."
                                     value="choose_alternative">End experiment, picking this</button>
+                                <button type="submit" class="button preview-alternative" name="action" 
+                                    data-alternative-number="{{number}}" data-canonical-name="{{canonical_name}}"
+                                    value="preview_alternative">Preview This</button>
                             {{/live}}
 
                             {{#is_short_circuited}}

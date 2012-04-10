@@ -1,6 +1,5 @@
 from profiles import recent_activity
 import logging
-import models
 import points
 import exercise_models
 import video_models
@@ -43,27 +42,6 @@ class SuggestedActivity(object):
                         and entry.seconds_watched > 60),
                 recent_activities)
 
-        # BEGIN TEMP LOOKUPS {
-        # Feb14, 2012 - This is a temporary lookup to the db since
-        # RecentVideoActivity data prior to Feb9 will not have the
-        # is_video_completed flag properly set, and the "recent activity window"
-        # can include those older log entries. Delete this code when the window
-        # slides off of those entries.
-        real_list = []
-        for candidate in recent_incomplete_videos:
-            key_name = video_models.UserVideo.get_key_name(candidate.youtube_id,
-                                                     user_data)
-            user_video = video_models.UserVideo.get_by_key_name(key_name)
-            if not user_video:
-                logging.warning("No UserVideo for recently watched vid [%s]" %
-                                candidate.video_title)
-                continue
-            if not user_video.completed:
-                real_list.append(candidate)
-
-        recent_incomplete_videos = real_list
-        # } END TEMP LOOKUPS
-
         max_activities = 2
         suggestions = [SuggestedActivity.from_video_activity(va)
                        for va in recent_incomplete_videos[:max_activities]]
@@ -75,8 +53,8 @@ class SuggestedActivity(object):
                 video_models.UserVideo.video.get_value_for_datastore(uv)
                 for uv in video_models.UserVideo.get_completed_user_videos(user_data)
             ])
-            # STOPSHIP: this results in way too many DB hits - have to figure
-            # out a better way to do this before launch.
+            # TODO(benkomalo): this results in way too many DB hits - have to figure
+            # out a better way to do this.
 
             # Suggest based on upcoming exercises
             for exercise_dict in exercise_graph_dicts:

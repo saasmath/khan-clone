@@ -448,6 +448,7 @@ ul.list li .item .avatar {
 
 a.button, button.button {
   background-color: #edeeed;
+  width: 100%;
   border: 1px solid #c3c4ba;
   font-family: "MuseoSans500", helvetica, arial, sans-serif;
   font-weight: normal;
@@ -468,6 +469,9 @@ a.button:active, button.button:active {
   outline: none;
   margin-top: 1px;
   margin-bottom: -1px;
+}
+a.button, button.button.previewing {
+  background-color: #9f9;
 }
 
 .form div.left {
