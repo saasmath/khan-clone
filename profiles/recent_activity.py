@@ -1,7 +1,8 @@
 import datetime
 
 import util
-import models
+import exercise_models
+import video_models
 from badges import util_badges, models_badges
 from goals.models import GoalList
 
@@ -39,7 +40,7 @@ class RecentExerciseActivity(RecentActivity):
         self.dt = problem_log.time_done
         self.c_problems = 1
         self.earned_proficiency = problem_log.earned_proficiency
-        self.exercise_display_name = models.Exercise.to_display_name(problem_log.exercise)
+        self.exercise_display_name = exercise_models.Exercise.to_display_name(problem_log.exercise)
 
     def is_complete(self):
         return self.earned_proficiency
@@ -69,7 +70,7 @@ class RecentVideoActivity(RecentActivity):
             self.youtube_id = video_log.youtube_id
         else:
             if video_cache is not None:
-                vkey = models.VideoLog.video.get_value_for_datastore(video_log)
+                vkey = video_models.VideoLog.video.get_value_for_datastore(video_log)
                 video = video_cache.get(vkey)
                 if not video:
                     video = video_log.video
@@ -139,9 +140,9 @@ def recent_goal_activity(goals):
 def recent_activity_for(user_data, dt_start, dt_end):
     query_user_badges = models_badges.UserBadge.get_for_user_data_between_dts(
             user_data, dt_start, dt_end)
-    query_problem_logs = models.ProblemLog.get_for_user_data_between_dts(
+    query_problem_logs = exercise_models.ProblemLog.get_for_user_data_between_dts(
             user_data, dt_start, dt_end)
-    query_video_logs = models.VideoLog.get_for_user_data_between_dts(
+    query_video_logs = video_models.VideoLog.get_for_user_data_between_dts(
             user_data, dt_start, dt_end)
     query_goals = GoalList.get_updated_between_dts(user_data, dt_start, dt_end)
 

@@ -1,13 +1,12 @@
-import math
-
 from jinja2.utils import escape
 
 from api import jsonify as apijsonify
 from templatefilters import slugify
-import models
 import shared_jinja
 import layer_cache
-from models import Exercise
+import exercise_models
+import setting_model
+import topic_models
 import util
 
 
@@ -70,8 +69,8 @@ def exercise_message(exercise, user_exercise_graph, sees_graph=False,
             for prereq in exercise.prerequisites:
                 if prereq not in proficient_exercises:
                     suggested_prereqs.append({
-                          'ka_url': Exercise.get_relative_url(prereq),
-                          'display_name': Exercise.to_display_name(prereq),
+                          'ka_url': exercise_models.Exercise.get_relative_url(prereq),
+                          'display_name': exercise_models.Exercise.to_display_name(prereq),
                           })
         exercise_states['suggested_prereqs'] = apijsonify.jsonify(
                 suggested_prereqs)
@@ -92,14 +91,14 @@ def user_points(user_data):
 @layer_cache.cache_with_key_fxn(lambda browser_id, version_number=None:
     "Templatetags.topic_browser_%s_%s" % (
     browser_id, 
-    version_number if version_number else models.Setting.topic_tree_version()))
+    version_number if version_number else setting_model.Setting.topic_tree_version()))
 def topic_browser(browser_id, version_number=None):
     if version_number:
-        version = models.TopicVersion.get_by_number(version_number)
+        version = topic_models.TopicVersion.get_by_number(version_number)
     else:
         version = None
 
-    root = models.Topic.get_root(version)
+    root = topic_models.Topic.get_root(version)
     if not root:
         return ""
 
@@ -107,8 +106,8 @@ def topic_browser(browser_id, version_number=None):
 
     # TODO(tomyedwab): Remove this once the confusion over the old Developmental Math playlists settles down
     if not version:
-        version = models.TopicVersion.get_default_version()
-    developmental_math = models.Topic(
+        version = topic_models.TopicVersion.get_default_version()
+    developmental_math = topic_models.Topic(
         id="developmental-math",
         version=version,
         title="Developmental Math",
@@ -131,7 +130,7 @@ def topic_browser_tree(tree, level=0):
         if not child.has_children_of_type(["Topic", "Video", "Url"]):
             continue
 
-        if not child.children or child.id in models.Topic._super_topic_ids:
+        if not child.children or child.id in topic_models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
                 continue
@@ -171,7 +170,7 @@ def topic_browser_get_topics(tree, level=0, show_topic_pages=False):
         if not child.has_children_of_type(["Topic", "Video", "Url"]):
             continue
 
-        if not child.children or child.id in models.Topic._super_topic_ids:
+        if not child.children or child.id in topic_models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
                 continue
@@ -223,7 +222,7 @@ def topic_browser_get_topics(tree, level=0, show_topic_pages=False):
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None, show_topic_pages=False:
     "Templatetags.topic_browser_data_%s_%s_v1" % (
-    version_number if version_number else models.Setting.topic_tree_version(),
+    version_number if version_number else setting_model.Setting.topic_tree_version(),
     "ST" if show_topic_pages else "HT"
     ))
 def topic_browser_data(version_number=None, show_topic_pages=False):
@@ -231,11 +230,11 @@ def topic_browser_data(version_number=None, show_topic_pages=False):
         in the page header on the client. """
 
     if version_number:
-        version = models.TopicVersion.get_by_number(version_number)
+        version = topic_models.TopicVersion.get_by_number(version_number)
     else:
         version = None
 
-    root = models.Topic.get_root(version)
+    root = topic_models.Topic.get_root(version)
     if not root:
         return ""
 

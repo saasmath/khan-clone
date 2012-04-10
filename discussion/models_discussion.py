@@ -4,7 +4,7 @@ import logging
 
 from google.appengine.ext import db
 
-import models
+import user_models
 from app import App
 import request_cache
 import layer_cache
@@ -183,7 +183,7 @@ class Feedback(db.Model):
         if self.author_user_id is not None:
             return self.author_user_id
         else:
-            user_data = models.UserData.get_from_user(self.author)
+            user_data = user_models.UserData.get_from_user(self.author)
             if user_data is not None:
                 return user_data.user_id
             else:

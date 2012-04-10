@@ -1,5 +1,5 @@
 from badges import Badge, BadgeCategory
-from models import PromoRecord
+from promo_record_model import PromoRecord
 
 # All badges awarded for various activity related to profile management
 class ProfileCustomizationBadge(Badge):

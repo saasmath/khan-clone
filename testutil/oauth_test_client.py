@@ -33,13 +33,11 @@ if False:
 
 from google.appengine.ext.remote_api import remote_api_stub
 
-# This import needs to happen first to avoid problems with circular
-# imports.  Sigh.
-import models
 from oauth_provider import consts
 from oauth_provider import models_oauth
 from oauth_provider import oauth
 from oauth_provider import stores
+import user_models
 
 
 def _stub_appengine_for_dev_appserver(dev_appserver_url):
@@ -69,7 +67,7 @@ def _create_user(name):
     """Creates a user with the given username, and an email/pw based on it."""
     email = name + '@example.com'
     pw = name + '_password'
-    user_data = models.UserData.insert_for(name, email)
+    user_data = user_models.UserData.insert_for(name, email)
     # Don't reset the password if it's already set as we expect, since
     # resetting the password can invalidate keys.
     if not user_data.validate_password(pw):
@@ -231,7 +229,7 @@ def fetch_via_oauth(url_to_fetch,
           This is who the oauth process will say is logging in (the
           'resource provider').  This user must exist in the khan db.
           You can create a user via
-             user_data = models.UserData.insert_for('random_string', 'a@b.com')
+             user_data = user_models.UserData.insert_for('random_string', 'a@b.com')
              user_data.set_password('password')
           If you pass in None, we will use an 'internal' user we create.
 

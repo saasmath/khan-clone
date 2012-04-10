@@ -11,7 +11,7 @@ from webapp2_extras import jinja2
 
 # Bring in our globally available custom templates and tags.
 # When possible, we now use jinja macros instead of these global tags.
-from models import UserData
+from user_models import UserData
 import templatetags
 import templatefilters
 import avatars.templatetags
