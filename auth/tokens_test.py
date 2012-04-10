@@ -7,6 +7,7 @@ from agar.test import BaseTest
 import auth.tokens as tokens
 import testutil
 import user_models
+from testutil import testsize
 
 try:
     import unittest2 as unittest
@@ -94,6 +95,7 @@ class TokenTests(BaseTest):
         time_to_expiry = datetime.timedelta(30)
         self.assertTrue(parsed.is_valid(u, time_to_expiry, clock))
 
+    @testsize.medium()
     def test_pw_reset_token_should_be_single_use(self):
         clock = testutil.MockDatetime()
         u = self.make_user("userid1")

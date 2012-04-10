@@ -6,6 +6,7 @@ import auth.tokens
 import user_models
 from app import App
 from auth.models import UserNonce
+from testutil import testsize
 
 
 class CredentialTest(BaseTest):
@@ -23,6 +24,7 @@ class CredentialTest(BaseTest):
         u.put()
         return u
 
+    @testsize.medium()
     def test_password_validation(self):
         u = self.make_user('bob@example.com')
 
@@ -33,6 +35,7 @@ class CredentialTest(BaseTest):
         self.assertFalse(u.validate_password('password'))
         self.assertTrue(u.validate_password('Password1'))
 
+    @testsize.medium()
     def test_updating_password(self):
         u = self.make_user('bob@example.com')
 

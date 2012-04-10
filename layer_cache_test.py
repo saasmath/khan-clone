@@ -1,8 +1,10 @@
-import layer_cache
-import request_cache as cachepy
 from google.appengine.api import memcache
 from google.appengine.ext import db
+
+import layer_cache
+import request_cache as cachepy
 from testutil import GAEModelTestCase
+from testutil import testsize
 
 try:
     import unittest2 as unittest
@@ -52,6 +54,7 @@ class LayerCacheMemcacheTest(LayerCacheTest):
         memcache.delete(self.key + "__chunk1__")
         self.assertEqualTruncateError("a", self.cache_func("a"))
 
+    @testsize.medium()
     def test_should_throw_out_result_when_wrong_chunk_is_read(self):
         ''' Tests to make sure results are recalculated when a chunk is corrupt 
         
@@ -70,6 +73,7 @@ class LayerCacheMemcacheTest(LayerCacheTest):
         self.cache_func(self.huge_string)
         self.assertEqualTruncateError("a", self.cache_func("a"))
     
+    @testsize.medium()
     def test_use_chunks_parameters_forces_chunking_for_small_size(self):
         @layer_cache.cache(layer=layer_cache.Layers.Memcache, use_chunks=True)
         def func(result):
@@ -99,6 +103,12 @@ class LayerCacheDatastoreTest(LayerCacheTest):
             layer_cache.ChunkedResult)
 
         self.assertEqual("a", self.cache_func("b"))
+
+    def test_layer_cache_sets_and_gets_unicode_datastore(self):
+        self.cache_func(u"a")
+        
+        # asserting cached value gets read correctly
+        self.assertEqual(u"a", self.cache_func("b"))
     
     def test_large_datastore_should_chunk_and_return_cached_result(self):        
         self.cache_func(self.big_string)
@@ -112,26 +122,39 @@ class LayerCacheDatastoreTest(LayerCacheTest):
 
     def test_chunked_result_deletion_leaves_no_chunks_behind(self):
         self.cache_func(self.big_string)
+
+        # deleting all chunks
         layer_cache.ChunkedResult.delete(
             self.key, 
             namespace=None,
             cache_class=layer_cache.KeyValueCache)
 
-        # deleting the 2nd chunk ... next time we get it pickle.loads should 
-        # throw an error and the target func will be rexecuted
+        # trying to get the chunks
         values = layer_cache.KeyValueCache.get_multi([
             self.key, 
             self.key + "__chunk1__", 
             self.key + "__chunk2__", 
             self.key + "__chunk3__"], namespace=None)
 
-        # assert that all entries are now gone
+        # assert that all chunks are now gone
         self.assertEqual(0, len(values))
 
         # assert that we will now recalculate target
         self.assertEqualTruncateError("a", self.cache_func("a"))
 
-  
+    def test_chunked_result_delete_removes_empty_items(self):
+        self.cache_func([])
+        
+        # deleting the key
+        layer_cache.ChunkedResult.delete(
+            self.key, 
+            namespace=None,
+            cache_class=layer_cache.KeyValueCache)
+        
+        # assert that we will now recalculate target
+        self.assertEqual("test", self.cache_func("test"))
+ 
+
 class LayerCacheLayerTest(LayerCacheTest):
         
     def test_repopulate_missing_inapp_cache_when_reading_from_memcache(self):

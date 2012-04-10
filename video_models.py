@@ -178,8 +178,7 @@ class Video(search.Searchable, db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda : "Video.get_all_%s" % (setting_model.Setting.cached_content_add_date()),
-        layer=layer_cache.Layers.Memcache)
+        lambda : "Video.get_all_%s" % (setting_model.Setting.cached_content_add_date()))
     def get_all():
         return Video.all().fetch(100000)
 

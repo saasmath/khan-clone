@@ -32,4 +32,4 @@ pip install -r "$WEBSITE_ROOT/requirements.txt"
 # Run commit build verifications
 
 cd "$WEBSITE_ROOT"
-"$MAKE" precommit COVERAGE=1
+"$MAKE" precommit COVERAGE=1 MAX_TEST_SIZE=large

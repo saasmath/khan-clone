@@ -409,7 +409,6 @@ def put_topic(topic_id, version_id = "edit"):
 @cacheable(caching_age=(60 * 60 * 24 * 60))
 @etag(lambda(topic_id): "%s_v%s" % (topic_id, models.Setting.topic_tree_version()))
 @jsonp
-@jsonify
 def get_topic_page_data(topic_id, version_id = "default"):
     """ Retrieve the listing of subtopics and videos for this topic.
         Used on the topic page. """
@@ -418,9 +417,9 @@ def get_topic_page_data(topic_id, version_id = "default"):
     topic = topic_models.Topic.get_by_id(topic_id, version)
 
     if not topic:
-        return {}
+        return u"{}"
 
-    return topic.get_topic_page_data()
+    return topic.get_topic_page_json()
 
 @route("/api/v1/topicversion/<version_id>/maplayout", methods=["GET"])
 @route("/api/v1/maplayout", methods=["GET"])

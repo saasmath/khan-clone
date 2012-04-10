@@ -33,8 +33,7 @@ class Url(db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda :
         "Url.get_all_%s" %
-        Setting.cached_content_add_date(),
-        layer=layer_cache.Layers.Memcache)
+        Setting.cached_content_add_date())
     def get_all():
         return Url.all().fetch(100000)
 
