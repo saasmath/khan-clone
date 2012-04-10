@@ -26,6 +26,26 @@ var KMapEditor = {
     // defaultMapLayout   /api/v1/topicversion/default/maplayout
     // editMapLayout      /api/v1/topicversion/edit/maplayout
     init: function(exerciseData, changeData, defaultMapLayout, editMapLayout) {
+        // resize the map on window resize
+        $(window).resize(function() {
+            KMapEditor.resize();
+        });
+        KMapEditor.resize();
+
+        // indicate which view we're in
+        if (window.location.hash === "#default") {
+            $("span.breadcrumbs_nav>a").removeClass("selected");
+            $("span.breadcrumbs_nav>a#select-view-mode").addClass("selected");
+        } else if (window.location.hash === "#viewedit") {
+            $("span.breadcrumbs_nav>a").removeClass("selected");
+        } else {
+            $("span.breadcrumbs_nav>a").removeClass("selected");
+            $("span.breadcrumbs_nav>a#select-edit-mode").addClass("selected");
+        }
+
+        KMapEditor.enableMapPanning();
+        KMapEditor.enableMarqueeSelect();
+
         // Override .indexOf() to search an array of exercises by name
         exerciseData.indexOf = function() {
             var cache = {};
@@ -52,7 +72,7 @@ var KMapEditor = {
         KMapEditor.defaultVersion = exerciseData;
         KMapEditor.defaultMap = defaultMapLayout.layout;
 
-        // copy the default version and apply the edit version's diff to it
+        // deep copy the default version and apply the edit version's diff to it
         $.extend(true, KMapEditor.editVersion, exerciseData);
         $.each(changeData, function(n, change) {
             if (change.content.kind === "Exercise") {
@@ -62,14 +82,14 @@ var KMapEditor = {
                 });
             }
         });
-        // If there's no edit maplayout, copy the default maplayout
+        // If there's no edit maplayout, deep copy the default maplayout
         if (editMapLayout == null || editMapLayout.layout == null) {
             $.extend(true, KMapEditor.editMap, defaultMapLayout.layout);
         } else {
             KMapEditor.editMap = editMapLayout.layout;
         }
 
-        // copy the edit version to the candidate version
+        // deep copy the edit version to the candidate version
         $.extend(true, KMapEditor.candidateVersion, KMapEditor.editVersion);
         $.extend(true, KMapEditor.candidateMap, KMapEditor.editMap);
 
@@ -145,11 +165,63 @@ var KMapEditor = {
 
         $('#find-exercise').placeholder();
         initAutocomplete("#find-exercise", false, KMapEditor.findExercise, true, {
-            includeVideos: false,
+            includeVideos: true,
             includeExercises: true,
-            addTypePrefix: false
+            addTypePrefix: true
         });
 
+        $("#save-button").click(function() {
+            $(".exercise-properties input").prop("disabled", true);
+            $(".exercise-properties select").prop("disabled", true);
+            $("#save-button").removeClass("green");
+            $("#save-button").addClass("disabled");
+            $("#map-edit-message").text("Saving changes").show();
+            var changedExercises = [];
+            $.each(KMapEditor.candidateVersion, function(n, exercise) {
+                if (KMapEditor.isDirty(exercise)) {
+                    changedExercises.push(exercise);
+                }
+            });
+
+            if (changedExercises.length === 0) {
+                $("#map-edit-message").text("No changes").delay(1000).fadeOut(400);
+                $(".exercise-properties input").prop("disabled", false);
+                $(".exercise-properties select").prop("disabled", false);
+                $("#save-button").addClass("green");
+                $("#save-button").removeClass("disabled");
+            } else {
+                var complete = 0;
+                $.each(changedExercises, function(n, exercise) {
+                    var change = {
+                        "name": exercise.name,
+                        "live": exercise.live,
+                        "h_position": exercise.h_position,
+                        "v_position": exercise.v_position,
+                        "seconds_per_fast_problem": exercise.seconds_per_fast_problem,
+                        "short_display_name": exercise.short_display_name,
+                        "covers": exercise.covers,
+                        "prerequisites": exercise.prerequisites,
+                        "related_videos": exercise.related_videos
+                    };
+
+                    $.ajax({
+                        url: "/api/v1/topicversion/edit/exercises/" + exercise.name,
+                        type: "PUT",
+                        data: JSON.stringify(change),
+                        contentType: "application/json; charset=utf-8",
+                        success: function(result) {
+                            complete += 1;
+                            $("#map-edit-message").text("Saving changes to exercises (" +
+                                    complete + "/" + changedExercises.length + ")");
+                            if (complete >= changedExercises.length) {
+                                location.reload();
+                            }
+                        }
+                    });
+                });
+            }
+            return false;
+        });
 
         // show the default version, edit version, or local changes depending on url fragment
         if (window.location.hash === "#default") {
@@ -160,6 +232,133 @@ var KMapEditor = {
             KMapEditor.editCandidateVersion();
         }
     },
+
+    resize: function() {
+        var containerHeight = $(window).height();
+        var yTopPadding = $("#map-edit-container").offset().top;
+        var newHeight = containerHeight - (yTopPadding + 39);
+        $("#map-edit-container").height(newHeight);
+    },
+
+
+    enableMapPanning: function() {
+        var moved;
+        var startX;
+        var startY;
+        var panning = false;
+
+        $("#map").bind("mousedown", function(event) {
+            if ($(event.target).hasClass("exercise")) {
+                return;
+            }
+            if (!event.shiftKey) {
+                startX = event.pageX - parseInt($("#map").css("margin-left"));
+                startY = event.pageY - parseInt($("#map").css("margin-top"));
+                moved = false;
+                panning = true;
+                return false;
+            }
+        });
+
+        $(document).bind("mousemove mouseup", function(event) {
+            if (panning) {
+                $("#map").css({
+                    "margin-top": event.pageY - startY,
+                    "margin-left": event.pageX - startX
+                });
+                if (event.type === "mouseup") {
+                    panning = false;
+                    if (moved) {
+                        KMapEditor.saveMapCoords();
+                    } else {
+                        KMapEditor.updateForm(null);
+                        $(".exercise-label").removeClass("exercise-selected");
+                        $("img.ex-live").attr({src: KMapEditor.IMG_LIVE});
+                        $("img.ex-dev").attr({src: KMapEditor.IMG_DEV});
+                        KMapEditor.selected = [];
+                    }
+                } else {
+                    moved = true;
+                }
+                return false;
+            }
+        });
+    },
+
+    enableMarqueeSelect: function() {
+        var startX;
+        var startY;
+        var selecting = false;
+        var marquee = $("<div>")
+            .zIndex(1001)
+            .css({
+                "position": "absolute",
+                "border": "1px red dashed"
+            })
+            .hide().appendTo($("#map-container"));
+
+        $("#map").bind("mousedown", function(event) {
+            if ($(event.target).hasClass("exercise")) {
+                return;
+            }
+            if (event.shiftKey) {
+                startX = event.pageX - parseInt($("#map").css("margin-left"));
+                startY = event.pageY - parseInt($("#map").css("margin-top"));
+                selecting = true;
+                marquee.css({
+                    "left": (event.pageX - $("#map-container").offset().left) + "px",
+                    "top": (event.pageY - $("#map-container").offset().top) + "px",
+                    "width": "0",
+                    "height": "0"
+                }).show();
+                return false;
+            }
+        });
+
+        $(document).bind("mousemove mouseup", function(event) {
+            if (selecting) {
+                var minx = Math.min(startX + parseInt($("#map").css("margin-left")), event.pageX);
+                var maxx = Math.max(startX + parseInt($("#map").css("margin-left")), event.pageX);
+                var miny = Math.min(startY + parseInt($("#map").css("margin-top")), event.pageY);
+                var maxy = Math.max(startY + parseInt($("#map").css("margin-top")), event.pageY);
+                marquee.css({
+                    "left": (minx - $("#map-container").offset().left) + "px",
+                    "top": (miny - $("#map-container").offset().top) + "px",
+                    "width": (maxx - minx) + "px",
+                    "height": (maxy - miny) + "px"
+                });
+                if (event.type === "mouseup") {
+                    selecting = false;
+                    marquee.hide();
+                    var elements = $("div.ui-draggable").map(function(n, el) {
+                        if ($(el).offset().left > minx &&
+                            $(el).offset().left < maxx &&
+                            $(el).offset().top > miny &&
+                            $(el).offset().top < maxy) return el;
+                    });
+
+                    KMapEditor.selected = [];
+                    $(".exercise-label").removeClass("exercise-selected");
+                    $("img.ex-live").attr({src: KMapEditor.IMG_LIVE});
+                    $("img.ex-dev").attr({src: KMapEditor.IMG_DEV});
+                    $(elements).each(function(n, el) {
+                        var ex = $(el).data("exercise");
+                        if (ex !== undefined) {
+                            KMapEditor.selected.push(ex.name);
+                            $(el).find(".exercise-label").addClass("exercise-selected");
+                            $(el).find("img").attr({src: ex.live ? KMapEditor.IMG_SELECTED : KMapEditor.IMG_SELECTED_DEV});
+                        }
+                    });
+                    if (KMapEditor.selected.length === 1) {
+                        KMapEditor.updateForm(KMapEditor.selected[0]);
+                    } else {
+                        KMapEditor.updateForm(null);
+                    }
+                }
+            }
+        });
+    },
+
 
     viewDefaultVersion: function() {
         this.exercises = this.defaultVersion;
@@ -511,6 +710,18 @@ var KMapEditor = {
         }
     },
 
+    isDirty: function(exercise) {
+        var oldExercise = KMapEditor.editVersion.get(exercise.name);
+        return (exercise.live !== oldExercise.live ||
+                exercise.h_position !== oldExercise.h_position ||
+                exercise.v_position !== oldExercise.v_position ||
+                exercise.seconds_per_fast_problem !== oldExercise.seconds_per_fast_problem ||
+                exercise.short_display_name !== oldExercise.short_display_name ||
+                JSON.stringify(exercise.covers) !== JSON.stringify(oldExercise.covers) ||
+                JSON.stringify(exercise.prerequisites) !== JSON.stringify(oldExercise.prerequisites) ||
+                JSON.stringify(exercise.related_videos) !== JSON.stringify(oldExercise.related_videos));
+    },
+
     addPath: function(src, dst) {
         var set = this.raphael.set();
         set.push(this.raphael.path(Raphael.format( "M{0},{1}L{2},{3}",
@@ -611,127 +822,6 @@ var KMapEditor = {
 
 
 $(document).ready(function() {
-    var resize = function() {
-        var containerHeight = $(window).height();
-        var yTopPadding = $("#map-edit-container").offset().top;
-        var newHeight = containerHeight - (yTopPadding + 39);
-        $("#map-edit-container").height(newHeight);
-    }
-
-    $(window).resize(function() {
-        resize();
-    });
-
-    resize();
-
-    if (window.location.hash === "#default") {
-        $("span.breadcrumbs_nav>a").removeClass("selected");
-        $("span.breadcrumbs_nav>a#select-view-mode").addClass("selected");
-    } else if (window.location.hash === "#viewedit") {
-        $("span.breadcrumbs_nav>a").removeClass("selected");
-    } else {
-        $("span.breadcrumbs_nav>a").removeClass("selected");
-        $("span.breadcrumbs_nav>a#select-edit-mode").addClass("selected");
-    }
-
-    var moved;
-    var startX;
-    var startY;
-    var scrolling = false;
-    var selecting = false;
-    var marquee = $("<div>")
-        .zIndex(1001)
-        .css({
-            "position": "absolute",
-            "border": "1px red dashed"
-        })
-        .hide().appendTo($("#map-container"));
-    // Make the map drag-scrollable
-    $("#map").bind("mousedown", function(event) {
-        if ($(event.target).hasClass("exercise")) {
-            return;
-        }
-        startX = event.pageX - parseInt($("#map").css("margin-left"));
-        startY = event.pageY - parseInt($("#map").css("margin-top"));
-        moved = false;
-        if (event.shiftKey) {
-            selecting = true;
-            marquee.css({
-                "left": (event.pageX - $("#map-container").offset().left) + "px",
-                "top": (event.pageY - $("#map-container").offset().top) + "px",
-                "width": "0",
-                "height": "0"
-            }).show();
-        } else {
-            scrolling = true;
-        }
-        return false;
-    });
-
-    $(document).bind("mousemove mouseup", function(event) {
-        if (selecting) {
-            var minx = Math.min(startX + parseInt($("#map").css("margin-left")), event.pageX);
-            var maxx = Math.max(startX + parseInt($("#map").css("margin-left")), event.pageX);
-            var miny = Math.min(startY + parseInt($("#map").css("margin-top")), event.pageY);
-            var maxy = Math.max(startY + parseInt($("#map").css("margin-top")), event.pageY);
-            marquee.css({
-                "left": (minx - $("#map-container").offset().left) + "px",
-                "top": (miny - $("#map-container").offset().top) + "px",
-                "width": (maxx - minx) + "px",
-                "height": (maxy - miny) + "px"
-            });
-            if (event.type === "mouseup") {
-                selecting = false;
-                marquee.hide();
-                var elements = $("div.ui-draggable").map(function(n, el) {
-                    if ($(el).offset().left > minx &&
-                        $(el).offset().left < maxx &&
-                        $(el).offset().top > miny &&
-                        $(el).offset().top < maxy) return el;
-                });
-
-                KMapEditor.selected = [];
-                $(".exercise-label").removeClass("exercise-selected");
-                $("img.ex-live").attr({src: KMapEditor.IMG_LIVE});
-                $("img.ex-dev").attr({src: KMapEditor.IMG_DEV});
-                $(elements).each(function(n, el) {
-                    var ex = $(el).data("exercise");
-                    if (ex !== undefined) {
-                        KMapEditor.selected.push(ex.name);
-                        $(el).find(".exercise-label").addClass("exercise-selected");
-                        $(el).find("img").attr({src: ex.live ? KMapEditor.IMG_SELECTED : KMapEditor.IMG_SELECTED_DEV});
-                    }
-                });
-                if (KMapEditor.selected.length === 1) {
-                    KMapEditor.updateForm(KMapEditor.selected[0]);
-                } else {
-                    KMapEditor.updateForm(null);
-                }
-            }
-        }
-        if (scrolling) {
-            $("#map").css({
-                "margin-top": event.pageY - startY,
-                "margin-left": event.pageX - startX
-            });
-            if (event.type === "mouseup") {
-                scrolling = false;
-                if (moved) {
-                    KMapEditor.saveMapCoords();
-                } else {
-                    KMapEditor.updateForm(null);
-                    $(".exercise-label").removeClass("exercise-selected");
-                    $("img.ex-live").attr({src: KMapEditor.IMG_LIVE});
-                    $("img.ex-dev").attr({src: KMapEditor.IMG_DEV});
-                    KMapEditor.selected = [];
-                }
-            } else {
-                moved = true;
-            }
-            return false;
-        }
-    });
-
 
     $("#map-edit-message").text("Getting exercise data").show();
     $.getJSON("/api/v1/exercises", function(exerciseData) {
@@ -748,66 +838,5 @@ $(document).ready(function() {
         });
     });
 
-
-    $("a#save-button").click(function() {
-        $(".exercise-properties input").prop("disabled", true);
-        $(".exercise-properties select").prop("disabled", true);
-        $("#save-button").removeClass("green");
-        $("#save-button").addClass("disabled");
-        $("#map-edit-message").text("Saving changes").show();
-        var changedExercises = [];
-        $.each(KMapEditor.candidateVersion, function(n, exercise) {
-            var oldExercise = KMapEditor.editVersion.get(exercise.name);
-            if (exercise.live !== oldExercise.live ||
-                    exercise.h_position !== oldExercise.h_position ||
-                    exercise.v_position !== oldExercise.v_position ||
-                    exercise.seconds_per_fast_problem !== oldExercise.seconds_per_fast_problem ||
-                    exercise.short_display_name !== oldExercise.short_display_name ||
-                    JSON.stringify(exercise.covers) !== JSON.stringify(oldExercise.covers) ||
-                    JSON.stringify(exercise.prerequisites) !== JSON.stringify(oldExercise.prerequisites) ||
-                    JSON.stringify(exercise.related_videos) !== JSON.stringify(oldExercise.related_videos)) {
-                changedExercises.push(exercise);
-            }
-        });
-
-        if (changedExercises.length === 0) {
-            $("#map-edit-message").text("No changes").delay(1000).fadeOut(400);
-            $(".exercise-properties input").prop("disabled", false);
-            $(".exercise-properties select").prop("disabled", false);
-            $("#save-button").addClass("green");
-            $("#save-button").removeClass("disabled");
-        } else {
-            var complete = 0;
-            $.each(changedExercises, function(n, exercise) {
-                var change = {
-                    "name": exercise.name,
-                    "live": exercise.live,
-                    "h_position": exercise.h_position,
-                    "v_position": exercise.v_position,
-                    "seconds_per_fast_problem": exercise.seconds_per_fast_problem,
-                    "short_display_name": exercise.short_display_name,
-                    "covers": exercise.covers,
-                    "prerequisites": exercise.prerequisites,
-                    "related_videos": exercise.related_videos
-                };
-
-                $.ajax({
-                    url: "/api/v1/topicversion/edit/exercises/" + exercise.name,
-                    type: "PUT",
-                    data: JSON.stringify(change),
-                    contentType: "application/json; charset=utf-8",
-                    success: function(result) {
-                        ++complete
-                        $("#map-edit-message").text("Saving changes to exercises (" +
-                                complete + "/" + changedExercises.length + ")");
-                        if (complete >= changedExercises.length) {
-                            location.reload();
-                        }
-                    }
-                });
-            });
-        }
-        return false;
-    });
 
 });

@@ -160,12 +160,14 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter, op
         // Customize the display of autocomplete suggestions
         var jLink = $("<a></a>").html(item.label);
         if (options.addTypePrefix) {
-            if (item.kind == "topic")
-                jLink.prepend("<span class='autocomplete-topic'>Topic </span>");
-            else if (item.kind == "video")
-                jLink.prepend("<span class='autocomplete-video'>Video </span>");
-            else if (item.kind == "exercise")
-                jLink.prepend("<span class='autocomplete-exercise'>Exercise </span>");
+            var prefixSpan = $("<span>").prependTo(jLink);
+            if (item.kind === "topic") {
+                prefixSpan.addClass("autocomplete-topic").text("Topic ");
+            } else if (item.kind === "video") {
+                prefixSpan.addClass("autocomplete-video").text("Video ");
+            } else if (item.kind === "exercise") {
+                prefixSpan.addClass("autocomplete-exercise").text("Exercise ");
+            }
         }
 
         jLink.attr("data-tag", "Autocomplete");
