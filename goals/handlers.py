@@ -15,7 +15,7 @@ from google.appengine.api import users
 
 import request_handler
 import user_util
-from knowledgemap import deserializeMapCoords
+from knowledgemap.knowledgemap_util import deserializeMapCoords
 from library import library_content_html
 from user_util import developer_only
 from api.auth.xsrf import ensure_xsrf_cookie

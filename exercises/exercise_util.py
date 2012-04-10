@@ -17,7 +17,7 @@ import request_handler
 import user_util
 import points
 import layer_cache
-import knowledgemap
+import knowledgemap.knowledgemap_util
 import string
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
@@ -297,7 +297,7 @@ class ExerciseAdmin(request_handler.RequestHandler):
 
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data, admin=True),
-            'map_coords': knowledgemap.deserializeMapCoords(),
+            'map_coords': knowledgemap.knowledgemap_util.deserializeMapCoords(),
             }
 
         self.render_jinja2_template('exerciseadmin.html', template_values)

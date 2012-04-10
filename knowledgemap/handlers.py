@@ -3,7 +3,7 @@ from gae_bingo.gae_bingo import bingo, ab_test
 import user_models
 import exercise_models
 import request_handler
-from knowledgemap import deserializeMapCoords, serializeMapCoords
+from knowledgemap_util import deserializeMapCoords, serializeMapCoords
 from exercises.exercise_util import exercise_graph_dict_json
 from layout import topics_layout
 from api.jsonify import jsonify
