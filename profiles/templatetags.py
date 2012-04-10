@@ -2,7 +2,7 @@ import os
 
 import shared_jinja
 
-from profiles import focus_graph, activity_graph, exercises_over_time_graph, exercise_problems_graph, recent_activity
+from profiles import focus_graph, activity_graph, exercises_over_time_graph, exercise_problems_graph
 from profiles import class_exercises_over_time_graph, class_energy_points_per_minute_graph, class_time_graph
 
 from urlparse import urlunparse

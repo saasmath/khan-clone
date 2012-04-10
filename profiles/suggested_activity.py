@@ -1,6 +1,5 @@
 from profiles import recent_activity
 import logging
-import models
 import points
 import exercise_models
 import video_models

@@ -17,7 +17,6 @@ import request_handler
 import user_util
 from knowledgemap.knowledgemap_util import deserializeMapCoords
 from library import library_content_html
-from user_util import developer_only
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import create_phantom
 from user_models import UserData

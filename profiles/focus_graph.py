@@ -1,12 +1,9 @@
 import datetime
-import time
-import logging
 
 from templatefilters import seconds_to_time_string, pluralize
 
 import exercise_models
 import summary_log_models
-import util
 import activity_summary
 
 def get_topic_focus_data(daily_activity_logs, dt_start_utc, dt_end_utc):
