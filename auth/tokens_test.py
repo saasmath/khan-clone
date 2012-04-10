@@ -5,8 +5,8 @@ from app import App
 from agar.test import BaseTest
 
 import auth.tokens as tokens
-import models
 import testutil
+import user_models
 from testutil import testsize
 
 try:
@@ -48,7 +48,7 @@ class TokenTests(BaseTest):
         super(TokenTests, self).tearDown()
 
     def make_user(self, user_id, credential_version=None):
-        u = models.UserData.insert_for(user_id, user_id)
+        u = user_models.UserData.insert_for(user_id, user_id)
         u.credential_version = credential_version
         u.put()
         return u

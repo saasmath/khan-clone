@@ -5,7 +5,7 @@ from google.appengine.api import users
 import user_util
 import util
 from app import App
-from models import UserData
+from user_models import UserData
 from common_core.models import CommonCoreMap
 import request_handler
 import itertools

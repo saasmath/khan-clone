@@ -9,7 +9,7 @@ import layer_cache
 import urllib
 import urllib2
 
-from models import Setting
+from setting_model import Setting
 
 import request_handler
 import user_util

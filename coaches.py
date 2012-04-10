@@ -12,7 +12,8 @@ import util
 import user_util
 import request_handler
 
-from models import UserData, CoachRequest, StudentList
+from user_models import UserData, StudentList
+from coach_resources.coach_request_model import CoachRequest
 from badges import util_badges
 
 from profiles.util_profile import ExercisesOverTimeGraph, ExerciseProblemsGraph

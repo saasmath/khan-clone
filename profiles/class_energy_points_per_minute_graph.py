@@ -6,7 +6,6 @@ try:
 except ImportError:
     import simplejson as json
 
-import models
 import util
 
 def class_energy_points_per_minute_update(user_data, student_list):

@@ -1,4 +1,4 @@
-import models   # TODO(csilvers): fix this circular import
+import exercise_models
 from notifications import UserNotifier
 import request_handler
 import user_util
@@ -21,7 +21,7 @@ def update(user_data, user_exercise, threshold=False, isProf=False, gotBadge=Fal
 
     if user_exercise != None:
         numquest = user_exercise.total_done
-        prof = str(models.Exercise.to_display_name(user_exercise.exercise))
+        prof = str(exercise_models.Exercise.to_display_name(user_exercise.exercise))
 
     numbadge = user_data.badges
     numpoint = user_data.points

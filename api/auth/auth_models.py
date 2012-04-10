@@ -71,9 +71,6 @@ class OAuthMap(db.Model):
         valid. Returns (None, None) if no valid user is found.
         
         """
-
-        from models import UserData
-
         if self.uses_password():
             user_data = auth.tokens.AuthToken.get_user_for_value(
                     self.khan_auth_token, UserData.get_from_user_id)
