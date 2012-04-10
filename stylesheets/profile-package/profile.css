@@ -856,7 +856,7 @@ a[rel="goals"] {
 a[rel="community coaches"] {
     background: transparent url(/images/profile-icons/user-silhouette.png) no-repeat 4px 50%;
 }
-a[rel="community questions"] {
+a[rel="community discussion"] {
     background: transparent url(/images/profile-icons/discussions.png) no-repeat 4px 50%;
 }
 li.profile-tab {
@@ -1137,24 +1137,24 @@ li.profile-tab {
     margin-top: 10px;
 }
 
-#tab-content-questions .graph-picker {
+#tab-content-discussion .graph-picker {
     margin-bottom: 0;
     margin-left: -10px;
     padding-left: 10px;
 }
-#tab-content-questions .question {
+#tab-content-discussion .question {
     line-height: 18px;
     padding: 10px;
     border-bottom: 1px solid #CCC;
     color: #777;
 }
-#tab-content-questions .question.unread {
+#tab-content-discussion .question.unread {
     background-color: #EBF7fB;
 }
-#tab-content-questions .question .discussion-link:hover {
+#tab-content-discussion .question .discussion-link:hover {
     color: #005987;
 }
-#tab-content-questions .question .timeago {
+#tab-content-discussion .question .timeago {
     float: right;
     padding-left: 20px;
     color: #BBB;

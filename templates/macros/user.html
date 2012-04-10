@@ -42,7 +42,7 @@
     {% set profile_root = '/profile' %}
     {% set count = 0 %}
 {% endif %}
-<a class="user-notification" href="{{profile_root}}/questions" title="{{ count }} discussion notification{{count|pluralize}}">
+<a class="user-notification" href="{{profile_root}}/discussion" title="{{ count }} discussion notification{{count|pluralize}}">
     {% if count %}
     <img src="{{ "/images/discussions-hi-16px.png"|static_url }}" class="icon"><span class="notification-bubble">{{ count }}</span>
     {% else %}

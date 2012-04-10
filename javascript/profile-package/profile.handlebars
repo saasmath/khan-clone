@@ -30,8 +30,7 @@
         <li>
             <span class="inactive link-section-header">Community</span>
             <ul class="vertical-tab-list second-tier">
-                <!-- TODO(marcia): Consistentize "questions" vs "discussions" vs "something else" -->
-                <li><a href="{{profileRoot}}/questions" class="tab-link has-icon no-recolor" rel="community questions">Discussion</a></li>
+                <li><a href="{{profileRoot}}/discussion" class="tab-link has-icon no-recolor" rel="community discussion">Discussion</a></li>
                 {{#if profileData.isSelf}}
                 <li><a href="{{profileRoot}}/coaches" class="tab-link has-icon no-recolor" rel="community coaches">Coaches</a></li>
                 {{/if}}
@@ -116,7 +115,7 @@
         </div>
         <div id="tab-content-coaches" rel="coaches">
         </div>
-        <div id="tab-content-questions" rel="questions" style="width: 60%">
+        <div id="tab-content-discussion" rel="discussion" style="width: 60%">
             <div class="graph-picker">
                 Updates to your questions
             </div>

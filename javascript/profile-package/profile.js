@@ -116,7 +116,7 @@ var Profile = {
         "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
         "/vital-statistics/:graph": "showVitalStatistics",
         "/coaches": "showCoaches",
-        "/questions": "showQuestions",
+        "/discussion": "showDiscussion",
 
         // Not associated with any tab highlighting.
         "/settings": "showSettings",
@@ -269,13 +269,13 @@ var Profile = {
             }
         },
 
-        showQuestions: function() {
-            Profile.populateQuestions();
+        showDiscussion: function() {
+            Profile.populateDiscussion();
 
-            $("#tab-content-questions").show()
+            $("#tab-content-discussion").show()
                 .siblings().hide();
 
-            this.activateRelatedTab("community questions");
+            this.activateRelatedTab("community discussion");
             this.updateTitleBreadcrumbs(["Discussion"]);
         },
 
@@ -945,15 +945,15 @@ var Profile = {
         return Profile.coachesDeferred_;
     },
 
-    questionsDeferred_: null,
-    populateQuestions: function() {
-        if (Profile.questionsDeferred_) {
-            return Profile.questionsDeferred_;
+    discussionDeferred_: null,
+    populateDiscussion: function() {
+        if (Profile.discussionDeferred_) {
+            return Profile.discussionDeferred_;
         }
 
         var email = Profile.profile.get("email");
         if (email) {
-            Profile.questionsDeferred_ = $.ajax({
+            Profile.discussionDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/questions",
                 data: {
@@ -973,12 +973,12 @@ var Profile = {
                     // Then reverse to get newest to oldest
                     context.reverse();
 
-                    $("#tab-content-questions")
+                    $("#tab-content-discussion")
                         .append(template(context))
                         .find("div.timeago").timeago();
 
-                    var jelUnread = $("#tab-content-questions").find(".unread");
-                    if (jelUnread.length !== 0) {
+                    var jelUnread = $("#tab-content-discussion").find(".unread");
+                    if (Profile.profile.get("isSelf") && jelUnread.length !== 0) {
                         // TODO(marcia): Polish below
 
                         // Fade out blue highlight on questions w unread answers
@@ -992,7 +992,7 @@ var Profile = {
                                 $("#top-header .user-notification img")
                                     .attr("src", "/images/discussions-lo-16px.png")
                             });
-                        
+
                         // Clear notifications upon viewing them in question list
                         // STOPSHIP(marcia): Uncomment below
 
@@ -1007,11 +1007,11 @@ var Profile = {
                 }
             });
         } else {
-            Profile.questionsDeferred_ = new $.Deferred();
-            Profile.questionsDeferred_.resolve();
+            Profile.discussionDeferred_ = new $.Deferred();
+            Profile.discussionDeferred_.resolve();
         }
 
-        return Profile.questionsDeferred_;
+        return Profile.discussionDeferred_;
     },
 
     populateSuggestedActivity: function(activities) {
