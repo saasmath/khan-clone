@@ -933,24 +933,6 @@ def get_cc_map():
     structured = request.request_bool('structured', default=False)
     return CommonCoreMap.get_all(lightweight, structured)
 
-def fully_populated_playlists():
-    playlists = models.Playlist.get_for_all_topics()
-    video_key_dict = models.Video.get_dict(models.Video.all(), lambda video: video.key())
-
-    video_playlist_query = models.VideoPlaylist.all()
-    video_playlist_query.filter('live_association =', True)
-    video_playlist_key_dict = models.VideoPlaylist.get_key_dict(video_playlist_query)
-
-    for playlist in playlists:
-        playlist.videos = []
-        video_playlists = sorted(video_playlist_key_dict[playlist.key()].values(), key=lambda video_playlist: video_playlist.video_position)
-        for video_playlist in video_playlists:
-            video = video_key_dict[models.VideoPlaylist.video.get_value_for_datastore(video_playlist)]
-            video.position = video_playlist.video_position
-            playlist.videos.append(video)
-
-    return playlists
-
 # Fetches data from YouTube if we don't have it already in the datastore
 @route("/api/v1/videos/<youtube_id>/youtubeinfo", methods=["GET"])
 @api.auth.decorators.developer_required

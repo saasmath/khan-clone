@@ -55,20 +55,6 @@ mapreduce:
     - name: processing_rate
       default: 350
 
-- name: BackfillUserTopicMigration
-  mapper:
-    input_reader: mapreduce.input_readers.DatastoreInputReader
-    handler:  backfill.user_topic_migration
-    params:
-    - name: entity_kind
-      default: models.UserPlaylist
-    - name: shard_count
-      default: 64
-    - name: queue_name
-      default: backfill-mapreduce-queue
-    - name: processing_rate
-      default: 450
-
 - name: CountBustedGoals
   mapper:
     input_reader: mapreduce.input_readers.DatastoreInputReader

@@ -33,7 +33,6 @@ from google.appengine.ext import db
 from topic_models import Topic, TopicVersion
 from video_models import Video
 from url_model import Url
-from obsolete_models import Playlist
 import topic_models
 import video_models
 
@@ -97,25 +96,7 @@ class EditContent(request_handler.RequestHandler):
 
         except urllib2.URLError, e:
             logging.exception("Failed to fetch content from khanacademy.org")
-
-    def topic_migration(self):
-        logging.info("deleting all existing topics")
-        db.delete(topic_models.Topic.all())
-        db.delete(topic_models.TopicVersion.all())
-        db.delete(Url.all())
-
-        version = topic_models.TopicVersion.all().filter("edit =", True).get()
-        if version is None:
-            version = topic_models.TopicVersion.create_new_version()
-            version.edit = True
-            version.put()
-        logging.info("starting migration")
-        create_root(version)
-        logging.info("created root")
-        logging.info("loading playlists")
-        deferred.defer(load_videos, version)
-        print "migration started... progress can be monitored in the logs"
-
+  
     def fix_duplicates(self):
         dry_run = self.request.get('dry_run', False)
         video_list = [v for v in video_models.Video.all()]
@@ -186,137 +167,6 @@ def create_root(version):
             description="All concepts fit into the root of all knowledge",
             id="root",
             version=version)
-
-
-# temporary function to load videos into the topics - will remove after deploy
-def load_videos(version, title=None):
-    root = Topic.get_by_id("root", version)
-                    
-    if title is None:
-        playlist = Playlist.all().order('title').get()
-    else:
-        playlist = Playlist.all().filter('title = ', title).get()
-    
-    title = playlist.title
-    
-    nextplaylist = Playlist.all().filter('title >', title).order('title').get()
-    if nextplaylist:
-        next_title = nextplaylist.title
-
-    playlists = [playlist]
-    # playlists = Playlist.all().order('title').fetch(100000)
-    for i, p in enumerate(playlists):
-        videos = p.get_videos()
-        content_keys = [v.key() for v in videos]
-        added = 0
-        for i, v in enumerate(videos):
-            for e in v.related_exercises():
-                if e.key() not in content_keys:
-                    content_keys.insert(i + added, e.key())
-                    added += 1
-
-        topic = Topic.insert(title=p.title,
-                     parent=root,
-                     description=p.description,
-                     tags=p.tags,
-                     child_keys=content_keys)
-    
-    logging.info("loading " + title)
-    
-    if nextplaylist:
-        deferred.defer(load_videos, version, next_title)
-    else:
-        deferred.defer(hide_topics, version)
-
-
-# temporary function for marking topics not in topics_list.py as
-# hidden - will remove after deploy
-def hide_topics(version):
-    from topics_list import topics_list
-    logging.info("hiding topics")
-
-    root = Topic.get_by_id("root", version)
-    topics = Topic.all().ancestor(root).fetch(10000)
-    for topic in topics:
-        if topic.title not in topics_list:
-            topic.hide = True
-            topic.put()
-        else:
-            topic.hide = False
-            topic.put()
-
-    logging.info("hid topics")
-    deferred.defer(recreate_topic_list_structure)
-
-
-# temporary function for copying the topic structure in topics_list.py
-# will remove after deploy
-def recursive_copy_topic_list_structure(parent, topic_list_part):
-    delete_topics = {}
-    for topic_dict in topic_list_part:
-        logging.info(topic_dict["name"])
-        if "playlist" in topic_dict:
-            topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
-            if topic:
-                logging.info(topic_dict["name"] + " is already created")
-            else:
-                version = TopicVersion.get_edit_version()
-                root = Topic.get_root(version)
-                topic = Topic.get_by_title_and_parent(topic_dict["playlist"], root)
-                if topic:
-                    delete_topics[topic.key()] = topic
-                    logging.info("copying %s to parent %s" %
-                                (topic_dict["name"], parent.title))
-                    topic.copy(title=topic_dict["name"], parent=parent,
-                               standalone_title=topic.title)
-                else:
-                    logging.error("Topic not found! %s" % (topic_dict["playlist"]))
-        else:
-            topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
-            if topic:
-                logging.info(topic_dict["name"] + " is already created")
-            else:
-                logging.info("adding %s to parent %s" %
-                             (topic_dict["name"], parent.title))
-                topic = Topic.insert(title=topic_dict["name"], parent=parent)
-
-        if "items" in topic_dict:
-            delete_topics.update(
-                recursive_copy_topic_list_structure(topic,
-                                                    topic_dict["items"]))
-
-    return delete_topics
-
-
-# temporary function for copying the topic structure in topics_list.py ... will remove after deploy
-def recreate_topic_list_structure():
-    import topics_list
-    logging.info("recreating topic_list structure")
-
-    version = TopicVersion.get_edit_version()
-    root = Topic.get_by_id("root", version)
-    delete_topics = recursive_copy_topic_list_structure(root, topics_list.PLAYLIST_STRUCTURE)
-    for topic in delete_topics.values():
-        topic.delete_tree()
-    deferred.defer(importSmartHistory)
-
-
-# temporary function to load smarthistory the first time during migration
-def importSmartHistory():
-    edit = topic_models.TopicVersion.get_edit_version()
-    ImportSmartHistory.importIntoVersion(edit)
-    edit.set_default_version()
-    new_edit = TopicVersion.create_edit_version()
-
-                
-# temporary function to remove playlist from the fulltext index...
-# will remove after we run it once after it gets deployed
-def removePlaylistIndex():
-    import search
-
-    items = search.StemmedIndex.all(keys_only=True).filter("parent_kind", "Playlist").fetch(10000)
-    db.delete(items)
-
 
 @layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
 def getSmartHistoryContent():

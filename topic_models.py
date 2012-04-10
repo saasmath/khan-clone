@@ -38,7 +38,6 @@ import homepage
 import layer_cache
 import library
 import object_property
-import obsolete_models   # TODO(james): remove this dep
 import request_cache
 import search
 import setting_model
@@ -1667,17 +1666,20 @@ def _change_default_version(version_number, run_code):
 
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
-
-    setting_model.Setting.topic_admin_task_message("Publish: creating new edit version")
-
-    TopicVersion.create_edit_version()
-    logging.info("done creating new edit version")
+    
+    #TODO(james): select only the new videos to be reindexed
+    video_models.Video.reindex()
 
     # update the new number of videos on the homepage
     vids = video_models.Video.get_all_live()
     urls = url_model.Url.get_all_live()
     setting_model.Setting.count_videos(len(vids) + len(urls))
     video_models.Video.approx_count(bust_cache=True)
+
+    setting_model.Setting.topic_admin_task_message("Publish: creating new edit version")
+
+    TopicVersion.create_edit_version()
+    logging.info("done creating new edit version")
 
     _do_set_default_deferred_step(_rebuild_content_caches,
                                   version_number,
