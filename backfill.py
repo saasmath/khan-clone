@@ -1,8 +1,12 @@
+from __future__ import with_statement
+
 import logging
 from mapreduce import operation as op
 import facebook_util
 from google.appengine.ext import db
 import models
+from reconstructor_patch import ReconstructorPatch
+import pickle
 
 
 def check_user_properties(user_data):
@@ -106,3 +110,15 @@ def count_busted_goals(goal):
         yield op.counters.Increment("goals_ok")
     else:
         yield op.counters.Increment("goals_busted_objectives")
+
+
+def fix_busted_goals(goal):
+    if not isinstance(goal.objectives, list):
+        logging.info("Fixing goal with key: %s" % goal.key())
+
+        with ReconstructorPatch():
+            objectives = pickle.loads(goal._entity['objectives'])
+        goal.objectives = objectives
+
+        logging.info("Fixed goal with key: %s" % goal.key())
+        yield op.db.Put(goal)
