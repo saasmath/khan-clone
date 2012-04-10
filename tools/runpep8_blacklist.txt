@@ -62,6 +62,7 @@
 ./api/v0/__init__.py
 ./api/v0/freezer.py
 ./api/v1.py
+./api/v1_utils.py
 ./app.py
 ./appengine_config.py
 ./appengine_stats.py
@@ -115,6 +116,7 @@
 ./bulk_update/handler.py
 ./cachepy.py
 ./classtime.py
+./coach_resources/coach_request_model.py
 ./coach_resources/schools_blog.py
 ./coach_resources/util_coach.py
 ./coaches.py
@@ -127,6 +129,7 @@
 ./counters/user_counter.py
 ./custom_exceptions.py
 ./dashboard/__init__.py
+./dashboard/handlers.py
 ./dashboard/models.py
 ./data_export/get_sqlite3_data.py
 ./decorators.py
@@ -149,11 +152,15 @@
 ./discussion/qa.py
 ./discussion/util_discussion.py
 ./discussion/voting.py
+./exercise_models.py
 ./exercise_statistics.py
+./exercise_video_model.py
 ./exercises/__init__.py
+./exercises/exercise_util.py
 ./exercises/file_contents.py
 ./exercises/handlers.py
 ./exercisestats/__init__.py
+./exercisestats/exercisestats_util.py
 ./exercisestats/models.py
 ./exercisestats/number_trivia.py
 ./exercisestats/report.py
@@ -404,6 +411,7 @@
 ./js_css_packages/templatetags.py
 ./khan-exercises/build/close-old-issues.py
 ./khan-exercises/build/kathjax.py
+./knowledgemap/handlers.py
 ./labs/__init__.py
 ./labs/explorations.py
 ./layer_cache.py
@@ -458,6 +466,7 @@
 ./oauth_provider/stores.py
 ./oauth_provider/utils.py
 ./object_property.py
+./obsolete_models.py
 ./offline/Khan Academy/code/copy_datastore.py
 ./offline/Khan Academy/code/download.py
 ./offline/Khan Academy/code/youtube-dl.py
@@ -465,6 +474,7 @@
 ./offline/setup_DVD.py
 ./offline/unzip.py
 ./offline/upload_individual_videos.py
+./parent_signup_model.py
 ./paypal/__init__.py
 ./phantom_users/cloner.py
 ./phantom_users/phantom_util.py
@@ -496,6 +506,7 @@
 ./search/__init__.py
 ./search/pyporter2/Stemmer.py
 ./secrets.py
+./setting_model.py
 ./shared_jinja.py
 ./smarthistory.py
 ./social/templatetags.py
@@ -503,18 +514,25 @@
 ./stories/__init__.py
 ./subtitle-tools/upload_captions.py
 ./subtitle-tools/upload_unisubs.py
+./summary_log_models.py
 ./summer/__init__.py
 ./summer/models.py
 ./templatefilters.py
 ./templatetags.py
 ./testutil/__init__.py
 ./testutil/gaetasktime.py
+./testutil/oauth_test_client.py
 ./toolkit/__init__.py
+./topic_models.py
 ./topics.py
 ./topics_list.py
+./transaction_util.py
+./url_model.py
+./user_models.py
 ./user_util.py
 ./util.py
 ./util_test.py
+./video_models.py
 ./warmup.py
 ./webapp2_extras/jinja2.py
 ./youtube_sync.py
