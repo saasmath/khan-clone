@@ -1310,7 +1310,8 @@ TopicTreeEditor.AddExistingItemView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        var el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1456,7 +1457,8 @@ TopicTreeEditor.CreateExerciseView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $( this.template( {type: this.type} ) ).appendTo(document.body).get(0);
+        var el = $( this.template( {type: this.type} ) ).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1514,7 +1516,8 @@ TopicTreeEditor.CreateVideoView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        var el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1606,7 +1609,8 @@ TopicTreeEditor.CreateUrlView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        var el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1654,7 +1658,8 @@ TopicTreeEditor.VersionListView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({})).appendTo(document.body).get(0);
+        var el = $(this.template({})).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1709,7 +1714,8 @@ TopicTreeEditor.SearchView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({})).get(0);
+        var el = $(this.template({})).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1831,7 +1837,8 @@ TopicTreeEditor.ImportExportView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({ import: this.options.import })).appendTo(document.body).get(0);
+        var el = $(this.template({ import: this.options.import })).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
