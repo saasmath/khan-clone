@@ -2,6 +2,7 @@ import exercise_models
 from notifications import UserNotifier
 import request_handler
 import user_util
+import user_models
 
 
 def welcome(user_data):
@@ -56,4 +57,4 @@ def update(user_data, user_exercise, threshold=False, isProf=False, gotBadge=Fal
 class ToggleNotify(request_handler.RequestHandler):
     @user_util.open_access
     def post(self):
-        UserNotifier.clear_login()
+        UserNotifier.clear_login_notifications(user_models.UserData.current())

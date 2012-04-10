@@ -44,7 +44,7 @@ class UserNotifier:
     @staticmethod
     def pop_for_user_data(user_data):
         if not user_data:
-            return UserNotifier.empty_notifications()
+            return UserNotifier.get_empty_notifications()
 
         notifications = UserNotifier.get_or_create_notifications(user_data)
 
@@ -57,19 +57,22 @@ class UserNotifier:
         return notifications
 
     @staticmethod
-    def empty_notifications():
+    def get_empty_notifications():
         return { "badges": [], "login": [] }
         
     @staticmethod
-    def clear_login():
-        notifications = UserNotifier.empty_notifications()
+    def clear_login_notifications(user_data):
+        if not user_data:
+            return
+
+        notifications = UserNotifier.get_empty_notifications()
         notifications["badges"] = UserNotifier.pop_for_current_user_data()["badges"]
-        memcache.set(UserNotifier.key_for_user_data(user_models.UserData.current()), notifications)
+        memcache.set(UserNotifier.key_for_user_data(user_data), notifications)
     
     @staticmethod
     def clear_all(user_data):
-        memcache.set(UserNotifier.key_for_user_data(user_data), UserNotifier.empty_notifications())
+        memcache.set(UserNotifier.key_for_user_data(user_data), UserNotifier.get_empty_notifications())
     
     @staticmethod
     def get_or_create_notifications(user_data):
-        return memcache.get(UserNotifier.key_for_user_data(user_data)) or UserNotifier.empty_notifications()
+        return memcache.get(UserNotifier.key_for_user_data(user_data)) or UserNotifier.get_empty_notifications()
