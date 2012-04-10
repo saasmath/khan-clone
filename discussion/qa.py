@@ -1,21 +1,14 @@
-import os
-import logging
-
 from google.appengine.ext import db
 from mapreduce import control
 from mapreduce import operation as op
-
-from collections import defaultdict
 
 import models
 import models_discussion
 import notification
 import util_discussion
 import user_util
-import app
 import util
 import request_handler
-import privileges
 import voting
 from phantom_users.phantom_util import disallow_phantoms
 from rate_limiter import FlagRateLimiter
@@ -46,7 +39,6 @@ class ExpandQuestion(request_handler.RequestHandler):
 class PageQuestions(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
-
         page = 0
         try:
             page = int(self.request.get("page"))
@@ -54,25 +46,14 @@ class PageQuestions(request_handler.RequestHandler):
             pass
 
         video_key = self.request.get("video_key")
-        topic_key = self.request.get("topic_key")
         qa_expand_key = self.request_string("qa_expand_key")
         sort = self.request_int("sort", default=-1)
-
-        try:
-            video = db.get(video_key)
-        except db.BadRequestError:
-            # Temporarily ignore errors caused by cached google pages of non-HR app
-            return
+        video = db.get(video_key)
 
         user_data = models.UserData.current()
 
         if video:
-            try:
-                topic = db.get(topic_key)
-            except db.BadKeyError:
-                topic = video.first_topic()
-
-            template_values = video_qa_context(user_data, video, topic, page, qa_expand_key, sort)
+            template_values = video_qa_context(user_data, video, page, qa_expand_key, sort)
             html = self.render_jinja2_template_to_string("discussion/video_qa_content.html", template_values)
             self.render_json({"html": html, "page": page, "qa_expand_key": qa_expand_key})
 
@@ -177,7 +158,6 @@ class AddQuestion(request_handler.RequestHandler):
 
         question_text = self.request.get("question_text")
         video_key = self.request.get("video_key")
-        topic_key = self.request.get("topic_key")
         video = db.get(video_key)
         question_key = ""
 
@@ -198,8 +178,8 @@ class AddQuestion(request_handler.RequestHandler):
             question.put()
             question_key = question.key()
 
-        self.redirect("/discussion/pagequestions?video_key=%s&topic_key=%s&qa_expand_key=%s" % 
-                (video_key, topic_key, question_key))
+        self.redirect("/discussion/pagequestions?video_key=%s&qa_expand_key=%s" % 
+                (video_key, question_key))
 
 class EditEntity(request_handler.RequestHandler):
     @disallow_phantoms
@@ -210,7 +190,6 @@ class EditEntity(request_handler.RequestHandler):
             return
 
         key = self.request.get("entity_key")
-        topic_key = self.request.get("topic_key")
         text = self.request.get("question_text") or self.request.get("answer_text")
 
         if key and text:
@@ -227,8 +206,8 @@ class EditEntity(request_handler.RequestHandler):
 
                         page = self.request.get("page")
                         video = feedback.video()
-                        self.redirect("/discussion/pagequestions?video_key=%s&topic_key=%s&page=%s&qa_expand_key=%s" % 
-                                        (video.key(), topic_key, page, feedback.key()))
+                        self.redirect("/discussion/pagequestions?video_key=%s&page=%s&qa_expand_key=%s" % 
+                                        (video.key(), page, feedback.key()))
 
                     elif feedback.is_type(models_discussion.FeedbackType.Answer):
 
@@ -317,7 +296,7 @@ class DeleteEntity(request_handler.RequestHandler):
 
         self.redirect("/discussion/flaggedfeedback")
 
-def video_qa_context(user_data, video, topic=None, page=0, qa_expand_key=None, sort_override=-1):
+def video_qa_context(user_data, video, page=0, qa_expand_key=None, sort_override=-1):
     limit_per_page = 5
 
     if page <= 0:
@@ -373,7 +352,6 @@ def video_qa_context(user_data, video, topic=None, page=0, qa_expand_key=None, s
     return {
             "is_mod": user_util.is_current_user_moderator(),
             "video": video,
-            "topic": topic,
             "questions": questions,
             "count_total": count_total,
             "pages": range(1, pages_total + 1),

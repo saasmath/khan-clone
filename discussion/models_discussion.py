@@ -63,7 +63,9 @@ class Feedback(db.Model):
         self.children_cache = [] # For caching each question's answers during render
 
     def clear_cache_for_video(self):
-        layer_cache.BlobCache.delete(Feedback.cache_key_for_video(self.video()), namespace=App.version)
+        layer_cache.ChunkedResult.delete(
+            Feedback.cache_key_for_video(self.video()), namespace=App.version,
+            cache_class=layer_cache.KeyValueCache)
 
     def delete(self):
         db.delete(self)
@@ -143,8 +145,9 @@ class Feedback(db.Model):
 
         if self.is_type(FeedbackType.Answer):
             question = self.question()
-            question.recalculate_score()
-            question.put()
+            if question:
+                question.recalculate_score()
+                question.put()
 
     def recalculate_votes(self):
         self.sum_votes = FeedbackVote.count_votes(self)

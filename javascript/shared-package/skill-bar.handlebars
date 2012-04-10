@@ -1,0 +1,11 @@
+<div class="skill-bar">
+    <div class="fill green" style="width:{{multiply end 100}}%;"></div>
+    <div class="fill gray" style="width:{{multiply start 100}}%;"></div>
+    {{#if reviewing}}
+        <div class="fill orange" style="width:100%;"></div>
+    {{else}}
+        {{#if proficient}}
+        <div class="fill blue {{#if justEarnedProficiency}}just-earned{{/if}}" style="width:100%;"></div>
+        {{/if}}
+    {{/if}}
+</div>

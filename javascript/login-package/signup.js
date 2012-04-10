@@ -62,6 +62,10 @@ Login.initSignupPage = function() {
  * Submits the signup attempt if it passes pre-checks.
  */
 Login.submitSignup = function() {
+    if (Login.submitDisabled_) {
+        return;
+    }
+
     // TODO(benkomalo): fix this at the bday-picker level.
     // "change" events aren't entirely reliable, and the bday-picker code
     // is prone to a bug where it doesn't properly update the hidden
@@ -103,6 +107,7 @@ Login.handleSignupResponse = function(data) {
         var template = Templates.get("login.signup-success");
         var dialogEl = $(template({
                 email: data["email"],
+                resendDetected: data["resendDetected"],
 
                 // On dev servers, the token is sent back down for easy
                 // debugging. This is obviously not available on prod.
@@ -113,6 +118,7 @@ Login.handleSignupResponse = function(data) {
                 backdrop: "static",
                 show: true
             });
+        Login.disableSubmit_();
     } else {
         // Only the e-mail can fail on a server side response from this
         // form.

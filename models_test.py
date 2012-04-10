@@ -1,4 +1,11 @@
-#!/usr/bin/env python
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+from mock import patch
+from agar.test.base_test import BaseTest
+from google.appengine.ext import db
 
 # TODO(benkomalo): move away form using testutil.GAEModelTestCase to agar.test.BaseTest
 import models
@@ -6,11 +13,7 @@ import custom_exceptions
 import coaches
 import phantom_users.phantom_util
 import testutil
-import unittest2
-
-from google.appengine.ext import db
-from mock import patch
-from agar.test.base_test import BaseTest
+from testutil import testsize
 
 
 class UserDataCoachTest(BaseTest):
@@ -330,7 +333,7 @@ class PromoRecordTest(testutil.GAEModelTestCase):
         # Different promo
         self.assertTrue(self.r(p2, u1))
 
-class VideoSubtitlesTest(unittest2.TestCase):
+class VideoSubtitlesTest(unittest.TestCase):
     def test_get_key_name(self):
         kn = models.VideoSubtitles.get_key_name('en', 'YOUTUBEID')
         self.assertEqual(kn, 'en:YOUTUBEID')
@@ -386,6 +389,7 @@ class UserDataCreationTest(testutil.GAEModelTestCase):
         self.assertTrue(self.insert_user("larry2", "tooslow@gmail.com", "larry")
                         is None)
         
+    @testsize.medium()
     def test_creation_with_password(self):
         self.flush([self.insert_user("larry",
                                      "email1@gmail.com",
@@ -405,6 +409,7 @@ class UserConsumptionTest(testutil.GAEModelTestCase):
         exercise.put()
         return exercise
         
+    @testsize.medium()
     def test_user_identity_consumption(self):
         superman = models.UserData.insert_for(
                 "superman@gmail.krypt",

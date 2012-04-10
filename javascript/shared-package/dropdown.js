@@ -114,7 +114,10 @@
         .parent().addClass('open')
     }
   , close: function () {
-      clearMenus()
+      var $this = $(this)
+
+      $this.trigger('close')
+        .parent().removeClass('open')
     }
   }
 

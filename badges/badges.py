@@ -11,7 +11,7 @@ class BadgeCategory(object):
     GOLD = 2 # Earth, "Rare"
     PLATINUM = 3 # Sun, "Epic"
     DIAMOND = 4 # Black Hole, "Legendary"
-    MASTER = 5 # Summative/Academic Achievement
+    MASTER = 5 # Topic/Academic Achievement
 
     _serialize_blacklist = [
             "BRONZE", "SILVER", "GOLD",
@@ -61,7 +61,7 @@ class BadgeCategory(object):
         elif category == BadgeCategory.DIAMOND:
             return "Black Hole badges are legendary and unknown. They are the most unique Khan Academy awards."
         elif category == BadgeCategory.MASTER:
-            return "Challenge Patches are special awards for completing challenge exercises."
+            return "Challenge Patches are special awards for completing topic challenges."
         return ""
 
     @staticmethod
@@ -160,7 +160,7 @@ class Badge(object):
     _serialize_whitelist = [
             "points", "badge_category", "description",
             "safe_extended_description", "name", "user_badges", "icon_src",
-            "is_owned", "objectives", "can_become_goal", "icons",
+            "is_owned", "objectives", "can_become_goal", "icons", "is_retired",
             "hide_context",
             ]
 
@@ -179,13 +179,17 @@ class Badge(object):
         # on the "all badges" page if the badge hasn't been achieved yet
         self.is_teaser_if_unknown = False
 
-        # Hide the badge from all badge lists if it hasn't been achieved yet
-        self.is_hidden_if_unknown = False
-
         self.is_owned = False
         
         # A badge may have an associated goal
         self.is_goal = False
+
+        # Retired badges are disabled for all users except those who've already earned them.
+        # To retire a badge, see RetiredBadge use below.
+        self.is_retired = isinstance(self, RetiredBadge)
+
+        # Hide the badge from all badge lists if it hasn't been achieved yet
+        self.is_hidden_if_unknown = self.is_retired
 
     @staticmethod
     def add_target_context_name(name, target_context_name):
@@ -315,6 +319,23 @@ class Badge(object):
 
     def frequency(self):
         return models_badges.BadgeStat.count_by_badge_name(self.name)
+
+class RetiredBadge(Badge):
+    """ Retired badges are no longer awarded or visible as normal badges. They only appear
+    for users who earned them before they were retired.
+
+    To retire a badge, inherit from RetiredBadge like so:
+        class MonkeyBadge(RetiredBadge)
+        
+    If the retired badge inherits from something other than Badge,
+    then be sure to inherit from RetiredBadge first:
+        class MonkeyBadge(RetiredBadge, AnimalBadge)
+
+    This will set the right method resolution order so is_satisfied_by always
+    returns False but your retired badge can still override methods like extended_description.
+    """
+    def is_satisfied_by(self, *args, **kwargs):
+        return False
 
 class GroupedUserBadge(object):
     """ Represents a set of user badges for any particular type. For example,

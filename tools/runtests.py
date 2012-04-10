@@ -11,15 +11,23 @@ except ImportError:
 
 import xmlrunner
 
-USAGE = """%prog [TEST_PATH] [options]
+USAGE = """%prog [options] [TEST_SPEC]
 
-Runs unit tests for App Engine apps.
+Run unit tests for App Engine apps.
 
-This sets the appropriate Python PATH and environment. Tests files are
-expected to be named with a _test.py suffix.
+This script will set up the Python path and environment. Test files
+are expected to be named with a _test.py suffix.
 
-TEST_PATH   Path to package containing test modules or Python file
-            containing test case.
+TEST_SPEC   Specify tests by directory, file, or dotted name. Omit to
+            use the current directory.
+
+            Directory name: recursively search for files named *_test.py
+
+            File name: find tests in the file.
+
+            Dotted name: find tests specified by the name, e.g.,
+            auth.tokens_test.TimestampTests.test_timestamp_creation,
+            importer.autonow_test
 """
 
 
@@ -48,7 +56,7 @@ def discover_sdk_path():
     sys.path.append(app_engine_path)
 
 
-def main(test_path, should_write_xml):
+def main(test_spec, should_write_xml, max_size):
     if 'SERVER_SOFTWARE' not in os.environ:
         os.environ['SERVER_SOFTWARE'] = 'Development'
     if 'CURRENT_VERSION' not in os.environ:
@@ -61,11 +69,16 @@ def main(test_path, should_write_xml):
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages"))
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages/flask.zip"))
 
+    from testutil import testsize
+    testsize.set_max_size(max_size)
+
     loader = unittest.loader.TestLoader()
-    if test_path.endswith('.py'):
-        suite = loader.loadTestsFromName(file_path_to_module(test_path))
+    if not os.path.exists(test_spec):
+        suite = loader.loadTestsFromName(test_spec)
+    elif test_spec.endswith('.py'):
+        suite = loader.loadTestsFromName(file_path_to_module(test_spec))
     else:
-        suite = loader.discover(test_path, pattern=TEST_FILE_RE)
+        suite = loader.discover(test_spec, pattern=TEST_FILE_RE)
 
     if should_write_xml:
         runner = xmlrunner.XMLTestRunner(verbose=True, output='test-reports')
@@ -75,23 +88,30 @@ def main(test_path, should_write_xml):
     result = runner.run(suite)
     return not result.wasSuccessful()
 
+
 if __name__ == '__main__':
     parser = optparse.OptionParser(USAGE)
     parser.add_option('--sdk', dest='sdk', metavar='SDK_PATH',
                       help='path to the App Engine SDK')
+    parser.add_option('--max-size', dest='max_size', metavar='SIZE',
+                      choices=['small', 'medium', 'large'],
+                      default='medium',
+                      help='run tests this size or smaller ("small", '
+                           '"medium", "large")')
     parser.add_option('--xml', dest='xml', action='store_true',
                       help='write xUnit XML')
+
     options, args = parser.parse_args()
 
     if len(args) == 1:
-        TEST_PATH = args[0]
+        TEST_SPEC = args[0]
     else:
-        TEST_PATH = os.getcwd()
+        TEST_SPEC = os.getcwd()
 
     if options.sdk:
         sys.path.append(options.sdk)
     else:
         discover_sdk_path()
 
-    result = main(TEST_PATH, options.xml)
+    result = main(TEST_SPEC, options.xml, options.max_size)
     sys.exit(result)

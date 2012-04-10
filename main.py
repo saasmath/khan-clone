@@ -21,7 +21,7 @@ from gae_mini_profiler import profiler
 from gae_bingo.middleware import GAEBingoWSGIMiddleware
 import autocomplete
 import coaches
-import knowledgemap
+import knowledgemap.handlers
 import youtube_sync
 import warmup
 import library
@@ -73,6 +73,8 @@ import redirects
 import robots
 from importer.handlers import ImportHandler
 
+from gae_bingo.gae_bingo import bingo, ab_test
+
 class VideoDataTest(request_handler.RequestHandler):
 
     @user_util.developer_only
@@ -86,6 +88,69 @@ def get_mangled_topic_name(topic_name):
     for char in " :()":
         topic_name = topic_name.replace(char, "")
     return topic_name
+
+# Handler that displays a topic page if the URL matches
+# a pre-existing topic. (i.e. /math/algebra or just /algebra)
+# NOTE: Since there is no specific route we are matching,
+# this handler is registered as the default handler, so
+# anything it doesn't recognize should return a 404.
+class TopicPage(request_handler.RequestHandler):
+
+    @staticmethod
+    def show_topic(handler, topic):
+        parent_topic = db.get(topic.parent_keys[0])
+
+        # If the parent is a supertopic, use that instead
+        if parent_topic.id in Topic._super_topic_ids:
+            topic = parent_topic
+        elif not (topic.id in Topic._super_topic_ids or
+                  topic.has_children_of_type(["Video"])):
+            handler.redirect("/", True)
+            return
+
+        template_values = {
+            "main_topic": topic
+        }
+        handler.render_jinja2_template('viewtopic.html', template_values)
+
+    @user_util.open_access
+    @ensure_xsrf_cookie
+    def get(self, path):
+        path_list = path.split('/')
+        if len(path_list) > 0:
+            # Only look at the actual topic ID
+            topic = models.Topic.get_by_id(path_list[-1])
+
+            # Handle a trailing slash
+            if not topic and path_list[-1] == "":
+                topic = models.Topic.get_by_id(path_list[-2])
+
+            if topic:
+                # Begin topic pages A/B test
+                if user_util.is_current_user_developer():
+                    show_topic_pages = "show"
+                else:
+                    show_topic_pages = ab_test("Show topic pages", ["show", "hide"],
+                        ["topic_pages_view_page", "topic_pages_started_video",
+                         "topic_pages_completed_video"])
+                if show_topic_pages == "hide":
+                    self.redirect("/#%s" % topic.id)
+                bingo("topic_pages_view_page")
+                # End topic pages A/B test
+
+                if path != topic.get_extended_slug():
+                    # If the topic ID is found but the path is incorrect,
+                    # redirect the user to the canonical path
+                    self.redirect("/%s" % topic.get_extended_slug(), True)
+                    return
+
+                TopicPage.show_topic(self, topic)
+                return
+
+        # error(404) sets the status code to 404. Be aware that execution continues
+        # after the .error call.
+        self.error(404)
+    
 
 # New video view handler.
 # The URI format is a topic path followed by /v/ and then the video identifier, i.e.:
@@ -615,7 +680,7 @@ application = webapp2.WSGIApplication([
     ('/about/downloads', util_about.ViewDownloads),
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
-    ('/exercisedashboard', exercises.ViewAllExercises),
+    ('/exercisedashboard', knowledgemap.handlers.ViewKnowledgeMap),
 
     ('/stories/submit', stories.SubmitStory),
     ('/stories/?.*', stories.ViewStories),
@@ -630,15 +695,17 @@ application = webapp2.WSGIApplication([
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
-    ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
-    ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
-    ('/review', exercises.ViewExercise),
+    ('/(.*)/e', exercises.ViewExercise),
+    ('/(.*)/e/([^/]*)', exercises.ViewExercise),
+    ('/exercise/(.+)', exercises.ViewExerciseDeprecated), # /exercise/addition_1
+    ('/topicexercise/(.+)', exercises.ViewTopicExerciseDeprecated), # /topicexercise/addition_and_subtraction
+    ('/exercises', exercises.ViewExerciseDeprecated), # /exercises?exid=addition_1
+    ('/(review)', exercises.ViewExercise),
 
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
-    ('/viewexercisesonmap', exercises.ViewAllExercises),
+    ('/viewexercisesonmap', knowledgemap.handlers.ViewKnowledgeMap),
     ('/editexercise', exercises.EditExercise),
     ('/updateexercise', exercises.UpdateExercise),
-    ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
     ('/video/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/v/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
@@ -646,8 +713,7 @@ application = webapp2.WSGIApplication([
     ('/(.*)/v/([^/]*)', ViewVideo),
     ('/reportissue', ReportIssue),
     ('/search', Search),
-    ('/savemapcoords', knowledgemap.SaveMapCoords),
-    ('/saveexpandedallexercises', knowledgemap.SaveExpandedAllExercises),
+    ('/savemapcoords', knowledgemap.handlers.SaveMapCoords),
     ('/crash', Crash),
 
     ('/image_cache/(.+)', ImageCache),
@@ -817,6 +883,11 @@ application = webapp2.WSGIApplication([
     ('/index\.html', PermanentRedirectToHome),
 
     ('/_ah/warmup.*', warmup.Warmup),
+
+    # Topic paths can be anything, so we match everything.
+    # The TopicPage handler will throw a 404 if no page is found.
+    # (For more information see TopicPage handler above)
+    ('/(.*)', TopicPage),
 
 
     ], debug=True)

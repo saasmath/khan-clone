@@ -58,7 +58,7 @@ class UnfinishedExerciseBadge(ExerciseBadge):
         return True
 
     def extended_description(self):
-        return "Answer more than %d problems mostly correctly in an exercise before becoming proficient" % self.problems_required
+        return "Answer more than %d problems mostly correctly in a skill before becoming proficient" % self.problems_required
 
 class SoCloseBadge(UnfinishedExerciseBadge):
 

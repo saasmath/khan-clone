@@ -1,0 +1,29 @@
+<div>
+  <div data-role="header" class="main-header">
+    <div class="topic-video thumbnail_td">
+      <a href="{{ marqueeVideo.href }}" data-tag="Topic Page Root Featured" data-youtube-id="{{ marqueeVideo.youtubeId }}" class="thumbnail_link modal-video">
+        <div class="thumb" style="background-image:url('{{ marqueeVideo.thumbUrls.hq }}')"></div>
+        <div class="thumbnail_label"><div class="thumbnail_desc">{{{ marqueeVideo.descHtml }}}</div><div class="thumbnail_teaser">{{{ marqueeVideo.teaserHtml }}}</div></div>
+      </a>
+    </div>
+    <div class="topic-info">
+      <div class='topic-title'>{{ topic.title }}</div>
+      <div class='topic-desc'>{{{ topic.description }}}</div>
+    </div>
+  </div>
+  <div class="subtopic-header">Topics</div>
+  <div class="subtopics-list">
+    {{#each subtopics }}
+      <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{/if}}">
+        <a class="subtopic-link" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
+          <div class="thumb" style="background-image:url('{{ thumbnailLink.thumbUrls.hq }}')"></div>
+        <div class="topic-info">
+          <div class="topic-title">{{ title }}</div>
+          <div class="topic-description">{{{ ellipsis description descriptionTruncateLength }}}</div>
+          <div class="topic-video-count">Browse {{ childCount }} videos</div>
+        </div>  
+        </a>
+      </div>
+    {{/each}}
+  </div>
+</div>

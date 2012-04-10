@@ -6,7 +6,22 @@ clean:
 	   --exclude 'deploy/node_modules'
 	cd khan-exercises && git clean -xdf
 
-# Run unittests.  If COVERAGE is set, run them in coverage mode.
+# Install dependencies required for development.
+install_deps:
+	pip install -r requirements.txt
+
+# Attempt to update (abort if uncommitted changes found).
+safeupdate:
+	hg pull
+	hg update -c
+
+# Update to the latest source and installed dependencies.
+# Run this as a cron job to keep your source tree up-to-date.
+refresh: safeupdate install_deps ;
+
+# Run unittests.  If COVERAGE is set, run them in coverage mode.  If
+# MAX_TEST_SIZE is set, only tests of this size or smaller are run.
+MAX_TEST_SIZE = medium
 COVERAGE_OMIT = *_test.py
 COVERAGE_OMIT += */google_appengine/*
 COVERAGE_OMIT += agar/*
@@ -22,12 +37,16 @@ COVERAGE_OMIT += webapp2_extras/*
 check:
 	if test -n "$(COVERAGE)"; then  \
 	   coverage run --omit="`echo '$(COVERAGE_OMIT)' | tr ' '  ,`" \
-	      tools/runtests.py --xml && \
+	      tools/runtests.py --max-size="$(MAX_TEST_SIZE)" --xml && \
 	   coverage xml && \
 	   coverage html; \
 	else \
-	   python tools/runtests.py; \
+	   python tools/runtests.py --max-size="$(MAX_TEST_SIZE)"; \
 	fi
+
+# Run the subset of unittests that are fast
+quickcheck:
+	$(MAKE) MAX_TEST_SIZE=small check
 
 # Run lint checks
 lint:
@@ -61,3 +80,6 @@ js:
 css:
 	python deploy/compress.py css
 
+# Package less stylesheets
+less:
+	python deploy/compile_less.py

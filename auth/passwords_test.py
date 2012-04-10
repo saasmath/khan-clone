@@ -1,11 +1,14 @@
-from auth.passwords import *
-import random
 import os
+import random
+
+from auth.passwords import *
+from testutil import testsize
 
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+
 
 class HashingTests(unittest.TestCase):
     def setUp(self):
@@ -21,6 +24,7 @@ class HashingTests(unittest.TestCase):
     def fake_urandom(self, bytes):
         return str(random.getrandbits(8 * bytes))
 
+    @testsize.medium()
     def test_hashing_is_unique(self):
         passwords = ['password',
                      'password1',
@@ -30,6 +34,7 @@ class HashingTests(unittest.TestCase):
                   for pw in passwords]
         self.assertEquals(len(set(hashes)), len(passwords))
 
+    @testsize.medium()
     def test_hashing_is_verifiable(self):
         passwords = ['password',
                      'password1',
@@ -40,4 +45,3 @@ class HashingTests(unittest.TestCase):
             hash = hash_password(pw, salt)
             self.assertTrue(validate_password(pw, salt, hash))
             self.assertFalse(validate_password(pw + 'x', salt, hash))
-

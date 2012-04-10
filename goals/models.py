@@ -275,7 +275,7 @@ class GoalObjective(object):
                 objs.append(GoalObjectiveWatchVideo(desc['video'], user_data))
             elif desc['type'] == "GoalObjectiveAnyExerciseProficiency":
                 objs.append(GoalObjectiveAnyExerciseProficiency(
-                    description="Any exercise"))
+                    description="Any skill"))
             elif desc['type'] == "GoalObjectiveAnyVideo":
                 objs.append(GoalObjectiveAnyVideo(description="Any video"))
         return objs

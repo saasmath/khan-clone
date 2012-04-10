@@ -7,44 +7,8 @@ var Homepage = {
     },
 
     initPlaceholder: function(youtube_id) {
-
         var jelPlaceholder = $("#main-video-placeholder");
-
-        // Once the youtube player is all loaded and ready, clicking the play
-        // button will play inline.
-        $(VideoControls).one("playerready", function() {
-
-            // Before any playing, unveil and play the real youtube player
-            $(VideoControls).one("beforeplay", function() {
-
-                // Use .left to unhide the player without causing any
-                // re-rendering or "pop"-in of the player.
-                $(".player-loading-wrapper").css("left", 0);
-
-                jelPlaceholder.find(".youtube-play").css("visibility", "hidden");
-
-            });
-
-            jelPlaceholder.click(function(e) {
-
-                VideoControls.play();
-                e.preventDefault();
-
-            });
-
-        });
-
-        // Start loading the youtube player immediately,
-        // and insert it wrapped in a hidden container
-        var template = Templates.get("shared.youtube-player");
-
-        jelPlaceholder
-            .parents("#main-video-link")
-                .after(
-                    $(template({"youtubeId": youtube_id}))
-                        .wrap("<div class='player-loading-wrapper'/>")
-                        .parent()
-            );
+        VideoControls.initPlaceholder(jelPlaceholder, {"youtubeId": youtube_id});
     },
 
     initWaypoints: function() {
@@ -115,6 +79,14 @@ var Homepage = {
         });
     },
 
+    /**
+     * Renders the contents of the video lists inside of the topic containers
+     * sent down by the server.
+     *
+     * This logic must be kept in sync with library.py and
+     * library_content_template.html, and changes must increment
+     * library._layout_version.
+     */
     renderLibraryContent: function(topics) {
         var template = Templates.get("homepage.videolist");
         $.each(topics, function(i, topic) {
@@ -131,7 +103,7 @@ var Homepage = {
                 }
             }
 
-            $("#" + topic["id"] + " ol").html(template(topic));
+            $("#" + topic["id"] + "-container ol").html(template(topic));
         });
 
         topics = null;

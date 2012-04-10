@@ -25,6 +25,32 @@ Handlebars.registerHelper("repeat", function(n, options) {
     return ret;
 });
 
+/**
+ * Usage:
+    {{pluralize 1 "dog"}} ==> 1 dog
+    {{pluralize 3 "dog"}} ==> 3 dogs
+    {{pluralize 1 "person"}} ==> 1 person
+    {{pluralize 5 "person"}} ==> 5 people
+
+ * TODO(marcia): Unify w the real pluralize function in
+ * /khan-exercises/utils/word-problems.js
+ */
+Handlebars.registerHelper("pluralize", function(num, word) {
+    if (num === 1) {
+        return num + " " + word;
+    }
+
+    var result = num + " ";
+
+    if (word === "person") {
+        result += "people";
+    } else {
+        result += word + "s";
+    }
+
+    return result;
+});
+
 Handlebars.registerHelper("reverseEach", function(context, block) {
     var result = "";
     for (var i = context.length - 1; i >= 0; i--) {
@@ -32,6 +58,26 @@ Handlebars.registerHelper("reverseEach", function(context, block) {
     }
     return result;
 });
+
+/**
+ * Render an exercise skill-bar with specified ending position and optional
+ * starting position, exercise states, and whether or not proficiency was just
+ * earned and should be animated.
+ */
+Handlebars.registerPartial("small-exercise-icon", Templates.get("shared.small-exercise-icon"));
+Handlebars.registerHelper("skill-bar", function(end, start, exerciseStates, justEarnedProficiency) {
+
+    var template = Templates.get("shared.skill-bar"),
+        context = _.extend({
+                start: parseFloat(start) || 0,
+                end: parseFloat(end) || 0,
+                justEarnedProficiency: !!(justEarnedProficiency)
+            }, 
+            exerciseStates);
+    
+    return template(context);
+
+}); 
 
 /**
  * Return a bingo redirect url
@@ -45,6 +91,10 @@ Handlebars.registerHelper("toBingoHref", function(destination) {
     return gae_bingo.create_redirect_url.call(null, destination, conversionNames);
 });
 
+Handlebars.registerHelper("multiply", function(num1, num2){
+    return (num1 * num2)
+});
+
 Handlebars.registerHelper("toLoginRedirectHref", function(destination) {
     var redirectParam = "/postlogin?continue=" + destination;
     return "/login?continue=" + encodeURIComponent(redirectParam);
@@ -55,4 +105,13 @@ Handlebars.registerHelper("commafy", function(numPoints) {
     return numPoints.toString().replace(/(\d)(?=(\d{3})+$)/g, "$1,");
 });
 
-Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
+// Truncates the text and removes all HTML tags
+Handlebars.registerHelper("ellipsis", function(text, length) {
+    var textStripped = text.replace(/(<([^>]+)>)/ig,"");
+    if (textStripped.length < length) {
+        return textStripped;
+    } else {
+        return textStripped.substr(0, length-3) + "...";
+    }
+});
+

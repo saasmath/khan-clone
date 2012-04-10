@@ -112,11 +112,11 @@ var Profile = {
         "/goals/:type": "showGoals",
         "/goals": "showGoals",
         "/vital-statistics": "showVitalStatistics",
-        "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
+        "/vital-statistics/problems/:exercise": "showExerciseProblems",
         "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
         "/vital-statistics/:graph": "showVitalStatistics",
         "/coaches": "showCoaches",
-        "/questions": "showQuestions",
+        "/discussion": "showDiscussion",
 
         // Not associated with any tab highlighting.
         "/settings": "showSettings",
@@ -125,6 +125,10 @@ var Profile = {
         // If the user types /profile/username/ with a trailing slash
         // it should work, too
         "/": "showDefault",
+
+        // If any old or crazy vital-statistics route is passed that we no longer support
+        // and therefore hasn't matched yet, just show the default vital statistics graph.
+        "/vital-statistics/*path": "showVitalStatistics",
 
         // A minor hack to ensure that if the user navigates to /profile without
         // her username, it still shows the default profile screen. Note that
@@ -169,16 +173,14 @@ var Profile = {
         },
 
         showVitalStatistics: function(graph, exercise, timePeriod) {
-            var graph = graph || "activity",
-                exercise = exercise || "addition_1",
-                timePeriod = timePeriod || "last-week",
+            var exercise = exercise || "addition_1",
                 emailEncoded = encodeURIComponent(USER_EMAIL),
                 hrefLookup = {
                     "activity": "/profile/graph/activity?student_email=" + emailEncoded,
                     "focus": "/profile/graph/focus?student_email=" + emailEncoded,
-                    "exercise-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
-                    "exercise-progress": "/api/v1/user/exercises?email=" + emailEncoded,
-                    "exercise-problems": "/profile/graph/exerciseproblems?" +
+                    "skill-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
+                    "skill-progress": "/api/v1/user/exercises?email=" + emailEncoded,
+                    "problems": "/profile/graph/exerciseproblems?" +
                                             "exercise_name=" + exercise +
                                             "&" + "student_email=" + emailEncoded
                 },
@@ -188,6 +190,8 @@ var Profile = {
                     "last-week": "&dt_start=lastweek&dt_end=today",
                     "last-month": "&dt_start=lastmonth&dt_end=today"
                 },
+                graph = !!(hrefLookup[graph]) ? graph : "activity",
+                timePeriod = !!(timePeriodLookup[timePeriod]) ? timePeriod : "",
                 timeURLParameter = timePeriod ? timePeriodLookup[timePeriod] : "",
                 href = hrefLookup[graph] + timeURLParameter;
 
@@ -204,7 +208,7 @@ var Profile = {
 
             this.activateRelatedTab($("#tab-content-vital-statistics").attr("rel") + " " + graph);
             var prettyGraphName = graph.replace(/-/gi, " ");
-            if (graph == "exercise-problems") {
+            if (graph == "problems") {
                 var prettyExName = exercise.replace(/_/gi, " ");
                 this.updateTitleBreadcrumbs([prettyGraphName, prettyExName]);
             }
@@ -222,7 +226,7 @@ var Profile = {
         },
 
         showExerciseProblems: function(exercise) {
-            this.showVitalStatistics("exercise-problems", exercise);
+            this.showVitalStatistics("problems", exercise);
         },
 
         showVitalStatisticsForTimePeriod: function(graph, timePeriod) {
@@ -265,13 +269,13 @@ var Profile = {
             }
         },
 
-        showQuestions: function() {
-            Profile.populateQuestions();
+        showDiscussion: function() {
+            Profile.populateDiscussion();
 
-            $("#tab-content-questions").show()
+            $("#tab-content-discussion").show()
                 .siblings().hide();
 
-            this.activateRelatedTab("community questions");
+            this.activateRelatedTab("community discussion");
             this.updateTitleBreadcrumbs(["Discussion"]);
         },
 
@@ -414,7 +418,7 @@ var Profile = {
         } else if (graphName === "focus") {
             FocusGraph.render();
             Profile.fLoadedGraph = true;
-        } else if (graphName === "exercise-progress") {
+        } else if (graphName === "skill-progress") {
             Profile.loadGraph("/api/v1/exercises");
         } else {
             ExerciseGraphOverTime.render();
@@ -552,7 +556,7 @@ var Profile = {
                 $("#info-hover-container").hide();
                 // Extract the name from the ID, which has been prefixed.
                 var exerciseName = this.id.substring("exercise-".length);
-                Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
+                Profile.router.navigate("/vital-statistics/problems/" + exerciseName, true);
             });
         }
     },
@@ -941,15 +945,15 @@ var Profile = {
         return Profile.coachesDeferred_;
     },
 
-    questionsDeferred_: null,
-    populateQuestions: function() {
-        if (Profile.questionsDeferred_) {
-            return Profile.questionsDeferred_;
+    discussionDeferred_: null,
+    populateDiscussion: function() {
+        if (Profile.discussionDeferred_) {
+            return Profile.discussionDeferred_;
         }
 
         var email = Profile.profile.get("email");
         if (email) {
-            Profile.questionsDeferred_ = $.ajax({
+            Profile.discussionDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/questions",
                 data: {
@@ -969,15 +973,25 @@ var Profile = {
                     // Then reverse to get newest to oldest
                     context.reverse();
 
-                    $("#tab-content-questions")
+                    $("#tab-content-discussion")
                         .append(template(context))
                         .find("div.timeago").timeago();
 
-                    var jelUnread = $("#tab-content-questions").find(".unread");
-                    if (jelUnread.length !== 0) {
+                    var jelUnread = $("#tab-content-discussion").find(".unread");
+                    if (Profile.profile.get("isSelf") && jelUnread.length !== 0) {
+                        // TODO(marcia): Polish below
+
+                        // Fade out blue highlight on questions w unread answers
                         jelUnread.animate({
                                 "background-color": "#FFF"
                             }, 1000);
+
+                        // Fade out notification in top-header
+                        $("#top-header .notification-bubble")
+                            .fadeOut(500, function() {
+                                $("#top-header .user-notification img")
+                                    .attr("src", "/images/discussions-lo-16px.png")
+                            });
 
                         // Clear notifications upon viewing them in question list
                         // STOPSHIP(marcia): Uncomment below
@@ -993,29 +1007,18 @@ var Profile = {
                 }
             });
         } else {
-            Profile.questionsDeferred_ = new $.Deferred();
-            Profile.questionsDeferred_.resolve();
+            Profile.discussionDeferred_ = new $.Deferred();
+            Profile.discussionDeferred_.resolve();
         }
 
-        return Profile.questionsDeferred_;
+        return Profile.discussionDeferred_;
     },
 
     populateSuggestedActivity: function(activities) {
         var suggestedTemplate = Templates.get("profile.suggested-activity");
 
         var attachProgress = function(activity) {
-            var progress = activity["progress"] || 0;
-            var formattedProgress = progress ?
-                    (100 * progress).toPrecision(4) + "%" :
-                    "not started";
-            activity["streakBar"] = {
-                "proficient": false,
-                "suggested": true,
-                "progressDisplay": formattedProgress,
-                // TODO: is this the right width?
-                "maxWidth": 228,
-                "width": activity["progress"] * 228
-            };
+            activity.progress = activity.progress || 0;
         };
         _.each(activities["exercises"] || [], attachProgress);
         _.each(activities["videos"] || [], attachProgress);

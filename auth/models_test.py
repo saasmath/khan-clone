@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 
 from agar.test.base_test import BaseTest
-from app import App
-from auth.models import UserNonce
+
 import auth.tokens
 import models
+from app import App
+from auth.models import UserNonce
+from testutil import testsize
+
 
 class CredentialTest(BaseTest):
     def setUp(self):
@@ -21,6 +24,7 @@ class CredentialTest(BaseTest):
         u.put()
         return u
 
+    @testsize.medium()
     def test_password_validation(self):
         u = self.make_user('bob@example.com')
 
@@ -31,6 +35,7 @@ class CredentialTest(BaseTest):
         self.assertFalse(u.validate_password('password'))
         self.assertTrue(u.validate_password('Password1'))
 
+    @testsize.medium()
     def test_updating_password(self):
         u = self.make_user('bob@example.com')
 
@@ -44,6 +49,7 @@ class CredentialTest(BaseTest):
 
         # The old token should be invalidated
         self.assertFalse(token.is_authentic(u))
+
 
 class NonceTest(BaseTest):
     def make_user(self, email):

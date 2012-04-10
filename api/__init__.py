@@ -43,9 +43,21 @@ def route(rule, **options):
                 '(It must be the first decorator after all the @route decorators.)'
                 % (func.__module__, func.__name__))
 
+        # Send down a common format for all API errors
         func = format_api_errors(func)
+
+        # Allow cross origin requests to our API so our mobile app
+        # doesn't have any issues. We rely on OAuth parameters for security,
+        # not cross origin policies.
         func = allow_cross_origin(func)
+
+        # Add a header that specifies this response as a Khan API response
+        # so client listeners can detect the response if they'd like.
         func = add_api_header(func)
+
+        # Explicitly specify Cache-Control:no-cache unless otherwise specified
+        # already. We don't want API responses to be cached.
+        func = add_no_cache_header(func)
 
         rule_desc = rule
         for key in options:
@@ -93,6 +105,21 @@ def add_api_header(func):
         return result
 
     return api_header_added
+
+def add_no_cache_header(func):
+    @wraps(func)
+    def no_cache_header_added(*args, **kwargs):
+        result = func(*args, **kwargs)
+
+        if isinstance(result, current_app.response_class):
+            # If this isn't an explicitly cacheable response,
+            # never cache any API results. We don't want private caches.
+            if not result.cache_control.public:
+                result.cache_control.no_cache = True
+
+        return result
+
+    return no_cache_header_added
 
 def allow_cross_origin(func):
     @wraps(func)

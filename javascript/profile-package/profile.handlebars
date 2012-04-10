@@ -23,15 +23,14 @@
             <ul class="vertical-tab-list second-tier">
                 <li><a href="{{profileRoot}}/vital-statistics/activity" class="tab-link has-icon no-recolor" rel="vital-statistics activity">Activity</a></li>
                 <li><a href="{{profileRoot}}/vital-statistics/focus" class="tab-link has-icon no-recolor" rel="vital-statistics focus">Focus</a></li>
-                <li><a href="{{profileRoot}}/vital-statistics/exercise-progress" class="tab-link has-icon no-recolor" rel="vital-statistics exercise-progress">Exercise Progress</a></li>
-                <li><a href="{{profileRoot}}/vital-statistics/exercise-progress-over-time" class="tab-link has-icon no-recolor" rel="vital-statistics exercise-progress-over-time">Progress Over Time</a></li>
+                <li><a href="{{profileRoot}}/vital-statistics/skill-progress" class="tab-link has-icon no-recolor" rel="vital-statistics skill-progress">Skill Progress</a></li>
+                <li><a href="{{profileRoot}}/vital-statistics/skill-progress-over-time" class="tab-link has-icon no-recolor" rel="vital-statistics skill-progress-over-time">Progress Over Time</a></li>
             </ul>
         </li>
         <li>
             <span class="inactive link-section-header">Community</span>
             <ul class="vertical-tab-list second-tier">
-                <!-- TODO(marcia): Consistentize "questions" vs "discussions" vs "something else" -->
-                <li><a href="{{profileRoot}}/questions" class="tab-link has-icon no-recolor" rel="community questions">Discussion</a></li>
+                <li><a href="{{profileRoot}}/discussion" class="tab-link has-icon no-recolor" rel="community discussion">Discussion</a></li>
                 {{#if profileData.isSelf}}
                 <li><a href="{{profileRoot}}/coaches" class="tab-link has-icon no-recolor" rel="community coaches">Coaches</a></li>
                 {{/if}}
@@ -45,7 +44,7 @@
     <div class="profile-notification">
         {{#if profileData.email}}
             <div class="empty-graph">
-                <h2><a href='/#browse'>Watch a video</a> or <a href='/exercisedashboard'>try an exercise</a>!</h2>
+                <h2><a href='/#browse'>Watch a video</a> or <a href='/exercisedashboard'>try a skill</a>!</h2>
                 <p>Once you do, real data will show up here.</p>
             </div>
             <div class="error-graph">
@@ -116,7 +115,7 @@
         </div>
         <div id="tab-content-coaches" rel="coaches">
         </div>
-        <div id="tab-content-questions" rel="questions" style="width: 60%">
+        <div id="tab-content-discussion" rel="discussion" style="width: 60%">
             <div class="graph-picker">
                 Updates to your questions
             </div>

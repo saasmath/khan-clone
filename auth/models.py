@@ -1,7 +1,10 @@
-import auth.passwords as passwords
 from google.appengine.ext import db
+
+import auth.passwords as passwords
 import logging
 import os
+import util
+
 
 class Credential(db.Model):
     """ An abstraction around a password for a given user.
@@ -16,9 +19,10 @@ class Credential(db.Model):
     @staticmethod
     def make_for_user(user_data, raw_password):
         salt = os.urandom(8).encode('hex')
-        return Credential(parent=user_data,
-                          hashed_pass=passwords.hash_password(raw_password, salt),
-                          salt=salt)
+        return Credential(
+                parent=user_data,
+                hashed_pass=passwords.hash_password(raw_password, salt),
+                salt=salt)
 
     @staticmethod
     def retrieve_for_user(user_data):
@@ -27,7 +31,9 @@ class Credential(db.Model):
     def validate_password(self, raw_password):
         # TODO(benkomalo): shortcut this to check if raw_password isn't
         # even a valid password.
-        return passwords.hash_password(raw_password, self.salt) == self.hashed_pass
+        return passwords.hash_password(
+                raw_password, self.salt) == self.hashed_pass
+
 
 class CredentialedUser(db.Model):
     # Randomly generated string representing a "credential version". This
@@ -49,6 +55,7 @@ class CredentialedUser(db.Model):
 
         """
         new_cred_version = os.urandom(16).encode('hex')
+
         def txn():
             c = Credential.retrieve_for_user(self)
             if c is not None:
@@ -57,10 +64,8 @@ class CredentialedUser(db.Model):
             self.credential_version = new_cred_version
             db.put([new_cred, self])
             
-        if db.is_in_transaction():
-            txn()
-        else:
-            db.run_in_transaction(txn)
+        # The Remote API doesn't support queries inside transactions
+        util.ensure_in_transaction(txn)
 
     def validate_password(self, raw_password):
         """ Tests the specified password for this user.
@@ -83,12 +88,12 @@ class CredentialedUser(db.Model):
     def set_password_from_user(self, other_user):
         """ Sets the password for this user to be the same as that of
         another user.
-        
+
         To be used sparingly! This should only be done for user migrations
         and other admin-related items.
-        
+
         """
-        
+
         def txn():
             credential = Credential.retrieve_for_user(other_user)
             cred_copy = None
@@ -101,7 +106,7 @@ class CredentialedUser(db.Model):
                 db.put([cred_copy, self])
             else:
                 db.put(self)
-            
+
         if db.is_in_transaction():
             txn()
         else:
@@ -115,20 +120,21 @@ class CredentialedUser(db.Model):
             credential = Credential.retrieve_for_user(self)
             if credential:
                 credential.delete()
-                
+
             # Delegate to the base class implementation of db.Model.delete
             # to do the actual deletion of this class.
             super(CredentialedUser, self).delete()
-            
+
         if db.is_in_transaction():
             txn()
         else:
             db.run_in_transaction(txn)
 
+
 class UserNonce(db.Model):
     """ A user-specific nonce that can be used for various security related
     purposes.
-    
+
     Nonce values are "typed" so that clients may make multiple nonce values
     for a user and differentiate them from each other. Only one nonce can be
     made per type per user. Nonce values are not guaranteed to be unique
@@ -141,7 +147,7 @@ class UserNonce(db.Model):
     @staticmethod
     def make_for(user_data, type="default"):
         """ Creates a new nonce value for the given user and type.
-        
+
         This will override any existing nonce values for the same user/type.
 
         """

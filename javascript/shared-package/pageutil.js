@@ -785,100 +785,6 @@ $.fx.step.reviewExplode = function(fx) {
         "0 0 " + val + " " + val + " " + "rgba(227, 93, 4, 0.2)");
 };
 
-var Review = {
-    REVIEW_DONE_HTML: "Review&nbsp;Done!",
-
-    highlightDone: function() {
-        if ($("#review-mode-title").hasClass("review-done")) {
-            return;
-        }
-
-        var duration = 800;
-
-        // Make the explosion flare overlap all other elements
-        var overflowBefore = $("#container").css("overflow");
-        $("#container").css("overflow", "visible")
-            .delay(duration).queue(function() {
-                $(this).css("overflow", overflowBefore);
-            });
-
-        // Review hue explosion
-        $("#review-mode-title").stop().addClass("review-done").animate({
-            reviewExplode: 200
-        }, duration).queue(function() {
-            $(this).removeAttr("style").addClass("post-animation");
-        });
-
-        // Temporarily change the color of the review done box to match the explosion
-        $("#review-mode-title > div")
-            .css("backgroundColor", "#F9DFCD")
-            .delay(duration).queue(function() {
-                $(this).removeAttr("style").addClass("review-done");
-            });
-
-        // Huge "REVIEW DONE!" text shrinks to fit in its box
-        $("#review-mode-title h1").html(Review.REVIEW_DONE_HTML).css({
-            fontSize: "100px",
-            right: 0,
-            position: "absolute"
-        }).stop().animate({
-            reviewGlow: 1,
-            opacity: 1,
-            fontSize: 30
-        }, duration).queue(function() {
-            $(this).removeAttr("style");
-        });
-    },
-
-    initCounter: function(reviewsLeftCount) {
-        var digits = "0 1 2 3 4 5 6 7 8 9 ";
-        $("#review-counter-container")
-            .find(".ones").text(new Array(10 + 1).join(digits)).end()
-            .find(".tens").text(digits);
-    },
-
-    updateCounter: function(reviewsLeftCount) {
-
-        // Spin the remaining reviews counter like a slot machine
-        var reviewCounterElem = $("#review-counter-container"),
-            reviewTitleElem = $("#review-mode-title"),
-            oldCount = reviewCounterElem.data("counter") || 0,
-            tens = Math.floor((reviewsLeftCount % 100) / 10),
-            animationOptions = {
-                duration: Math.log(1 + Math.abs(reviewsLeftCount - oldCount)) *
-                    1000 * 0.5 + 0.2,
-                easing: "easeInOutCubic"
-            },
-            lineHeight = parseInt(
-                reviewCounterElem.children().css("lineHeight"), 10);
-
-        reviewCounterElem.find(".ones").animate({
-            top: (reviewsLeftCount % 100) * -lineHeight
-        }, animationOptions);
-
-        reviewCounterElem.find(".tens").animate({
-            top: tens * -lineHeight
-        }, animationOptions);
-
-        if (reviewsLeftCount === 0) {
-            if (oldCount > 0) {
-                // Review just finished, light a champagne supernova in the sky
-                Review.highlightDone();
-            } else {
-                reviewTitleElem
-                    .addClass("review-done post-animation")
-                    .find("h1")
-                    .html(Review.REVIEW_DONE_HTML);
-            }
-        } else if (!reviewTitleElem.hasClass("review-done")) {
-            $("#review-mode-title h1").text(
-                reviewsLeftCount === 1 ? "Exercise Left!" : "Exercises Left");
-        }
-
-        reviewCounterElem.data("counter", reviewsLeftCount);
-    }
-};
-
 var HeaderTopicBrowser = {
     topicBrowserData: null,
     rendered: false,
@@ -893,15 +799,14 @@ var HeaderTopicBrowser = {
                 hoverIntentActive = true;
             },
             out: function() {
-                $(".nav-subheader .dropdown-toggle").dropdown("close");
+                $(".nav-subheader .watch-link.dropdown-toggle").dropdown("close");
                 hoverIntentActive = false;
             },
             timeout: 400
         });
-        $(".nav-subheader .dropdown-toggle")
+        $(".nav-subheader .watch-link.dropdown-toggle")
             .on('mouseenter', function() {
                 if (!HeaderTopicBrowser.rendered) {
-                    gae_bingo.bingo(["topic_browser_clicked_link"]);
                     HeaderTopicBrowser.render();
                 }
                 $(this).dropdown("open");
@@ -910,6 +815,9 @@ var HeaderTopicBrowser = {
                 if (!hoverIntentActive) {
                     $(this).dropdown("close");
                 }
+            })
+            .on('click', function() {
+                location.href = $(this).attr("href");
             });
     },
 
@@ -917,35 +825,69 @@ var HeaderTopicBrowser = {
         this.topicBrowserData = topicBrowserData;
     },
 
-    hoverIntentHandlers: function(timeout, setActive) {
+    hoverIntentHandlers: function(timeout, sensitivityX, setActive) {
         // Intentionally create one closure per <ul> level so each has
         // its own selected element
+        
+        // activeEl is the currently focused <li> element. The focus is
+        // maintained until the out() function is called, even if other
+        // <li> elements get an over() call.
         var activeEl = null;
+
+        // nextEl is the element currently being hovered over in the case
+        // that activeEl isn't giving up focus. When activeEl gives up
+        // focus it moves to the current nextEl.
+        var nextEl = null;
+
         return {
             over: function() {
+                if (this == activeEl) {
+                    return;
+                }
                 if (activeEl) {
-                    $(activeEl).removeClass("hover-active");
+                    // Don't grab focus until activeEl gives it up.
+                    nextEl = this;
+                } else {
+                    // There is no activeEl, so grab focus now.
+                    $(this).addClass("hover-active");
+                    if (setActive) {
+                        // Setting child-active overrides the hover CSS
+                        $(".nav-subheader ul.topic-browser-menu")
+                            .addClass("child-active")
+                            .removeClass("none-active");
+                    }
+                    activeEl = this;
                 }
-                $(this).addClass("hover-active");
-                if (setActive) {
-                    $(".nav-subheader ul.topic-browser-menu")
-                        .addClass("child-active")
-                        .removeClass("none-active");
-                }
-                activeEl = this;
             },
             out: function() {
-                $(this).removeClass("hover-active");
                 if (activeEl == this) {
-                    activeEl = null;
-                    if (setActive) {
-                        $(".nav-subheader ul.topic-browser-menu")
-                            .removeClass("child-active")
-                            .addClass("none-active");
+                    $(this).removeClass("hover-active");
+                    if (nextEl) {
+                        // Transfer the focus to nextEl and keep child-active on
+                        $(nextEl).addClass("hover-active");
+                        activeEl = nextEl;
+                        nextEl = null;
+                    } else {
+                        // Clear the focus
+                        activeEl = null;
+                        if (setActive) {
+                            // Setting none-active re-enables the hover CSS
+                            $(".nav-subheader ul.topic-browser-menu")
+                                .removeClass("child-active")
+                                .addClass("none-active");
+                        }
+                    }
+                } else {
+                    if (this == nextEl) {
+                        // If this element was queued up for focus, clear it
+                        // to prevent an element getting focus and never losing
+                        // it.
+                        nextEl = null;
                     }
                 }
             },
-            timeout: timeout
+            timeout: timeout,
+            directionalSensitivityX: sensitivityX
         };
     },
 
@@ -958,10 +900,10 @@ var HeaderTopicBrowser = {
             // Use hoverIntent to keep the menus selected/open
             // even if you temporarily leave the item bounds.
             el.children("li")
-                .hoverIntent(this.hoverIntentHandlers(200, true))
+                .hoverIntent(this.hoverIntentHandlers(50, 0.5, true))
                 .children("ul")
                     .children("li")
-                        .hoverIntent(this.hoverIntentHandlers(0, false))
+                        .hoverIntent(this.hoverIntentHandlers(0, 0, false))
 
             $("#sitewide-navigation .topic-browser-dropdown").append(el);
 

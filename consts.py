@@ -11,10 +11,10 @@ MAX_PROGRESS_SHOWN = 1.0
 # before energy points bottom out for the exercise
 DEGRADING_EXERCISES_AFTER_PROFICIENCY = 15
 
-# Number of problems after which a non-summative exercise no longer rewards substantive points
+# Number of problems after which a practice exercise no longer rewards substantive points
 # (all problems capped at EXERCISE_POINTS_BASE to avoid constantly just missing
 # proficiency loophole abuse)
-LIMIT_EXERCISES_NON_SUMMATIVE = 150
+LIMIT_EXERCISES = 150
 
 # Minimum number of energy points available for a correct problem
 EXERCISE_POINTS_BASE = 5
@@ -22,8 +22,8 @@ EXERCISE_POINTS_BASE = 5
 # Minimum number of energy points available for a problem in an unfinished exercise
 INCOMPLETE_EXERCISE_POINTS_BASE = 15
 
-# Multiplier for energy points in summative assessment problems
-SUMMATIVE_EXERCISE_MULTIPLIER = 1.25
+# Multiplier for energy points while working in topic mode
+TOPIC_EXERCISE_MULTIPLIER = 3
 
 # Multiplier for energy points in suggested exercise problems
 SUGGESTED_EXERCISE_MULTIPLIER = 3

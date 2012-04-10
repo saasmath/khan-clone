@@ -6,6 +6,7 @@ import urllib
 import logging
 import layer_cache
 import urllib2
+from knowledgemap import layout
 from youtube_sync import youtube_get_video_data_dict
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
@@ -75,6 +76,7 @@ class EditContent(request_handler.RequestHandler):
         return
 
     def topic_update_from_live(self, edit_version):
+        layout.update_from_live(edit_version)
         request = urllib2.Request("http://www.khanacademy.org/api/v1/topictree")
         try:
             opener = urllib2.build_opener()

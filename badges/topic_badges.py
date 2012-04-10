@@ -1,6 +1,6 @@
 from badges import Badge, BadgeContextType
 
-# All badges that may be awarded once-per-Playlist inherit from PlaylistBadge
+# All badges that may be awarded once-per-Topic inherit from TopicBadge
 class TopicBadge(Badge):
 
     def __init__(self):
