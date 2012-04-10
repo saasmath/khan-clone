@@ -578,6 +578,8 @@ class KeyValueCache(db.Model):
                 # persist_across_app_versions=True might still be around with
                 # .pickled=None.  Once we are sure they are all expired we can
                 # delete the "or key_value.pickled is None:"
+                # TODO(james): After May 2nd the default cache time of 25 days
+                # should have ended and the or can be removed.
                 if key_value.pickled or key_value.pickled is None:
                     values[key] = pickle.loads(key_value.value)
                 else:
