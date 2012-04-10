@@ -13,7 +13,11 @@ from google.appengine.api import memcache
 import webapp2
 from webapp2_extras.routes import DomainRoute
 
-import templatetags
+# It's important to have this prior to the imports below that require imports
+# to request_handler.py. The structure of the imports are such that this
+# module causes a lot of circular imports to happen, so including it once out
+# the way at first seems to fix some of those issues.
+import templatetags #@UnusedImport
 
 import devpanel
 import bulk_update.handler
