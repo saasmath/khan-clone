@@ -325,6 +325,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
     events: {
         "click .take-a-break": "toDashboard",
+        "click .skill-proficient": "toDashboard",
         "click .more-stacks": "toMoreStacks",
         "click #show-topic-details": "showTopicDetails"
     },
@@ -646,10 +647,10 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
                     $(Exercises.completeStackView.el).hide();
                     $(Exercises.currentCardView.el)
-                        .find(".stack-stats p, .small-exercise-icon")
+                        .find(".stack-stats p, .small-exercise-icon, .review-explain")
                             .each(Exercises.currentCardView.attachTooltip)
                             .end()
-                        .find(".more-stacks")
+                        .find(".more-stacks, .skill-proficient")
                             .focus();
 
                 }
