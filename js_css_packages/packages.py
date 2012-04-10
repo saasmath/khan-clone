@@ -27,7 +27,7 @@ javascript = {
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "jquery.qtip.js",
-            "../../khan-exercises/utils/underscore.js",
+            "underscore.js",
             "underscore-extras.js",
             "keyhandling.js",
             "backbone.js",
