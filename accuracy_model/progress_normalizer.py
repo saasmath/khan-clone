@@ -2,10 +2,11 @@ import logging
 import itertools
 import math
 
+
 def exponential_fit(X, Y):
     # See http://mathworld.wolfram.com/LeastSquaresFittingExponential.html
-    # TODO(david): This just uses the simpler fit given by equations (3) and (4) of
-    #     above link. Try equations (9) and (10).
+    # TODO(david): This just uses the simpler fit given by equations
+    #     (3) and (4) of the above link. Try equations (9) and (10).
     # TODO(david): Use numpy when supported
 
     def sqr(x):
@@ -25,6 +26,7 @@ def exponential_fit(X, Y):
     b = float(b_num) / den
 
     return math.exp(a), b
+
 
 class InvFnExponentialNormalizer(object):
     """
@@ -72,7 +74,8 @@ class InvFnExponentialNormalizer(object):
                 break
 
         self.A, self.B = exponential_fit(X, Y)
-        # normalize the function output so that it outputs 1.0 at the proficency threshold
+        # normalize the function output so that it outputs 1.0 at the
+        # proficency threshold
         self.A /= self.exponential_estimate(proficiency_threshold)
 
     def exponential_estimate(self, x):
