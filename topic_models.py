@@ -25,7 +25,7 @@ from google.appengine.api import taskqueue
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 
-from api.jsonify import jsonify
+from api import jsonify
 import app
 import autocomplete
 import badges
@@ -34,7 +34,6 @@ import exercise_video_model
 import exercises.exercise_util
 import exercise_models
 from knowledgemap import layout
-import homepage
 import layer_cache
 import library
 import object_property
@@ -406,7 +405,7 @@ class Topic(search.Searchable, db.Model):
             "extended_slug": self.get_extended_slug(),
         }
 
-        return jsonify(topic_info, camel_cased=True)
+        return jsonify.jsonify(topic_info, camel_cased=True)
 
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
@@ -831,6 +830,7 @@ class Topic(search.Searchable, db.Model):
             child_topic_keys = [c for c in new_topic.child_keys if c.kind() == "Topic"]
             child_topics = db.get(child_topic_keys)
             for child in child_topics:
+                # TODO(csilvers): topic not defined; should it be new_topic?
                 child.parent_keys.append(topic.key())
                 child.ancestor_keys.append(topic.key())
 
