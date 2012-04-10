@@ -3,7 +3,7 @@
 from agar.test.base_test import BaseTest
 
 import models
-import exercises.util
+import exercises.exercise_util
 from testutil import testsize
 
 
@@ -187,11 +187,11 @@ def do_problem(user_data, user_exercise, correct=True):
     }
 
     if correct:
-        return exercises.attempt_problem(**options)
+        return exercises.exercise_util.attempt_problem(**options)
     else:
-        exercises.attempt_problem(**dict(options.items() +
+        exercises.exercise_util.attempt_problem(**dict(options.items() +
             {"completed": False}.items()))
-        return exercises.attempt_problem(**dict(options.items() +
+        return exercises.exercise_util.attempt_problem(**dict(options.items() +
             {"attempt_number": 2}.items()))
 
 
