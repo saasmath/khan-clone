@@ -1,7 +1,7 @@
 import layer_cache
+import topic_models
 from video_models import Video
 from url_model import Url
-from topic_models import Topic, TopicVersion
 from setting_model import Setting
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
@@ -9,7 +9,7 @@ from setting_model import Setting
     version_number or Setting.topic_tree_version()))
 def video_title_dicts(version_number=None):
     if version_number:
-        version = TopicVersion.get_by_number(version_number)
+        version = topic_models.TopicVersion.get_by_number(version_number)
     else:
         version = None
 
@@ -25,7 +25,7 @@ def video_title_dicts(version_number=None):
     version_number or Setting.topic_tree_version()))
 def url_title_dicts(version_number=None):
     if version_number:
-        version = TopicVersion.get_by_number(version_number)
+        version = topic_models.TopicVersion.get_by_number(version_number)
     else:
         version = None
 
@@ -41,12 +41,12 @@ def url_title_dicts(version_number=None):
     version_number or Setting.topic_tree_version()))
 def topic_title_dicts(version_number=None):
     if version_number:
-        version = TopicVersion.get_by_number(version_number)
+        version = topic_models.TopicVersion.get_by_number(version_number)
     else:
         version = None
 
-    topic_list = Topic.get_content_topics(version=version)
-    topic_list.extend(Topic.get_super_topics(version=version))
+    topic_list = topic_models.Topic.get_content_topics(version=version)
+    topic_list.extend(topic_models.Topic.get_super_topics(version=version))
 
     return map(lambda topic: {
         "title": topic.standalone_title,

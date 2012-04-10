@@ -17,7 +17,7 @@ import os
 import re
 import urllib
 
-from google.appengine.api import datastore_errors
+from google.appengine.api import datastore_errors, users
 from google.appengine.ext import db
 
 import accuracy_model
@@ -36,7 +36,6 @@ import points
 import request_cache
 import templatetags
 import transaction_util
-import users
 import util
 
 

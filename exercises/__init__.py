@@ -24,9 +24,10 @@ try:
 except ImportError:
     import simplejson as json
 
-from badges import util_badges, last_action_cache
-from phantom_users import util_notify
-from custom_exceptions import QuietException
+import badges
+import phantom_users
+import custom_exceptions
+
 from api.auth.xsrf import ensure_xsrf_cookie
 from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
@@ -135,7 +136,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         # If a non-admin tries to answer a problem out-of-order, just ignore it
         if problem_number != user_exercise.total_done + 1 and not user_util.is_current_user_developer():
             # Only admins can answer problems out of order.
-            raise QuietException("Problem number out of order (%s vs %s) for user_id: %s submitting attempt content: %s with seed: %s" % (problem_number, user_exercise.total_done + 1, user_data.user_id, attempt_content, seed))
+            raise custom_exceptions.QuietException("Problem number out of order (%s vs %s) for user_id: %s submitting attempt content: %s with seed: %s" % (problem_number, user_exercise.total_done + 1, user_data.user_id, attempt_content, seed))
 
         if len(sha1) <= 0:
             raise Exception("Missing sha1 hash of problem content.")
@@ -224,10 +225,10 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 user_data,
                 user_exercise,
                 include_other_badges=True,
-                action_cache=last_action_cache.LastActionCache.get_cache_and_push_problem_log(user_data, problem_log))
+                action_cache=badges.last_action_cache.LastActionCache.get_cache_and_push_problem_log(user_data, problem_log))
 
             # Update phantom user notifications
-            util_notify.update(user_data, user_exercise)
+            phantom_users.util_notify.update(user_data, user_exercise)
 
             bingo([
                 'hints_problems_done',

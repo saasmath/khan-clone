@@ -1,6 +1,6 @@
 import layer_cache
+import topic_models
 from setting_model import Setting
-from topic_models import Topic, TopicVersion
 import request_handler
 import shared_jinja
 import time
@@ -45,7 +45,7 @@ def flatten_tree(tree, parent_topics=[]):
 
     child_parent_topics = parent_topics[:]
 
-    if tree.id in Topic._super_topic_ids:
+    if tree.id in topic_models.Topic._super_topic_ids:
         tree.is_super = True
         child_parent_topics.append(tree)
     elif parent_topics:
@@ -106,15 +106,15 @@ def library_content_html(ajax=False, version_number=None):
     names as those are filled in later asynchronously via the cache.
     """
     if version_number:
-        version = TopicVersion.get_by_number(version_number)
+        version = topic_models.TopicVersion.get_by_number(version_number)
     else:
-        version = TopicVersion.get_default_version()
+        version = topic_models.TopicVersion.get_default_version()
 
-    tree = Topic.get_root(version).make_tree(types = ["Topics", "Video", "Url"])
+    tree = topic_models.Topic.get_root(version).make_tree(types = ["Topics", "Video", "Url"])
     topics = flatten_tree(tree)
 
     # TODO(tomyedwab): Remove this once the confusion over the old Developmental Math playlists settles down
-    developmental_math = Topic(
+    developmental_math = topic_models.Topic(
         id="developmental-math",
         version=version,
         title="Developmental Math",

@@ -29,8 +29,7 @@ from google.appengine.ext import deferred
 
 import app
 import autocomplete
-from badges import topic_exercise_badges
-from badges import util_badges
+import badges
 import decorators
 import exercise_video_model
 import exercises
@@ -46,9 +45,231 @@ import search
 import setting_model
 import templatetags
 import url_model
-import user_data
 import util
 import video_models
+
+
+class TopicVersion(db.Model):
+    """Metadata describing a particular version of the topic-tree data."""
+    created_on = db.DateTimeProperty(indexed=False, auto_now_add=True)
+    updated_on = db.DateTimeProperty(indexed=False, auto_now=True)
+    made_default_on = db.DateTimeProperty(indexed=False)
+    copied_from = db.SelfReferenceProperty(indexed=False)
+    last_edited_by = db.UserProperty(indexed=False)
+    number = db.IntegerProperty(required=True)
+    title = db.StringProperty(indexed=False)
+    description = db.StringProperty(indexed=False)
+    default = db.BooleanProperty(default=False)
+    edit = db.BooleanProperty(default=False)
+
+    _serialize_blacklist = ["copied_from"]
+
+    @property
+    def copied_from_number(self):
+        if self.copied_from:
+            return self.copied_from.number
+
+    @staticmethod
+    def get_by_id(version_id):
+        if version_id is None or version_id == "default":
+            return TopicVersion.get_default_version()
+        if version_id == "edit":
+            return TopicVersion.get_edit_version()
+        number = int(version_id)
+        return TopicVersion.all().filter("number =", number).get()
+
+    @staticmethod
+    def get_by_number(number):
+        return TopicVersion.all().filter("number =", number).get()
+
+    # used by get_unused_content - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda :
+        "TopicVersion.get_all_content_keys_%s" %
+        setting_model.Setting.cached_content_add_date(),
+        layer=layer_cache.Layers.Memcache)
+    def get_all_content_keys():
+        video_keys = video_models.Video.all(keys_only=True).fetch(100000)
+        exercise_keys = exercise_models.Exercise.all(keys_only=True).fetch(100000)
+        url_keys = url_model.Url.all(keys_only=True).fetch(100000)
+
+        content = video_keys
+        content.extend(exercise_keys)
+        content.extend(url_keys)
+        return content
+
+    def get_unused_content(self):
+        topics = Topic.all().filter("version =", self).run()
+        used_content_keys = set()
+        for t in topics:
+            used_content_keys.update([c for c in t.child_keys if c.kind() != "Topic"])
+
+        content_keys = set(TopicVersion.get_all_content_keys())
+
+        return db.get(content_keys - used_content_keys)
+
+
+    @staticmethod
+    def get_latest_version():
+        return TopicVersion.all().order("-number").get()
+
+    @staticmethod
+    def get_latest_version_number():
+        latest_version = TopicVersion.all().order("-number").get()
+        return latest_version.number if latest_version else 0
+
+    @staticmethod
+    def create_new_version():
+        new_version_number = TopicVersion.get_latest_version_number() + 1
+        if user_models.UserData.current():
+            last_edited_by = user_models.UserData.current().user
+        else:
+            last_edited_by = None
+        new_version = TopicVersion(last_edited_by=last_edited_by,
+                                   number=new_version_number)
+        new_version.put()
+        return new_version
+
+    @staticmethod
+    def get_default_version():
+        return TopicVersion.all().filter("default = ", True).get()
+
+    @staticmethod
+    def get_edit_version():
+        return TopicVersion.all().filter("edit = ", True).get()
+
+    @staticmethod
+    @decorators.synchronized_with_memcache(timeout=300) #takes 70secs on dev 03/2012
+    def create_edit_version():
+        version = TopicVersion.all().filter("edit = ", True).get()
+        if version is None:
+            default = TopicVersion.get_default_version()
+            version = default.copy_version()
+            version.edit = True
+            version.put()
+            return version
+        else:
+            logging.warning("Edit version already exists")
+            return False
+
+    def copy_version(self):
+        version = TopicVersion.create_new_version()
+
+        old_root = Topic.get_root(self)
+        old_tree = old_root.make_tree(types=["Topics"], include_hidden=True)
+        TopicVersion.copy_tree(old_tree, version)
+
+        version.copied_from = self
+        version.put()
+
+        return version
+
+    @staticmethod
+    def copy_tree(old_tree, new_version, new_root=None, parent=None):
+        parent_keys = []
+        ancestor_keys = []
+        if parent:
+            parent_keys = [parent.key()]
+            ancestor_keys = parent_keys[:]
+            ancestor_keys.extend(parent.ancestor_keys)
+
+        if new_root:
+            key_name = old_tree.key().name()
+        else:
+            #don't copy key_name of root as it is parentless, and needs its own key
+            key_name = Topic.get_new_key_name()
+
+        new_tree = util.clone_entity(old_tree,
+                                     key_name=key_name,
+                                     version=new_version,
+                                     parent=new_root,
+                                     parent_keys=parent_keys,
+                                     ancestor_keys=ancestor_keys)
+        new_tree.put()
+        if not new_root:
+            new_root = new_tree
+
+        old_key_new_key_dict = {}
+        for child in old_tree.children:
+            old_key_new_key_dict[child.key()] = TopicVersion.copy_tree(child, new_version, new_root, new_tree).key()
+
+        new_tree.child_keys = [c if c not in old_key_new_key_dict else old_key_new_key_dict[c] for c in old_tree.child_keys]
+        new_tree.put()
+        return new_tree
+
+    def update(self):
+        if user_models.UserData.current():
+            last_edited_by = user_models.UserData.current().user
+        else:
+            last_edited_by = None
+        self.last_edited_by = last_edited_by
+        self.put()
+
+    def find_content_problems(self):
+        logging.info("checking for problems")
+        version = self
+
+        # find exercises that are overlapping on the knowledge map
+        logging.info("checking for exercises that are overlapping on the knowledge map")
+        exercises = exercise_models.Exercise.all()
+        exercise_dict = dict((e.key(),e) for e in exercises)
+
+        location_dict = {}
+        duplicate_positions = list()
+        changes = VersionContentChange.get_updated_content_dict(version)
+        exercise_changes = dict((k,v) for k,v in changes.iteritems()
+                                if v.key() in exercise_dict)
+        exercise_dict.update(exercise_changes)
+
+        for exercise in [e for e in exercise_dict.values()
+                         if e.live and not e.summative]:
+
+            if exercise.h_position not in location_dict:
+                location_dict[exercise.h_position] = {}
+
+            if exercise.v_position in location_dict[exercise.h_position]:
+                location_dict[exercise.h_position][exercise.v_position].append(exercise)
+                duplicate_positions.append(
+                    location_dict[exercise.h_position][exercise.v_position])
+            else:
+                location_dict[exercise.h_position][exercise.v_position] = [exercise]
+
+        # find videos whose duration is 0
+        logging.info("checking for videos with 0 duration")
+        zero_duration_videos = video_models.Video.all().filter("duration =", 0).fetch(10000)
+        zero_duration_dict = dict((v.key(),v) for v in zero_duration_videos)
+        video_changes = dict((k,v) for k,v in changes.iteritems()
+                                if k in zero_duration_dict or (
+                                type(v) == video_models.Video and v.duration == 0))
+        zero_duration_dict.update(video_changes)
+        zero_duration_videos = [v for v in zero_duration_dict.values()
+                                if v.duration == 0]
+
+        # find videos with invalid youtube_ids that would be marked live
+        logging.info("checking for videos with invalid youtube_ids")
+        root = Topic.get_root(version)
+        videos = root.get_videos(include_descendants = True)
+        bad_videos = []
+        for video in videos:
+            if re.search("_DUP_\d*$", video.youtube_id):
+                bad_videos.append(video)
+
+        problems = {
+            "ExerciseVideos with topicless videos" :
+                exercise_video_model.ExerciseVideo.get_all_with_topicless_videos(version),
+            "Exercises with colliding positions" : list(duplicate_positions),
+            "Zero duration videos": zero_duration_videos,
+            "Videos with bad youtube_ids": bad_videos}
+
+        return problems
+
+    def set_default_version(self):
+        logging.info("starting set_default_version")
+        setting_model.Setting.topic_admin_task_message("Publish: started")
+        run_code = base64.urlsafe_b64encode(os.urandom(30))
+        _do_set_default_deferred_step(_check_for_problems,
+                                      self.number,
+                                      run_code)
 
 
 class Topic(search.Searchable, db.Model):
@@ -1074,7 +1295,7 @@ class Topic(search.Searchable, db.Model):
     def get_exercise_badge(self):
         """ Returns the TopicExerciseBadge associated with this topic
         """
-        badge_name = topic_exercise_badges.TopicExerciseBadge.name_for_topic_key_name(self.key().name())
+        badge_name = badges.topic_exercise_badges.TopicExerciseBadge.name_for_topic_key_name(self.key().name())
         return badges.util_badges.all_badges_dict().get(badge_name, None)
 
     @staticmethod
@@ -1535,228 +1756,6 @@ def _rebuild_content_caches(version_number, run_code):
     logging.info("set_default_version complete")
     setting_model.Setting.topic_admin_task_message("Publish: finished successfully")
 
-
-class TopicVersion(db.Model):
-    """Metadata describing a particular version of the topic-tree data."""
-    created_on = db.DateTimeProperty(indexed=False, auto_now_add=True)
-    updated_on = db.DateTimeProperty(indexed=False, auto_now=True)
-    made_default_on = db.DateTimeProperty(indexed=False)
-    copied_from = db.SelfReferenceProperty(indexed=False)
-    last_edited_by = db.UserProperty(indexed=False)
-    number = db.IntegerProperty(required=True)
-    title = db.StringProperty(indexed=False)
-    description = db.StringProperty(indexed=False)
-    default = db.BooleanProperty(default=False)
-    edit = db.BooleanProperty(default=False)
-
-    _serialize_blacklist = ["copied_from"]
-
-    @property
-    def copied_from_number(self):
-        if self.copied_from:
-            return self.copied_from.number
-
-    @staticmethod
-    def get_by_id(version_id):
-        if version_id is None or version_id == "default":
-            return TopicVersion.get_default_version()
-        if version_id == "edit":
-            return TopicVersion.get_edit_version()
-        number = int(version_id)
-        return TopicVersion.all().filter("number =", number).get()
-
-    @staticmethod
-    def get_by_number(number):
-        return TopicVersion.all().filter("number =", number).get()
-
-    # used by get_unused_content - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
-    @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda :
-        "TopicVersion.get_all_content_keys_%s" %
-        setting_model.Setting.cached_content_add_date(),
-        layer=layer_cache.Layers.Memcache)
-    def get_all_content_keys():
-        video_keys = video_models.Video.all(keys_only=True).fetch(100000)
-        exercise_keys = exercise_models.Exercise.all(keys_only=True).fetch(100000)
-        url_keys = url_model.Url.all(keys_only=True).fetch(100000)
-
-        content = video_keys
-        content.extend(exercise_keys)
-        content.extend(url_keys)
-        return content
-
-    def get_unused_content(self):
-        topics = Topic.all().filter("version =", self).run()
-        used_content_keys = set()
-        for t in topics:
-            used_content_keys.update([c for c in t.child_keys if c.kind() != "Topic"])
-
-        content_keys = set(TopicVersion.get_all_content_keys())
-
-        return db.get(content_keys - used_content_keys)
-
-
-    @staticmethod
-    def get_latest_version():
-        return TopicVersion.all().order("-number").get()
-
-    @staticmethod
-    def get_latest_version_number():
-        latest_version = TopicVersion.all().order("-number").get()
-        return latest_version.number if latest_version else 0
-
-    @staticmethod
-    def create_new_version():
-        new_version_number = TopicVersion.get_latest_version_number() + 1
-        if user_models.UserData.current():
-            last_edited_by = user_models.UserData.current().user
-        else:
-            last_edited_by = None
-        new_version = TopicVersion(last_edited_by=last_edited_by,
-                                   number=new_version_number)
-        new_version.put()
-        return new_version
-
-    @staticmethod
-    def get_default_version():
-        return TopicVersion.all().filter("default = ", True).get()
-
-    @staticmethod
-    def get_edit_version():
-        return TopicVersion.all().filter("edit = ", True).get()
-
-    @staticmethod
-    @decorators.synchronized_with_memcache(timeout=300) #takes 70secs on dev 03/2012
-    def create_edit_version():
-        version = TopicVersion.all().filter("edit = ", True).get()
-        if version is None:
-            default = TopicVersion.get_default_version()
-            version = default.copy_version()
-            version.edit = True
-            version.put()
-            return version
-        else:
-            logging.warning("Edit version already exists")
-            return False
-
-    def copy_version(self):
-        version = TopicVersion.create_new_version()
-
-        old_root = Topic.get_root(self)
-        old_tree = old_root.make_tree(types=["Topics"], include_hidden=True)
-        TopicVersion.copy_tree(old_tree, version)
-
-        version.copied_from = self
-        version.put()
-
-        return version
-
-    @staticmethod
-    def copy_tree(old_tree, new_version, new_root=None, parent=None):
-        parent_keys = []
-        ancestor_keys = []
-        if parent:
-            parent_keys = [parent.key()]
-            ancestor_keys = parent_keys[:]
-            ancestor_keys.extend(parent.ancestor_keys)
-
-        if new_root:
-            key_name = old_tree.key().name()
-        else:
-            #don't copy key_name of root as it is parentless, and needs its own key
-            key_name = Topic.get_new_key_name()
-
-        new_tree = util.clone_entity(old_tree,
-                                     key_name=key_name,
-                                     version=new_version,
-                                     parent=new_root,
-                                     parent_keys=parent_keys,
-                                     ancestor_keys=ancestor_keys)
-        new_tree.put()
-        if not new_root:
-            new_root = new_tree
-
-        old_key_new_key_dict = {}
-        for child in old_tree.children:
-            old_key_new_key_dict[child.key()] = TopicVersion.copy_tree(child, new_version, new_root, new_tree).key()
-
-        new_tree.child_keys = [c if c not in old_key_new_key_dict else old_key_new_key_dict[c] for c in old_tree.child_keys]
-        new_tree.put()
-        return new_tree
-
-    def update(self):
-        if user_models.UserData.current():
-            last_edited_by = user_models.UserData.current().user
-        else:
-            last_edited_by = None
-        self.last_edited_by = last_edited_by
-        self.put()
-
-    def find_content_problems(self):
-        logging.info("checking for problems")
-        version = self
-
-        # find exercises that are overlapping on the knowledge map
-        logging.info("checking for exercises that are overlapping on the knowledge map")
-        exercises = exercise_models.Exercise.all()
-        exercise_dict = dict((e.key(),e) for e in exercises)
-
-        location_dict = {}
-        duplicate_positions = list()
-        changes = VersionContentChange.get_updated_content_dict(version)
-        exercise_changes = dict((k,v) for k,v in changes.iteritems()
-                                if v.key() in exercise_dict)
-        exercise_dict.update(exercise_changes)
-
-        for exercise in [e for e in exercise_dict.values()
-                         if e.live and not e.summative]:
-
-            if exercise.h_position not in location_dict:
-                location_dict[exercise.h_position] = {}
-
-            if exercise.v_position in location_dict[exercise.h_position]:
-                location_dict[exercise.h_position][exercise.v_position].append(exercise)
-                duplicate_positions.append(
-                    location_dict[exercise.h_position][exercise.v_position])
-            else:
-                location_dict[exercise.h_position][exercise.v_position] = [exercise]
-
-        # find videos whose duration is 0
-        logging.info("checking for videos with 0 duration")
-        zero_duration_videos = video_models.Video.all().filter("duration =", 0).fetch(10000)
-        zero_duration_dict = dict((v.key(),v) for v in zero_duration_videos)
-        video_changes = dict((k,v) for k,v in changes.iteritems()
-                                if k in zero_duration_dict or (
-                                type(v) == video_models.Video and v.duration == 0))
-        zero_duration_dict.update(video_changes)
-        zero_duration_videos = [v for v in zero_duration_dict.values()
-                                if v.duration == 0]
-
-        # find videos with invalid youtube_ids that would be marked live
-        logging.info("checking for videos with invalid youtube_ids")
-        root = Topic.get_root(version)
-        videos = root.get_videos(include_descendants = True)
-        bad_videos = []
-        for video in videos:
-            if re.search("_DUP_\d*$", video.youtube_id):
-                bad_videos.append(video)
-
-        problems = {
-            "ExerciseVideos with topicless videos" :
-                exercise_video_model.ExerciseVideo.get_all_with_topicless_videos(version),
-            "Exercises with colliding positions" : list(duplicate_positions),
-            "Zero duration videos": zero_duration_videos,
-            "Videos with bad youtube_ids": bad_videos}
-
-        return problems
-
-    def set_default_version(self):
-        logging.info("starting set_default_version")
-        setting_model.Setting.topic_admin_task_message("Publish: started")
-        run_code = base64.urlsafe_b64encode(os.urandom(30))
-        _do_set_default_deferred_step(_check_for_problems,
-                                      self.number,
-                                      run_code)
 
 
 class VersionContentChange(db.Model):
