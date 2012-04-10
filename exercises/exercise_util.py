@@ -27,6 +27,7 @@ except ImportError:
     import simplejson as json
 
 import badges
+import badges.util_badges
 import phantom_users
 import custom_exceptions
 
@@ -223,7 +224,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                     just_earned_proficiency = True
                     problem_log.earned_proficiency = True
 
-            util_badges.update_with_user_exercise(
+            badges.util_badges.update_with_user_exercise(
                 user_data,
                 user_exercise,
                 include_other_badges=True,

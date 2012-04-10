@@ -1702,7 +1702,7 @@ def attempt_problem_number(exercise_name, problem_number):
 
             review_mode = request.request_bool("review_mode", default=False)
 
-            user_exercise, user_exercise_graph, goals_updated = exercise_util.attempt_problem(
+            user_exercise, user_exercise_graph, goals_updated = exercises.exercise_util.attempt_problem(
                     user_data,
                     user_exercise,
                     problem_number,
@@ -1775,7 +1775,7 @@ def hint_problem_number(exercise_name, problem_number):
             count_hints = request.request_int("count_hints")
             review_mode = request.request_bool("review_mode", default=False)
 
-            user_exercise, user_exercise_graph, goals_updated = exercise_util.attempt_problem(
+            user_exercise, user_exercise_graph, goals_updated = exercises.exercise_util.attempt_problem(
                     user_data,
                     user_exercise,
                     problem_number,
@@ -1837,7 +1837,7 @@ def _attempt_problem_wrong(exercise_name):
 
     if user_data and exercise_name:
         user_exercise = user_data.get_or_insert_exercise(models.Exercise.get_by_name(exercise_name))
-        return exercise_util.make_wrong_attempt(user_data, user_exercise)
+        return exercises.exercise_util.make_wrong_attempt(user_data, user_exercise)
 
     return unauthorized_response()
 
