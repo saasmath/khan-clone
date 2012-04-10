@@ -612,7 +612,21 @@ Exercises.CurrentCardView = Backbone.View.extend({
                         }),
                         startedExercises = _.filter(topicUserExercises, function(userExercise) {
                             return !userExercise.exerciseStates.proficient && userExercise.totalDone > 0;
+                        }),
+                        progressStats = Exercises.sessionStats.progressStats();
+
+                    // Proficient exercises in which proficiency was just
+                    // earned in this current stack need to be marked as such.
+                    //
+                    // TODO: if we stick with this everywhere, we probably want
+                    // to change the actual review model algorithm to stop
+                    // setting recently-earned exercises into review state so
+                    // quickly.
+                    _.each(proficientExercises, function(userExercise) {
+                        userExercise.exerciseStates.justEarnedProficiency = _.any(progressStats.progress, function(stat) {
+                            return stat.exerciseStates.justEarnedProficiency && stat.name == userExercise.exercise;
                         });
+                    });
 
                     return _.extend(
                         {
@@ -623,7 +637,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             unstartedExercises: unstartedExercises,
                             proficientExercises: proficientExercises
                         },
-                        Exercises.sessionStats.progressStats(),
+                        progressStats,
                         Exercises.completeStack.stats()
                     );
 
