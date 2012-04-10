@@ -754,7 +754,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      */
     showTopicDetails: function() {
         $(".current-topic").slideDown();
-        $(this).hide();
+        $("#show-topic-details").hide();
     },
 
     /**
