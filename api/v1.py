@@ -239,7 +239,7 @@ def topic_videos(topic_id, version_id = None):
     if topic is None:
         topic = topic_models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
         if topic is None:
-            raise ValueError("Invalid topic readable_id.")
+            return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
 
     videos = topic_models.Topic.get_cached_videos_for_topic(topic, False, version)
     for i, video in enumerate(videos):
@@ -264,7 +264,7 @@ def topic_exercises(topic_id, version_id = None):
     if topic is None:
         topic = topic_models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
         if topic is None:
-            raise ValueError("Invalid topic readable_id.")
+            return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
 
     exercises = topic.get_exercises()
     return exercises
@@ -905,7 +905,7 @@ def video_exercises(video_id):
 def video_play_data(topic_id, video_id):
     topic = topic_models.Topic.get_by_id(topic_id)
     if topic is None:
-        raise ValueError("Invalid topic readable_id.")
+        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
 
     get_topic_data = request.request_bool('topic', default=False);
 
