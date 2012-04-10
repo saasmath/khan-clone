@@ -1,15 +1,7 @@
-./about/blog.py
-./about/util_about.py
-./accuracy_model/accuracy_model.py
-./accuracy_model/accuracy_model_test.py
-./accuracy_model/progress_normalizer.py
 ./activity_summary.py
 ./agar/test/base_test.py
 ./agar/test/mock_urlfetch_test.py
 ./agar/test/web_test.py
-./api/__init__.py
-./api/api_request_class.py
-./api/api_util.py
 ./api/auth/__init__.py
 ./api/auth/auth_models.py
 ./api/auth/auth_util.py
@@ -63,8 +55,6 @@
 ./api/v0/freezer.py
 ./api/v1.py
 ./api/v1_utils.py
-./app.py
-./appengine_config.py
 ./appengine_stats.py
 ./asynctools/__init__.py
 ./asynctools/datastore.py
@@ -453,9 +443,6 @@
 ./mapreduce/util.py
 ./models.py
 ./models_test.py
-./nicknames.py
-./nicknames_test.py
-./notifications.py
 ./oauth_provider/apps.py
 ./oauth_provider/config.py
 ./oauth_provider/consts.py
@@ -501,13 +488,10 @@
 ./redirects/models.py
 ./request_cache.py
 ./request_handler.py
-./robots.py
 ./sample_data/sample_data.py
 ./search/__init__.py
 ./search/pyporter2/Stemmer.py
 ./secrets.py
-./setting_model.py
-./shared_jinja.py
 ./smarthistory.py
 ./social/templatetags.py
 ./socrates/__init__.py
@@ -519,8 +503,6 @@
 ./summer/models.py
 ./templatefilters.py
 ./templatetags.py
-./testutil/__init__.py
-./testutil/gaetasktime.py
 ./testutil/oauth_test_client.py
 ./toolkit/__init__.py
 ./topic_models.py
@@ -533,6 +515,5 @@
 ./util.py
 ./util_test.py
 ./video_models.py
-./warmup.py
 ./webapp2_extras/jinja2.py
 ./youtube_sync.py
