@@ -4,6 +4,7 @@ import logging
 from google.appengine.ext import db
 
 import auth.tokens
+from user_models import UserData
 
 
 # OAuthMap creates a mapping between our OAuth credentials and our identity providers'.
