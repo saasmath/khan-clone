@@ -281,7 +281,7 @@ function KnowledgeMap(params) {
 
             var rowHeight;
             if (row) {
-                rowHeight = row.el.outerHeight(/* includeMargin */ true);
+                rowHeight = row.$el.outerHeight(/* includeMargin */ true);
             } else {
                 // use a guess because doFilter can't determine this for itself
                 rowHeight = 86;
@@ -355,14 +355,14 @@ function KnowledgeMap(params) {
                     }
                 }
                 // use css() because show() is somewhat slow
-                row.el.css("display", "block");
+                row.$el.css("display", "block");
 
                 if (rowHeight === 0) {
-                    rowHeight = row.el.outerHeight(/* includeMargin */ true);
+                    rowHeight = row.$el.outerHeight(/* includeMargin */ true);
                 }
                 renderedHeight += rowHeight;
             } else {
-                row.el.css("display", "none");
+                row.$el.css("display", "none");
             }
 
             // filter the item off the map view
@@ -539,7 +539,7 @@ function KnowledgeMap(params) {
 
                         if (view) {
 
-                            view.updateElement(jel);
+                            view.setElement(jel);
 
                         } else {
 
