@@ -3,7 +3,7 @@ from google.appengine.ext import db
 import auth.passwords as passwords
 import logging
 import os
-import util
+import transaction_util
 
 
 class Credential(db.Model):
@@ -65,7 +65,7 @@ class CredentialedUser(db.Model):
             db.put([new_cred, self])
             
         # The Remote API doesn't support queries inside transactions
-        util.ensure_in_transaction(txn)
+        transaction_util.ensure_in_transaction(txn)
 
     def validate_password(self, raw_password):
         """ Tests the specified password for this user.
