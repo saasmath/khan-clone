@@ -95,11 +95,6 @@ class VideoDataTest(request_handler.RequestHandler):
         for video in videos:
             self.response.out.write('<P>Title: ' + video.title)
 
-def get_mangled_topic_name(topic_name):
-    for char in " :()":
-        topic_name = topic_name.replace(char, "")
-    return topic_name
-
 # Handler that displays a topic page if the URL matches
 # a pre-existing topic. (i.e. /math/algebra or just /algebra)
 # NOTE: Since there is no specific route we are matching,

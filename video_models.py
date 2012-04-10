@@ -24,6 +24,7 @@ try:
 except ImportError:
     import simplejson as json    # python 2.5 and earlier
 
+from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 
@@ -282,7 +283,7 @@ class Video(search.Searchable, db.Model):
         } if next_video else None
 
         if app.App.offline_mode:
-            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
+            video_path = "/videos/" + _get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
         else:
             video_path = video.download_video_url()
 
@@ -780,4 +781,10 @@ class UserVideoCss(db.Model):
             css_list.append(complete_css)
 
         self.video_css = ''.join(css_list)
+
+
+def _get_mangled_topic_name(topic_name):
+    for char in " :()":
+        topic_name = topic_name.replace(char, "")
+    return topic_name
 
