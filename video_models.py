@@ -489,8 +489,9 @@ class VideoLog(backup_model.BackupModel):
         video_log.last_second_watched = last_second_watched
 
         if seconds_watched > 0:
-            # TODO(csilvers): get rid of circular dependency here
+            # TODO(csilvers): get rid of circular dependencies here
             import badges.util_badges
+            import topic_models
 
             if user_video.seconds_watched == 0:
                 user_data.uservideocss_version += 1
