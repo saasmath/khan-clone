@@ -447,10 +447,9 @@ class UserExercise(db.Model):
         if self.progress < 1.0 and not self.has_been_proficient():
             return
 
-        # If the user is hitting a new streak either for the first time or after having lost
-        # proficiency, reset their review interval counter.
+        # If the user is highly accurate, put a floor under their review_interval
         if self.progress >= 1.0:
-            self.review_interval_secs = 60 * 60 * 24 * consts.DEFAULT_REVIEW_INTERVAL_DAYS
+            self.review_interval_secs = max(self.review_interval_secs, 60 * 60 *24 * consts.DEFAULT_REVIEW_INTERVAL_DAYS)
 
         review_interval = self.get_review_interval()
 
