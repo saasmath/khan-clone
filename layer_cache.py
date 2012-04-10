@@ -466,7 +466,7 @@ class ChunkedResult():
             keys = value.chunk_list
             keys.append(key)
             cache_class.delete_multi(keys, namespace)
-        elif value:
+        elif value is not None:
             cache_class.delete(key, namespace)
 
     def get_result(self, cache_class=memcache, namespace=""):
@@ -574,7 +574,13 @@ class KeyValueCache(db.Model):
         values = {}
         for (key, key_value) in zip(keys, key_values):
             if key_value and not key_value.is_expired():
-                if key_value.pickled:
+                # legacy entries in key_value cache that were set with 
+                # persist_across_app_versions=True might still be around with
+                # .pickled=None.  Once we are sure they are all expired we can
+                # delete the "or key_value.pickled is None:"
+                # TODO(james): After May 2nd 2012 the default cache time of 25 
+                # days should have ended and the or can be removed.
+                if key_value.pickled or key_value.pickled is None:
                     values[key] = pickle.loads(key_value.value)
                 else:
                     values[key] = key_value.value
@@ -610,7 +616,7 @@ class KeyValueCache(db.Model):
             
             # check to see if we need to pickle the results
             pickled = False
-            if not isinstance(value, basestring):
+            if not isinstance(value, str):
                 pickled = True
                 value = pickle.dumps(value)
 
