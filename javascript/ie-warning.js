@@ -1,9 +1,9 @@
 var msg1 = "Did you know that your Internet Explorer is out of date?";
 var msg2 = "To use Khan Academy you need to upgrade to a newer version or another web browser.";
 var msg3 = "Just click one of the icons below to start upgrading.";
-var br1 = "Chrome 12.0+";
-var br2 = "Firefox 4+";
-var br3 = "Safari 5+";
+var br1 = "Chrome";
+var br2 = "Firefox";
+var br3 = "Safari";
 var br4 = "Internet Explorer 8+";
 var url1 = "http://www.google.com/chrome";
 var url2 = "http://www.mozilla.com/firefox/";
