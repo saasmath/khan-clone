@@ -30,7 +30,6 @@ from google.appengine.ext import deferred
 
 import app
 import backup_model
-import badges.util_badges
 import classtime
 import consts
 import experiments
@@ -44,7 +43,6 @@ import search
 import setting_model
 import shared_jinja
 import summary_log_models
-import topic_models
 import user_models
 import util
 
@@ -490,6 +488,8 @@ class VideoLog(backup_model.BackupModel):
         video_log.last_second_watched = last_second_watched
 
         if seconds_watched > 0:
+            # TODO(csilvers): get rid of circular dependency here
+            import badges.util_badges
 
             if user_video.seconds_watched == 0:
                 user_data.uservideocss_version += 1
