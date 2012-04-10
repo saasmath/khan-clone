@@ -40,6 +40,7 @@ import exercises.exercise_util as exercises   # TODO(csilvers): get rid of the '
 import dashboard
 import exercisestats.report
 import exercisestats.report_json
+import exercisestats.exercisestats_util
 import github
 import paypal
 import smarthistory
@@ -846,7 +847,7 @@ application = webapp2.WSGIApplication([
 
     ('/user_video_css', ServeUserVideoCss),
 
-    ('/admin/exercisestats/collectfancyexercisestatistics', exercisestats.CollectFancyExerciseStatistics),
+    ('/admin/exercisestats/collectfancyexercisestatistics', exercisestats.exercisestats_util.CollectFancyExerciseStatistics),
     ('/exercisestats/report', exercisestats.report.Test),
     ('/exercisestats/exerciseovertime', exercisestats.report_json.ExerciseOverTimeGraph),
     ('/exercisestats/geckoboardexerciseredirect', exercisestats.report_json.GeckoboardExerciseRedirect),
