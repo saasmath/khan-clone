@@ -1,5 +1,3 @@
-import math
-
 from jinja2.utils import escape
 
 from api import jsonify as apijsonify

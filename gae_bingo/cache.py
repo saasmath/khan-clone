@@ -1,4 +1,3 @@
-import logging
 import cPickle as pickle
 import hashlib
 

@@ -32,9 +32,7 @@ import gae_bingo.models
 import nicknames
 import object_property
 import phantom_users
-import points
 import request_cache
-import templatetags
 import transaction_util
 import util
 
