@@ -979,10 +979,20 @@ var Profile = {
 
                     var jelUnread = $("#tab-content-questions").find(".unread");
                     if (jelUnread.length !== 0) {
+                        // TODO(marcia): Polish below
+
+                        // Fade out blue highlight on questions w unread answers
                         jelUnread.animate({
                                 "background-color": "#FFF"
                             }, 1000);
 
+                        // Fade out notification in top-header
+                        $("#top-header .notification-bubble")
+                            .fadeOut(500, function() {
+                                $("#top-header .user-notification img")
+                                    .attr("src", "/images/discussions-lo-16px.png")
+                            });
+                        
                         // Clear notifications upon viewing them in question list
                         // STOPSHIP(marcia): Uncomment below
 
