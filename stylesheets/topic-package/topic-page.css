@@ -71,32 +71,14 @@ a.main-video-link:hover {
     width: 100%;
 }
 
-.nav-pane-background {
-    position: absolute;
-    background-color: #f4f4f5;
-    border-right: solid 1px #ccc;
-    left: 0px;
-    top: 0px;
-    bottom: 0px;
-    width: 310px;
-}
-
-.nav-fixed-background {
-    position: fixed;
-    height: 100%;
-    top: -39px;
-}
-.nav-fixed-background > .nav-pane-background {
-    margin-top: 125px;
-    margin-left: 1px;
-}
-
 .topic-page-content > .container > .nav-pane {
     display: inline-block;
     background-color: #f4f4f5;
     border-right: solid 1px #ccc;
     width: 300px;
     padding-left: 10px;
+    padding-bottom: 10px;
+    margin-bottom: -510px;
 }
 
 .topic-page-content > .container > .nav-pane-spacer {
@@ -214,7 +196,11 @@ a.main-video-link:hover {
     text-decoration: none;
 }
 .topic-page-content > .container > .content-pane .vid-progress {
+    display: inline-block;
     padding-left: 14px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    line-height: 18px;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
@@ -299,12 +285,16 @@ a.main-video-link:hover {
     padding-top: 30px;
 }
 
+.content-pane div.subtopic-list-container {
+    overflow: hidden;
+}
 .content-pane div.subtopics-list {
     width: 390px;
-    float: left;
+    display: inline-block;
+    margin-left: -1px;
 }
-.content-pane div.subtopics-list.first {
-    border-right: solid 1px #ccc;
+.content-pane div.subtopics-list.second {
+    border-left: solid 1px #ccc;
 }
 
 .content-pane .subtopic-header {
@@ -328,12 +318,6 @@ a.main-video-link:hover {
     background-color: #ebf1df;
     color: #000;
     text-decoration: none;
-}
-.content-pane div.subtopics-list .number {
-    position: absolute;
-    top: 4px;
-    padding: 4px;
-    color: #356700;
 }
 .content-pane div.subtopics-list .thumbnail-link {
     display: inline-block;
@@ -405,14 +389,8 @@ a.main-video-link:hover {
     display: inline-block;
 }
 .content-pane div.videos-list ol > li > a > .indent {
+    display: inline-block;
     margin-left: 8px;
-}
-.content-pane div.videos-list ol > li > a .number {
-    z-index: 1;
-    position: absolute;
-    left: 10px;
-    color: #7e9e5c;
-    font-size: 11px;
 }
 .content-pane div.videos-list ol > li > a:hover {
     background-color: #ebf1df;
