@@ -10,6 +10,7 @@ import models
 import user_models
 import layer_cache
 import templatetags
+import topic_models
 import util
 from app import App
 from topics_list import DVD_list
@@ -63,7 +64,7 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None, parent_
         expiration=86400
         )
 def new_and_noteworthy_link_sets():
-    topic = models.Topic.get_by_id("new-and-noteworthy")
+    topic = topic_models.Topic.get_by_id("new-and-noteworthy")
     if topic is None:
         return []
     videos = topic.get_cached_videos_for_topic(topic)
@@ -173,7 +174,7 @@ class ViewHomePage(request_handler.RequestHandler):
 
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
-        default = models.TopicVersion.get_default_version()
+        default = topic_models.TopicVersion.get_default_version()
         if App.is_dev_server and default is None:
             library_content = "<h1>Content not initialized. <a href=\"/devadmin/content?autoupdate=1\">Click here</a> to autoupdate from khanacademy.org."
         elif version_number:
