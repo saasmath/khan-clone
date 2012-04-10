@@ -33,7 +33,7 @@ from badges import topic_exercise_badges
 from badges import util_badges
 import decorators
 import exercise_video_model
-import exercises.util
+import exercises.exercise_util
 import exercise_models
 from knowledgemap import layout
 import homepage
@@ -1787,7 +1787,7 @@ class VersionContentChange(db.Model):
 
         if (content.key().kind() == "Exercise"
             and hasattr(content, "related_videos")):
-            exercises.util.UpdateExercise.do_update_related_videos(content,
+            exercises.exercise_util.UpdateExercise.do_update_related_videos(content,
                                                     content.related_videos)
 
         return content
