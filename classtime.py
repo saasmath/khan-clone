@@ -3,7 +3,6 @@ import logging
 import copy
 
 from google.appengine.api import users
-from google.appengine.ext import deferred
 
 from asynctools import AsyncMultiTask, QueryTask
 
@@ -18,19 +17,6 @@ def dt_to_utc(dt, timezone_adjustment):
 
 def dt_to_ctz(dt, timezone_adjustment):
     return dt + timezone_adjustment
-
-# bulk loads the entire class data for the day
-def reload_class(user_data_coach, dt_start_utc):
-    students_data = user_data_coach.get_students_data()
-    dt_start_utc1 = datetime.datetime(dt_start_utc.year, dt_start_utc.month, dt_start_utc.day)
-
-    for student_data in students_data:
-        deferred.defer(fill_class_summaries_from_logs, user_data_coach, [student_data], dt_start_utc1)
-
-    if dt_start_utc1 != dt_start_utc:
-        dt_start_utc2 =  dt_start_utc1 + datetime.timedelta(days = 1)
-        for student_data in students_data:
-            deferred.defer(fill_class_summaries_from_logs, user_data_coach, [student_data], dt_start_utc2)
 
 #bulk loader of student data into the LogSummaries where there is one LogSummary per day per coach
 #can get in memory trouble if handling a large class - so break it up and send only one student at a time
