@@ -2,7 +2,7 @@ from profiles import recent_activity
 import logging
 import models
 import points
-from exercises import exercise_models
+import exercise_models
 import video_models
 import exercise_video_model
 

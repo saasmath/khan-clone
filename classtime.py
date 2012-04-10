@@ -8,7 +8,7 @@ from google.appengine.ext import deferred
 from asynctools import AsyncMultiTask, QueryTask
 
 import util
-from exercises.exercise_models import UserExercise, Exercise, ProblemLog
+from exercise_models import UserExercise, Exercise, ProblemLog
 import video_models
 from summary_log_models import LogSummary, LogSummaryTypes
 import activity_summary

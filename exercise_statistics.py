@@ -7,7 +7,7 @@ from mapreduce import operation as op
 
 import request_handler
 import user_util
-from exercises import exercise_models
+import exercise_models
 import consts
 
 # /admin/startnewexercisestatisticsmapreduce is called periodically by a cron job

@@ -18,7 +18,7 @@ import request_handler
 import user_util
 from user_models import UserData
 from video_models import UserVideo, VideoLog
-from exercises.exercise_models import UserExercise, ProblemLog
+from exercise_models import UserExercise, ProblemLog
 from goals.models import Goal
 from api.jsonify import jsonify
 from api.auth.tests.test import TestOAuthClient

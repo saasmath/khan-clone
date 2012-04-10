@@ -8,7 +8,7 @@ import util
 import request_handler
 import video_models
 import summary_log_models
-from exercises import exercise_models
+import exercise_models
 
 class ActivitySummaryExerciseItem:
     def __init__(self):

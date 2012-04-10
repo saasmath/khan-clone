@@ -8,7 +8,7 @@ from google.appengine.ext import db
 from object_property import ObjectProperty
 from templatefilters import timesince_ago, seconds_to_time_string
 
-from exercises.exercise_models import Exercise
+from exercise_models import Exercise
 import util
 import logging
 

@@ -1,6 +1,6 @@
 import datetime
 
-from exercises import exercise_models
+import exercise_models
 import summary_log_models
 import activity_summary
 from badges import models_badges, util_badges

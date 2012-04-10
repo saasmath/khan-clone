@@ -609,7 +609,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     def get_or_insert_exercise(self, exercise, allow_insert=True):
         # TODO(csilvers): get rid of the circular import here
-        from exercises import exercise_models 
+        import exercise_models 
 
         if not exercise:
             return None
@@ -669,7 +669,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
         if user_exercise_graph is None:
             # TODO(csilvers): get rid of the circular import here
-            from exercises import exercise_models 
+            import exercise_models 
             user_exercise_graph = exercise_models.UserExerciseGraph.get(self)
 
         return self.reassess_from_graph(user_exercise_graph)

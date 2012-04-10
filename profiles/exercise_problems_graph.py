@@ -1,4 +1,4 @@
-from exercises import exercise_models
+import exercise_models
 import video_models
 import util
 import logging

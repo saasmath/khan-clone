@@ -8,7 +8,7 @@ from google.appengine.ext import deferred
 
 import datetime
 import user_models
-from exercises import exercise_models
+import exercise_models
 import video_models
 import exercise_video_model
 import request_handler

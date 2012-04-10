@@ -1,4 +1,4 @@
-from exercises import exercise_models
+import exercise_models
 import util
 
 class ExerciseData(object):

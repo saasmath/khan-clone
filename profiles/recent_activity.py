@@ -1,7 +1,7 @@
 import datetime
 
 import util
-from exercises import exercise_models
+import exercise_models
 import video_models
 from badges import util_badges, models_badges
 from goals.models import GoalList

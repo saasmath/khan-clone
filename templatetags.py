@@ -6,7 +6,7 @@ from api import jsonify as apijsonify
 from templatefilters import slugify
 import shared_jinja
 import layer_cache
-from exercises import exercise_models
+import exercise_models
 import setting_model
 import topic_models
 import util

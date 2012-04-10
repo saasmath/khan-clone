@@ -10,7 +10,7 @@ from dashboard.models import DailyStatistic, EntityStatistic
 from google.appengine.ext.db import stats
 from itertools import groupby
 import topic_models
-from exercises import exercise_models
+import exercise_models
 import url_model
 import video_models
 

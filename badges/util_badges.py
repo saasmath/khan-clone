@@ -35,7 +35,7 @@ import video_time_badges
 import consecutive_activity_badges
 import discussion_badges
 import feedback_badges
-from exercises import exercise_models
+import exercise_models
 
 import layer_cache
 import request_handler

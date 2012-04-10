@@ -34,7 +34,7 @@ from badges import util_badges
 import decorators
 import exercise_video_model
 import exercises
-from exercises import exercise_models
+import exercise_models
 from knowledgemap import layout
 import homepage
 import layer_cache
