@@ -33,6 +33,7 @@ import badges.util_badges
 import classtime
 import consts
 import experiments
+import gae_bingo.gae_bingo
 import goals.models
 import image_cache
 import layer_cache
@@ -45,7 +46,6 @@ import summary_log_models
 import topic_models
 import user_models
 import util
-
 
 class Video(search.Searchable, db.Model):
     youtube_id = db.StringProperty()
@@ -539,7 +539,7 @@ class VideoLog(backup_model.BackupModel):
             user_data.uservideocss_version += 1
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
-            bingo([
+            gae_bingo.gae_bingo.bingo([
                 'videos_finished',
                 'struggling_videos_finished',
             ])
