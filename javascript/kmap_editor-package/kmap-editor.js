@@ -1,7 +1,7 @@
-var ZOOM_EXERCISES = 8;
-var ZOOM_HYBRID = 7;
-var ZOOM_TOPICS = 6;
 var KMapEditor = {
+    ZOOM_EXERCISES: 8,
+    ZOOM_HYBRID: 7,
+    ZOOM_TOPICS: 6,
 
     defaultVersion: [],    // currently-live exercise settings
     editVersion: [],       // exercise setting changes that have been persisted to the edit version
@@ -90,11 +90,11 @@ var KMapEditor = {
         $("div.zoom-button").click(function(event) {
             var newZoomLevel = KMapEditor.zoomLevel;
             if (this.id === "zoom-exercise") {
-                newZoomLevel = ZOOM_EXERCISES;
+                newZoomLevel = this.ZOOM_EXERCISES;
             } else if (this.id === "zoom-hybrid") {
-                newZoomLevel = ZOOM_HYBRID;
+                newZoomLevel = this.ZOOM_HYBRID;
             } else if (this.id === "zoom-topic") {
-                newZoomLevel = ZOOM_TOPICS;
+                newZoomLevel = this.ZOOM_TOPICS;
                 // hide the form since we can't edit topics yet :(
                 KMapEditor.updateForm(null);
             }
@@ -251,15 +251,15 @@ var KMapEditor = {
     IMG_SELECTED_DEV: null,
 
     setZoom: function(zoom) {
-        this.zoomLevel = Math.min(Math.max(zoom, ZOOM_TOPICS), ZOOM_EXERCISES);
+        this.zoomLevel = Math.min(Math.max(zoom, this.ZOOM_TOPICS), this.ZOOM_EXERCISES);
         $("div.zoom-button").removeClass("zoom-select");
-        if (this.zoomLevel === ZOOM_EXERCISES) {
+        if (this.zoomLevel === this.ZOOM_EXERCISES) {
             this.X_SPACING = 64;
             this.Y_SPACING = 74;
             this.ICON_SIZE = 26;
             this.LABEL_WIDTH = 60;
             $("div#zoom-exercise").addClass("zoom-select");
-        } else if (this.zoomLevel === ZOOM_HYBRID) {
+        } else if (this.zoomLevel === this.ZOOM_HYBRID) {
             this.X_SPACING = 32;
             this.Y_SPACING = 36;
             this.ICON_SIZE = 10;
@@ -292,7 +292,7 @@ var KMapEditor = {
         });
 
         // add topics
-        if (this.zoomLevel === ZOOM_TOPICS || this.zoomLevel === ZOOM_HYBRID) {
+        if (this.zoomLevel === this.ZOOM_TOPICS || this.zoomLevel === this.ZOOM_HYBRID) {
             $.each(this.maplayout.topics, function(topicId, topic) {
                 var newDiv = $("<div>").appendTo($("#map"));
                 newDiv.addClass("exercise");
@@ -309,14 +309,14 @@ var KMapEditor = {
                     .css({"font-size": "12px", "width": "80px"})
                     .text(topic.standalone_title).appendTo(newDiv);
 
-                if (KMapEditor.zoomLevel === ZOOM_HYBRID) {
+                if (KMapEditor.zoomLevel === KMapEditor.ZOOM_HYBRID) {
                     newDiv.css({ "width": "80px", "opacity": 0.5 });
                 }
             });
         }
 
         // add polylines
-        if (this.zoomLevel === ZOOM_TOPICS) {
+        if (this.zoomLevel === this.ZOOM_TOPICS) {
             $.each(this.maplayout.polylines, function(topicId, polyline) {
                 var path = "";
                 $.each(polyline.path, function(n, coordinate) {
@@ -330,7 +330,7 @@ var KMapEditor = {
         }
 
         // add exercises
-        if (this.zoomLevel === ZOOM_EXERCISES || this.zoomLevel === ZOOM_HYBRID) {
+        if (this.zoomLevel === this.ZOOM_EXERCISES || this.zoomLevel === this.ZOOM_HYBRID) {
             $.each(this.exercises, function(n, ex) {
                 var newDiv = $("<div>").appendTo($("#map"));
                 newDiv.addClass("exercise");
@@ -349,7 +349,7 @@ var KMapEditor = {
                     .bind("dragstart", function(event) { event.preventDefault(); })
                     .appendTo(newDiv);
 
-                if (KMapEditor.zoomLevel === ZOOM_EXERCISES) {
+                if (KMapEditor.zoomLevel === KMapEditor.ZOOM_EXERCISES) {
                     $("<div>").addClass("exercise exercise-label")
                         .text(ex.display_name)
                         .css({"width": KMapEditor.LABEL_WIDTH + "px"})
