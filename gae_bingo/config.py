@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from google.appengine.api import users
 
-from user_models import UserData
+import user_models
 
 # CUSTOMIZE set queue_name to something other than "default"
 # if you'd like to use a non-default task queue.
@@ -12,7 +12,7 @@ QUEUE_NAME = "gae-bingo-queue"
 # whether or not the currently-logged-in user has access
 # to the experiment dashboard.
 def can_control_experiments():
-    user_data = UserData.current(bust_cache=True)
+    user_data = user_models.current(bust_cache=True)
     return users.is_current_user_admin() or (user_data and user_data.developer)
 
 # CUSTOMIZE current_logged_in_identity to make your a/b sessions
@@ -36,11 +36,11 @@ def can_control_experiments():
 #   from google.appengine.api import users
 #   return users.get_current_user().user_id() if users.get_current_user() else None
 def current_logged_in_identity():
-    return UserData.current(bust_cache=True)
+    return user_models.UserData.current(bust_cache=True)
 
 # Optionally, you can provide a function that will retrieve the identitiy given a query.
 # If not used, simply return None
 def retrieve_identity(query):
-    user_data = UserData.get_from_db_key_email(query)
+    user_data = user_models.UserData.get_from_db_key_email(query)
     return user_data.gae_bingo_identity if user_data else None
 

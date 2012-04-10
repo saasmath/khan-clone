@@ -3,14 +3,14 @@ from __future__ import absolute_import
 from google.appengine.api import users
 from google.appengine.ext import db
 
-from user_models import UserData
+import user_models
 
 def can_control_gandalf():
     """CUSTOMIZE can_control_gandalf however you want to specify
     whether or not the currently-logged-in user has access
     to Gandalf dashboard."
     """
-    user_data = UserData.current(bust_cache=True)
+    user_data = user_models.UserData.current(bust_cache=True)
     return users.is_current_user_admin() or (user_data and user_data.developer)
 
 def current_logged_in_identity():
@@ -26,7 +26,7 @@ def current_logged_in_identity():
              ...or...
         from google.appengine.api import users
         return users.get_current_user().user_id() if users.get_current_user() else None"""
-    return UserData.current(bust_cache=True)
+    return user_models.UserData.current(bust_cache=True)
 
 def current_logged_in_identity_string():
     identity = current_logged_in_identity()

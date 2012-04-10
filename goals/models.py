@@ -9,7 +9,6 @@ from object_property import ObjectProperty
 from templatefilters import timesince_ago, seconds_to_time_string
 
 from exercises.exercise_models import Exercise
-from video_models import UserVideo, Video
 import util
 import logging
 
@@ -386,7 +385,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
         self.video_readable_id = video.readable_id
         self.description = video.title
 
-        user_video = UserVideo.get_for_video_and_user_data(video, user_data)
+        user_video = video_models.UserVideo.get_for_video_and_user_data(video, user_data)
         if user_video:
             self.progress = user_video.progress
         else:
@@ -395,17 +394,17 @@ class GoalObjectiveWatchVideo(GoalObjective):
     def init_from_json(self, json):
         super(GoalObjectiveWatchVideo, self).init_from_json(json)
         self.video_readable_id = json['internal_id']
-        self.video_key = Video.get_for_readable_id(self.video_readable_id).key()
+        self.video_key = video_models.Video.get_for_readable_id(self.video_readable_id).key()
 
     def url(self):
-        return Video.get_relative_url(self.video_readable_id)
+        return video_models.Video.get_relative_url(self.video_readable_id)
 
     def internal_id(self):
         return self.video_readable_id
 
     def record_progress(self, user_data, user_video):
         obj_key = self.video_key
-        video_key = UserVideo.video.get_value_for_datastore(user_video)
+        video_key = video_models.UserVideo.video.get_value_for_datastore(user_video)
         if obj_key == video_key:
             self.progress = user_video.progress
             return True
@@ -420,11 +419,11 @@ class GoalObjectiveAnyVideo(GoalObjective):
         super(GoalObjectiveAnyVideo, self).init_from_json(json)
         self.video_readable_id = json['internal_id'] or None
         if self.video_readable_id:
-            self.video_key = Video.get_for_readable_id(self.video_readable_id).key()
+            self.video_key = video_models.Video.get_for_readable_id(self.video_readable_id).key()
 
     def url(self):
         if self.video_readable_id:
-            return Video.get_relative_url(self.video_readable_id)
+            return video_models.Video.get_relative_url(self.video_readable_id)
         else:
             return "/#browse"
 

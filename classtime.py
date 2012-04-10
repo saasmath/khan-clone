@@ -9,9 +9,8 @@ from asynctools import AsyncMultiTask, QueryTask
 
 import util
 from exercises.exercise_models import UserExercise, Exercise, ProblemLog
-from user_modles import UserData
-from video_models import VideoLog
-from log_summary_models import LogSummary, LogSummaryTypes
+import video_models
+from summary_log_models import LogSummary, LogSummaryTypes
 import activity_summary
 
 def dt_to_utc(dt, timezone_adjustment):
@@ -42,7 +41,7 @@ def fill_class_summaries_from_logs(user_data_coach, students_data, dt_start_utc)
     async_queries = []
     for user_data_student in students_data:
         query_problem_logs = ProblemLog.get_for_user_data_between_dts(user_data_student, dt_start_utc, dt_end_utc)
-        query_video_logs = VideoLog.get_for_user_data_between_dts(user_data_student, dt_start_utc, dt_end_utc)
+        query_video_logs = video_models.VideoLog.get_for_user_data_between_dts(user_data_student, dt_start_utc, dt_end_utc)
 
         async_queries.append(query_problem_logs)
         async_queries.append(query_video_logs)
@@ -168,7 +167,7 @@ class ClassTimeAnalyzer:
         for user_data_student in students_data:
 
             query_problem_logs = ProblemLog.get_for_user_data_between_dts(user_data_student, self.dt_to_utc(dt_start_ctz), self.dt_to_utc(dt_end_ctz))
-            query_video_logs = VideoLog.get_for_user_data_between_dts(user_data_student, self.dt_to_utc(dt_start_ctz), self.dt_to_utc(dt_end_ctz))
+            query_video_logs = video_models.VideoLog.get_for_user_data_between_dts(user_data_student, self.dt_to_utc(dt_start_ctz), self.dt_to_utc(dt_end_ctz))
 
             async_queries.append(query_problem_logs)
             async_queries.append(query_video_logs)
@@ -351,7 +350,7 @@ class ClassTimeChunk:
 
         for activity in self.activities:
             has_exercise = has_exercise or type(activity) == ProblemLog
-            has_video = has_video or type(activity) == VideoLog
+            has_video = has_video or type(activity) == video_models.VideoLog
 
         if has_exercise and has_video:
             self.cached_activity_class = "exercise_video"
@@ -422,7 +421,7 @@ class ClassTimeChunk:
             if type(activity) == ProblemLog:
                 name_activity = activity.exercise
                 dict_target = dict_exercises
-            elif type(activity) == VideoLog:
+            elif type(activity) == video_models.VideoLog:
                 name_activity = activity.video_title
                 dict_target = dict_videos
 
@@ -615,9 +614,9 @@ class UserAdjacentActivitySummary:
         if self.activity_class is None:
             if type(activity) == ProblemLog:
                 self.activity_class = "exercise"
-            elif type(activity) == VideoLog:
+            elif type(activity) == video_models.VideoLog:
                 self.activity_class = "video"
-            elif (self.activity_class == "exercise" and type(activity) == VideoLog) or (self.activity_class == "video" and type(activity) == ProblemLog): 
+            elif (self.activity_class == "exercise" and type(activity) == video_models.VideoLog) or (self.activity_class == "video" and type(activity) == ProblemLog): 
                 self.activity_class = "exercise_video"
         return self.activity_class
 
@@ -650,7 +649,7 @@ class UserAdjacentActivitySummary:
         if type(activity) == ProblemLog:
             name_activity = activity.exercise
             dict_target = self.dict_exercises
-        elif type(activity) == VideoLog:
+        elif type(activity) == video_models.VideoLog:
             name_activity = activity.video_title
             dict_target = self.dict_videos
 

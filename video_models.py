@@ -28,6 +28,7 @@ from google.appengine.ext import db
 from google.appengine.ext import deferred
 
 import app
+import backup_model
 import classtime
 import consts
 import experiments
@@ -401,7 +402,7 @@ def commit_log_summary_coaches(activity_log, coaches):
         summary_log_models.LogSummary.add_or_update_entry(user_models.UserData.get_from_db_key_email(coach), activity_log, classtime.ClassDailyActivitySummary, summary_log_models.LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
 
 
-class VideoLog(BackupModel):
+class VideoLog(backup_model.BackupModel):
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
     video_title = db.StringProperty(indexed=False)

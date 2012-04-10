@@ -24,7 +24,6 @@ import accuracy_model
 from api import jsonify   # TODO(csilvers): move out of api/?
 import auth.models
 from auth import age_util
-import autocomplete
 from badges import util_badges
 from counters import user_counter
 from discussion import models_discussion
