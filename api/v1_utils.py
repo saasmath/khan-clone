@@ -13,7 +13,6 @@ import zlib
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 
-from api import v1
 import app
 import exercise_models
 import exercise_video_model
@@ -155,7 +154,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                         for readable_id in tree["related_videos"]:
                             video = video_dict[readable_id]
                             tree["related_video_keys"].append(video.key())
-                    exercise = v1.exercise_save_data(version, tree, None, put_change)
+                    exercise = exercise_save_data(version, tree, None, put_change)
                     logging.info("%s: added Exercise %s" % (pos, exercise.name))
                     new_content_keys.append(exercise.key())
                     tree["key"] = exercise.key()
@@ -255,7 +254,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                 exercise = all_entities_dict[node["key"]]
                 logging.info("%i/%i Updating any changes to Exercise %s" % (i, len(nodes), exercise.name))
 
-                change = v1.exercise_save_data(version, node, exercise)
+                change = exercise_save_data(version, node, exercise)
                 if change:
                     logging.info("changed")
 

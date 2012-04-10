@@ -827,27 +827,8 @@ class Topic(search.Searchable, db.Model):
             parent.put()
 
         if new_topic.child_keys:
-            child_topic_keys = [c for c in new_topic.child_keys if c.kind() == "Topic"]
-            child_topics = db.get(child_topic_keys)
-            for child in child_topics:
-                # TODO(csilvers): topic not defined; should it be new_topic?
-                child.parent_keys.append(topic.key())
-                child.ancestor_keys.append(topic.key())
-
-            all_descendant_keys = {} # used to make sure we don't loop
-            descendant_keys = {}
-            descendants = child_topics
-            while True: # should iterate n+1 times making n db.gets() where n is the tree depth under topic
-                for descendant in descendants:
-                    descendant_keys.update(dict((key, True) for key in descendant.child_keys if key.kind() == "Topic" and not all_descendant_keys.has_key(key)))
-                if not descendant_keys: # no more topic descendants that we haven't already seen before
-                    break
-
-                all_descendant_keys.update(descendant_keys)
-                descendants = db.get(descendant_keys.keys())
-                for descendant in descendants:
-                    descendant.ancestor_keys = topic.key()
-                descendant_keys = {}
+            # Children should be added after the parent topic is already added to the topic tree
+            raise Exception("Should not insert a new topic with children into the tree.")
 
         return new_topic
 
