@@ -27,12 +27,7 @@ class PageComments(request_handler.RequestHandler):
         video_key = self.request.get("video_key")
         topic_key = self.request.get("topic_key")
         sort_order = self.request_int("sort_order", default=voting.VotingSortOrder.HighestPointsFirst)
-
-        try:
-            video = db.get(video_key)
-        except db.BadRequestError:
-            # Temporarily ignore errors caused by cached google pages of non-HR app
-            return
+        video = db.get(video_key)
 
         if video:
             try:

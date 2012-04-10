@@ -39,7 +39,6 @@ class ExpandQuestion(request_handler.RequestHandler):
 class PageQuestions(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
-
         page = 0
         try:
             page = int(self.request.get("page"))
@@ -50,12 +49,7 @@ class PageQuestions(request_handler.RequestHandler):
         topic_key = self.request.get("topic_key")
         qa_expand_key = self.request_string("qa_expand_key")
         sort = self.request_int("sort", default=-1)
-
-        try:
-            video = db.get(video_key)
-        except db.BadRequestError:
-            # Temporarily ignore errors caused by cached google pages of non-HR app
-            return
+        video = db.get(video_key)
 
         user_data = models.UserData.current()
 
