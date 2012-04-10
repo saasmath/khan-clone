@@ -1,8 +1,5 @@
 # TODO(csilvers): rename this file to something better, and/or break it up.
 
-import re
-import os
-import hashlib
 import urllib
 
 from google.appengine.ext import db
@@ -16,9 +13,7 @@ import exercise_video_model
 import request_handler
 import user_util
 import points
-import layer_cache
 import knowledgemap.knowledgemap_util
-import string
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
 try:
@@ -26,21 +21,14 @@ try:
 except ImportError:
     import simplejson as json
 
-import badges
 import badges.util_badges
 import phantom_users
 import custom_exceptions
 
-from api.auth.xsrf import ensure_xsrf_cookie
-from api import jsonify
-from gae_bingo.gae_bingo import bingo, ab_test
-from gae_bingo.models import ConversionTypes
+from gae_bingo.gae_bingo import bingo
 from goals.models import GoalList
 from experiments import StrugglingExperiment
-from js_css_packages import templatetags
-from exercises.handlers import ViewExercise, ViewExerciseDeprecated, ViewTopicExerciseDeprecated
 from exercises.file_contents import raw_exercise_contents
-import util
 
 def exercise_graph_dict_json(user_data, admin=False):
     user_exercise_graph = exercise_models.UserExerciseGraph.get(user_data)
