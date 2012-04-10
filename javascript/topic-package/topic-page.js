@@ -47,6 +47,12 @@
                 self.router.navigate("/" + selectedID, true);
                 return false;
             });
+            $(".topic-page-content").on("click", ".topic-page-content a.subtopic-link-and-scroll", function() {
+                selectedID = $(this).attr("data-id");
+                self.router.navigate("/" + selectedID, true);
+                $("body").animate( {scrollTop:0}, 200, "easeInOutCubic");
+                return false;
+            });
 
             $(".topic-page-content").on("click", "a.modal-video", function(ev) {
                 var videoDesc = videosDict[$(this).attr("data-youtube-id")];
@@ -79,6 +85,16 @@
                 if (subtopicID.charAt(0) === '/') {
                     subtopicID = subtopicID.substr(1);
                 }
+
+                // Try to retain maximum content pane height
+                var containerEl = $(".topic-page-content .content-pane");
+                var minHeight = containerEl.css("min-height");
+                if (minHeight == "none") {
+                    minHeight = containerEl.height();
+                } else {
+                    minHeight = Math.max(containerEl.height(), minHeight.substr(0,minHeight.length-2)*1);
+                }
+                containerEl.css("min-height", minHeight);
 
                 KAConsole.log("Switching to subtopic: " + subtopicID);
                 if (subtopicID === "") {
@@ -125,8 +141,6 @@
                         .end()
                     .find("li[data-id=\"" + selectedTopicID + "\"]")
                         .addClass("selected");
-
-                $("body").scrollTop(0);
             }
         }),
 
@@ -141,6 +155,12 @@
                 var listLength = Math.floor((this.model.children.length+1)/2);
                 var childrenCol1 = this.model.children.slice(0, listLength);
                 var childrenCol2 = this.model.children.slice(listLength);
+
+                $.each(childrenCol1, function(idx, video) {
+                    if (idx < 3) {
+                        video.number = idx+1;
+                    }
+                });
 
                 $(this.el).html(this.template({
                     topic: this.model,
@@ -168,13 +188,23 @@
             },
 
             render: function() {
-                $.each(this.model.subtopics, function(idx, subtopic) {
-                    if (idx > 1) {
+                // Split subtopics into two equal lists
+                var listLength = Math.floor((this.model.subtopics.length+1)/2);
+                var childrenCol1 = this.model.subtopics.slice(0, listLength);
+                var childrenCol2 = this.model.subtopics.slice(listLength);
+
+                subtopicAddInfo = function(idx, subtopic) {
+                    if (idx > 0) {
                         subtopic.notFirst = true;
                     }
+                    if (idx < 3) {
+                        subtopic.number = idx+1;
+                    }
                     subtopic.descriptionTruncateLength = (subtopic.title.length > 28) ? 38 : 68;
-                });
-                $(this.el).html(this.template(this.model));
+                };
+                $.each(childrenCol1, subtopicAddInfo);
+                $.each(childrenCol2, subtopicAddInfo);
+                $(this.el).html(this.template({topicInfo: this.model, subtopicsA : childrenCol1, subtopicsB: childrenCol2 }));
                 VideoControls.initThumbnailHover($(this.el));
             },
 
