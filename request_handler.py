@@ -13,7 +13,7 @@ from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 import webapp2
 import shared_jinja
 
-from custom_exceptions import MissingVideoException, MissingExerciseException, SmartHistoryLoadException, QuietException
+from custom_exceptions import MissingVideoException, MissingExerciseException, SmartHistoryLoadException, PageNotFoundException, QuietException
 from app import App
 import cookie_util
 
@@ -189,7 +189,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
     def handle_exception(self, e, *args):
 
-        title = "Oops. We broke our streak."
+        title = "Oops. We made a mistake."
         message_html = "We ran into a problem. It's our fault, and we're working on it."
         sub_message_html = "This has been reported to us, and we'll be looking for a fix. If the problem continues, feel free to <a href='/reportissue?type=Defect'>send us a report directly</a>."
 
@@ -218,6 +218,12 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             # 404s are very common with Smarthistory as bots have gotten hold of bad urls, silencing these reports and log as info instead
             title = "This page of the Smarthistory section of Khan Academy does not exist"
             message_html = "Go to <a href='/'>our Smarthistory homepage</a> to find more art history content."
+            sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
+
+        elif type(e) is PageNotFoundException:
+
+            title = "Sorry, we can't find what you're looking for."
+            message_html = "This page doesn't seem to be around. <a href='/'>Head to our homepage</a> instead."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         if isinstance(e, QuietException):

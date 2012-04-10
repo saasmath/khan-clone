@@ -18,3 +18,6 @@ class SmartHistoryLoadException(QuietException):
 
 class InvalidEmailException(QuietException):
     pass
+
+class PageNotFoundException(QuietException):
+    pass
