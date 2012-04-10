@@ -5,6 +5,7 @@ import library
 from badges import util_badges
 import user_util
 
+
 class Warmup(request_handler.RequestHandler):
 
     @user_util.open_access
@@ -16,4 +17,3 @@ class Warmup(request_handler.RequestHandler):
         logging.info("Warmup: loading badges")
         util_badges.all_badges()
         util_badges.all_badges_dict()
-

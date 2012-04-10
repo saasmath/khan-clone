@@ -4,6 +4,7 @@ import search
 import layer_cache
 from google.appengine.ext import db
 
+
 # Now that we're supporting unicode nicknames, ensure all callers get a
 # consistent type of object back by converting everything to unicode.
 # This fixes issue #4297.
@@ -12,6 +13,7 @@ def to_unicode(s):
         return unicode(s, 'utf-8', 'ignore')
     else:
         return s
+
 
 def get_default_nickname_for(user_data):
     """ Gets the default nickname for a user if none is available locally.
@@ -35,6 +37,7 @@ def get_default_nickname_for(user_data):
     else:
         nickname = email.split('@')[0]
     return to_unicode(nickname)
+
 
 def combinations(iterable, r):
     """Return r length subsequences of elements from the input iterable.
@@ -68,6 +71,7 @@ def combinations(iterable, r):
 
 INDEX_DELIMITER = u"\uffff"
 
+
 def build_index_strings(nickname):
     """ Builds sanitized strings to be used in a username index so that
     searches on a user's first, middle, or last name can be done.
@@ -86,6 +90,7 @@ def build_index_strings(nickname):
         term_tuples.extend([t for t in combinations(tokens, num_terms)])
     return [INDEX_DELIMITER.join(t) for t in term_tuples]
 
+
 def build_search_query(raw_query):
     """ Builds out a relevant search query to be used in conjunction with
     the index tokens built out by build_index_strings
@@ -96,12 +101,15 @@ def build_search_query(raw_query):
     tokens.sort()
     return INDEX_DELIMITER.join(tokens)
 
+
 @layer_cache.cache(persist_across_app_versions=True)
 def _get_offensive_terms():
     return frozenset([entity.term for entity in OffensiveTerm.all()])
 
+
 class OffensiveTerm(db.Model):
     term = db.StringProperty()
+
 
 def is_valid_nickname(name):
     """ Validates a name to be used, checking for blatantly offensive names.

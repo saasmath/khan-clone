@@ -39,7 +39,8 @@ class Setting(db.Model):
     def _get_settings_dict():
         # ancestor query to ensure consistent results
         query = Setting.all().ancestor(Setting.entity_group_key())
-        results = dict((setting.key().name(), setting) for setting in query.fetch(20))
+        results = dict((setting.key().name(), setting)
+                       for setting in query.fetch(20))
         return results
 
     @staticmethod
@@ -60,7 +61,8 @@ class Setting(db.Model):
 
     @staticmethod
     def last_youtube_sync_generation_start(val=None):
-        return Setting._get_or_set_with_key("last_youtube_sync_generation_start", val) or 0
+        return Setting._get_or_set_with_key(
+            "last_youtube_sync_generation_start", val) or 0
 
     @staticmethod
     def topic_admin_task_message(val=None):
@@ -77,4 +79,3 @@ class Setting(db.Model):
     @staticmethod
     def classtime_report_startdate(val=None):
         return Setting._get_or_set_with_key("classtime_report_startdate", val)
-

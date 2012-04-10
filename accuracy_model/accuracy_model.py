@@ -18,6 +18,7 @@ EWMA_SEED = 0.9
 MAX_HISTORY_KEPT = 20
 MAX_HISTORY_BIT_MASK = (1 << MAX_HISTORY_KEPT) - 1
 
+
 def bit_count(num):
     # TODO(david): This uses Kerninghan's method, which would not be very quick
     #     for dense 1s. Use numpy or some library.
@@ -27,9 +28,11 @@ def bit_count(num):
         count += 1
     return count
 
+
 class AccuracyModel(object):
     """
-    Predicts the probabilty of the next problem correct using logistic regression.
+    Predicts the probabilty of the next problem correct using logistic
+    regression.
     """
 
     # Bump this whenever you change the state we keep around so we can
@@ -47,8 +50,9 @@ class AccuracyModel(object):
         self.total_done = 0
 
         if user_exercise is not None:
-            # Switching the user from streak model to new accuracy model. Use
-            # current streak as known history, and simulate streak correct answers.
+            # Switching the user from streak model to new accuracy
+            # model. Use current streak as known history, and simulate
+            # streak correct answers.
             self.update([True] * user_exercise.streak)
 
     def update(self, correct):
@@ -61,7 +65,8 @@ class AccuracyModel(object):
                 self.update(answer or answer == '1')
         else:
             self.total_done = min(self.total_done + 1, MAX_HISTORY_KEPT)
-            self.answer_history = ((self.answer_history << 1) | correct) & MAX_HISTORY_BIT_MASK
+            self.answer_history = \
+                ((self.answer_history << 1) | correct) & MAX_HISTORY_BIT_MASK
 
         return self
 
@@ -81,7 +86,7 @@ class AccuracyModel(object):
     def get_answer_at(self, index):
         return (self.answer_history >> index) & 1
 
-    # See http://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+    # http://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
     def exp_moving_avg(self, weight):
         ewma = EWMA_SEED
 
@@ -103,7 +108,8 @@ class AccuracyModel(object):
 
     def predict(self):
         """
-        Returns: the probabilty of the next problem correct using logistic regression.
+        Returns: the probabilty of the next problem correct using
+        logistic regression.
         """
 
         if self.version != AccuracyModel.CURRENT_VERSION:
@@ -118,7 +124,8 @@ class AccuracyModel(object):
         ewma_10 = self.exp_moving_avg(0.1)
         current_streak = self.streak()
         log_num_done = math.log(self.total_done)
-        log_num_missed = math.log(self.total_done - self.total_correct() + 1)  # log (num_missed + 1)
+        # log (num_missed + 1)
+        log_num_missed = math.log(self.total_done - self.total_correct() + 1)
         percent_correct = float(self.total_correct()) / self.total_done
 
         weighted_features = [
@@ -132,7 +139,8 @@ class AccuracyModel(object):
 
         X, weight_vector = zip(*weighted_features)  # unzip the list of pairs
 
-        return AccuracyModel.logistic_regression_predict(params.INTERCEPT, weight_vector, X)
+        return AccuracyModel.logistic_regression_predict(
+            params.INTERCEPT, weight_vector, X)
 
     def is_struggling(self, param, minimum_accuracy, minimum_attempts):
         """ Whether or not this model detects that the student is struggling
@@ -174,7 +182,8 @@ class AccuracyModel(object):
         model.update(answer_history)
         return model.predict()
 
-    # The minimum number of problems correct in a row to be greater than the given threshold
+    # The minimum number of problems correct in a row to be greater
+    # than the given threshold
     @staticmethod
     def min_streak_till_threshold(threshold):
         model = AccuracyModel()
