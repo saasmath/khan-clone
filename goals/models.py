@@ -8,7 +8,7 @@ from google.appengine.ext import db
 from object_property import ObjectProperty
 from templatefilters import timesince_ago, seconds_to_time_string
 
-from exercise_models import Exercise
+import exercise_models
 import util
 import logging
 
@@ -318,7 +318,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         self.exercise_name = json['internal_id']
 
     def url(self):
-        exercise = Exercise.get_by_name(self.exercise_name)
+        exercise = exercise_models.Exercise.get_by_name(self.exercise_name)
         if not exercise:
             logging.warn("Exercise [%s] not found for goal" % self.exercise_name)
             return ""
@@ -362,7 +362,7 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
 
     def url(self):
         if self.exercise_name:
-            return Exercise.get_relative_url(self.exercise_name)
+            return exercise_models.Exercise.get_relative_url(self.exercise_name)
         else:
             return "/exercisedashboard"
 
