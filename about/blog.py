@@ -18,6 +18,7 @@ import user_util
 TUMBLR_URL = "http://khanacademy.tumblr.com"
 POSTS_PER_PAGE = 5
 
+
 class BlogPost:
     def __init__(self, json):
         self.post_id = json["id"]
@@ -32,14 +33,17 @@ class BlogPost:
             return "/about/blog"
         return "/about/blog/post/%s/%s" % (self.post_id, self.slug)
 
+
 class TumblrDownBlogPost(BlogPost):
     def __init__(self):
         self.post_id = ""
         self.title = "Temporarily unavailable"
-        self.body = "Our blog is temporarily unavailable but will be back soon."
+        self.body = "Our blog is temporarily unavailable but will be back " \
+                    "soon."
         self.dt = ""
         self.url = "/about/blog"
         self.slug = ""
+
 
 def strip_json(json):
 
@@ -53,7 +57,8 @@ def strip_json(json):
 
     return json
 
-def get_posts(offset = 0, post_id = None, force_refresh = False):
+
+def get_posts(offset=0, post_id=None, force_refresh=False):
 
     json = ""
 
@@ -68,10 +73,12 @@ def get_posts(offset = 0, post_id = None, force_refresh = False):
 
     if not posts or force_refresh:
         try:
-            request = urllib2.urlopen("%s/api/read/json" % TUMBLR_URL, params_encoded)
+            request = urllib2.urlopen("%s/api/read/json" % TUMBLR_URL,
+                                      params_encoded)
             json = request.read()
         except:
-            raise TumblrException("Error while grabbing blog posts from Tumblr.")
+            raise TumblrException(
+                "Error while grabbing blog posts from Tumblr.")
 
         posts = []
 
@@ -83,15 +90,18 @@ def get_posts(offset = 0, post_id = None, force_refresh = False):
 
         if posts:
             # Cache for an hour
-            memcache.set(memcache_key, posts, time=60 * 60, namespace=App.version)
+            memcache.set(memcache_key, posts, time=60 * 60,
+                         namespace=App.version)
 
     return posts
 
-def get_single_post(post_id, force_refresh = False):
+
+def get_single_post(post_id, force_refresh=False):
     posts = get_posts(0, post_id, force_refresh)
     if len(posts):
         return posts[0]
     return None
+
 
 def parse_json_posts(json_string):
 
@@ -107,6 +117,7 @@ def parse_json_posts(json_string):
         posts.append(post)
 
     return posts
+
 
 class ViewBlog(util_about.AboutRequestHandler):
 
@@ -140,6 +151,7 @@ class ViewBlog(util_about.AboutRequestHandler):
 
         self.render_jinja2_template('about/viewblog.html', dict_context)
 
+
 class ViewBlogPost(util_about.AboutRequestHandler):
 
     @user_util.open_access
@@ -172,4 +184,5 @@ class ViewBlogPost(util_about.AboutRequestHandler):
         except TumblrException:
             post = TumblrDownBlogPost()
 
-        self.render_jinja2_template('about/viewblogpost.html', {"post": post, "selected_id": "blog"})
+        self.render_jinja2_template('about/viewblogpost.html',
+                                    {"post": post, "selected_id": "blog"})
