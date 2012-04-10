@@ -3,6 +3,7 @@
 import user_models
 import testutil
 
+
 class NicknamesTest(testutil.GAEModelTestCase):
 
     def setUp(self):
@@ -30,13 +31,14 @@ class NicknamesTest(testutil.GAEModelTestCase):
         for raw_query in ['Fake', 'uSeR', 'ONE', 'fake user one']:
             self.assertSingleResult(u.key(), raw_query)
 
-        user_matches = user_models.NicknameIndex.users_for_search('does not exist')
-        self.assertEqual(0, len(user_matches))
+        matches = user_models.NicknameIndex.users_for_search('does not exist')
+        self.assertEqual(0, len(matches))
 
     def test_retrieval_order_agnostic(self):
         u = self.make_user('Firstname Middlename Lastname')
 
-        # Order of tokens doesn't matter (name order differs by culture anyways)
+        # Order of tokens doesn't matter (name order differs by
+        # culture anyways)
         for raw_query in ['Lastname, Firstname',
                           'Firstname Lastname',
                           'lastname firstname middlename']:
@@ -65,5 +67,5 @@ class NicknamesTest(testutil.GAEModelTestCase):
 
         # Partial matches on a full search should _not_ be returned.
         for raw_query in ['lastn', 'firstname mid', 'firstname wronglast']:
-            user_matches = user_models.NicknameIndex.users_for_search(raw_query)
-            self.assertEqual(0, len(user_matches))
+            matches = user_models.NicknameIndex.users_for_search(raw_query)
+            self.assertEqual(0, len(matches))

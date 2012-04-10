@@ -18,4 +18,3 @@ except ImportError:
     # google.appengine.dist has been removed in GAE's python27, replaced by the
     # "libraries" section of app.yaml
     pass
-
