@@ -1,7 +1,5 @@
 from __future__ import absolute_import
-import os
 import logging
-import bisect
 import layer_cache
 
 from google.appengine.ext import db

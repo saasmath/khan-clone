@@ -17,7 +17,6 @@ from custom_exceptions import MissingVideoException, MissingExerciseException, S
 from app import App
 import cookie_util
 
-import goals.models
 from api.jsonify import jsonify
 from gae_bingo.gae_bingo import ab_test
 
@@ -477,6 +476,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         else:
             self.response.out.write(json_string)
 
+import goals.models
 import user_models
 import util
 from gandalf import gandalf

@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import os
 import urllib
 import logging
 import re
@@ -13,6 +12,8 @@ from google.appengine.api import memcache
 
 import webapp2
 from webapp2_extras.routes import DomainRoute
+
+import templatetags
 
 import devpanel
 import bulk_update.handler
@@ -52,7 +53,6 @@ import summer
 import common_core
 import unisubs
 import api.jsonify
-import labs
 import socrates
 import labs.explorations
 

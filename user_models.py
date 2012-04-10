@@ -1175,4 +1175,3 @@ class StudentList(db.Model):
         query = StudentList.all()
         query.filter("coaches = ", key)
         return query
-
