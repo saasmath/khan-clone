@@ -14,9 +14,10 @@ from badges import badges, util_badges, models_badges, profile_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
 from exercises import attempt_problem, make_wrong_attempt
-from models import StudentList
+from user_data import StudentList
 from phantom_users.phantom_util import api_create_phantom, api_disallow_phantoms
 import notifications
+import user_models
 import user_util
 import coaches
 from gae_bingo.gae_bingo import bingo
@@ -52,7 +53,7 @@ from google.appengine.ext import db, deferred
 def add_action_results(obj, dict_results):
 
     badges_earned = []
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data:
         dict_results["user_data"] = user_data
@@ -96,7 +97,7 @@ def add_action_results(obj, dict_results):
 def get_visible_user_data_from_request(disable_coach_visibility=False,
                                        user_data=None):
 
-    user_data = user_data or models.UserData.current()
+    user_data = user_data or user_models.UserData.current()
     if not user_data:
         return None
 
@@ -118,7 +119,7 @@ def get_visible_user_data_from_request(disable_coach_visibility=False,
         return user_data
 
 def get_user_data_coach_from_request():
-    user_data_coach = models.UserData.current()
+    user_data_coach = user_models.UserData.current()
     user_data_override = request.request_user_data("coach_email")
 
     if user_data_override and user_data_coach and (user_data_coach.developer or user_data_coach.is_coworker_of(user_data_override)):
@@ -273,9 +274,9 @@ def topic_exercises(topic_id, version_id = None):
 @jsonp
 @jsonify
 def topic_progress(topic_id):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if not user_data:
-        user_data = models.UserData.pre_phantom()
+        user_data = user_models.UserData.pre_phantom()
 
     topic = models.Topic.get_by_id(topic_id)
     if not topic:
@@ -381,7 +382,7 @@ def topic(topic_id, version_id = None):
 def put_topic(topic_id, version_id = "edit"):
     version = models.TopicVersion.get_by_id(version_id)
 
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
@@ -1063,7 +1064,7 @@ def get_students_data_from_request(user_data):
 @jsonp
 @jsonify
 def user_data_other():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data:
         user_data_student = get_visible_user_data_from_request()
@@ -1090,7 +1091,7 @@ def is_username_available():
 @jsonp
 @jsonify
 def has_seen_promo(promo_name):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     return models.PromoRecord.has_user_seen_promo(promo_name, user_data.user_id)
 
 @route("/api/v1/user/promo/<promo_name>", methods=["POST"])
@@ -1098,7 +1099,7 @@ def has_seen_promo(promo_name):
 @jsonp
 @jsonify
 def mark_promo_as_seen(promo_name):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     return models.PromoRecord.record_promo(promo_name, user_data.user_id)
 
 @route("/api/v1/user/profile", methods=["GET"])
@@ -1108,7 +1109,7 @@ def mark_promo_as_seen(promo_name):
 def get_user_profile():
     # TODO(marcia): This uses user_id, as opposed to email...
     # which means that the GET and POST are not symmetric...
-    current_user_data = models.UserData.current() or models.UserData.pre_phantom()
+    current_user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
     user_data = request.request_user_data_by_user_id()
     return util_profile.UserProfile.from_user(user_data, current_user_data)
 
@@ -1123,7 +1124,7 @@ def update_user_profile():
     needs to be changed. Supports "user_nickname", "avatar_name",
     "username", and "isPublic".
     """
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     profile_json = request.json
     if not profile_json:
@@ -1192,7 +1193,7 @@ def update_coaches_and_requesters():
     """ Update the student's list of coaches and coach requesters
     """
     # TODO(marcia): what is the deal with coach_email.lower() in coaches.py
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     try:
         profiles = coaches.update_coaches_and_requests(user_data, request.json)
@@ -1206,7 +1207,7 @@ def update_coaches_and_requesters():
 @jsonp
 @jsonify
 def user_data_student():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data:
         user_data_student = get_visible_user_data_from_request(disable_coach_visibility=True)
@@ -1220,12 +1221,12 @@ def user_data_student():
 @jsonp
 @jsonify
 def get_user_studentlists():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data:
         user_data_student = get_visible_user_data_from_request()
         if user_data_student:
-            student_lists_model = StudentList.get_for_coach(user_data_student.key())
+            student_lists_model = user_models.StudentList.get_for_coach(user_data_student.key())
             student_lists = []
             for student_list in student_lists_model:
                 student_lists.append({
@@ -1241,7 +1242,7 @@ def get_user_studentlists():
 @jsonp
 @jsonify
 def create_user_studentlist():
-    coach_data = models.UserData.current()
+    coach_data = user_models.UserData.current()
     if not coach_data:
         return unauthorized_response()
 
@@ -1249,7 +1250,7 @@ def create_user_studentlist():
     if not list_name:
         raise Exception('Invalid list name')
 
-    student_list = models.StudentList(coaches=[coach_data.key()],
+    student_list = user_models.StudentList(coaches=[coach_data.key()],
         name=list_name)
     student_list.put()
 
@@ -1264,7 +1265,7 @@ def create_user_studentlist():
 @jsonp
 @jsonify
 def delete_user_studentlist(list_key):
-    coach_data = models.UserData.current()
+    coach_data = user_models.UserData.current()
     if not coach_data:
         return unauthorized_response()
 
@@ -1293,7 +1294,7 @@ def filter_query_by_request_dates(query, property):
 @jsonp
 @jsonify
 def user_videos_all():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data:
         user_data_student = get_visible_user_data_from_request()
@@ -1315,7 +1316,7 @@ def user_videos_all():
 @jsonp
 @jsonify
 def user_videos_specific(youtube_id):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data and youtube_id:
         user_data_student = get_visible_user_data_from_request()
@@ -1345,7 +1346,7 @@ def log_user_video(youtube_id):
         return api_invalid_param_response("Must supply seconds_watched and" +
             "last_second_watched")
 
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if not user_data:
         logging.warning("Video watched with no user_data present")
         return unauthorized_response()
@@ -1390,10 +1391,10 @@ def topic_next_exercises(topic_id):
     """ Retrieves the next few suggested user exercises in a specific topic.
     """
 
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if not user_data:
-        user_data = models.UserData.pre_phantom()
+        user_data = user_models.UserData.pre_phantom()
 
     topic = models.Topic.get_by_id(topic_id)
     if not topic:
@@ -1417,12 +1418,12 @@ def user_exercises_list(topic_id = None):
     skeletal and contains little information.
 
     """
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     student = get_visible_user_data_from_request(user_data=user_data)
 
     if not student:
-        student = models.UserData.pre_phantom()
+        student = user_models.UserData.pre_phantom()
 
     exercises = None
 
@@ -1545,7 +1546,7 @@ def get_students_progress_summary():
 @jsonp
 @jsonify
 def user_exercises_specific(exercise_name):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data and exercise_name:
         user_data_student = get_visible_user_data_from_request()
@@ -1567,7 +1568,7 @@ def user_exercises_specific(exercise_name):
     return None
 
 def user_followup_exercises(exercise_name):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data and exercise_name:
 
@@ -1612,7 +1613,7 @@ def api_user_followups(exercise_name):
 @jsonp
 @jsonify
 def user_playlists_all():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data:
         user_data_student = get_visible_user_data_from_request()
@@ -1629,7 +1630,7 @@ def user_playlists_all():
 @jsonp
 @jsonify
 def user_playlists_specific(topic_id):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data and playlist_title:
         user_data_student = get_visible_user_data_from_request()
@@ -1647,7 +1648,7 @@ def user_playlists_specific(topic_id):
 @jsonp
 @jsonify
 def reviews_count():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data:
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
@@ -1660,7 +1661,7 @@ def reviews_count():
 @jsonp
 @jsonify
 def user_problem_logs(exercise_name):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data and exercise_name:
         user_data_student = get_visible_user_data_from_request()
@@ -1691,7 +1692,7 @@ def user_problem_logs(exercise_name):
 @jsonp
 @jsonify
 def attempt_problem_number(exercise_name, problem_number):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data:
         exercise = models.Exercise.get_by_name(exercise_name)
@@ -1760,7 +1761,7 @@ def attempt_problem_number(exercise_name, problem_number):
 @jsonify
 def hint_problem_number(exercise_name, problem_number):
 
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data:
         exercise = models.Exercise.get_by_name(exercise_name)
@@ -1832,7 +1833,7 @@ def attempt_problem_wrong(exercise_name):
     return _attempt_problem_wrong(exercise_name)
 
 def _attempt_problem_wrong(exercise_name):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data and exercise_name:
         user_exercise = user_data.get_or_insert_exercise(models.Exercise.get_by_name(exercise_name))
@@ -1845,7 +1846,7 @@ def _attempt_problem_wrong(exercise_name):
 @jsonp
 @jsonify
 def user_video_logs(youtube_id):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if user_data and youtube_id:
         user_data_student = get_visible_user_data_from_request()
@@ -1876,7 +1877,7 @@ def user_video_logs(youtube_id):
 def badges_list():
     badges_dict = util_badges.all_badges_dict()
 
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if user_data:
 
         user_data_student = get_visible_user_data_from_request()
@@ -1916,7 +1917,7 @@ def badge_category(category):
 @jsonp
 @jsonify
 def update_public_user_badges():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
@@ -1956,7 +1957,7 @@ def update_public_user_badges():
 @jsonp
 @jsonify
 def get_user_badges():
-    user_data = get_visible_user_data_from_request() or models.UserData.pre_phantom()
+    user_data = get_visible_user_data_from_request() or user_models.UserData.pre_phantom()
     grouped_badges = util_badges.get_grouped_user_badges(user_data)
 
     user_badges_by_category = {
@@ -2203,7 +2204,7 @@ def video_logs():
 @jsonp
 @jsonify
 def user_data():
-    user_data_query = models.UserData.all()
+    user_data_query = user_models.UserData.all()
     filter_query_by_request_dates(user_data_query, "joined")
     user_data_query.order("joined")
     return user_data_query.fetch(request.request_int("max", default=500))
@@ -2287,7 +2288,7 @@ def get_student_goals():
 @jsonp
 @jsonify
 def create_user_goal():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User is not logged in.")
 
@@ -2357,7 +2358,7 @@ def create_user_goal():
 @jsonp
 @jsonify
 def get_user_goal(id):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
@@ -2374,7 +2375,7 @@ def get_user_goal(id):
 @jsonp
 @jsonify
 def put_user_goal(id):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
@@ -2403,7 +2404,7 @@ def put_user_goal(id):
 @jsonp
 @jsonify
 def delete_user_goal(id):
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
@@ -2421,7 +2422,7 @@ def delete_user_goal(id):
 @jsonp
 @jsonify
 def delete_user_goals():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if not user_data.developer:
         return api_unauthorized_response("UNAUTHORIZED")
 
@@ -2442,7 +2443,7 @@ def get_avatars():
     If this is an authenticated request and user-info is available, the
     avatars will be annotated with whether or not they're available.
     """
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     result = util_avatars.avatars_by_category()
     if user_data:
         for category in result:

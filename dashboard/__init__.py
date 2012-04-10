@@ -9,7 +9,11 @@ import user_util
 from dashboard.models import DailyStatistic, EntityStatistic
 from google.appengine.ext.db import stats
 from itertools import groupby
-import models
+import topic_models
+from exercises import exercise_models
+import url_model
+import video_models
+
 
 class Dashboard(request_handler.RequestHandler):
     """
@@ -92,12 +96,12 @@ class ContentCountsCSV(request_handler.RequestHandler):
 
     @user_util.open_access
     def get(self):
-        root = models.Topic.get_root()
+        root = topic_models.Topic.get_root()
         tree = root.make_tree()
 
         def stats(tree, parent):
             title = (tree.title 
-                     if parent.id not in models.Topic._super_topic_ids 
+                     if parent.id not in topic_models.Topic._super_topic_ids 
                      else parent.title + " : " + tree.title)
 
             topic_stats = {"title" : title,                           
@@ -112,7 +116,7 @@ class ContentCountsCSV(request_handler.RequestHandler):
                            "subtopics": []}
 
             for child in tree.children:
-                if type(child) == models.Topic:
+                if type(child) == topic_models.Topic:
                     subtopic_stats = stats(child, tree)
                     topic_stats["video_keys"].update(subtopic_stats["video_keys"])
                     topic_stats["exercise_keys"].update(subtopic_stats["exercise_keys"])
@@ -120,12 +124,12 @@ class ContentCountsCSV(request_handler.RequestHandler):
                     topic_stats["descendant_video_count"] += subtopic_stats["descendant_video_count"] 
                     topic_stats["descendant_exercise_count"] += subtopic_stats["descendant_exercise_count"]               
                                     
-                elif type(child) == models.Exercise and child.live:
+                elif type(child) == exercise_models.Exercise and child.live:
                     topic_stats["exercise_keys"].add(child.key())
                     topic_stats["exercise_count"] += 1
                     topic_stats["descendant_exercise_count"] += 1
 
-                elif type(child) == models.Video or type(child) == models.Url:
+                elif type(child) == video_models.Video or type(child) == url_model.Url:
                     topic_stats["video_keys"].add((
                         child.key(), 
                         child.views if hasattr(child, "views") else 0))

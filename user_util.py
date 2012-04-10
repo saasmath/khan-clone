@@ -28,7 +28,7 @@ from app import App
 
 def _go_to_login(handler, why):
     '''Redirects the user to the login page, and logs the access attempt.'''
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     if user_data:
         logging.warning("Attempt by %s to access %s page"
                         % (user_data.user_id, why))
@@ -58,7 +58,7 @@ def open_access(method):
 
 @request_cache.cache()
 def is_current_user_developer():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     return user_data and (users.is_current_user_admin() or
                           user_data.developer)
 
@@ -78,7 +78,7 @@ def developer_only(method):
 
 @request_cache.cache()
 def is_current_user_moderator():
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     return user_data and (users.is_current_user_admin() or
                           user_data.moderator or user_data.developer)
 
@@ -103,7 +103,7 @@ def is_current_user_admin():
     # TODO(csilvers): have this actually do xsrf checking for non-/api/ calls?
     #                 c.f. api/auth/auth_util.py:allow_cookie_based_auth()
     #                 If so, change the decorators to call ensure_xsrf_cookie.
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
     return user_data and users.is_current_user_admin()
 
 def admin_only(method):
@@ -133,7 +133,7 @@ def manual_access_checking(method):
 
 
 def is_current_user(user_data):
-    current_user_data = models.UserData.current()
+    current_user_data = user_models.UserData.current()
     return (current_user_data and
             current_user_data.user_id == user_data.user_id)
 
@@ -147,7 +147,7 @@ def dev_server_only(method):
         if App.is_dev_server:
             return method(self, *args, **kwargs)
         else:
-            user_data = models.UserData.current()
+            user_data = user_models.UserData.current()
             user_id = user_data.user_id or None
             logging.warning(
                 "Attempt by %s to access production restricted page" % user_id)
@@ -161,4 +161,4 @@ def dev_server_only(method):
 
 # Put down here to avoid circular-import problems.
 # See http://effbot.org/zone/import-confusion.htm
-import models
+import user_models

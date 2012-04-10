@@ -476,7 +476,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         else:
             self.response.out.write(json_string)
 
-from models import UserData
+from user_models import UserData
 import util
 from goals.models import GoalList
 from gandalf import gandalf

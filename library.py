@@ -1,5 +1,6 @@
 import layer_cache
-from models import Setting, Topic, TopicVersion
+from setting_model import Setting
+from topic_models import Topic, TopicVersion
 import request_handler
 import shared_jinja
 import time

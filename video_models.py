@@ -395,7 +395,7 @@ def _commit_video_log(video_log, user_data=None):
     video_log.put()
 
 
-def _commit_log_summary_coaches(activity_log, coaches):
+def commit_log_summary_coaches(activity_log, coaches):
     """Used by our deferred log summary insertion process."""
     for coach in coaches:
         summary_log_models.LogSummary.add_or_update_entry(user_models.UserData.get_from_db_key_email(coach), activity_log, classtime.ClassDailyActivitySummary, summary_log_models.LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
@@ -560,7 +560,7 @@ class VideoLog(BackupModel):
 
         if user_data is not None and user_data.coaches:
             # Making a separate queue for the log summaries so we can clearly see how much they are getting used
-            deferred.defer(_commit_log_summary_coaches, video_log, user_data.coaches,
+            deferred.defer(commit_log_summary_coaches, video_log, user_data.coaches,
                 _queue="log-summary-queue",
                 _url="/_ah/queue/deferred_log_summary")
 

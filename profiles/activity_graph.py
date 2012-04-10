@@ -1,6 +1,7 @@
 import datetime
 
-import models
+from exercises import exercise_models
+import summary_log_models
 import activity_summary
 from badges import models_badges, util_badges
 from templatefilters import seconds_to_time_string
@@ -95,7 +96,7 @@ def get_exercise_activity_data(user_data, bucket_list, bucket_type, daily_activi
                 dict_bucket[key]["minutes"] += (activity_summary_exercise_item.time_taken / 60.0)
                 dict_bucket[key]["seconds"] += activity_summary_exercise_item.time_taken
                 dict_bucket[key]["points"] += activity_summary_exercise_item.points_earned
-                dict_bucket[key]["exercise_names"][models.Exercise.to_display_name(activity_summary_exercise_item.exercise)] = True
+                dict_bucket[key]["exercise_names"][exercise_models.Exercise.to_display_name(activity_summary_exercise_item.exercise)] = True
 
     for bucket in bucket_list:
         if dict_bucket[bucket]:
@@ -175,7 +176,7 @@ def get_badge_activity_data(user_data, bucket_list, bucket_type, dt_start_utc, d
 def get_proficiency_activity_data(user_data, bucket_list, bucket_type, dt_start_utc, dt_end_utc, tz_offset):
 
     dict_bucket = get_empty_dict_bucket(bucket_list)
-    user_exercise_graph = models.UserExerciseGraph.get(user_data)
+    user_exercise_graph = exercise_models.UserExerciseGraph.get(user_data)
 
     for graph_dict in user_exercise_graph.graph_dicts():
 
@@ -193,7 +194,7 @@ def get_proficiency_activity_data(user_data, bucket_list, bucket_type, dt_start_
         if not dict_bucket[key]:
             dict_bucket[key] = {"exercise_names": {}}
 
-        dict_bucket[key]["exercise_names"][models.Exercise.to_display_name(graph_dict["name"])] = True
+        dict_bucket[key]["exercise_names"][exercise_models.Exercise.to_display_name(graph_dict["name"])] = True
 
     add_bucket_html_summary(dict_bucket, "exercise_names", 3)
 
@@ -233,7 +234,7 @@ def activity_graph_context(user_data_student, dt_start_utc, dt_end_utc, tz_offse
     # then we filter for proper time zone daily boundaries
     dt_start_utc_expanded = dt_start_utc - datetime.timedelta(days=1)
     dt_end_utc_expanded = dt_end_utc + datetime.timedelta(days=1)
-    daily_activity_logs = models.DailyActivityLog.get_for_user_data_between_dts(user_data_student, dt_start_utc_expanded, dt_end_utc_expanded).fetch(1000)
+    daily_activity_logs = summary_log_models.DailyActivityLog.get_for_user_data_between_dts(user_data_student, dt_start_utc_expanded, dt_end_utc_expanded).fetch(1000)
     daily_activity_logs = activity_summary.fill_realtime_recent_daily_activity_summaries(daily_activity_logs, user_data_student, dt_end_utc_expanded)
 
     bucket_type = get_bucket_type(dt_start_utc, dt_end_utc)

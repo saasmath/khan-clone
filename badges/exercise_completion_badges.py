@@ -4,7 +4,7 @@ try:
 except ImportError:
     import simplejson as json
 
-import models
+from exercises import exercise_models
 from badges import Badge, BadgeCategory, RetiredBadge
 
 # All badges awarded for completing some subset of exercises inherit from ExerciseCompletionBadge
@@ -38,8 +38,8 @@ class ExerciseCompletionBadge(Badge):
         total_len = 0;
 
         for exercise_name in self.exercise_names_required:
-            long_name = models.Exercise.to_display_name(exercise_name)
-            short_name = models.Exercise.to_short_name(exercise_name)
+            long_name = exercise_models.Exercise.to_display_name(exercise_name)
+            short_name = exercise_models.Exercise.to_short_name(exercise_name)
 
             display_name = long_name if (total_len < 80) else short_name
 
@@ -61,7 +61,7 @@ class ChallengeCompletionBadge(ExerciseCompletionBadge):
         for exercise_name in self.exercise_names_required:
             if len(s_exercises) > 0:
                 s_exercises += ", "
-            s_exercises += models.Exercise.to_display_name(exercise_name)
+            s_exercises += exercise_models.Exercise.to_display_name(exercise_name)
         return "Complete the %s" % s_exercises
 
     @property

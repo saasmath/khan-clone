@@ -7,7 +7,10 @@ from google.appengine.ext import db
 from google.appengine.ext import deferred
 
 import datetime
-import models
+import user_models
+from exercises import exercise_models
+import video_models
+import exercise_video_model
 import request_handler
 import user_util
 import points
@@ -36,7 +39,7 @@ from exercises.file_contents import raw_exercise_contents
 import util
 
 def exercise_graph_dict_json(user_data, admin=False):
-    user_exercise_graph = models.UserExerciseGraph.get(user_data)
+    user_exercise_graph = exercise_models.UserExerciseGraph.get(user_data)
     if user_data.reassess_from_graph(user_exercise_graph):
         user_data.put()
 
@@ -80,7 +83,7 @@ def exercise_graph_dict_json(user_data, admin=False):
             'status': graph_dict.get("status"),
             'recent': graph_dict.get("recent", False),
             'progress': graph_dict["progress"],
-            'progress_display': models.UserExercise.to_progress_display(graph_dict["progress"]),
+            'progress_display': exercise_models.UserExercise.to_progress_display(graph_dict["progress"]),
             'longest_streak': graph_dict["longest_streak"],
             'h_position': graph_dict["h_position"],
             'v_position': graph_dict["v_position"],
@@ -88,11 +91,11 @@ def exercise_graph_dict_json(user_data, admin=False):
             'states': user_exercise_graph.states(graph_dict["name"]),
 
             # get_by_name returns only exercises visible to current user
-            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"] if models.Exercise.get_by_name(prereq["name"])],
+            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"] if exercise_models.Exercise.get_by_name(prereq["name"])],
         }
 
         if admin:
-            exercise = models.Exercise.get_by_name(graph_dict["name"])
+            exercise = exercise_models.Exercise.get_by_name(graph_dict["name"])
             row["live"] = exercise and exercise.live
         graph_dict_data.append(row)
 
@@ -144,8 +147,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             raise Exception("Attempt content exceeded maximum length.")
 
         # Build up problem log for deferred put
-        problem_log = models.ProblemLog(
-                key_name=models.ProblemLog.key_for(user_data, user_exercise.exercise, problem_number),
+        problem_log = exercise_models.ProblemLog(
+                key_name=exercise_models.ProblemLog.key_for(user_data, user_exercise.exercise, problem_number),
                 user=user_data.user,
                 exercise=user_exercise.exercise,
                 problem_number=problem_number,
@@ -247,7 +250,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         if attempt_number == 1:
             user_exercise.schedule_review(completed)
 
-        user_exercise_graph = models.UserExerciseGraph.get_and_update(user_data, user_exercise)
+        user_exercise_graph = exercise_models.UserExerciseGraph.get_and_update(user_data, user_exercise)
 
         goals_updated = GoalList.update_goals(user_data,
             lambda goal: goal.just_did_exercise(user_data, user_exercise,
@@ -260,15 +263,15 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Defer the put of ProblemLog for now, as we think it might be causing hot tablets
             # and want to shift it off to an automatically-retrying task queue.
             # http://ikaisays.com/2011/01/25/app-engine-datastore-tip-monotonically-increasing-values-are-bad/
-            deferred.defer(models.commit_problem_log, problem_log,
+            deferred.defer(exercise_models.commit_problem_log, problem_log,
                            _queue="problem-log-queue",
                            _url="/_ah/queue/deferred_problemlog")
         else:
-            models.commit_problem_log(problem_log)
+            exercise_models.commit_problem_log(problem_log)
 
         if user_data is not None and user_data.coaches:
             # Making a separate queue for the log summaries so we can clearly see how much they are getting used
-            deferred.defer(models.commit_log_summary_coaches, problem_log, user_data.coaches,
+            deferred.defer(video_models.commit_log_summary_coaches, problem_log, user_data.coaches,
                        _queue="log-summary-queue",
                        _url="/_ah/queue/deferred_log_summary")
 
@@ -278,15 +281,15 @@ class ExerciseAdmin(request_handler.RequestHandler):
 
     @user_util.developer_only
     def get(self):
-        user_data = models.UserData.current()
-        user_exercise_graph = models.UserExerciseGraph.current()
+        user_data = user_models.UserData.current()
+        user_exercise_graph = exercise_models.UserExerciseGraph.current()
 
         if user_data.reassess_from_graph(user_exercise_graph):
             user_data.put()
 
         graph_dicts = user_exercise_graph.graph_dicts()
         for graph_dict in graph_dicts:
-            exercise = models.Exercise.get_by_name(graph_dict["name"])
+            exercise = exercise_models.Exercise.get_by_name(graph_dict["name"])
             graph_dict["live"] = exercise and exercise.live
 
         template_values = {
@@ -302,7 +305,7 @@ class EditExercise(request_handler.RequestHandler):
     def get(self):
         exercise_name = self.request.get('name')
         if exercise_name:
-            query = models.Exercise.all().order('name')
+            query = exercise_models.Exercise.all().order('name')
             exercises = query.fetch(1000)
 
             main_exercise = None
@@ -326,15 +329,15 @@ class UpdateExercise(request_handler.RequestHandler):
 
     @staticmethod
     def do_update(dict):
-        user = models.UserData.current().user
+        user = user_models.UserData.current().user
 
         exercise_name = dict["name"]
 
-        query = models.Exercise.all()
+        query = exercise_models.Exercise.all()
         query.filter('name =', exercise_name)
         exercise = query.get()
         if not exercise:
-            exercise = models.Exercise(name=exercise_name)
+            exercise = exercise_models.Exercise(name=exercise_name)
             exercise.prerequisites = []
             exercise.covers = []
             exercise.author = user
@@ -370,7 +373,7 @@ class UpdateExercise(request_handler.RequestHandler):
     def do_update_related_videos(exercise, related_videos):
         video_keys = []
         for video_name in related_videos:
-            video = models.Video.get_for_readable_id(video_name)
+            video = video_models.Video.get_for_readable_id(video_name)
             if video and not video.key() in video_keys:
                 video_keys.append(str(video.key()))
 
@@ -378,7 +381,7 @@ class UpdateExercise(request_handler.RequestHandler):
 
     @staticmethod
     def do_update_related_video_keys(exercise, video_keys):
-        query = models.ExerciseVideo.all()
+        query = exercise_video_model.ExerciseVideo.all()
         query.filter('exercise =', exercise.key())
         existing_exercise_videos = query.fetch(1000)
 
@@ -390,14 +393,14 @@ class UpdateExercise(request_handler.RequestHandler):
 
         for video_key in video_keys:
             if not video_key in existing_video_keys:
-                exercise_video = models.ExerciseVideo()
+                exercise_video = exercise_video_model.ExerciseVideo()
                 exercise_video.exercise = exercise
                 exercise_video.video = db.Key(video_key)
                 exercise_video.exercise_order = 0 #reordering below
                 exercise_video.put()
 
         # Start ordering
-        exercise_videos = models.ExerciseVideo.all().filter('exercise =', exercise.key()).run()
+        exercise_videos = exercise_video_model.ExerciseVideo.all().filter('exercise =', exercise.key()).run()
 
         # get a dict of a topic : a dict of exercises_videos and the order of their videos in that topic
         topics = {}

@@ -1,5 +1,8 @@
 import layer_cache
-from models import Video, Url, Topic, Setting, TopicVersion
+from video_models import Video
+from url_model import Url
+from topic_models import Topic, TopicVersion
+from setting_model import Setting
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "video_title_dicts_%s" % (

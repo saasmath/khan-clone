@@ -2,8 +2,10 @@ import logging
 import urllib
 
 from custom_exceptions import MissingExerciseException
+from exercises import exercise_models
 import request_handler
-import models
+import topic_models
+import user_models
 import user_util
 from exercises.stacks import get_problem_stack, get_review_stack, MAX_CARDS_PER_REVIEW_STACK
 from api.jsonify import jsonify
@@ -20,7 +22,7 @@ class ViewExerciseDeprecated(request_handler.RequestHandler):
         if not exid:
             exid = self.request_string("exid")
 
-        exercise = models.Exercise.get_by_name(exid)
+        exercise = exercise_models.Exercise.get_by_name(exid)
 
         if not exercise:
             raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
@@ -46,7 +48,7 @@ class ViewTopicExerciseDeprecated(request_handler.RequestHandler):
     @user_util.open_access
     def get(self, topic_id):
 
-        topic = models.Topic.get_by_id(topic_id)
+        topic = topic_models.Topic.get_by_id(topic_id)
 
         if not topic:
             raise MissingExerciseException("Missing topic w/ id '%s'" % topic_id)
@@ -81,7 +83,7 @@ class ViewExercise(request_handler.RequestHandler):
             topic_id = topic_path_list[-1]
 
             if len(topic_id) > 0:
-                topic = models.Topic.get_by_id(topic_id)
+                topic = topic_models.Topic.get_by_id(topic_id)
 
             # Topics are required
             if not topic:
@@ -91,7 +93,7 @@ class ViewExercise(request_handler.RequestHandler):
             topic_exercise_badge = topic.get_exercise_badge()
 
             if exid:
-                practice_exercise = models.Exercise.get_by_name(exid)
+                practice_exercise = exercise_models.Exercise.get_by_name(exid)
 
                 # Exercises are not required but must be valid if supplied
                 if not practice_exercise:
@@ -99,17 +101,17 @@ class ViewExercise(request_handler.RequestHandler):
 
                 title = practice_exercise.display_name
 
-        user_data = models.UserData.current() or models.UserData.pre_phantom()
+        user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
 
         if practice_mode:
             # Practice mode involves a single exercise only
-            user_exercises = models.UserExercise.next_in_practice(user_data, practice_exercise)
+            user_exercises = exercise_models.UserExercise.next_in_practice(user_data, practice_exercise)
         elif review_mode:
             # Review mode sends down up to a certain limit of review exercises
-            user_exercises = models.UserExercise.next_in_review(user_data, n=MAX_CARDS_PER_REVIEW_STACK)
+            user_exercises = exercise_models.UserExercise.next_in_review(user_data, n=MAX_CARDS_PER_REVIEW_STACK)
         else:
             # Topics mode context switches between multiple exercises
-            user_exercises = models.UserExercise.next_in_topic(user_data, topic)
+            user_exercises = exercise_models.UserExercise.next_in_topic(user_data, topic)
 
         if len(user_exercises) == 0:
             # If something has gone wrong and we didn't get any UserExercises,
@@ -195,7 +197,7 @@ class ViewExercise(request_handler.RequestHandler):
                 # We cannot render old problems that were created in the v1 exercise framework.
                 renderable = False
 
-            query = models.ProblemLog.all()
+            query = exercise_models.ProblemLog.all()
             query.filter("user = ", user_data_student.user)
             query.filter("exercise = ", user_exercise.exercise)
 

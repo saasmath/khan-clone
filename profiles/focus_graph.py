@@ -4,7 +4,8 @@ import logging
 
 from templatefilters import seconds_to_time_string, pluralize
 
-import models
+from exercises import exercise_models
+import summary_log_models
 import util
 import activity_summary
 
@@ -89,7 +90,7 @@ def get_exercise_focus_data(user_data, daily_activity_logs, dt_start_utc, dt_end
 
                 key_exercise = exid.lower()
                 if not dict_exercise_seconds.has_key(key_exercise):
-                    dict_exercise_seconds[key_exercise] = {"exercise_title": models.Exercise.to_display_name(exid), "exid": exid, "seconds": 0, "correct": 0, "problems": 0}
+                    dict_exercise_seconds[key_exercise] = {"exercise_title": exercise_models.Exercise.to_display_name(exid), "exid": exid, "seconds": 0, "correct": 0, "problems": 0}
 
                 dict_exercise_seconds[key_exercise]["seconds"] += hourly_activity_summary_exercise_item.time_taken
                 dict_exercise_seconds[key_exercise]["problems"] += hourly_activity_summary_exercise_item.c_problems
@@ -129,7 +130,7 @@ def focus_graph_context(user_data_student, dt_start_utc, dt_end_utc):
     # then we filter for proper time zone daily boundaries
     dt_start_utc_expanded = dt_start_utc - datetime.timedelta(days=1)
     dt_end_utc_expanded = dt_end_utc + datetime.timedelta(days=1)
-    daily_activity_logs = models.DailyActivityLog.get_for_user_data_between_dts(user_data_student, dt_start_utc_expanded, dt_end_utc_expanded).fetch(1000)
+    daily_activity_logs = summary_log_models.DailyActivityLog.get_for_user_data_between_dts(user_data_student, dt_start_utc_expanded, dt_end_utc_expanded).fetch(1000)
     daily_activity_logs = activity_summary.fill_realtime_recent_daily_activity_summaries(daily_activity_logs, user_data_student, dt_end_utc_expanded)
 
     topic_focus_data = get_topic_focus_data(daily_activity_logs, dt_start_utc, dt_end_utc)

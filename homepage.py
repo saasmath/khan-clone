@@ -7,6 +7,7 @@ import library
 import request_handler
 import user_util
 import models
+import user_models
 import layer_cache
 import templatetags
 import util
@@ -134,7 +135,7 @@ class ViewHomePage(request_handler.RequestHandler):
     def get(self):
         version_number = None
 
-        if models.UserData.current() and models.UserData.current().developer:
+        if user_models.UserData.current() and user_models.UserData.current().developer:
             version_number = self.request_string('version', default=None)
 
         thumbnail_link_sets = new_and_noteworthy_link_sets()

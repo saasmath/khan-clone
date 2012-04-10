@@ -5,7 +5,8 @@ from app import App
 from auth import age_util
 from counters import user_counter
 from google.appengine.api import users
-from models import UserData
+import user_models
+from user_models import UserData
 from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 
@@ -15,7 +16,6 @@ from auth.tokens import AuthToken, TransferAuthToken
 import cookie_util
 import datetime
 import logging
-import models
 import os
 import re
 import request_handler
@@ -293,7 +293,7 @@ class PostLogin(request_handler.RequestHandler):
                 if current_google_user:
                     # Look for a matching UnverifiedUser with the same e-mail
                     # to see if the user used Google login to verify.
-                    unverified_user = models.UnverifiedUser.get_for_value(
+                    unverified_user = user_models.UnverifiedUser.get_for_value(
                             current_google_user.email())
                     if unverified_user:
                         unverified_user.delete()
@@ -451,7 +451,7 @@ class Signup(request_handler.RequestHandler):
                 else:
                     # No full user account detected, but have they tried to
                     # signup before and still haven't verified their e-mail?
-                    existing = models.UnverifiedUser.get_for_value(email)
+                    existing = user_models.UnverifiedUser.get_for_value(email)
                     resend_detected = existing is not None
         else:
             errors['email'] = "Please enter your email."
@@ -469,7 +469,7 @@ class Signup(request_handler.RequestHandler):
             return
 
         # Success!
-        unverified_user = models.UnverifiedUser.get_or_insert_for_value(
+        unverified_user = user_models.UnverifiedUser.get_or_insert_for_value(
                 email,
                 birthdate)
         Signup.send_verification_email(unverified_user)
@@ -542,7 +542,7 @@ class CompleteSignup(request_handler.RequestHandler):
         if not token:
             return (None, None)
 
-        unverified_user = models.UnverifiedUser.get_for_token(token)
+        unverified_user = user_models.UnverifiedUser.get_for_token(token)
         if not unverified_user:
             return (None, None)
 
@@ -702,15 +702,15 @@ class CompleteSignup(request_handler.RequestHandler):
         if values['username']:
             username = values['username']
             # TODO(benkomalo): ask for advice on text
-            if models.UniqueUsername.is_username_too_short(username):
+            if user_models.UniqueUsername.is_username_too_short(username):
                 errors['username'] = "Sorry, that username's too short."
-            elif not models.UniqueUsername.is_valid_username(username):
+            elif not user_models.UniqueUsername.is_valid_username(username):
                 errors['username'] = "Usernames must start with a letter and be alphanumeric."
 
             # Only check to see if it's available if we're changing values
             # or if this is a brand new UserData
             elif ((not user_data or user_data.username != username) and
-                    not models.UniqueUsername.is_available_username(username)):
+                    not user_models.UniqueUsername.is_available_username(username)):
                 errors['username'] = "That username isn't available."
 
         if values['password']:
@@ -748,7 +748,7 @@ class CompleteSignup(request_handler.RequestHandler):
             while not user_data and num_tries < 2:
                 # Double-check to ensure we don't create any duplicate ids!
                 user_id = uid.new_user_id()
-                user_data = models.UserData.insert_for(
+                user_data = user_models.UserData.insert_for(
                         user_id,
                         unverified_user.email,
                         username,

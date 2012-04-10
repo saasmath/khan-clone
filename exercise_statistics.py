@@ -7,7 +7,7 @@ from mapreduce import operation as op
 
 import request_handler
 import user_util
-import models
+from exercises import exercise_models
 import consts
 
 # /admin/startnewexercisestatisticsmapreduce is called periodically by a cron job
@@ -24,7 +24,7 @@ class StartNewExerciseStatisticsMapReduce(request_handler.RequestHandler):
                 name = "UpdateExerciseStatistics",
                 handler_spec = "exercise_statistics.statistics_update_map",
                 reader_spec = "mapreduce.input_readers.DatastoreInputReader",
-                reader_parameters = {"entity_kind": "models.Exercise"},
+                reader_parameters = {"entity_kind": "exercises.exercise_models.Exercise"},
                 queue_name = "exercise-statistics-mapreduce-queue",
                 )
 
@@ -35,7 +35,7 @@ class StartNewExerciseStatisticsMapReduce(request_handler.RequestHandler):
 def statistics_update_map(exercise):
     
     # Get the last 5,000 correct problems for this exercise for analysis
-    query = models.ProblemLog.all()
+    query = exercise_models.ProblemLog.all()
     query.filter('exercise =', exercise.name)
     query.filter('correct = ', True)
     query.order('-time_done')

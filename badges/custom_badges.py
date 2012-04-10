@@ -3,7 +3,7 @@ import user_util
 import util_badges
 from badges import Badge, BadgeCategory
 from models_badges import CustomBadgeType
-from models import UserData
+from user_models import UserData
 
 class CustomBadge(Badge):
 

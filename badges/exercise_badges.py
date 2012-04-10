@@ -1,4 +1,4 @@
-import models
+from exercises import exercise_models
 from badges import Badge, BadgeContextType
 
 # All badges that may be awarded once-per-Exercise inherit from ExerciseBadge
@@ -13,12 +13,12 @@ class ExerciseBadge(Badge):
         if user_exercise is None:
             return False
 
-        return self.name_with_target_context(models.Exercise.to_display_name(user_exercise.exercise)) in user_data.badges
+        return self.name_with_target_context(exercise_models.Exercise.to_display_name(user_exercise.exercise)) in user_data.badges
 
     def award_to(self, user_data, *args, **kwargs):
         user_exercise = kwargs.get("user_exercise", None)
         if user_exercise is None:
             return False
 
-        self.complete_award_to(user_data, user_exercise.exercise_model, models.Exercise.to_display_name(user_exercise.exercise))
+        self.complete_award_to(user_data, user_exercise.exercise_model, exercise_models.Exercise.to_display_name(user_exercise.exercise))
 

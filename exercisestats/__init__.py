@@ -9,7 +9,7 @@ from google.appengine.api import taskqueue
 
 import request_handler
 
-from models import ProblemLog, Exercise
+from exercises.exercise_models import ProblemLog, Exercise
 from .models import ExerciseStatisticShard, ExerciseStatistic
 import user_util
 

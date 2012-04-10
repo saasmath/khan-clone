@@ -3,7 +3,7 @@ from itertools import izip
 from jinja2.utils import escape
 
 from templatefilters import escapejs, timesince_ago
-from models import Exercise, UserExerciseGraph
+from exercises.exercise_models import Exercise, UserExerciseGraph
 
 def class_progress_report_graph_context(user_data, list_students):
     if not user_data:

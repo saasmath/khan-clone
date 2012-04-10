@@ -1,4 +1,4 @@
-import models
+from exercises import exercise_models
 
 class ExerciseData:
         def __init__(self, nickname, exid, days_until_proficient, proficient_date):
@@ -8,7 +8,7 @@ class ExerciseData:
             self.proficient_date = proficient_date
 
         def display_name(self):
-            return  models.Exercise.to_display_name(self.exid)
+            return exercise_models.Exercise.to_display_name(self.exid)
 
 def class_exercises_over_time_graph_context(user_data, student_list):
 
@@ -21,7 +21,7 @@ def class_exercises_over_time_graph_context(user_data, student_list):
         students_data = user_data.get_students_data()
   
     dict_student_exercises = {}
-    user_exercise_cache_list = models.UserExerciseCache.get(students_data)
+    user_exercise_cache_list = exercise_models.UserExerciseCache.get(students_data)
     for i, user_data_student in enumerate(students_data):
         student_nickname = user_data_student.nickname
 

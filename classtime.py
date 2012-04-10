@@ -8,7 +8,10 @@ from google.appengine.ext import deferred
 from asynctools import AsyncMultiTask, QueryTask
 
 import util
-from models import UserExercise, Exercise, UserData, ProblemLog, VideoLog, LogSummary, LogSummaryTypes
+from exercises.exercise_models import UserExercise, Exercise, ProblemLog
+from user_modles import UserData
+from video_models import VideoLog
+from log_summary_models import LogSummary, LogSummaryTypes
 import activity_summary
 
 def dt_to_utc(dt, timezone_adjustment):

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from google.appengine.api import users
 from google.appengine.ext import db
 
-from models import UserData
+from user_models import UserData
 
 def can_control_gandalf():
     """CUSTOMIZE can_control_gandalf however you want to specify
@@ -16,13 +16,13 @@ def can_control_gandalf():
 def current_logged_in_identity():
     """This should return one of the following:
 
-        A) a db.Model that identifies the current user, like models.UserData.current()
+        A) a db.Model that identifies the current user, like user_models.UserData.current()
         B) a unique string that consistently identifies the current user, like users.get_current_user().user_id()
 
     Ideally, this should be connected to your app's existing identity system.
 
     Examples:
-        return models.UserData.current()
+        return user_models.UserData.current()
              ...or...
         from google.appengine.api import users
         return users.get_current_user().user_id() if users.get_current_user() else None"""

@@ -55,8 +55,13 @@ import labs
 import socrates
 import labs.explorations
 
-import models
-from models import UserData, Video, Url, ExerciseVideo, Topic
+import topic_models
+import video_models
+from user_models import UserData
+from video_models import Video
+from url_model import Url
+from exercise_video_model import ExerciseVideo
+from topic_models import Topic
 from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
 from coach_resources import util_coach, schools_blog
@@ -119,11 +124,11 @@ class TopicPage(request_handler.RequestHandler):
         path_list = path.split('/')
         if len(path_list) > 0:
             # Only look at the actual topic ID
-            topic = models.Topic.get_by_id(path_list[-1])
+            topic = topic_models.Topic.get_by_id(path_list[-1])
 
             # Handle a trailing slash
             if not topic and path_list[-1] == "":
-                topic = models.Topic.get_by_id(path_list[-2])
+                topic = topic_models.Topic.get_by_id(path_list[-2])
 
             if topic:
                 # Begin topic pages A/B test
@@ -624,7 +629,7 @@ class ServeUserVideoCss(request_handler.RequestHandler):
         if user_data == None:
             return
 
-        user_video_css = models.UserVideoCss.get_for_user_data(user_data)
+        user_video_css = video_models.UserVideoCss.get_for_user_data(user_data)
         self.response.headers['Content-Type'] = 'text/css'
 
         if user_video_css.version == user_data.uservideocss_version:

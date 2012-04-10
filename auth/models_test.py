@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from agar.test.base_test import BaseTest
 
 import auth.tokens
-import models
+import user_models
 from app import App
 from auth.models import UserNonce
 
@@ -19,7 +19,7 @@ class CredentialTest(BaseTest):
         super(CredentialTest, self).tearDown()
 
     def make_user(self, email):
-        u = models.UserData.insert_for(email, email)
+        u = user_models.UserData.insert_for(email, email)
         u.put()
         return u
 
@@ -50,7 +50,7 @@ class CredentialTest(BaseTest):
 
 class NonceTest(BaseTest):
     def make_user(self, email):
-        u = models.UserData.insert_for(email, email)
+        u = user_models.UserData.insert_for(email, email)
         u.put()
         return u
 

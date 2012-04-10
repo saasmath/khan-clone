@@ -20,7 +20,9 @@ from library import library_content_html
 from user_util import developer_only
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import create_phantom
-from models import UserData, UserExercise, Exercise, Video, VideoLog
+from user_models import UserData
+from exercises.exercise_model import UserExercise, Exercise
+from video_models import Video, VideoLog
 from .models import Goal, GoalList, GoalObjective
 
 class CreateNewGoal(request_handler.RequestHandler):
