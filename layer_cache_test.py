@@ -122,24 +122,38 @@ class LayerCacheDatastoreTest(LayerCacheTest):
 
     def test_chunked_result_deletion_leaves_no_chunks_behind(self):
         self.cache_func(self.big_string)
+
+        # deleting all chunks
         layer_cache.ChunkedResult.delete(
             self.key, 
             namespace=None,
             cache_class=layer_cache.KeyValueCache)
 
-        # deleting the 2nd chunk ... next time we get it pickle.loads should 
-        # throw an error and the target func will be rexecuted
+        # trying to get the chunks
         values = layer_cache.KeyValueCache.get_multi([
             self.key, 
             self.key + "__chunk1__", 
             self.key + "__chunk2__", 
             self.key + "__chunk3__"], namespace=None)
 
-        # assert that all entries are now gone
+        # assert that all chunks are now gone
         self.assertEqual(0, len(values))
 
         # assert that we will now recalculate target
         self.assertEqualTruncateError("a", self.cache_func("a"))
+
+    def test_chunked_result_delete_removes_empty_items(self):
+        self.cache_func([])
+        
+        # deleting the key
+        layer_cache.ChunkedResult.delete(
+            self.key, 
+            namespace=None,
+            cache_class=layer_cache.KeyValueCache)
+        
+        # assert that we will now recalculate target
+        self.assertEqual("test", self.cache_func("test"))
+
 
   
 class LayerCacheLayerTest(LayerCacheTest):
