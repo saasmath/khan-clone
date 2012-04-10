@@ -150,10 +150,10 @@ var Profile = {
      */
     onProfileUpdated_: function() {
         var username = this.profile.get("username");
-        if (username && Profile.profileRoot != ("/profile/" + username)) {
+        if (username && Profile.profileRoot != ("/profile/" + username + "/")) {
             // Profile root changed - we need to reload the page since
             // Backbone.router isn't happy when the root changes.
-            window.location.replace("/profile/" + username);
+            window.location.replace("/profile/" + username + "/");
         }
     },
 

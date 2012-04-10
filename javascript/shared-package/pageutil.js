@@ -212,7 +212,7 @@ var Badges = {
         if (!jel.length) return;
 
         $(".achievement-badge", jel).click(function() {
-            window.location = KA.profileRoot + "/achievements";
+            window.location = KA.profileRoot + "achievements";
             return false;
         });
 
