@@ -3,7 +3,7 @@
 from agar.test.base_test import BaseTest
 
 import models
-import exercises
+import exercises.util
 from testutil import testsize
 
 

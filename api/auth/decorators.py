@@ -13,7 +13,6 @@ from oauth_provider.oauth import OAuthError
 
 import user_util
 import util
-import models
 import os
 import logging
 

@@ -6,7 +6,9 @@ from google.appengine.ext import db
 import user_util
 import util
 import request_handler
-import models
+import video_models
+import summary_log_models
+import exercise_models
 
 class ActivitySummaryExerciseItem:
     def __init__(self):
@@ -112,8 +114,8 @@ def fill_realtime_recent_daily_activity_summaries(daily_activity_logs, user_data
     if user_data.last_daily_summary:
         dt_start = max(dt_start, user_data.last_daily_summary)
 
-    query_problem_logs = models.ProblemLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
-    query_video_logs = models.VideoLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
+    query_problem_logs = exercise_models.ProblemLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
+    query_video_logs = video_models.VideoLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
 
     results = util.async_queries([query_problem_logs, query_video_logs])
 
@@ -129,7 +131,7 @@ def fill_realtime_recent_daily_activity_summaries(daily_activity_logs, user_data
     while dt <= dt_end:
         summary = DailyActivitySummary.build(user_data, dt, problem_logs, video_logs)
         if summary.has_activity():
-            log = models.DailyActivityLog.build(user_data, dt, summary)
+            log = summary_log_models.DailyActivityLog.build(user_data, dt, summary)
             daily_activity_logs.append(log)
         dt += datetime.timedelta(days=1)
 
@@ -187,15 +189,15 @@ def daily_activity_summary_map(user_data):
     dt = dt_start
     list_entities_to_put = []
 
-    problem_logs = models.ProblemLog.get_for_user_data_between_dts(
+    problem_logs = summary_log_models.ProblemLog.get_for_user_data_between_dts(
             user_data, dt_start, dt_end).fetch(100000)
-    video_logs = models.VideoLog.get_for_user_data_between_dts(
+    video_logs = video_models.VideoLog.get_for_user_data_between_dts(
             user_data, dt_start, dt_end).fetch(100000)
 
     while dt <= dt_end:
         summary = DailyActivitySummary.build(user_data, dt, problem_logs, video_logs)
         if summary.has_activity():
-            log = models.DailyActivityLog.build(user_data, dt, summary)
+            log = summary_log_models.DailyActivityLog.build(user_data, dt, summary)
             list_entities_to_put.append(log)
 
         dt += datetime.timedelta(days=1)
@@ -217,7 +219,7 @@ class StartNewDailyActivityLogMapReduce(request_handler.RequestHandler):
                 handler_spec = "activity_summary.daily_activity_summary_map",
                 reader_spec = "mapreduce.input_readers.DatastoreInputReader",
                 reader_parameters = {
-                     "entity_kind": "models.UserData",
+                     "entity_kind": "user_models.UserData",
                      "processing_rate": 250,
                 },
                 mapreduce_parameters = {},

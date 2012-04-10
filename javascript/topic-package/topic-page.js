@@ -73,6 +73,23 @@
             this.router = new this.SubTopicRouter();
             this.router.bind("all", Analytics.handleRouterNavigation);
             Backbone.history.start({pushState: true, root: rootPath});
+
+            $(window).resize(function() {
+                TopicPage.growContent();
+            });
+        },
+        growContent: function() {
+            var containerEl = $(".topic-page-content .content-pane");
+
+            var minHeight = containerEl.css("min-height");
+            if (minHeight == "none") {
+                minHeight = containerEl.height();
+            } else {
+                minHeight = Math.max(containerEl.height(), minHeight.substr(0,minHeight.length-2)*1);
+            }
+
+            containerEl.css("min-height", minHeight);
+            $(".nav-pane").css("min-height", minHeight);
         },
 
         SubTopicRouter: Backbone.Router.extend({
@@ -85,16 +102,6 @@
                 if (subtopicID.charAt(0) === '/') {
                     subtopicID = subtopicID.substr(1);
                 }
-
-                // Try to retain maximum content pane height
-                var containerEl = $(".topic-page-content .content-pane");
-                var minHeight = containerEl.css("min-height");
-                if (minHeight == "none") {
-                    minHeight = containerEl.height();
-                } else {
-                    minHeight = Math.max(containerEl.height(), minHeight.substr(0,minHeight.length-2)*1);
-                }
-                containerEl.css("min-height", minHeight);
 
                 KAConsole.log("Switching to subtopic: " + subtopicID);
                 if (subtopicID === "") {
@@ -141,6 +148,9 @@
                         .end()
                     .find("li[data-id=\"" + selectedTopicID + "\"]")
                         .addClass("selected");
+
+                // Try to retain maximum content pane height
+                TopicPage.growContent();
             }
         }),
 

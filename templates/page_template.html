@@ -19,6 +19,9 @@
         <script type="text/javascript">
             // TODO: Sweep below into KA
             // TODO: Change USERNAME var since it is actually the user's nickname
+            {% if App.is_dev_server -%}
+            var KA_IS_DEV = true;
+            {%- endif %}
             var KA_VERSION = '{{ App.version }}';
             var FB_APP_ID = '{{ App.facebook_app_id }}';
             var USERNAME = '{{ username|escapejs }}';

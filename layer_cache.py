@@ -1,7 +1,5 @@
 # the following 3 imports are needed for blobcache
 from __future__ import with_statement
-from google.appengine.api import files
-from google.appengine.ext import blobstore
 
 import datetime
 import logging
@@ -354,6 +352,7 @@ def layer_cache_check_set_return(
                 return result
 
         # could not retrieve item from a permanent cache, raise the error on up
+        logging.exception(e)
         raise e
 
     if isinstance(result, UncachedResult):

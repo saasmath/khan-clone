@@ -8,7 +8,7 @@ from mapreduce import operation as op
 
 from privileges import Privileges
 from rate_limiter import VoteRateLimiter
-from models import UserData
+from user_models import UserData
 from models_discussion import FeedbackVote
 import request_handler
 import user_util

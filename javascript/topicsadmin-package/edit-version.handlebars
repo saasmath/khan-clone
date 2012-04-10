@@ -2,7 +2,13 @@
   <b><a href="/?version={{ number }}">Version #{{ number }}</a>:</b>
   {{#edit}}
     <b>[Editing version]</b>
-    <a href="javascript:" class="set-default simple-button green action-gradient">Publish to website</a>
+    <a href="javascript:" class="set-default simple-button {{#if IS_DEV}}green{{else}}orange{{/if}} action-gradient">
+      {{#if IS_DEV}}
+        Commit local changes
+      {{else}}
+        Publish to website
+      {{/if}}
+    </a>
   {{/edit}}
   {{#default}}<b>[Currently live version]</b>{{/default}}
   <div id="topictree-queue-progress-wrapper"><div id="topictree-queue-progress-bar"></div><div id="topictree-queue-progress-text"></div></div>

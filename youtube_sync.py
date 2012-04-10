@@ -12,7 +12,10 @@ from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import db
 
-from models import Setting, Video, Playlist, VideoPlaylist, Topic
+from setting_model import Setting
+from video_models import Video
+from obsolete_models import Playlist, VideoPlaylist
+from topic_models import Topic
 import request_handler
 import user_util
 

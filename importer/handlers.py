@@ -16,7 +16,9 @@ from google.appengine.ext import db
 
 import request_handler
 import user_util
-from models import UserData, UserVideo, VideoLog, UserExercise, ProblemLog
+from user_models import UserData
+from video_models import UserVideo, VideoLog
+from exercise_models import UserExercise, ProblemLog
 from goals.models import Goal
 from api.jsonify import jsonify
 from api.auth.tests.test import TestOAuthClient

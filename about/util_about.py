@@ -1,6 +1,6 @@
 import request_handler
 import user_util
-from models import Video
+from video_models import Video
 from app import App
 
 class AboutRequestHandler(request_handler.RequestHandler):

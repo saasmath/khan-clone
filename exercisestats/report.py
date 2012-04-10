@@ -4,7 +4,7 @@ import request_handler
 import user_util
 
 from itertools import groupby
-from models import ProblemLog
+from exercise_models import ProblemLog
 from .models import ExerciseStatistic
 
 import datetime as dt
