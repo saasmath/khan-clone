@@ -5,6 +5,7 @@ import pickle
 
 from object_property import ObjectProperty as OriginalObjectProperty
 from reconstructor_patch import ReconstructorPatch
+import logging
 
 
 class ObjectProperty(OriginalObjectProperty):
@@ -13,6 +14,7 @@ class ObjectProperty(OriginalObjectProperty):
             try:
                 value = pickle.loads(str(value))
             except Exception, e:
-                pass
+                logging.warn("ReconstructorPatch failed to depickle instance of type %r" % type(value))
+                logging.warn(e)
 
         return super(db.BlobProperty, self).make_value_from_datastore(value)
