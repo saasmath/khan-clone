@@ -32,12 +32,9 @@ import layer_cache
 import object_property
 import phantom_users
 import setting_model
+import user_models
 import user_util
 import util
-import !! for ExerciseVideo
-import !! for Topic
-import !! for UserData
-import !! for VersionContentChange
 
 
 class Exercise(db.Model):
@@ -95,7 +92,9 @@ class Exercise(db.Model):
                 exercise = dict_exercises[name]
                 # if there is a version check to see if there are any updates to the video
                 if version:
-                    change = VersionContentChange.get_change_for_content(exercise, version)
+                    # TODO(csilvers): remove circular dependency here
+                    import topic_models
+                    change = topic_models.VersionContentChange.get_change_for_content(exercise, version)
                     if change:
                         exercise = change.updated_content(exercise)
                 return exercise
@@ -138,7 +137,9 @@ class Exercise(db.Model):
         return None
 
     def related_videos_query(self):
-        query = ExerciseVideo.all()
+        # TODO(csilvers): get rid of circular dependency here
+        import exercise_video_model
+        query = exercise_video_model.ExerciseVideo.all()
         query.filter('exercise =', self.key()).order('exercise_order')
         return query
 
@@ -153,6 +154,9 @@ class Exercise(db.Model):
 
     @staticmethod
     def add_related_videos_prop(exercise_dict, evs=None, video_dict=None):
+        # TODO(csilvers): get rid of circular dependency here
+        import exercise_video_model
+
         if video_dict is None:
             video_dict = {}
 
@@ -169,13 +173,13 @@ class Exercise(db.Model):
         # if too many evs were passed in filter out exercise_videos which are
         # not looking at one of the exercises in exercise_dict
         evs = [ev for ev in evs
-               if ExerciseVideo.exercise.get_value_for_datastore(ev)
+               if exercise_video_model.ExerciseVideo.exercise.get_value_for_datastore(ev)
                in exercise_dict.keys()]
 
         # add any videos to video_dict that we need and are not already in
         # the video_dict passed in
-        extra_video_keys = [ExerciseVideo.video.get_value_for_datastore(ev)
-            for ev in evs if ExerciseVideo.video.get_value_for_datastore(ev)
+        extra_video_keys = [exercise_video_model.ExerciseVideo.video.get_value_for_datastore(ev)
+            for ev in evs if exercise_video_model.ExerciseVideo.video.get_value_for_datastore(ev)
             not in video_dict.keys()]
         extra_videos = db.get(extra_video_keys)
         extra_video_dict = dict((v.key(), v) for v in extra_videos)
@@ -185,8 +189,8 @@ class Exercise(db.Model):
         # ev_dict[exercise_key][video_key] = (video_readable_id, ev.exercise_order)
         ev_dict = {}
         for ev in evs:
-            exercise_key = ExerciseVideo.exercise.get_value_for_datastore(ev)
-            video_key = ExerciseVideo.video.get_value_for_datastore(ev)
+            exercise_key = exercise_video_model.ExerciseVideo.exercise.get_value_for_datastore(ev)
+            video_key = exercise_video_model.ExerciseVideo.video.get_value_for_datastore(ev)
             video_readable_id = video_dict[video_key].readable_id
 
             if exercise_key not in ev_dict:
@@ -372,7 +376,7 @@ class UserExercise(db.Model):
         if hasattr(self, "_user_data"):
             user_data = self._user_data
         else:
-            user_data = UserData.get_from_db_key_email(self.user.email())
+            user_data = user_models.UserData.get_from_db_key_email(self.user.email())
 
         if not user_data:
             logging.critical("Empty user data for UserExercise w/ .user = %s" % self.user)
@@ -477,9 +481,9 @@ class UserExercise(db.Model):
 
         phantom_users.util_notify.update(user_data, self, False, True)
 
-        if self.exercise in UserData.conversion_test_hard_exercises:
+        if self.exercise in user_models.UserData.conversion_test_hard_exercises:
             gae_bingo.bingo('hints_gained_proficiency_hard_binary')
-        elif self.exercise in UserData.conversion_test_easy_exercises:
+        elif self.exercise in user_models.UserData.conversion_test_easy_exercises:
             gae_bingo.bingo('hints_gained_proficiency_easy_binary')
 
     @classmethod
@@ -748,7 +752,7 @@ class UserExerciseCache(db.Model):
         if not user_exercises:
             user_exercises = UserExercise.get_for_user_data(user_data)
 
-        current_user = UserData.current()
+        current_user = user_models.UserData.current()
         is_current_user = current_user and current_user.user_id == user_data.user_id
 
         # Experiment to try different struggling models.
@@ -917,7 +921,7 @@ class UserExerciseGraph(object):
 
     @staticmethod
     def current():
-        return UserExerciseGraph.get(UserData.current())
+        return UserExerciseGraph.get(user_models.UserData.current())
 
     @staticmethod
     def get(user_data_or_list, exercises_allowed=None):

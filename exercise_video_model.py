@@ -7,7 +7,6 @@ some videos have exercises that practice the content of the video.
 from google.appengine.ext import db
 
 from exercises import exercise_models
-import topic_models
 import video_models
 
 class ExerciseVideo(db.Model):
@@ -80,6 +79,8 @@ class ExerciseVideo(db.Model):
                 ev_dict[exercise_key][video_readable_id] = ev.key()
 
             # cycle through all the version changes to see if an exercise has been updated
+            # TODO(csilvers): get rid of circular imports here
+            import topic_models
             changes = topic_models.VersionContentChange.get_updated_content_dict(version)
             new_evs = []
 
@@ -116,4 +117,3 @@ class ExerciseVideo(db.Model):
             # ExerciseVideo.video.get_value_for_datastore(ev) is not needed
             # because we populated ev.video
             return [ev for ev in evs if ev.video.key() not in video_keys]
-

@@ -21,7 +21,7 @@ from google.appengine.api import datastore_errors
 from google.appengine.ext import db
 
 import accuracy_model
-from api import jsonify   # TODO(csilvers): move out of API?
+from api import jsonify   # TODO(csilvers): move out of api/?
 import auth.models
 from auth import age_util
 import autocomplete
@@ -38,11 +38,6 @@ import request_cache
 import templatetags
 import users
 import util
-
-import !! for UserExercise
-import !! for UserExerciseGraph
-import !! for UserVideo
-import !! for Video
 
 
 _PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
@@ -613,17 +608,20 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
                 or facebook_util.is_facebook_user_id(email))
 
     def get_or_insert_exercise(self, exercise, allow_insert=True):
+        # TODO(csilvers): get rid of the circular import here
+        from exercises import exercise_models 
+
         if not exercise:
             return None
 
         exid = exercise.name
-        userExercise = UserExercise.get_by_key_name(exid, parent=self)
+        userExercise = exercise_models.UserExercise.get_by_key_name(exid, parent=self)
 
         if not userExercise:
             # There are some old entities lying around that don't have keys.
             # We have to check for them here, but once we have reparented and rekeyed legacy entities,
             # this entire function can just be a call to .get_or_insert()
-            query = UserExercise.all(keys_only=True)
+            query = exercise_models.UserExercise.all(keys_only=True)
             query.filter('user =', self.user)
             query.filter('exercise =', exid)
             query.order('-total_done') # Temporary workaround for issue 289
@@ -632,10 +630,10 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             # via db.get for these old, parent-less entities.
             key_user_exercise = query.get()
             if key_user_exercise:
-                userExercise = UserExercise.get(str(key_user_exercise))
+                userExercise = exercise_models.UserExercise.get(str(key_user_exercise))
 
         if allow_insert and not userExercise:
-            userExercise = UserExercise.get_or_insert(
+            userExercise = exercise_models.UserExercise.get_or_insert(
                 key_name=exid,
                 parent=self,
                 user=self.user,
@@ -670,7 +668,9 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             return False
 
         if user_exercise_graph is None:
-            user_exercise_graph = UserExerciseGraph.get(self)
+            # TODO(csilvers): get rid of the circular import here
+            from exercises import exercise_models 
+            user_exercise_graph = exercise_models.UserExerciseGraph.get(self)
 
         return self.reassess_from_graph(user_exercise_graph)
 
@@ -825,7 +825,9 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     def get_videos_completed(self):
         if self.videos_completed < 0:
-            self.videos_completed = UserVideo.count_completed_for_user_data(self)
+            # TODO(csilvers): get rid of the circular import here
+            import video_models
+            self.videos_completed = video_models.UserVideo.count_completed_for_user_data(self)
             self.put()
         return self.videos_completed
 

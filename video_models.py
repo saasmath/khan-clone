@@ -39,13 +39,8 @@ import search
 import setting_model
 import shared_jinja
 import summary_log_models
+import user_models
 import util
-
-import !! for ExerciseVideo
-import !! for Topic
-import !! for TopicVersion
-import !! for UserData
-import !! for VersionContentChange
 
 
 class Video(search.Searchable, db.Model):
@@ -160,14 +155,16 @@ class Video(search.Searchable, db.Model):
 
         # if there is a version check to see if there are any updates to the video
         if version:
+            # TODO(csilvers): get rid of circular dependency here
+            import topic_models
             if video:
-                change = VersionContentChange.get_change_for_content(video, version)
+                change = topic_models.VersionContentChange.get_change_for_content(video, version)
                 if change:
                     video = change.updated_content(video)
 
             # if we didnt find any video, check to see if another video's readable_id has been updated to the one we are looking for
             else:
-                changes = VersionContentChange.get_updated_content_dict(version)
+                changes = topic_models.VersionContentChange.get_updated_content_dict(version)
                 for key, content in changes.iteritems():
                     if (type(content) == Video and
                         content.readable_id == readable_id):
@@ -185,10 +182,12 @@ class Video(search.Searchable, db.Model):
 
     @staticmethod
     def get_all_live(version=None):
+        # TODO(csilvers): get rid of circular dependency here
+        import topic_models
         if not version:
-            version = TopicVersion.get_default_version()
+            version = topic_models.TopicVersion.get_default_version()
 
-        root = Topic.get_root(version)
+        root = topic_models.Topic.get_root(version)
         videos = root.get_videos(include_descendants=True, include_hidden=False)
 
         # return only unique videos
@@ -205,7 +204,7 @@ class Video(search.Searchable, db.Model):
         return None
 
     def current_user_points(self):
-        user_video = UserVideo.get_for_video_and_user_data(self, UserData.current())
+        user_video = UserVideo.get_for_video_and_user_data(self, user_models.UserData.current())
         if user_video:
             return points.VideoPointCalculator(user_video)
         else:
@@ -223,7 +222,9 @@ class Video(search.Searchable, db.Model):
         layer=layer_cache.Layers.Memcache,
         expiration=3600 * 2)
     def related_exercises(self):
-        exvids = ExerciseVideo.all()
+        # TODO(csilvers): get rid of circular dependency here
+        import exercise_video_model
+        exvids = exercise_video_model.ExerciseVideo.all()
         exvids.filter('video =', self.key())
         exercises = [ev.exercise for ev in exvids]
         exercises.sort(key=lambda e: e.h_position)
@@ -238,6 +239,9 @@ class Video(search.Searchable, db.Model):
     # Gets the data we need for the video player
     @staticmethod
     def get_play_data(readable_id, topic, discussion_options):
+        # TODO(csilvers): get rid of circular dependency here
+        import topic_models
+
         video = None
 
         # If we got here, we have a readable_id and a topic, so we can display
@@ -245,7 +249,7 @@ class Video(search.Searchable, db.Model):
         # query the Video entities for one with the requested readable_id because in some
         # cases there are multiple Video objects in the datastore with the same readable_id
         # (e.g. there are 2 "Order of Operations" videos).
-        videos = Topic.get_cached_videos_for_topic(topic)
+        videos = topic_models.Topic.get_cached_videos_for_topic(topic)
         previous_video = None
         next_video = None
         for v in videos:
@@ -291,7 +295,7 @@ class Video(search.Searchable, db.Model):
                 }
             button_top_exercise = ex_to_dict(related_exercises[0])
 
-        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current())
+        user_video = UserVideo.get_for_video_and_user_data(video, user_models.UserData.current())
 
         awarded_points = 0
         if user_video:
@@ -308,12 +312,12 @@ class Video(search.Searchable, db.Model):
 
         # TODO (tomyedwab): This is ugly; we would rather have these templates client-side.
         player_html = shared_jinja.get().render_template('videoplayer.html',
-            user_data=UserData.current(), video_path=video_path, video=video,
+            user_data=user_models.UserData.current(), video_path=video_path, video=video,
             awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE,
             subtitles_json=subtitles_json, show_interactive_transcript=show_interactive_transcript)
 
         discussion_html = shared_jinja.get().render_template('videodiscussion.html',
-            user_data=UserData.current(), video=video, topic=topic, **discussion_options)
+            user_data=user_models.UserData.current(), video=video, topic=topic, **discussion_options)
 
         subtitles_html = shared_jinja.get().render_template('videosubtitles.html',
             subtitles_json=subtitles_json)
@@ -394,7 +398,7 @@ def _commit_video_log(video_log, user_data=None):
 def _commit_log_summary_coaches(activity_log, coaches):
     """Used by our deferred log summary insertion process."""
     for coach in coaches:
-        summary_log_models.LogSummary.add_or_update_entry(UserData.get_from_db_key_email(coach), activity_log, classtime.ClassDailyActivitySummary, summary_log_models.LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
+        summary_log_models.LogSummary.add_or_update_entry(user_models.UserData.get_from_db_key_email(coach), activity_log, classtime.ClassDailyActivitySummary, summary_log_models.LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
 
 
 class VideoLog(BackupModel):
@@ -595,7 +599,7 @@ class VideoLog(BackupModel):
 
 
 def _set_css_deferred(user_data_key, video_key, status, version):
-    user_data = UserData.get(user_data_key)
+    user_data = user_models.UserData.get(user_data_key)
     uvc = UserVideoCss.get_for_user_data(user_data)
     css = pickle.loads(uvc.pickled_dict)
 

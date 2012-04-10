@@ -32,7 +32,9 @@ import autocomplete
 from badges import topic_exercise_badges
 from badges import util_badges
 import decorators
+import exercise_video_model
 import exercises
+from exercises import exercise_models
 from knowledgemap import layout
 import homepage
 import layer_cache
@@ -43,16 +45,10 @@ import request_cache
 import search
 import setting_model
 import templatetags
+import url_model
+import user_data
 import util
-
-
-import !! for Exercise
-import !! for ExerciseVideo
-import !! for Url
-import !! for UserData
-import !! for UserExerciseGraph
-import !! for UserVideoCSS
-import !! for Video
+import video_models
 
 
 class Topic(search.Searchable, db.Model):
@@ -747,13 +743,13 @@ class Topic(search.Searchable, db.Model):
         content_dict = dict((content.key(), content) for content in contentItems)
 
         if "Exercise" in types or len(types) == 0:
-            evs = ExerciseVideo.all().fetch(10000)
+            evs = exercise_video_model.ExerciseVideo.all().fetch(10000)
             exercise_dict = dict((k, v) for k, v in content_dict.iteritems() if
                           (k.kind() == "Exercise"))
             video_dict = dict((k, v) for k, v in content_dict.iteritems() if
                           (k.kind() == "Video"))
 
-            Exercise.add_related_videos_prop(exercise_dict, evs, video_dict)
+            exercise_models.Exercise.add_related_videos_prop(exercise_dict, evs, video_dict)
 
         # make any content changes for this version
         changes = VersionContentChange.get_updated_content_dict(self.version)
@@ -1221,13 +1217,13 @@ class Topic(search.Searchable, db.Model):
             else:
                 return None
 
-        user_video_css = UserVideoCss.get_for_user_data(user_data)
+        user_video_css = video_models.UserVideoCss.get_for_user_data(user_data)
         if user_video_css:
             user_video_dict = pickle.loads(user_video_css.pickled_dict)
         else:
             user_video_dict = {}
 
-        user_exercise_graph = UserExerciseGraph.get(user_data)
+        user_exercise_graph = exercise_models.UserExerciseGraph.get(user_data)
         user_exercise_dict = dict((exdict["id"], exdict) for name, exdict in user_exercise_graph.graph.iteritems())
 
         topics = Topic.get_visible_topics()
@@ -1455,10 +1451,10 @@ def _change_default_version(version_number, run_code):
     logging.info("done creating new edit version")
 
     # update the new number of videos on the homepage
-    vids = Video.get_all_live()
-    urls = Url.get_all_live()
+    vids = video_models.Video.get_all_live()
+    urls = url_model.Url.get_all_live()
     setting_model.Setting.count_videos(len(vids) + len(urls))
-    Video.approx_count(bust_cache=True)
+    video_models.Video.approx_count(bust_cache=True)
 
     _do_set_default_deferred_step(rebuild_content_caches,
                                   version_number,
@@ -1476,20 +1472,20 @@ def _rebuild_content_caches(version_number, run_code):
 
     topics = Topic.get_all_topics(version)  # does not include hidden topics!
 
-    videos = [v for v in Video.all()]
+    videos = [v for v in video_models.Video.all()]
     video_dict = dict((v.key(), v) for v in videos)
 
     for video in videos:
         video.topic_string_keys = []
 
-    urls = [u for u in Url.all()]
+    urls = [u for u in url_model.Url.all()]
     url_dict = dict((u.key(), u) for u in urls)
 
     for url in urls:
         url.topic_string_keys = []
 
     # Grab all Exercise objects, even those that are hidden
-    exercises = list(Exercise.all_unsafe())
+    exercises = list(exercise_models.Exercise.all_unsafe())
     exercise_dict = dict((e.key(), e) for e in exercises)
 
     for exercise in exercises:
@@ -1580,9 +1576,9 @@ class TopicVersion(db.Model):
         setting_model.Setting.cached_content_add_date(),
         layer=layer_cache.Layers.Memcache)
     def get_all_content_keys():
-        video_keys = Video.all(keys_only=True).fetch(100000)
-        exercise_keys = Exercise.all(keys_only=True).fetch(100000)
-        url_keys = Url.all(keys_only=True).fetch(100000)
+        video_keys = video_models.Video.all(keys_only=True).fetch(100000)
+        exercise_keys = exercise_models.Exercise.all(keys_only=True).fetch(100000)
+        url_keys = url_model.Url.all(keys_only=True).fetch(100000)
 
         content = video_keys
         content.extend(exercise_keys)
@@ -1612,8 +1608,8 @@ class TopicVersion(db.Model):
     @staticmethod
     def create_new_version():
         new_version_number = TopicVersion.get_latest_version_number() + 1
-        if UserData.current():
-            last_edited_by = UserData.current().user
+        if user_models.UserData.current():
+            last_edited_by = user_models.UserData.current().user
         else:
             last_edited_by = None
         new_version = TopicVersion(last_edited_by=last_edited_by,
@@ -1689,8 +1685,8 @@ class TopicVersion(db.Model):
         return new_tree
 
     def update(self):
-        if UserData.current():
-            last_edited_by = UserData.current().user
+        if user_models.UserData.current():
+            last_edited_by = user_models.UserData.current().user
         else:
             last_edited_by = None
         self.last_edited_by = last_edited_by
@@ -1702,7 +1698,7 @@ class TopicVersion(db.Model):
 
         # find exercises that are overlapping on the knowledge map
         logging.info("checking for exercises that are overlapping on the knowledge map")
-        exercises = Exercise.all()
+        exercises = exercise_models.Exercise.all()
         exercise_dict = dict((e.key(),e) for e in exercises)
 
         location_dict = {}
@@ -1727,11 +1723,11 @@ class TopicVersion(db.Model):
 
         # find videos whose duration is 0
         logging.info("checking for videos with 0 duration")
-        zero_duration_videos = Video.all().filter("duration =", 0).fetch(10000)
+        zero_duration_videos = video_models.Video.all().filter("duration =", 0).fetch(10000)
         zero_duration_dict = dict((v.key(),v) for v in zero_duration_videos)
         video_changes = dict((k,v) for k,v in changes.iteritems()
                                 if k in zero_duration_dict or (
-                                type(v) == Video and v.duration == 0))
+                                type(v) == video_models.Video and v.duration == 0))
         zero_duration_dict.update(video_changes)
         zero_duration_videos = [v for v in zero_duration_dict.values()
                                 if v.duration == 0]
@@ -1747,7 +1743,7 @@ class TopicVersion(db.Model):
 
         problems = {
             "ExerciseVideos with topicless videos" :
-                ExerciseVideo.get_all_with_topicless_videos(version),
+                exercise_video_model.ExerciseVideo.get_all_with_topicless_videos(version),
             "Exercises with colliding positions" : list(duplicate_positions),
             "Zero duration videos": zero_duration_videos,
             "Videos with bad youtube_ids": bad_videos}
@@ -1779,7 +1775,7 @@ class VersionContentChange(db.Model):
     content_changes = object_property.UnvalidatedObjectProperty()
 
     def put(self):
-        last_edited_by = UserData.current().user if UserData.current() else None
+        last_edited_by = user_models.UserData.current().user if user_models.UserData.current() else None
         self.last_edited_by = last_edited_by
         db.Model.put(self)
 
@@ -1839,19 +1835,19 @@ class VersionContentChange(db.Model):
         content = klass(**filtered_props)
         content.put()
 
-        if (type(content) == Exercise and "related_videos" in new_props):
+        if (type(content) == exercise_models.Exercise and "related_videos" in new_props):
             if "related_video_keys" in new_props:
                 related_video_keys = new_props["related_video_keys"]
                 logging.info("related video keys already added")
             else:
                 related_video_keys = []
                 for readable_id in new_props["related_videos"]:
-                    video = Video.get_for_readable_id(readable_id, version)
+                    video = video_models.Video.get_for_readable_id(readable_id, version)
                     logging.info("doing get for readable_id")
                     related_video_keys.append(video.key())
 
             for i, video_key in enumerate(related_video_keys):
-                ExerciseVideo(
+                exercise_video_model.ExerciseVideo(
                     exercise=content,
                     video=video_key,
                     exercise_order=i
