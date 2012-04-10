@@ -43,6 +43,7 @@ import search
 import setting_model
 import templatetags
 import url_model
+import user_models
 import util
 import video_models
 
@@ -1549,7 +1550,7 @@ def _check_for_problems(version_number, run_code):
 
             raise deferred.PermanentTaskFailure
 
-    _do_set_default_deferred_step(apply_version_content_changes,
+    _do_set_default_deferred_step(_apply_version_content_changes,
                                   version_number,
                                   run_code)
 
@@ -1564,7 +1565,7 @@ def _apply_version_content_changes(version_number, run_code):
         change.apply_change()
         logging.info("applied change %i of %i" % (i, num_changes))
     logging.info("applied content changes")
-    _do_set_default_deferred_step(preload_default_version_data,
+    _do_set_default_deferred_step(_preload_default_version_data,
                                   version_number,
                                   run_code)
 
@@ -1675,7 +1676,7 @@ def _change_default_version(version_number, run_code):
     setting_model.Setting.count_videos(len(vids) + len(urls))
     video_models.Video.approx_count(bust_cache=True)
 
-    _do_set_default_deferred_step(rebuild_content_caches,
+    _do_set_default_deferred_step(_rebuild_content_caches,
                                   version_number,
                                   run_code)
 
@@ -1855,7 +1856,7 @@ class VersionContentChange(db.Model):
             change.version = version
             change.content_changes = filtered_props
             change.content = content
-            Setting.cached_content_add_date(datetime.datetime.now())
+            setting_model.Setting.cached_content_add_date(datetime.datetime.now())
             change.put()
         return content
 
