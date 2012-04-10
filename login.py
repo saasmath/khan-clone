@@ -736,7 +736,7 @@ class CompleteSignup(request_handler.RequestHandler):
                 user_data.set_password(password)
                 user_data.update_nickname(values['nickname'])
 
-            util.ensure_in_transaction(txn, xg_on=True)
+            transaction_util.ensure_in_transaction(txn, xg_on=True)
             if len(errors) > 0:
                 self.render_json({'errors': errors}, camel_cased=True)
                 return

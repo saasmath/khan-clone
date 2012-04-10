@@ -36,6 +36,7 @@ from phantom_users import util_notify
 import points
 import request_cache
 import templatetags
+import transaction_util
 import users
 import util
 
@@ -200,7 +201,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             def txn():
                 NicknameIndex.update_indices(self)
                 self.put()
-            util.ensure_in_transaction(txn, xg_on=True)
+            transaction_util.ensure_in_transaction(txn, xg_on=True)
         return True
 
     @property
@@ -548,7 +549,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
                 return True
             return False
 
-        result = util.ensure_in_transaction(txn, xg_on=True)
+        result = transaction_util.ensure_in_transaction(txn, xg_on=True)
         if result:
             # Note that all of the updates to the above fields causes changes
             # to indices affected by each user. Since some of those are really
@@ -867,7 +868,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
                 self.put()
             return claim_success
         
-        result = util.ensure_in_transaction(claim_and_set, xg_on=True)
+        result = transaction_util.ensure_in_transaction(claim_and_set, xg_on=True)
         if result:
             # Success! Ensure we flush the apply() phase of the modifications
             # so that subsequent queries get consistent results. This makes
@@ -1056,7 +1057,7 @@ class UniqueUsername(db.Model):
             from_user.username = None
             db.put([from_user, to_user, entity])
             return True
-        return util.ensure_in_transaction(txn, xg_on=True)
+        return transaction_util.ensure_in_transaction(txn, xg_on=True)
 
     @staticmethod
     def get_canonical(username):
