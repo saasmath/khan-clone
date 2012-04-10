@@ -1370,9 +1370,7 @@ class UserTopic(db.Model):
 
     @staticmethod
     def get_for_user_data(user_data):
-        query = obsolete_models.UserPlaylist.all()
-        query.filter('user =', user_data.user)
-        return query
+        return UserTopic.all().filter('user =', user_data.user)
 
     @staticmethod
     def get_key_name(topic, user_data):
