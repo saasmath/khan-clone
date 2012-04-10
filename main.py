@@ -639,16 +639,6 @@ class ServeUserVideoCss(request_handler.RequestHandler):
 
         self.response.out.write(user_video_css.video_css)
 
-class RealtimeEntityCount(request_handler.RequestHandler):
-    @user_util.open_access
-    @user_util.dev_server_only
-    def get(self):
-        default_kinds = 'Exercise'
-        kinds = self.request_string("kinds", default_kinds).split(',')
-        for kind in kinds:
-            count = getattr(models, kind).all().count(10000)
-            self.response.out.write("%s: %d<br>" % (kind, count))
-
 class MemcacheViewer(request_handler.RequestHandler):
     @user_util.developer_only
     def get(self):
@@ -738,7 +728,6 @@ application = webapp2.WSGIApplication([
     ('/admin/dailyactivitylog', activity_summary.StartNewDailyActivityLogMapReduce),
     ('/admin/youtubesync.*', youtube_sync.YouTubeSync),
     ('/admin/changeemail', ChangeEmail),
-    ('/admin/realtimeentitycount', RealtimeEntityCount),
     ('/admin/unisubs', unisubs.ReportHandler),
     ('/admin/unisubs/import', unisubs.ImportHandler),
 
