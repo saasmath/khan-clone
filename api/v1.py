@@ -1084,7 +1084,7 @@ def is_username_available():
     if not username:
         return False
     else:
-        return models.UniqueUsername.is_available_username(username)
+        return user_models.UniqueUsername.is_available_username(username)
 
 @route("/api/v1/user/promo/<promo_name>", methods=["GET"])
 @api.auth.decorators.login_required
