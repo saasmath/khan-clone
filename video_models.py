@@ -454,6 +454,8 @@ class VideoLog(backup_model.BackupModel):
     @staticmethod
     def add_entry(user_data, video, seconds_watched, last_second_watched, detect_cheat=True):
 
+        # TODO(csilvers): get rid of circular dependency here
+        import badges.last_action_cache
         user_video = UserVideo.get_for_video_and_user_data(video, user_data, insert_if_missing=True)
 
         # Cap seconds_watched at duration of video
