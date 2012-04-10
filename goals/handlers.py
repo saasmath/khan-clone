@@ -21,7 +21,7 @@ from user_util import developer_only
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import create_phantom
 from user_models import UserData
-from exercises.exercise_models import UserExercise, Exercise
+from exercise_models import UserExercise, Exercise
 from video_models import Video, VideoLog
 from .models import Goal, GoalList, GoalObjective
 

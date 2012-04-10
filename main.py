@@ -36,7 +36,7 @@ import util
 import user_util
 import exercise_statistics
 import activity_summary
-import exercises
+import exercises.exercise_util as exercises   # TODO(csilvers): get rid of the 'as'
 import dashboard
 import exercisestats.report
 import exercisestats.report_json

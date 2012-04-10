@@ -4,7 +4,7 @@ import logging
 
 from templatefilters import seconds_to_time_string, pluralize
 
-from exercises import exercise_models
+import exercise_models
 import summary_log_models
 import util
 import activity_summary

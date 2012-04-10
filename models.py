@@ -24,7 +24,7 @@ The remaining circular dependencies
 from backup_model import *
 from coach_resources.coach_request_model import *
 from exercise_video_model import *
-from exercises.exercise_models import *
+from exercise_models import *
 from obsolete_models import *
 from parent_signup_model import *
 from promo_record_model import *

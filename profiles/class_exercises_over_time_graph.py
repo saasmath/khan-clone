@@ -1,4 +1,4 @@
-from exercises import exercise_models
+import exercise_models
 
 class ExerciseData:
         def __init__(self, nickname, exid, days_until_proficient, proficient_date):

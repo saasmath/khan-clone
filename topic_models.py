@@ -32,8 +32,8 @@ import autocomplete
 import badges
 import decorators
 import exercise_video_model
-import exercises
-from exercises import exercise_models
+import exercises.exercise_util
+import exercise_models
 from knowledgemap import layout
 import homepage
 import layer_cache
@@ -1786,7 +1786,7 @@ class VersionContentChange(db.Model):
 
         if (content.key().kind() == "Exercise"
             and hasattr(content, "related_videos")):
-            exercises.UpdateExercise.do_update_related_videos(content,
+            exercises.exercise_util.UpdateExercise.do_update_related_videos(content,
                                                     content.related_videos)
 
         return content

@@ -2,7 +2,7 @@ import logging
 import urllib
 
 from custom_exceptions import MissingExerciseException
-from exercises import exercise_models
+import exercise_models
 import request_handler
 import topic_models
 import user_models

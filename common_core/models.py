@@ -6,7 +6,7 @@ import layer_cache
 
 from google.appengine.ext import db
 
-from exercises.exercise_models import Exercise
+from exercise_models import Exercise
 from video_models import Video
 
 COMMON_CORE_SEPARATOR = '.'

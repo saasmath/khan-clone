@@ -14,7 +14,7 @@ from profiles import templatetags
 import request_handler
 import user_util
 import util
-from exercises import exercise_models
+import exercise_models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import disallow_phantoms

@@ -8,7 +8,7 @@ from google.appengine.ext import deferred
 from asynctools import AsyncMultiTask, QueryTask
 
 import util
-from exercises.exercise_models import UserExercise, Exercise, ProblemLog
+import exercise_models
 import video_models
 from summary_log_models import LogSummary, LogSummaryTypes
 import activity_summary
@@ -40,7 +40,7 @@ def fill_class_summaries_from_logs(user_data_coach, students_data, dt_start_utc)
    # Asynchronously grab all student data at once
     async_queries = []
     for user_data_student in students_data:
-        query_problem_logs = ProblemLog.get_for_user_data_between_dts(user_data_student, dt_start_utc, dt_end_utc)
+        query_problem_logs = exercise_models.ProblemLog.get_for_user_data_between_dts(user_data_student, dt_start_utc, dt_end_utc)
         query_video_logs = video_models.VideoLog.get_for_user_data_between_dts(user_data_student, dt_start_utc, dt_end_utc)
 
         async_queries.append(query_problem_logs)
@@ -166,7 +166,7 @@ class ClassTimeAnalyzer:
         async_queries = []
         for user_data_student in students_data:
 
-            query_problem_logs = ProblemLog.get_for_user_data_between_dts(user_data_student, self.dt_to_utc(dt_start_ctz), self.dt_to_utc(dt_end_ctz))
+            query_problem_logs = exercise_models.ProblemLog.get_for_user_data_between_dts(user_data_student, self.dt_to_utc(dt_start_ctz), self.dt_to_utc(dt_end_ctz))
             query_video_logs = video_models.VideoLog.get_for_user_data_between_dts(user_data_student, self.dt_to_utc(dt_start_ctz), self.dt_to_utc(dt_end_ctz))
 
             async_queries.append(query_problem_logs)
@@ -349,7 +349,7 @@ class ClassTimeChunk:
         has_video = False
 
         for activity in self.activities:
-            has_exercise = has_exercise or type(activity) == ProblemLog
+            has_exercise = has_exercise or type(activity) == exercise_models.ProblemLog
             has_video = has_video or type(activity) == video_models.VideoLog
 
         if has_exercise and has_video:
@@ -418,7 +418,7 @@ class ClassTimeChunk:
             dict_target = None
             name_activity = None
 
-            if type(activity) == ProblemLog:
+            if type(activity) == exercise_models.ProblemLog:
                 name_activity = activity.exercise
                 dict_target = dict_exercises
             elif type(activity) == video_models.VideoLog:
@@ -446,7 +446,7 @@ class ClassTimeChunk:
         for key in dict_exercises:
             if len(desc_exercises) > 0:
                 desc_exercises += "<br/>"
-            desc_exercises += " - <em>%s</em>" % Exercise.to_display_name(key)
+            desc_exercises += " - <em>%s</em>" % exercise_models.Exercise.to_display_name(key)
         if len(desc_exercises) > 0:
             desc_exercises = "<br/><b>Skills:</b><br/>" + desc_exercises
 
@@ -612,11 +612,11 @@ class UserAdjacentActivitySummary:
     #updates the activity class based upon the new activity
     def update_activity_class(self, activity):
         if self.activity_class is None:
-            if type(activity) == ProblemLog:
+            if type(activity) == exercise_models.ProblemLog:
                 self.activity_class = "exercise"
             elif type(activity) == video_models.VideoLog:
                 self.activity_class = "video"
-            elif (self.activity_class == "exercise" and type(activity) == video_models.VideoLog) or (self.activity_class == "video" and type(activity) == ProblemLog): 
+            elif (self.activity_class == "exercise" and type(activity) == video_models.VideoLog) or (self.activity_class == "video" and type(activity) == exercise_models.ProblemLog): 
                 self.activity_class = "exercise_video"
         return self.activity_class
 
@@ -646,7 +646,7 @@ class UserAdjacentActivitySummary:
         dict_target = None
         name_activity = None
 
-        if type(activity) == ProblemLog:
+        if type(activity) == exercise_models.ProblemLog:
             name_activity = activity.exercise
             dict_target = self.dict_exercises
         elif type(activity) == video_models.VideoLog:
@@ -676,7 +676,7 @@ class UserAdjacentActivitySummary:
         for key in self.dict_exercises:
             if len(desc_exercises) > 0:
                 desc_exercises += "<br/>"
-            desc_exercises += " - <em>%s</em>" % Exercise.to_display_name(key)
+            desc_exercises += " - <em>%s</em>" % exercise_models.Exercise.to_display_name(key)
         if len(desc_exercises) > 0:
             desc_exercises = "<br/><b>Skills:</b><br/>" + desc_exercises
  

@@ -6,7 +6,7 @@ some videos have exercises that practice the content of the video.
 
 from google.appengine.ext import db
 
-from exercises import exercise_models
+import exercise_models
 import video_models
 
 class ExerciseVideo(db.Model):

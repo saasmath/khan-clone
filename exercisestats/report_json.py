@@ -6,7 +6,7 @@ import layer_cache
 import request_handler
 import user_util
 
-from exercises.exercise_models import Exercise
+from exercise_models import Exercise
 from setting_model import Setting
 from .models import ExerciseStatistic
 

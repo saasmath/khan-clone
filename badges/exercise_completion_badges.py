@@ -4,7 +4,7 @@ try:
 except ImportError:
     import simplejson as json
 
-from exercises import exercise_models
+import exercise_models
 from badges import Badge, BadgeCategory, RetiredBadge
 
 # All badges awarded for completing some subset of exercises inherit from ExerciseCompletionBadge

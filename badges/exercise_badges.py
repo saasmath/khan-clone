@@ -1,4 +1,4 @@
-from exercises import exercise_models
+import exercise_models
 from badges import Badge, BadgeContextType
 
 # All badges that may be awarded once-per-Exercise inherit from ExerciseBadge

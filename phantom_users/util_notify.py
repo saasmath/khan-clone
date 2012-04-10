@@ -1,4 +1,4 @@
-from exercises import exercise_models
+import exercise_models
 from notifications import UserNotifier
 import request_handler
 import user_util
