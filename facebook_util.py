@@ -128,7 +128,7 @@ def get_profile_from_fb_token(access_token):
 
     profile = None
 
-    c_facebook_tries_left = 3
+    c_facebook_tries_left = 4
     while not profile and c_facebook_tries_left > 0:
         try:
             graph = facebook.GraphAPI(access_token)
@@ -139,7 +139,13 @@ def get_profile_from_fb_token(access_token):
                 logging.debug("Ignoring '%s'. Assuming access_token is no longer valid: %s" % (error, access_token))
             else:
                 c_facebook_tries_left -= 1
-                logging.error("Ignoring Facebook graph error '%s'. Tries left: %s" % (error, c_facebook_tries_left))
+
+                if c_facebook_tries_left > 1:
+                    logging.info("Ignoring Facebook graph error '%s'. Tries left: %s" % (error, c_facebook_tries_left))
+                elif c_facebook_tries_left > 0:
+                    logging.warning("Ignoring Facebook graph error '%s'. Last try." % error)
+                else:
+                    logging.error("Last Facebook graph try failed with error '%s'." % error)
 
     return profile
 

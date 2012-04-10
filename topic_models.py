@@ -374,7 +374,7 @@ class Topic(search.Searchable, db.Model):
 
         ancestor_topics = [{
             "title": topic.title, 
-            "url": (topic.relative_url topic.id in Topic._super_topic_ids 
+            "url": (topic.relative_url if topic.id in Topic._super_topic_ids 
                     or topic.has_content() else None)
             }
             for topic in db.get(self.ancestor_keys)][0:-1]
@@ -838,7 +838,7 @@ class Topic(search.Searchable, db.Model):
     lambda self, types=[], include_hidden=False:
             "topic.make_tree_%s_%s_%s" % (
             self.key(), types, include_hidden),
-            layer=layer_cache.Layers.Blobstore)
+            layer=layer_cache.Layers.Memcache)
     def make_tree(self, types=[], include_hidden=False):
         if include_hidden:
             nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
@@ -1021,7 +1021,7 @@ class Topic(search.Searchable, db.Model):
             (str(version.number) + str(version.updated_on))  if version
             else setting_model.Setting.topic_tree_version(),
             include_hidden),
-        layer=layer_cache.Layers.Blobstore)
+        layer=layer_cache.Layers.Memcache)
     def get_filled_rolled_up_top_level_topics(types=None, version=None, include_hidden=False):
         if types is None:
             types = []
