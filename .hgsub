@@ -1,2 +1,2 @@
 khan-exercises = [git]http://github.com/Khan/khan-exercises.git
-third_party/agar = https://bitbucket.org/csilvers/agar
+third_party/agar-src = https://bitbucket.org/csilvers/agar
