@@ -1,10 +1,9 @@
 import copy_reg
 from google.appengine.datastore import entity_pb
 import types
-import copy_reg
 
 
-class PatchApplied(object):
+class ReconstructorPatch(object):
     def __enter__(self,):
         # now monkey patch pickle.loads to try and get it working... uh-oh
         copy_reg._original_reconstructor = copy_reg._reconstructor
@@ -20,7 +19,7 @@ def _reconstructor_monkey_patch(cls, base, state):
     Unfortunately, google.appengine.datastore.entity_pb.Reference changes from
     an old style class to a new style class in GAE Python 2.7. When depickling
     entity_pb.References, any that were pickled in Python 2.7 will not be
-    readable by _reconstructor.
+    readable by _reconstructor (when read in Python 2.5).
 
     This monkey patch adds a check to see if _reconstructor is passed a
     Reference that is an old-style class. If so, it instantiates it directly

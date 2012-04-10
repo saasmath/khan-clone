@@ -1,12 +1,10 @@
-#!/usr/bin/env python
-
 from __future__ import with_statement
 
 from agar.test.base_test import BaseTest
 
 import models # needed for side-effects
 from goals.models import *
-import reconstructor_patch
+from reconstructor_patch import ReconstructorPatch
 
 import pickle
 
@@ -22,20 +20,17 @@ class ReconstructorTest(BaseTest):
         obj = pickle.loads(self.working)
         self.assertEqual(list, type(obj))
 
-        with reconstructor_patch.PatchApplied():
+        with ReconstructorPatch():
             # make sure this still works with our monkey patched reconstructor
             obj = pickle.loads(self.working)
-            self.assert_is_objectives_object(obj)
+            self.assertIsInstance(obj, list)
 
     def test_patch_should_depickle_new_style_refs(self):
         # first make sure that the busted one doesn't work
         with self.assertRaises(TypeError):
             obj = pickle.loads(self.busted)
 
-        with reconstructor_patch.PatchApplied():
+        with ReconstructorPatch():
             # finally try to load busted again with the patched versions
             obj = pickle.loads(self.busted)
-            self.assert_is_objectives_object(obj)
-
-    def assert_is_objectives_object(self, obj):
-        self.assertEqual(list, type(obj))
+            self.assertIsInstance(obj, list)

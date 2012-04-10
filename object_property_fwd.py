@@ -4,12 +4,12 @@ from google.appengine.ext import db
 import pickle
 
 from object_property import ObjectProperty as OriginalObjectProperty
-from reconstructor_patch import PatchApplied
+from reconstructor_patch import ReconstructorPatch
 
 
 class ObjectProperty(OriginalObjectProperty):
     def make_value_from_datastore(self, value):
-        with PatchApplied():
+        with ReconstructorPatch():
             try:
                 value = pickle.loads(str(value))
             except Exception, e:
