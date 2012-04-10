@@ -93,7 +93,7 @@
 
             {{#experiment_results}}
 
-            <div class="experiment-container experiment-container-minimized block" data-canonical-name="{{canonical_name}}">
+            <div class="experiment-container experiment-container-minimized block {{^live}}not-live{{/live}}" data-canonical-name="{{canonical_name}}">
                 <div class="experiment-status">
                     <strong>Status: </strong> {{status}}
                 </div>
