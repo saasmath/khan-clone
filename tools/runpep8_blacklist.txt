@@ -485,6 +485,8 @@
 ./profiles/templatetags.py
 ./profiles/util_profile.py
 ./rate_limiter.py
+./reconstructor_patch.py
+./reconstructor_patch_test.py
 ./redirects/__init__.py
 ./redirects/models.py
 ./request_cache.py
