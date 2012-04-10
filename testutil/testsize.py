@@ -9,40 +9,47 @@ Test sizing guide:
 
  - Small tests run in less than one second
  - Medium tests run in less than one minute
- - Large tests run in one minute or more
+ - Large tests run in one minute or more or use external resources such
+   as a database, an actual network connection, and so on.
 """
+
+import logging
 
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
 
-SMALL_SIZE = 1
-MEDIUM_SIZE = 2
-LARGE_SIZE = 4
+_VALID_SIZES = set(['small', 'medium', 'large'])
 
-ALLOWED_SIZES = SMALL_SIZE | \
-                MEDIUM_SIZE | \
-                LARGE_SIZE
-"""Tests of these sizes are allowed to run"""
+_MAX_SIZE = 'large'
+"""Tests of this size or smaller may run"""
+
+
+def set_max_size(size):
+    """The largest test size that may run ("small", "medium", "large")"""
+    if size in _VALID_SIZES:
+        global _MAX_SIZE
+        _MAX_SIZE = size
+    else:
+        logging.warn('ignoring invalid test size "%s"' % size)
 
 
 def small():
-    """Skip unless small sized tests are allowed to run"""
-    if ALLOWED_SIZES & SMALL_SIZE:
-        return lambda func: func
-    return unittest.skip("skipping small tests")
+    """Skip unless small sized tests may run"""
+    # small tests alway run
+    return lambda func: func
 
 
 def medium():
-    """Skip unless medium sized tests are allowed to run"""
-    if ALLOWED_SIZES & MEDIUM_SIZE:
+    """Skip unless medium sized tests may run"""
+    if _MAX_SIZE in ['medium', 'large']:
         return lambda func: func
     return unittest.skip("skipping medium tests")
 
 
 def large():
-    """Skip unless large sized tests are allowed to run"""
-    if ALLOWED_SIZES & LARGE_SIZE:
+    """Skip unless large sized tests may run"""
+    if _MAX_SIZE == 'large':
         return lambda func: func
     return unittest.skip("skipping large tests")
