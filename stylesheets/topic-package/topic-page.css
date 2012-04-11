@@ -215,7 +215,7 @@ a.main-video-link:hover {
 }
 .content-pane div.main-header div.thumbnail_label,
 .content-pane div.subtopics-list div.thumbnail_label {
-    padding: 5px 10px;
+    padding: 0px 10px;
     max-width: 280px;
     text-align: left;
     margin-left: 1px;
@@ -277,7 +277,7 @@ a.main-video-link:hover {
     display: inline-block;
     width: 316px;
     vertical-align: top;
-    padding-left: 14px;
+    padding-left: 20px;
 }
 .content-pane div.main-header .topic-video a {
     display: block;
@@ -287,6 +287,7 @@ a.main-video-link:hover {
 
 .content-pane div.subtopic-list-container {
     overflow: hidden;
+    margin-left: 6px;
 }
 .content-pane div.subtopics-list {
     width: 390px;
@@ -302,7 +303,7 @@ a.main-video-link:hover {
     font-family: "MuseoSans500", sans-serif;
     font-size: 20px;
     margin: 22px 0 12px 0;
-    padding-left: 14px;
+    padding-left: 20px;
 }
 .content-pane div.subtopics-list .subtopic {
     position: relative;
@@ -370,7 +371,7 @@ a.main-video-link:hover {
     font-family: "MuseoSans500", sans-serif;
     font-size: 20px;
     margin: 22px 0 12px 0;
-    padding-left: 14px;
+    padding-left: 20px;
 }
 .content-pane div.videos-list ol {
     display: inline-block;
