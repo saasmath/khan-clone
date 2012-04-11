@@ -324,8 +324,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
     model: null,
 
     events: {
-        "click .take-a-break": "toDashboard",
-        "click .skill-proficient": "toDashboard",
+        "click .to-dashboard": "toDashboard",
         "click .more-stacks": "toMoreStacks",
         "click #show-topic-details": "showTopicDetails"
     },
