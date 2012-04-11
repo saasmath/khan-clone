@@ -511,6 +511,7 @@
 ./transaction_util.py
 ./url_model.py
 ./user_models.py
+./user_models_test.py
 ./user_util.py
 ./util.py
 ./util_test.py
