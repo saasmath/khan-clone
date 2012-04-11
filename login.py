@@ -10,10 +10,15 @@ import auth.cookies
 import auth.passwords
 import cookie_util
 import facebook_util
-import models
+import datetime
+import logging
+import os
+import re
 import request_handler
 import shared_jinja
+import transaction_util
 import uid
+import user_models
 import user_util
 import util
 
@@ -34,9 +39,6 @@ class Login(request_handler.RequestHandler):
     def get(self):
         if self.request_bool("form", default=False):
             self.render_login_form()
-        # TODO(benkomalo): remove this code when auth has stabilized.
-        #elif not self.request_bool("use_new", default=False):
-            #self.render_login_legacy()
         else:
             self.render_login_outer()
 
@@ -46,20 +48,6 @@ class Login(request_handler.RequestHandler):
         # Always go to /postlogin after a /login, regardless if the continue
         # url actually specified it or not. Important things happen there.
         return util.create_post_login_url(cont)
-
-    # TODO(benkomalo): remove this and the legacy template when auth stabilizes
-    def render_login_legacy(self):
-        """ Renders the old login page with no username/password inputs. """
-        cont = self.request_continue_url()
-        direct = self.request_bool('direct', default=False)
-
-        template_values = {
-                           'continue': cont,
-                           'direct': direct,
-                           'google_url': users.create_login_url(cont),
-                           }
-
-        self.render_jinja2_template('login_legacy.html', template_values)
 
     def render_login_outer(self):
         """ Renders the login page.
@@ -170,9 +158,6 @@ class MobileOAuthLogin(request_handler.RequestHandler):
             "anointed": self.request_bool("an", default=False),
             "view": self.request_string("view", default=""),
             "error": error,
-
-            # TODO(benkomalo): remove this when auth stabilizes
-            "use_new": True, #self.request_bool("use_new", default=False),
         })
 
     @user_util.manual_access_checking
@@ -476,7 +461,7 @@ class Signup(request_handler.RequestHandler):
                 else:
                     # No full user account detected, but have they tried to
                     # signup before and still haven't verified their e-mail?
-                    existing = models.UnverifiedUser.get_for_value(email)
+                    existing = user_models.UnverifiedUser.get_for_value(email)
                     resend_detected = existing is not None
         else:
             errors['email'] = "Please enter your email."
@@ -494,7 +479,7 @@ class Signup(request_handler.RequestHandler):
             return
 
         # Success!
-        unverified_user = models.UnverifiedUser.get_or_insert_for_value(
+        unverified_user = user_models.UnverifiedUser.get_or_insert_for_value(
                 email,
                 birthdate)
         Signup.send_verification_email(unverified_user)
@@ -566,7 +551,7 @@ class CompleteSignup(request_handler.RequestHandler):
         if not token:
             return (None, None)
 
-        unverified_user = models.UnverifiedUser.get_for_token(token)
+        unverified_user = user_models.UnverifiedUser.get_for_token(token)
         if not unverified_user:
             return (None, None)
 
@@ -726,15 +711,15 @@ class CompleteSignup(request_handler.RequestHandler):
         if values['username']:
             username = values['username']
             # TODO(benkomalo): ask for advice on text
-            if models.UniqueUsername.is_username_too_short(username):
+            if user_models.UniqueUsername.is_username_too_short(username):
                 errors['username'] = "Sorry, that username's too short."
-            elif not models.UniqueUsername.is_valid_username(username):
+            elif not user_models.UniqueUsername.is_valid_username(username):
                 errors['username'] = "Usernames must start with a letter and be alphanumeric."
 
             # Only check to see if it's available if we're changing values
             # or if this is a brand new UserData
             elif ((not user_data or user_data.username != username) and
-                    not models.UniqueUsername.is_available_username(username)):
+                    not user_models.UniqueUsername.is_available_username(username)):
                 errors['username'] = "That username isn't available."
 
         if values['password']:
@@ -760,7 +745,7 @@ class CompleteSignup(request_handler.RequestHandler):
                 user_data.set_password(password)
                 user_data.update_nickname(values['nickname'])
 
-            util.ensure_in_transaction(txn, xg_on=True)
+            transaction_util.ensure_in_transaction(txn, xg_on=True)
             if len(errors) > 0:
                 self.render_json({'errors': errors}, camel_cased=True)
                 return
@@ -772,7 +757,7 @@ class CompleteSignup(request_handler.RequestHandler):
             while not user_data and num_tries < 2:
                 # Double-check to ensure we don't create any duplicate ids!
                 user_id = uid.new_user_id()
-                user_data = models.UserData.insert_for(
+                user_data = user_models.UserData.insert_for(
                         user_id,
                         unverified_user.email,
                         username,

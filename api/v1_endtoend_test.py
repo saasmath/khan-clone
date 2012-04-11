@@ -8,6 +8,7 @@ running appengine instance: it will start an instance on an unused port.
 
 from testutil import handler_test_utils
 from testutil import oauth_test_client
+from testutil import testsize
 try:
     import unittest2 as unittest     # python 2.5
 except ImportError:
@@ -16,6 +17,7 @@ except ImportError:
 
 def setUpModule():
     handler_test_utils.start_dev_appserver()
+
 
 def tearDownModule():
     handler_test_utils.stop_dev_appserver()
@@ -27,6 +29,7 @@ class V1EndToEndTest(unittest.TestCase):
         return oauth_test_client.fetch_via_oauth(
             handler_test_utils.appserver_url + path)
 
+    @testsize.large()
     def testUser(self):
         r = self.fetch('/api/v1/user')    
         self.assertTrue("user_id" in r, r)

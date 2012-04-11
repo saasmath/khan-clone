@@ -13,12 +13,30 @@
 
     // All the video information sorted by YouTube ID
     var videosDict = {};
-    
+
+    // Maximum content height
+    var maxContentHeight = 0;
+
     window.TopicPage = {
-        init: function(rootPath, rootTopic) {
+        init: function(topicID) {
+            // TODO(tom): figure out how to invalidate this if we need to change
+            // the schema of a topic.
+            $.ajax({
+                url: "/api/v1/topic/" + topicID + "/topic-page?casing=camel",
+                dataType: "json",
+                success: function(rootTopic) {
+                    rootPath = "/" + rootTopic.extendedSlug;
+                    TopicPage.finishInit(rootPath, rootTopic);
+                }
+            });
+        },
+        finishInit: function(rootPath, rootTopic) {
             var self = this;
 
             rootPageTopic = rootTopic;
+
+            var navTemplate = Templates.get("topic.subtopic-nav");
+            $(".nav-pane > ul").replaceWith($(navTemplate({topicInfo: rootTopic})));
 
             // TODO(tomyedwab): Temporary, should move this to a shared lib 
             Handlebars.registerPartial("youtube-player", Templates.get("shared.youtube-player"));
@@ -32,6 +50,12 @@
             $(".topic-page-content").on("click", ".topic-page-content a.subtopic-link", function() {
                 selectedID = $(this).attr("data-id");
                 self.router.navigate("/" + selectedID, true);
+                return false;
+            });
+            $(".topic-page-content").on("click", ".topic-page-content a.subtopic-link-and-scroll", function() {
+                selectedID = $(this).attr("data-id");
+                self.router.navigate("/" + selectedID, true);
+                $("body").animate( {scrollTop:0}, 200, "easeInOutCubic");
                 return false;
             });
 
@@ -54,21 +78,41 @@
             this.router = new this.SubTopicRouter();
             this.router.bind("all", Analytics.handleRouterNavigation);
             Backbone.history.start({pushState: true, root: rootPath});
+
+            $(window).resize(function() {
+                TopicPage.growContent();
+            });
+        },
+        growContent: function() {
+            var containerEl = $(".topic-page-content .content-pane");
+
+            var curHeight = containerEl.children("div").height();
+            maxContentHeight = Math.max(maxContentHeight, curHeight);
+
+            var containerHeight = $(window).height();
+            var yTopPadding = containerEl.offset().top;
+            var yBottomPadding = $("#end-of-page-spacer").outerHeight(true);
+            var minContentHeight = containerHeight - (yTopPadding + yBottomPadding);
+
+            var targetHeight = Math.max(maxContentHeight, minContentHeight);
+
+            containerEl.css("min-height", targetHeight + "px");
+            $(".nav-pane").css("min-height", targetHeight + "px");
         },
 
         SubTopicRouter: Backbone.Router.extend({
             routes: {
-                "*subtopicID": "subtopic"
+                "*subtopicID": "showSubtopic"
             },
 
-            subtopic: function(subtopicID) {
+            showSubtopic: function(subtopicID) {
                 var selectedTopicID = '';
-                if (subtopicID.charAt(0) == '/') {
+                if (subtopicID.charAt(0) === '/') {
                     subtopicID = subtopicID.substr(1);
                 }
 
                 KAConsole.log("Switching to subtopic: " + subtopicID);
-                if (subtopicID == "") {
+                if (subtopicID === "") {
                     selectedTopic = null;
                 } else {
                     selectedTopic = videosByTopic[subtopicID] || null;
@@ -113,7 +157,8 @@
                     .find("li[data-id=\"" + selectedTopicID + "\"]")
                         .addClass("selected");
 
-                $("body").scrollTop(0);
+                // Try to retain maximum content pane height
+                TopicPage.growContent();
             }
         }),
 
@@ -128,6 +173,12 @@
                 var listLength = Math.floor((this.model.children.length+1)/2);
                 var childrenCol1 = this.model.children.slice(0, listLength);
                 var childrenCol2 = this.model.children.slice(listLength);
+
+                $.each(childrenCol1, function(idx, video) {
+                    if (idx < 3) {
+                        video.number = idx+1;
+                    }
+                });
 
                 $(this.el).html(this.template({
                     topic: this.model,
@@ -155,13 +206,23 @@
             },
 
             render: function() {
-                $.each(this.model.subtopics, function(idx, subtopic) {
-                    if (idx > 1) {
+                // Split subtopics into two equal lists
+                var listLength = Math.floor((this.model.subtopics.length+1)/2);
+                var childrenCol1 = this.model.subtopics.slice(0, listLength);
+                var childrenCol2 = this.model.subtopics.slice(listLength);
+
+                subtopicAddInfo = function(idx, subtopic) {
+                    if (idx > 0) {
                         subtopic.notFirst = true;
                     }
+                    if (idx < 3) {
+                        subtopic.number = idx+1;
+                    }
                     subtopic.descriptionTruncateLength = (subtopic.title.length > 28) ? 38 : 68;
-                });
-                $(this.el).html(this.template(this.model));
+                };
+                $.each(childrenCol1, subtopicAddInfo);
+                $.each(childrenCol2, subtopicAddInfo);
+                $(this.el).html(this.template({topicInfo: this.model, subtopicsA : childrenCol1, subtopicsB: childrenCol2 }));
                 VideoControls.initThumbnailHover($(this.el));
             },
 

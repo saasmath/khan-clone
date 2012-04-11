@@ -7,10 +7,32 @@ except ImportError:
 from google.appengine.ext import db
 
 import object_property
-import models
+import topic_models
 import logging
+import urllib2
 
 NUM_SUGGESTED_TOPICS = 2
+
+
+def update_from_live(edit_version):
+    """ imports the latest version of the knowledgemap layout from the live
+    site into the edit_version
+    """
+    logging.info("importing knowledge map layout")
+    request = urllib2.Request("http://www.khanacademy.org/api/v1/maplayout")
+    try:
+        opener = urllib2.build_opener()
+        f = opener.open(request)
+        map_layout_live = json.load(f)
+
+    except urllib2.URLError, e:
+        logging.exception("Failed to fetch knowledgemap layout from "
+                          "khanacademy.org")
+
+    map_layout = MapLayout.get_for_version(edit_version)
+    map_layout.layout = map_layout_live
+    map_layout.put()
+    logging.info("finished putting knowledge map layout")
 
 
 def topics_layout(user_data, user_exercise_graph):
@@ -18,8 +40,8 @@ def topics_layout(user_data, user_exercise_graph):
     and suggested info already filled in.
     """
 
-    version = models.TopicVersion.get_default_version()
-    topics = models.Topic.get_visible_topics(version)
+    version = topic_models.TopicVersion.get_default_version()
+    topics = topic_models.Topic.get_visible_topics(version)
     layout = MapLayout.get_for_version(version).layout
 
     if not layout:

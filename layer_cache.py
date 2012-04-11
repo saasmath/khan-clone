@@ -1,7 +1,5 @@
 # the following 3 imports are needed for blobcache
 from __future__ import with_statement
-from google.appengine.api import files
-from google.appengine.ext import blobstore
 
 import datetime
 import logging
@@ -12,7 +10,8 @@ import os
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.runtime.apiproxy_errors import RequestTooLargeError
-
+from google.appengine.api.datastore_errors import BadRequestError
+                                            
 from app import App
 import request_cache
 
@@ -286,13 +285,18 @@ def layer_cache_check_set_return(
                 try:
                     KeyValueCache.set(key, result, time=expiration, 
                                       namespace=namespace)
-                except RequestTooLargeError, e:
-                    # The result was too big to store in datastore. Going to  
-                    # chunk it and try again
-                    ChunkedResult.set(key, result, time=expiration, 
-                                  namespace=namespace,
-                                  compress=compress_chunks, 
-                                  cache_class=KeyValueCache)  
+                except (RequestTooLargeError, BadRequestError), e:
+                    if (isinstance(e, RequestTooLargeError) or 
+                        str(e).startswith("string property value is too long")):
+
+                        # The result was too big to store in datastore. Going to  
+                        # chunk it and try again
+                        ChunkedResult.set(key, result, time=expiration, 
+                                          namespace=namespace,
+                                          compress=compress_chunks, 
+                                          cache_class=KeyValueCache)  
+                    else:
+                        raise
             else:
                 # use_chunks parameter was explicitly set, not going to even 
                 # bother trying to put it in KeyValueCache directly
@@ -348,6 +352,7 @@ def layer_cache_check_set_return(
                 return result
 
         # could not retrieve item from a permanent cache, raise the error on up
+        logging.exception(e)
         raise e
 
     if isinstance(result, UncachedResult):
@@ -421,8 +426,12 @@ class ChunkedResult():
         # if now that we have compressed the item it can fit within a single
         # 1MB object don't use the chunk_list, and it will save us from having
         # to do an extra round-trip on the gets
-        if size < MAX_SIZE_OF_CACHE_CHUNKS:
-            return cache_class.set(key, 
+        # disabling this code for now as when datastore pickles ChunkedResult
+        # its value can triple in size.
+        # TODO(james): Figure out a workaround, or remove
+        if False:
+            if size < MAX_SIZE_OF_CACHE_CHUNKS:
+                return cache_class.set(key, 
                                    ChunkedResult(data=result, 
                                                  compress=compress),
                                    time=time,
@@ -456,7 +465,7 @@ class ChunkedResult():
             keys = value.chunk_list
             keys.append(key)
             cache_class.delete_multi(keys, namespace)
-        elif value:
+        elif value is not None:
             cache_class.delete(key, namespace)
 
     def get_result(self, cache_class=memcache, namespace=""):
@@ -564,7 +573,13 @@ class KeyValueCache(db.Model):
         values = {}
         for (key, key_value) in zip(keys, key_values):
             if key_value and not key_value.is_expired():
-                if key_value.pickled:
+                # legacy entries in key_value cache that were set with 
+                # persist_across_app_versions=True might still be around with
+                # .pickled=None.  Once we are sure they are all expired we can
+                # delete the "or key_value.pickled is None:"
+                # TODO(james): After May 2nd 2012 the default cache time of 25 
+                # days should have ended and the or can be removed.
+                if key_value.pickled or key_value.pickled is None:
                     values[key] = pickle.loads(key_value.value)
                 else:
                     values[key] = key_value.value
@@ -600,7 +615,7 @@ class KeyValueCache(db.Model):
             
             # check to see if we need to pickle the results
             pickled = False
-            if not isinstance(value, basestring):
+            if not isinstance(value, str):
                 pickled = True
                 value = pickle.dumps(value)
 

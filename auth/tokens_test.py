@@ -5,8 +5,9 @@ from app import App
 from agar.test import BaseTest
 
 import auth.tokens as tokens
-import models
 import testutil
+import user_models
+from testutil import testsize
 
 try:
     import unittest2 as unittest
@@ -47,7 +48,7 @@ class TokenTests(BaseTest):
         super(TokenTests, self).tearDown()
 
     def make_user(self, user_id, credential_version=None):
-        u = models.UserData.insert_for(user_id, user_id)
+        u = user_models.UserData.insert_for(user_id, user_id)
         u.credential_version = credential_version
         u.put()
         return u
@@ -94,6 +95,7 @@ class TokenTests(BaseTest):
         time_to_expiry = datetime.timedelta(30)
         self.assertTrue(parsed.is_valid(u, time_to_expiry, clock))
 
+    @testsize.medium()
     def test_pw_reset_token_should_be_single_use(self):
         clock = testutil.MockDatetime()
         u = self.make_user("userid1")

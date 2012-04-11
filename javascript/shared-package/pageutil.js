@@ -60,8 +60,13 @@ function addAutocompleteMatchToList(list, match, kind, reMatch) {
     list[list.length] = o;
 }
 
-function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
+function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter, options)
 {
+    options = $.extend({
+        includeVideos: true,
+        includeExercises: true,
+        addTypePrefix: true
+    }, options);
     var autocompleteWidget = $(selector).autocomplete({
         delay: 150,
         source: function(req, fxnCallback) {
@@ -97,11 +102,15 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
                             addAutocompleteMatchToList(matches, data.topics[ix], "topic", reMatch);
                         }
                     }
-                    for (var ix = 0; ix < data.videos.length; ix++) {
-                        addAutocompleteMatchToList(matches, data.videos[ix], "video", reMatch);
+                    if (options.includeVideos) {
+                        for (var ix = 0; ix < data.videos.length; ix++) {
+                            addAutocompleteMatchToList(matches, data.videos[ix], "video", reMatch);
+                        }
                     }
-                    for (var ix = 0; ix < data.exercises.length; ix++) {
-                        addAutocompleteMatchToList(matches, data.exercises[ix], "exercise", reMatch);
+                    if (options.includeExercises) {
+                        for (var ix = 0; ix < data.exercises.length; ix++) {
+                            addAutocompleteMatchToList(matches, data.exercises[ix], "exercise", reMatch);
+                        }
                     }
                 }
 
@@ -150,12 +159,16 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
     autocompleteWidget.data("autocomplete")._renderItem = function(ul, item) {
         // Customize the display of autocomplete suggestions
         var jLink = $("<a></a>").html(item.label);
-        if (item.kind == "topic")
-            jLink.prepend("<span class='autocomplete-topic'>Topic </span>");
-        else if (item.kind == "video")
-            jLink.prepend("<span class='autocomplete-video'>Video </span>");
-        else if (item.kind == "exercise")
-            jLink.prepend("<span class='autocomplete-exercise'>Exercise </span>");
+        if (options.addTypePrefix) {
+            var prefixSpan = $("<span>").prependTo(jLink);
+            if (item.kind === "topic") {
+                prefixSpan.addClass("autocomplete-topic").text("Topic ");
+            } else if (item.kind === "video") {
+                prefixSpan.addClass("autocomplete-video").text("Video ");
+            } else if (item.kind === "exercise") {
+                prefixSpan.addClass("autocomplete-exercise").text("Exercise ");
+            }
+        }
 
         jLink.attr("data-tag", "Autocomplete");
 

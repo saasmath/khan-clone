@@ -2,7 +2,7 @@
  * JS client library for detecting if a user has been served a
  * one-time promotion of any kind.
  *
- * Corresponds to PromoRecord in models.py on the server side.
+ * Corresponds to PromoRecord in promo_record_model.py on the server side.
  */
 
 var Promos = {};

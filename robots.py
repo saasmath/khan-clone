@@ -2,6 +2,7 @@ import request_handler
 import user_util
 import os
 
+
 class RobotsTxt(request_handler.RequestHandler):
     """Dynamic robots.txt that hides staging apps from search engines"""
     @user_util.open_access

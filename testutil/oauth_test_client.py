@@ -24,22 +24,20 @@ if False:
     # remote_api_shell has a fix-paths-for-appengine function, and
     # it's easy to find because it lives on $PATH (though not
     # necessarily $PYTHONPATH).  Note this changes $PYTHONPATH:
-    import sys, os
+    import os
+    import sys
     sys.path.extend([''] + os.environ.get('PATH', '').split(':'))
     import remote_api_shell
     remote_api_shell.fix_sys_path(include_google_sql_libs=False)
-    os.environ['SERVER_SOFTWARE'] = 'Development (oauth-testing remote-api)/1.0'
+    os.environ['SERVER_SOFTWARE'] = 'Development (oauth-test remote-api)/1.0'
 
 from google.appengine.ext.remote_api import remote_api_stub
 
-# This import needs to happen first to avoid problems with circular
-# imports.  Sigh.
-import models
-import api.auth
 from oauth_provider import consts
 from oauth_provider import models_oauth
 from oauth_provider import oauth
 from oauth_provider import stores
+import user_models
 
 
 def _stub_appengine_for_dev_appserver(dev_appserver_url):
@@ -52,24 +50,24 @@ def _stub_appengine_for_dev_appserver(dev_appserver_url):
         dev_appserver_url: the machine:port pair your dev-appserver
            process is running likely 'localhost:8080'
     """
-    for protocol in ('http://', 'https://'):   # we want a hostname, not a proto
+    for protocol in ('http://', 'https://'):  # we want a hostname, not a proto
         if dev_appserver_url.startswith(protocol):
             dev_appserver_url = dev_appserver_url[len(protocol):]
-    
+
     remote_api_stub.ConfigureRemoteApi(
         None,
         '/_ah/remote_api',
-        auth_func=(lambda : ('test', 'test')),   # username/password
+        auth_func=(lambda: ('test', 'test')),   # username/password
         servername=dev_appserver_url)
 
-    os.environ['SERVER_SOFTWARE'] = 'Development (oauth-testing remote-api)/1.0'
+    os.environ['SERVER_SOFTWARE'] = 'Development (oauth-test remote-api)/1.0'
 
 
 def _create_user(name):
     """Creates a user with the given username, and an email/pw based on it."""
     email = name + '@example.com'
     pw = name + '_password'
-    user_data = models.UserData.insert_for(name, email)
+    user_data = user_models.UserData.insert_for(name, email)
     # Don't reset the password if it's already set as we expect, since
     # resetting the password can invalidate keys.
     if not user_data.validate_password(pw):
@@ -90,29 +88,32 @@ def _create_oauth_tokens(dev_appserver_url,
 
     # To start the oauth request, we need a consumer token.
     consumer_object = models_oauth.Consumer.get_or_insert(
-        key_name = name,
-        name = name,
-        description = name,
-        website = '',
-        user = user_data.user,
-        status = consts.ACCEPTED,
-        phone = '',
-        company = '',
-        anointed = anointed)
+        key_name=name,
+        name=name,
+        description=name,
+        website='',
+        user=user_data.user,
+        status=consts.ACCEPTED,
+        phone='',
+        company='',
+        anointed=anointed)
     if not consumer_object.secret:   # we just created it
         consumer_object.generate_random_codes()
-    consumer = oauth.OAuthConsumer(consumer_object.key_, consumer_object.secret)
+    consumer = oauth.OAuthConsumer(consumer_object.key_,
+                                   consumer_object.secret)
 
     # Next, create an oauth request token.
     request = oauth.OAuthRequest.from_consumer_and_token(
         consumer, http_url='%s/api/auth/request_token' % dev_appserver_url)
-    request.sign_request(oauth.OAuthSignatureMethod_PLAINTEXT(), consumer, None)
+    request.sign_request(oauth.OAuthSignatureMethod_PLAINTEXT(),
+                         consumer, None)
 
     request_token_req = urllib2.urlopen(request.to_url())
     if request_token_req.code != 200:
         raise RuntimeError('Unable to get the request token, '
                            'instead got %d: "%s"'
-                           % (request_token_req.code, request_token_req.read()))
+                           % (request_token_req.code,
+                              request_token_req.read()))
 
     # Next, we need to register the request token in Khan Academy
     # oauth-map.  The response from the request-token fetch is the url
@@ -134,8 +135,8 @@ def _create_oauth_tokens(dev_appserver_url,
     # The url that we end up with after going through
     # /login/mobileauth, which yields a *second* request token.
     # TODO(csilvers): figure out what's going on here.
-    oauth_map_key_and_secret_str = urlparse.urlparse(oauth_map_req.geturl())[4]
-    oauth_map_token = oauth.OAuthToken.from_string(oauth_map_key_and_secret_str)
+    oauth_map_key_and_secret = urlparse.urlparse(oauth_map_req.geturl())[4]
+    oauth_map_token = oauth.OAuthToken.from_string(oauth_map_key_and_secret)
 
     # Finally, we can get the access token from the previous request token.
     request = oauth.OAuthRequest.from_consumer_and_token(
@@ -165,9 +166,9 @@ def _access_resource(full_url, consumer, access_token, method="GET"):
     # Get a new request token for the specific url we want to fetch.
     oauth_request = oauth.OAuthRequest.from_consumer_and_token(
         consumer,
-        token = access_token,
-        http_url = full_url,
-        parameters = query_params,
+        token=access_token,
+        http_url=full_url,
+        parameters=query_params,
         http_method=method
         )
     oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(),
@@ -228,7 +229,7 @@ def fetch_via_oauth(url_to_fetch,
           This is who the oauth process will say is logging in (the
           'resource provider').  This user must exist in the khan db.
           You can create a user via
-             user_data = models.UserData.insert_for('random_string', 'a@b.com')
+             user_data = user_models.UserData.insert_for('random_string', 'a@b.com')
              user_data.set_password('password')
           If you pass in None, we will use an 'internal' user we create.
 

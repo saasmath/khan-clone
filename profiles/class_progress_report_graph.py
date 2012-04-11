@@ -3,7 +3,7 @@ from itertools import izip
 from jinja2.utils import escape
 
 from templatefilters import escapejs, timesince_ago
-from models import Exercise, UserExerciseGraph
+from exercise_models import Exercise, UserExerciseGraph
 
 def class_progress_report_graph_context(user_data, list_students):
     if not user_data:
@@ -31,11 +31,11 @@ def class_progress_report_graph_context(user_data, list_students):
 
     exercise_data = {}
 
-    for (student, student_email_pair, escapejsed_student_email, user_exercise_graph) in izip(list_students, student_email_pairs, emails_escapejsed, user_exercise_graphs):
+    for (student, _, _, user_exercise_graph) in izip(list_students, student_email_pairs, emails_escapejsed, user_exercise_graphs):
 
         student_email = student.email
 
-        for (exercise, (_, exercise_display, exercise_name_js)) in izip(exercises_found, exercise_names):
+        for (exercise, (_, _, _)) in izip(exercises_found, exercise_names):
 
             exercise_name = exercise.name
             graph_dict = user_exercise_graph.graph_dict(exercise_name)
@@ -78,7 +78,7 @@ def class_progress_report_graph_context(user_data, list_students):
                     "status": status,
                 })
 
-    student_row_data = [data for key, data in exercise_data.iteritems()]
+    student_row_data = [data for (_, data) in exercise_data.iteritems()]
 
     return {
         'exercise_names': exercise_list,

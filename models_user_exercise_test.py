@@ -3,7 +3,8 @@
 from agar.test.base_test import BaseTest
 
 import models
-import exercises
+import exercises.exercise_util
+from testutil import testsize
 
 
 class UserDataCoachTest(BaseTest):
@@ -59,6 +60,7 @@ class UserDataCoachTest(BaseTest):
         self.assertLength(1, uexs)
         self.assertEqual(uexs[0].exercise_model.key(), self.c1.key())
 
+    @testsize.medium()
     def test_when_proficient_in_c1_should_get_children(self):
         c1_uex = self.student.get_or_insert_exercise(self.c1)
         for i in xrange(10):
@@ -70,6 +72,7 @@ class UserDataCoachTest(BaseTest):
                 [e.name for e in self.exercises if 'c1' in e.prerequisites])
         self.assertTrue(len(children.intersection(uexs)) > 0)
 
+    @testsize.medium()
     def test_returns_max_exercises(self):
         c1_uex = self.student.get_or_insert_exercise(self.c1)
         d1_uex = self.student.get_or_insert_exercise(self.d1)
@@ -87,6 +90,7 @@ class UserDataCoachTest(BaseTest):
             models.UserExercise.next_in_topic(self.student, self.topic, n=3)]
         self.assertLength(3, uexs)
 
+    @testsize.medium()
     def test_when_exercise_is_worked_on_should_be_presented_last(self):
         c1_uex = self.student.get_or_insert_exercise(self.c1)
         for i in xrange(10):
@@ -110,6 +114,7 @@ class UserDataCoachTest(BaseTest):
 
         self.assertEqual(uexs[-1], 'l1')
 
+    @testsize.medium()
     def test_proficient_exercises_are_not_returned(self):
         c1_uex = self.student.get_or_insert_exercise(self.c1)
         l1_uex = self.student.get_or_insert_exercise(self.l1)
@@ -129,6 +134,7 @@ class UserDataCoachTest(BaseTest):
         self.assertNotIn('l1', uexs)
         self.assertNotIn('r1', uexs)
 
+    @testsize.medium()
     def test_exercise_in_review_mode_is_included(self):
         c1_uex = self.student.get_or_insert_exercise(self.c1)
         l1_uex = self.student.get_or_insert_exercise(self.l1)
@@ -181,11 +187,11 @@ def do_problem(user_data, user_exercise, correct=True):
     }
 
     if correct:
-        return exercises.attempt_problem(**options)
+        return exercises.exercise_util.attempt_problem(**options)
     else:
-        exercises.attempt_problem(**dict(options.items() +
+        exercises.exercise_util.attempt_problem(**dict(options.items() +
             {"completed": False}.items()))
-        return exercises.attempt_problem(**dict(options.items() +
+        return exercises.exercise_util.attempt_problem(**dict(options.items() +
             {"attempt_number": 2}.items()))
 
 

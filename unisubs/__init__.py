@@ -5,9 +5,7 @@ import logging
 from google.appengine.api import urlfetch
 from google.appengine.ext import deferred
 
-from models import Video
-from models import VideoSubtitles
-from models import VideoSubtitlesFetchReport
+from video_models import Video, VideoSubtitles, VideoSubtitlesFetchReport
 import request_handler
 import user_util
 

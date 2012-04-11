@@ -62,7 +62,7 @@ a.main-video-link:hover {
 }
 
 .topic-page-content {
-    width: 1162px;
+    width: 100%;
     margin-top: 0px;
     margin-bottom: 10px;
 }
@@ -71,32 +71,14 @@ a.main-video-link:hover {
     width: 100%;
 }
 
-.nav-pane-background {
-    position: absolute;
-    background-color: #f4f4f5;
-    border-right: solid 1px #ccc;
-    left: 0px;
-    top: 0px;
-    bottom: 0px;
-    width: 330px;
-}
-
-.nav-fixed-background {
-    position: fixed;
-    height: 100%;
-    top: -39px;
-}
-.nav-fixed-background > .nav-pane-background {
-    margin-top: 125px;
-    margin-left: 1px;
-}
-
 .topic-page-content > .container > .nav-pane {
     display: inline-block;
     background-color: #f4f4f5;
     border-right: solid 1px #ccc;
-    width: 320px;
+    width: 300px;
     padding-left: 10px;
+    padding-bottom: 10px;
+    margin-bottom: -510px;
 }
 
 .topic-page-content > .container > .nav-pane-spacer {
@@ -113,14 +95,14 @@ a.main-video-link:hover {
 }
 
 .topic-page-content > .container > .nav-pane > ul {
-    width: 260px;
+    width: 240px;
     margin-top: 0px;
     padding: 3px 0;
     padding-top: 12px;
 }
 .topic-page-content > .container > .nav-pane > ul > li {
     position: relative;
-    width: 322px;
+    width: 302px;
 }
 .topic-page-content > .container > .nav-pane > ul > li.subheading {
     padding-top: 20px;
@@ -141,7 +123,7 @@ a.main-video-link:hover {
     letter-spacing: 0;
     font-family: MuseoSans300;
     color: #333;
-    width: 291px;
+    width: 271px;
     font-weight: normal;
     font-size: 16px;
     padding: 8px 8px;
@@ -179,8 +161,15 @@ a.main-video-link:hover {
     width: 1162px
 }
 .topic-page-content > .container > .content-pane.indent {
-    width: 804px;
+    width: 66%;
     padding-left: 16px;
+}
+
+.topic-page-content > .container > .content-pane .topic-loading {
+    font-family: MuseoSans300;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 36px 0;
 }
 
 .topic-page-content > .container > .content-pane .title {
@@ -207,7 +196,11 @@ a.main-video-link:hover {
     text-decoration: none;
 }
 .topic-page-content > .container > .content-pane .vid-progress {
+    display: inline-block;
     padding-left: 14px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    line-height: 18px;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
@@ -255,7 +248,7 @@ a.main-video-link:hover {
 
 .content-pane div.main-header .topic-info {
     display: inline-block;
-    width: 450px;
+    width: 40%;
     vertical-align: top;
 }
 .content-pane div.main-header .topic-info .topic-title {
@@ -292,8 +285,17 @@ a.main-video-link:hover {
     padding-top: 30px;
 }
 
+.content-pane div.subtopic-list-container {
+    overflow: hidden;
+}
 .content-pane div.subtopics-list {
-    margin-left: 4px;
+    width: 390px;
+    display: inline-block;
+    margin-left: -1px;
+}
+.content-pane div.subtopics-list.second {
+    border-left: solid 1px #ccc;
+    vertical-align:top;
 }
 
 .content-pane .subtopic-header {
@@ -303,19 +305,17 @@ a.main-video-link:hover {
     padding-left: 14px;
 }
 .content-pane div.subtopics-list .subtopic {
+    position: relative;
     float: left;
-    width: 50%;
+    width: 100%;
     height: 102px;
 }
-.content-pane div.subtopics-list .subtopic.not-first {
-    border-top: solid 1px #ddd;
-}
-.content-pane div.subtopics-list a.subtopic-link {
+.content-pane div.subtopics-list a.subtopic-link-and-scroll {
     display: block;
     color: #356700;
     height: 102px;
 }
-.content-pane div.subtopics-list a.subtopic-link:hover {
+.content-pane div.subtopics-list a.subtopic-link-and-scroll:hover {
     background-color: #ebf1df;
     color: #000;
     text-decoration: none;
@@ -335,13 +335,13 @@ a.main-video-link:hover {
     -moz-box-shadow: 0 0 3px #ccc;
     box-shadow: 0 0 3px #ccc;
     background-size: 140px 80px;
-    margin: 10px 5px 10px 10px;
+    margin: 10px 5px 10px 14px;
 }
 
 .content-pane div.subtopics-list .topic-info {
     position: relative;
     display: inline-block;
-    width: 230px;
+    width: 224px;
     height: 68px;
     padding-top: 10px;
     padding-bottom: 20px;
@@ -352,6 +352,7 @@ a.main-video-link:hover {
     font-size: 16px;
     line-height: 18px;
     padding-bottom: 6px;
+    margin-top: 5px;
 }
 .content-pane div.subtopics-list .topic-info .topic-description {
     font-size: 12px;
@@ -362,7 +363,7 @@ a.main-video-link:hover {
     position: absolute;
     font-size: 10pt;
     left: 0px;
-    bottom: 0px;
+    bottom: 5px;
 }
 
 .content-pane div.videos-list .videos-header {
@@ -372,27 +373,32 @@ a.main-video-link:hover {
     padding-left: 14px;
 }
 .content-pane div.videos-list ol {
-    float: left;
-    width: 400px;
+    display: inline-block;
+    width: 49%;
+    vertical-align: top;
+}
+.content-pane div.videos-list ol.first {
+    border-right: solid 1px #ccc;
 }
 .content-pane div.videos-list ol > li {
-    width: 400px;
+    width: 100%;
 }
 .content-pane div.videos-list ol > li > a {
+    position: relative;
     font-size: 11pt;
     color: #356700;
-    width: 380px;
+    width: 100%;
     display: inline-block;
-    margin-left: -8px;
-    padding-left: 8px;
+}
+.content-pane div.videos-list ol > li > a > .indent {
+    display: inline-block;
+    margin-left: 8px;
 }
 .content-pane div.videos-list ol > li > a:hover {
     background-color: #ebf1df;
     color: #356700;
 }
-.content-pane div.videos-list ol > li > a > .vid-progress {
-    display: block;
-    line-height: 18px;
-    padding-top: 6px;
-    padding-bottom: 6px;
+.content-pane div.videos-list ol > li > a .vid-progress {
+    position: relative;
+    z-index: 2;
 }

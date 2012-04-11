@@ -1,12 +1,7 @@
-import datetime
-import time
-import logging
-
-from google.appengine.api import users
-
-import models
 import classtime
-import util
+import datetime
+import logging
+import setting_model
 
 def class_time_graph_context(user_data, dt_utc, tz_offset, student_list):
 
@@ -28,11 +23,8 @@ def class_time_graph_context(user_data, dt_utc, tz_offset, student_list):
         # If no timezone offset is specified, don't bother grabbing all the data
         # because we'll be redirecting back to here w/ timezone information.
         import os
-        if os.environ["QUERY_STRING"].find("&version=3") != -1:
-            classtime.reload_class(user_data, dt_utc)
-            return
         try:
-            if os.environ["QUERY_STRING"].find("&version=2") != -1 or int(models.Setting.classtime_report_method()) == 2 and datetime.datetime.strptime(models.Setting.classtime_report_startdate(), "%Y-%m-%dT%H:%M:%S") < dt_utc:
+            if os.environ["QUERY_STRING"].find("&version=2") != -1 or int(setting_model.Setting.classtime_report_method()) == 2 and datetime.datetime.strptime(setting_model.Setting.classtime_report_startdate(), "%Y-%m-%dT%H:%M:%S") < dt_utc:
                 classtime_table = classtime_analyzer.get_classtime_table_by_coach(user_data, students_data, dt_utc)
             else:
                 classtime_table = classtime_analyzer.get_classtime_table_old(students_data, dt_utc)

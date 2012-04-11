@@ -1,3 +1,4 @@
+import api.v1_utils    # TODO(csilvers): move this to another file
 import request_handler
 import user_util
 import cgi
@@ -6,6 +7,7 @@ import urllib
 import logging
 import layer_cache
 import urllib2
+from knowledgemap import layout
 from youtube_sync import youtube_get_video_data_dict
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
@@ -28,10 +30,13 @@ from api.auth.decorators import developer_required
 from google.appengine.ext import db
 
 
-import models
-from models import Topic, TopicVersion, Video, Url
-from models import Playlist
-        
+from topic_models import Topic, TopicVersion
+from video_models import Video
+from url_model import Url
+from obsolete_models import Playlist
+import topic_models
+import video_models
+
 class EditContent(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
@@ -75,6 +80,7 @@ class EditContent(request_handler.RequestHandler):
         return
 
     def topic_update_from_live(self, edit_version):
+        layout.update_from_live(edit_version)
         request = urllib2.Request("http://www.khanacademy.org/api/v1/topictree")
         try:
             opener = urllib2.build_opener()
@@ -84,7 +90,7 @@ class EditContent(request_handler.RequestHandler):
             logging.info("calling /_ah/queue/deferred_import")
 
             # importing the full topic tree can be too large so pickling and compressing
-            deferred.defer(models.topictree_import_task, "edit", "root", True,
+            deferred.defer(api.v1_utils.topictree_import_task, "edit", "root", True,
                         zlib.compress(pickle.dumps(topictree)),
                         _queue="import-queue",
                         _url="/_ah/queue/deferred_import")
@@ -94,13 +100,13 @@ class EditContent(request_handler.RequestHandler):
 
     def topic_migration(self):
         logging.info("deleting all existing topics")
-        db.delete(models.Topic.all())
-        db.delete(models.TopicVersion.all())
-        db.delete(models.Url.all())
+        db.delete(topic_models.Topic.all())
+        db.delete(topic_models.TopicVersion.all())
+        db.delete(Url.all())
 
-        version = models.TopicVersion.all().filter("edit =", True).get()
+        version = topic_models.TopicVersion.all().filter("edit =", True).get()
         if version is None:
-            version = models.TopicVersion.create_new_version()
+            version = topic_models.TopicVersion.create_new_version()
             version.edit = True
             version.put()
         logging.info("starting migration")
@@ -112,10 +118,10 @@ class EditContent(request_handler.RequestHandler):
 
     def fix_duplicates(self):
         dry_run = self.request.get('dry_run', False)
-        video_list = [v for v in models.Video.all()]
+        video_list = [v for v in video_models.Video.all()]
         video_dict = dict()
 
-        version = models.TopicVersion.get_by_id("edit")
+        version = topic_models.TopicVersion.get_by_id("edit")
 
         videos_to_update = []
         
@@ -132,14 +138,14 @@ class EditContent(request_handler.RequestHandler):
                 canonical_key_id = 0
                 canonical_readable_id = None
                 for video in videos:
-                    if models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).get():
+                    if topic_models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).get():
                         canonical_key_id = video.key().id()
                     if not canonical_readable_id or len(video.readable_id) < len(canonical_readable_id):
                         canonical_readable_id = video.readable_id
                 
                 def print_video(video, is_canonical, dup_idx):
                     canon_str = "CANONICAL" if is_canonical else "DUPLICATE"
-                    topic_strings = "|".join([topic.id for topic in models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).run()])
+                    topic_strings = "|".join([topic.id for topic in topic_models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).run()])
                     print "%d,%s,%d,%s,%s,%s,%s,%s" % (video_idx, canon_str, dup_idx, str(video.key()), video.readable_id, video.youtube_id, video.title, topic_strings)
 
                 for video in videos:
@@ -297,7 +303,7 @@ def recreate_topic_list_structure():
 
 # temporary function to load smarthistory the first time during migration
 def importSmartHistory():
-    edit = models.TopicVersion.get_edit_version()
+    edit = topic_models.TopicVersion.get_edit_version()
     ImportSmartHistory.importIntoVersion(edit)
     edit.set_default_version()
     new_edit = TopicVersion.create_edit_version()
@@ -329,8 +335,8 @@ class ImportSmartHistory(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
         """update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)"""
-        default = models.TopicVersion.get_default_version()
-        edit = models.TopicVersion.get_edit_version()
+        default = topic_models.TopicVersion.get_default_version()
+        edit = topic_models.TopicVersion.get_edit_version()
         
         logging.info("importing into edit version")
         # if there are any changes to the edit version
@@ -415,7 +421,7 @@ class ImportSmartHistory(request_handler.RequestHandler):
                 if youtube_id not in video_dict:
                     # make sure it didn't get imported before, but never put 
                     # into a topic
-                    query = models.Video.all()
+                    query = video_models.Video.all()
                     video = query.filter("youtube_id =", youtube_id).get()
 
                     if video is None:
@@ -429,8 +435,8 @@ class ImportSmartHistory(request_handler.RequestHandler):
                         if video_data:
                             video_data["title"] = title
                             video_data["extra_properties"] = extra_properties
-                            video = models.VersionContentChange.add_new_content(
-                                                                models.Video,
+                            video = topic_models.VersionContentChange.add_new_content(
+                                                                video_models.Video,
                                                                 version,
                                                                 video_data)
                         else:
@@ -458,8 +464,8 @@ class ImportSmartHistory(request_handler.RequestHandler):
                 logging.info("adding %i %s %s to %s" % 
                              (i, href, title, parent_title))
                 
-                models.VersionContentChange.add_new_content(
-                    models.Url, 
+                topic_models.VersionContentChange.add_new_content(
+                    Url, 
                     version,
                     {"title": title,
                      "url": href

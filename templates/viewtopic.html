@@ -8,6 +8,10 @@
 {% block meta_description %}{{ main_topic.description }}{% endblock %}
 
 {% block pagecss %}
+
+{{ js_css_packages.css_package("topic") }}
+{{ js_css_packages.css_package("video") }}
+
 <style>
 	#page_sub_nav { display: none; }
 	td { vertical-align: top; }
@@ -16,44 +20,29 @@
     #library-content .library-content-list p.topic-desc { display: block; width: 500px; }
     #library-content .topic-spacer { display: block; margin-bottom: 30px; }
 </style>
+
 {% endblock pagecss %}
 
 {% block pagecontent %}
-
-<!-- Extends pane background down to footer -->
-<div class="nav-fixed-background">
-  <div class="nav-pane-background"></div>
-</div>
 
 <article id="topic-page">
 
 <div class="topic-page-content">
   <div class="container">
-    <div class="nav-pane-background"></div>
     <div class="nav-pane">
 
       <ul>
         <li data-id="">
-          <a class="subtopic-link" data-tag="Topic Page Nav Root Topic" href="/{{ main_topic_info.extended_slug }}" data-id="">
+          <a class="subtopic-link" href="javascript:" data-id="">
             <h2 class='topic-heading'>{{ main_topic.title }}</h2>
             <div class="right-arrow"></div>
           </a>
         </li>
-        {% if main_topic_info.subtopics %}
-        <li class="subheading"><span>Topics</span></li>
-        {% for child in main_topic_info.subtopics %}
-          <li data-id="{{ child.id }}">
-            <a class="subtopic-link" data-tag="Topic Page Nav Subtopic" href="/{{ main_topic_info.extended_slug }}/{{ child.id }}" data-id="{{ child.id }}">
-              {{ child.title|escape }}
-              <div class="right-arrow"></div>
-            </a>
-          </li>
-        {% endfor %}
-        {% endif %}
       </ul>
       <div style="clear: both"></div>
     </div>
     <div class="content-pane indent">
+      <div class="topic-loading">Loading... <img src="/images/throbber.gif"></div>
     </div>
   </div>
 </div>
@@ -63,14 +52,10 @@
 
 {% block bottompagescript %}
     {{ js_css_packages.js_package("topic") }}
-    {{ js_css_packages.css_package("topic") }}
     {{ js_css_packages.js_package("video") }}
-    {{ js_css_packages.css_package("video") }}
     <script type="text/javascript">
       $(function() {
-        var rootPath = "/{{ main_topic.get_extended_slug() }}";
-        var rootTopic = {{ templatetags.jsonify(main_topic_info, True) }};
-        TopicPage.init(rootPath, rootTopic);
+        TopicPage.init("{{ main_topic.id }}");
       });
     </script>
 {% endblock %}

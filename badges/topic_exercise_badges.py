@@ -1,9 +1,7 @@
-import string
-
 from google.appengine.ext import db
 
 import object_property
-import models
+import topic_models
 from badges import Badge, BadgeCategory
 from templatefilters import slugify
 
@@ -16,7 +14,7 @@ def sync_with_topic_version(version):
     """
 
     # Get all topics with live exercises as direct children
-    topics = models.Topic.get_exercise_topics(version)
+    topics = topic_models.Topic.get_exercise_topics(version)
 
     entities_to_put = []
 
@@ -150,16 +148,16 @@ class TopicExerciseBadge(Badge):
         """ Returns the icon src for a special, "completed!" version of this
         topic badge to be used on the knowledge map only, for now.
         """
-        return ("/images/power-mode/badges/%s-completed-40x40.png?4" %
+        return ("/images/power-mode/badges/%s-completed-40x40.png?6" %
                 self.icon_filename)
 
     @property
     def compact_icon_src(self):
-        return "/images/power-mode/badges/%s-60x60.png?4" % self.icon_filename
+        return "/images/power-mode/badges/%s-60x60.png?6" % self.icon_filename
 
     @property
     def icon_src(self):
-        return "/images/power-mode/badges/%s-40x40.png?4" % self.icon_filename
+        return "/images/power-mode/badges/%s-40x40.png?6" % self.icon_filename
 
 
 class TopicExerciseBadgeType(db.Model):

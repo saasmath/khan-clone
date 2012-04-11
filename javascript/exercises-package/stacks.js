@@ -106,7 +106,10 @@ Exercises.StackCollection = Backbone.Collection.extend({
     stats: function() {
 
         var totalLeaves = this.reduce(function(sum, card) {
-            return card.get("leavesEarned") + sum;
+            // Don't count the fourth leaf for now. We're showing it in a different
+            // way at the end of the stack. TODO (jasonrr/kamens) remove 4th leaf 
+            // altogether if we keep this implementation
+            return Math.min(3, card.get("leavesEarned")) + sum;
         }, 0);
 
         var longestStreak = this.longestStreak(
@@ -321,7 +324,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
     model: null,
 
     events: {
-        "click .take-a-break": "toDashboard",
+        "click .to-dashboard": "toDashboard",
         "click .more-stacks": "toMoreStacks",
         "click #show-topic-details": "showTopicDetails"
     },
@@ -454,18 +457,40 @@ Exercises.CurrentCardView = Backbone.View.extend({
         }, 500);
 
         // Fade in/out our various pieces of "calculating progress" text
-        var fadeInNextText = function(jel) {
+        var fadeInNextText = function(jel, egg) {
 
+            // allows the loop to recycle when the nextMessage === []
+            var messages = $(".calc-text-spin span")
             if (!jel || !jel.length) {
-                jel = $(".current-card-contents .calc-text-spin span").first();
+                jel = messages;
             }
 
-            jel.fadeIn(600, function() {
-                jel.delay(1000).fadeOut(600, function() {
-                    fadeInNextText(jel.next("span"));
+            // display either jel or the egg if it was passed in
+            var thisMessage = (egg == null) ? jel.first() : $(egg);
+            var nextMessage = jel.next("span:not(.egg)");
+
+            // send egg as second parameter if a tiny die lands just so
+            var r = Math.random();
+            var nextEgg = _.find(jel.filter(".egg"), function(elt){
+                var p = $(elt).data("prob");
+                return (r >= p[0]) && (r < p[1]);
+            });
+
+            // fade out thisMessage and display egg || nextMessage
+            thisMessage.fadeIn(600, function() {
+                thisMessage.delay(1000).fadeOut(600, function() {
+                    fadeInNextText(nextMessage, nextEgg);
                 });
             });
         };
+
+        // recalculate cumulative probabilities for each egg
+        var eggs = $(".calc-text-spin span.egg");
+        for (var i = 0, head = 0; i < eggs.length; i+=1){
+            tail = head + $(eggs[i]).data("prob");
+            $(eggs[i]).data("prob", [head, tail]);
+            head = tail;
+        }
 
         fadeInNextText();
 
@@ -587,7 +612,21 @@ Exercises.CurrentCardView = Backbone.View.extend({
                         }),
                         startedExercises = _.filter(topicUserExercises, function(userExercise) {
                             return !userExercise.exerciseStates.proficient && userExercise.totalDone > 0;
+                        }),
+                        progressStats = Exercises.sessionStats.progressStats();
+
+                    // Proficient exercises in which proficiency was just
+                    // earned in this current stack need to be marked as such.
+                    //
+                    // TODO: if we stick with this everywhere, we probably want
+                    // to change the actual review model algorithm to stop
+                    // setting recently-earned exercises into review state so
+                    // quickly.
+                    _.each(proficientExercises, function(userExercise) {
+                        userExercise.exerciseStates.justEarnedProficiency = _.any(progressStats.progress, function(stat) {
+                            return stat.exerciseStates.justEarnedProficiency && stat.name == userExercise.exercise;
                         });
+                    });
 
                     return _.extend(
                         {
@@ -598,7 +637,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             unstartedExercises: unstartedExercises,
                             proficientExercises: proficientExercises
                         },
-                        Exercises.sessionStats.progressStats(),
+                        progressStats,
                         Exercises.completeStack.stats()
                     );
 
@@ -607,10 +646,10 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
                     $(Exercises.completeStackView.el).hide();
                     $(Exercises.currentCardView.el)
-                        .find(".stack-stats p, .small-exercise-icon")
+                        .find(".stack-stats p, .small-exercise-icon, .review-explain")
                             .each(Exercises.currentCardView.attachTooltip)
                             .end()
-                        .find(".more-stacks")
+                        .find(".more-stacks, .skill-proficient")
                             .focus();
 
                 }
@@ -715,7 +754,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      */
     showTopicDetails: function() {
         $(".current-topic").slideDown();
-        $(this).hide();
+        $("#show-topic-details").hide();
     },
 
     /**
@@ -916,9 +955,12 @@ Exercises.SessionStats = Backbone.Model.extend({
             // Add all current proficiency/review/struggling states
             stat.exerciseStates = userExercise.exerciseStates;
 
+            // Add an extra state to be used when proficiency was just earned
+            // during the current stack.
+            stat.exerciseStates.justEarnedProficiency = stat.exerciseStates.proficient && !stat.startProficient;
+
             stat.endTotalDone = userExercise.totalDone;
             stat.end = userExercise.progress;
-            stat.justEarnedProficiency = stat.exerciseStates.proficient && !stat.startProficient;
 
             // Keep start set at the minimum of starting and current progress.
             // We do this b/c we never want to animate backwards progress --
