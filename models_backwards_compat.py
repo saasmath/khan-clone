@@ -25,3 +25,4 @@ sys.modules['summary_log_models'] = models
 sys.modules['topic_models'] = models
 sys.modules['user_models'] = models
 sys.modules['video_models'] = models
+sys.modules['url_model'] = models
