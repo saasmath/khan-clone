@@ -213,11 +213,10 @@ def _upgrade_phantom_into(phantom_data, target_data):
     return False
 
 class PostLogin(request_handler.RequestHandler):
-    def consume_auth_token(self):
-        """ Checks to see if a valid auth token is specified as a param
+    def _consume_auth_token(self):
+        """Checks to see if a valid auth token is specified as a param
         in the request, so it can be converted into a cookie
         and used as the identifier for the current and future requests.
-
         """
 
         auth_stamp = self.request_string("auth")
@@ -249,7 +248,7 @@ class PostLogin(request_handler.RequestHandler):
     def get(self):
         cont = self.request_continue_url()
 
-        self.consume_auth_token()
+        self._consume_auth_token()
 
         user_data = UserData.current()
         if not user_data:
