@@ -60,6 +60,7 @@ import unisubs
 import api.jsonify
 import socrates
 import labs.explorations
+import kmap_editor
 
 import topic_models
 import video_models
@@ -75,7 +76,7 @@ from phantom_users import util_notify
 from badges import util_badges, custom_badges
 from mailing_lists import util_mailing_lists
 from profiles import util_profile
-from custom_exceptions import MissingVideoException
+from custom_exceptions import MissingVideoException, PageNotFoundException
 from oauth_provider import apps as oauth_apps
 from phantom_users.cloner import Clone
 from image_cache import ImageCache
@@ -156,6 +157,7 @@ class TopicPage(request_handler.RequestHandler):
         # error(404) sets the status code to 404. Be aware that execution continues
         # after the .error call.
         self.error(404)
+        raise PageNotFoundException("Page not found")
     
 
 # New video view handler.
@@ -732,6 +734,7 @@ application = webapp2.WSGIApplication([
     ('/admin/unisubs/import', unisubs.ImportHandler),
 
     ('/devadmin', devpanel.Panel),
+    ('/devadmin/maplayout', kmap_editor.MapLayoutEditor),
     ('/devadmin/emailchange', devpanel.MergeUsers),
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),

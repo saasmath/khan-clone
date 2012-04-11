@@ -2,7 +2,7 @@ import os
 
 import shared_jinja
 
-from profiles import focus_graph, activity_graph, exercises_over_time_graph, exercise_problems_graph, recent_activity
+from profiles import focus_graph, activity_graph, exercises_over_time_graph, exercise_problems_graph
 from profiles import class_exercises_over_time_graph, class_energy_points_per_minute_graph, class_time_graph
 
 from urlparse import urlunparse
@@ -24,8 +24,6 @@ def profile_exercises_over_time_graph(user_data_student):
     return render_graph_html_and_context("exercises_over_time_graph.html", exercises_over_time_graph.exercises_over_time_graph_context(user_data_student))
 def profile_exercise_problems_graph(user_data_student, exid):
     return render_graph_html_and_context("exercise_problems_graph.html", exercise_problems_graph.exercise_problems_graph_context(user_data_student, exid))
-def profile_exercise_progress_graph(user_data_student):
-    return render_graph_html_and_context("exercise_progress_graph.html", exercise_progress_graph.exercise_progress_graph_context(user_data_student))
 # End profile graph types
 
 # Class profile graph types

@@ -1,4 +1,4 @@
-from gae_bingo.gae_bingo import bingo, ab_test
+from gae_bingo.gae_bingo import bingo
 
 import user_models
 import exercise_models

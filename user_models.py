@@ -574,8 +574,15 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     def delete(self):
         # Override delete(), so that we can log this severe event, and clean
         # up some statistics.
-        logging.info("Deleting user data for %s with points %s" % (self.key_email, self.points))
-        logging.info("Dumping user data for %s: %s" % (self.user_id, jsonify.jsonify(self)))
+        logging.info("Deleting user data %s with points %s and badges [%s]" %
+                     (str(self), self.points, self.badges))
+
+        # Avoid calling JSONify which may touch badge models and queries to
+        # do the JSONify if there are cache misses. That would be unwise in
+        # a transaction since GAE doesn't like non-ancestor queries in txn's
+        if not db.is_in_transaction():
+            logging.info("Dumping user data for %s: %s" %
+                         (self.user_id, jsonify.jsonify(self)))
 
         if not self.is_phantom:
             user_counter.add(-1)
@@ -880,6 +887,9 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         return (self.is_profile_public
                 and self.username is not None
                 and len(self.username) > 0)
+
+    def __str__(self):
+        return self.__unicode__()
 
     def __unicode__(self):
         return "<UserData [%s] [%s] [%s]>" % (self.user_id,
