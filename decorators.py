@@ -3,6 +3,7 @@ from google.appengine.api import memcache
 import time
 import logging
 
+
 def clamp(min_val, max_val):
     """Ensures wrapped fn's return value is between given min and max bounds"""
     def decorator(func):
@@ -11,6 +12,7 @@ def clamp(min_val, max_val):
             return sorted((min_val, func(*arg, **kwargs), max_val))[1]
         return wrapped
     return decorator
+
 
 def synchronized_with_memcache(key=None, timeout=10):
     """A mutually exclusive (mutex) lock based on memcache.  
@@ -58,12 +60,18 @@ def synchronized_with_memcache(key=None, timeout=10):
                     end = time.time()
 
                 if not got_lock:
-                    logging.warning("synchronization lock on %s:%s timed out after %f seconds" % (func.__module__, func.__name__, end-start))
+                    logging.warning(("synchronization lock on %s:%s timed out "
+                                     "after %f seconds")
+                                    % (func.__module__, func.__name__,
+                                       end - start))
                 elif end - start > timeout * 0.75:
-                    # its possible that the func didn't finish but the cas 
-                    # timeout was reached, so if we get these warnings we should
-                    # probably bump the timeout as well
-                    logging.warning("synchronization lock %s:%s almost timed out, but got lock after %f seconds" % (func.__module__, func.__name__, end-start))
+                    # its possible that the func didn't finish but the
+                    # cas timeout was reached, so if we get these
+                    # warnings we should probably bump the timeout as well
+                    logging.warning(("synchronization lock %s:%s almost timed "
+                                     "out, but got lock after %f seconds")
+                                    % (func.__module__, func.__name__,
+                                       end - start))
                 
                 results = func(*arg, **kwargs)
 
@@ -75,4 +83,3 @@ def synchronized_with_memcache(key=None, timeout=10):
             return results
         return wrapped
     return decorator
-
