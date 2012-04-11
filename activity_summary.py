@@ -189,7 +189,7 @@ def daily_activity_summary_map(user_data):
     dt = dt_start
     list_entities_to_put = []
 
-    problem_logs = summary_log_models.ProblemLog.get_for_user_data_between_dts(
+    problem_logs = exercise_models.ProblemLog.get_for_user_data_between_dts(
             user_data, dt_start, dt_end).fetch(100000)
     video_logs = video_models.VideoLog.get_for_user_data_between_dts(
             user_data, dt_start, dt_end).fetch(100000)
