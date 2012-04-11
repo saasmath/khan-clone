@@ -1,6 +1,6 @@
 <ul>
   <li data-id="">
-    <a class="subtopic-link" data-tag="Topic Page Nav Root Topic" href="/{{ topic.extendedSlug }}" data-id="">
+    <a class="subtopic-link" data-tag="Topic Page Nav Root Topic" href="/{{ topicInfo.extendedSlug }}" data-id="">
       <h2 class='topic-heading'>{{ topicInfo.topic.standaloneTitle }}</h2>
       <div class="right-arrow"></div>
     </a>
@@ -9,7 +9,7 @@
   <li class="subheading"><span>Topics</span></li>
   {{#each topicInfo.subtopics }}
     <li data-id="{{ id }}">
-      <a class="subtopic-link" data-tag="Topic Page Nav Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
+      <a class="subtopic-link" data-tag="Topic Page Nav Subtopic" href="/{{ ../../topicInfo.extendedSlug }}/{{ id }}" data-id="{{ id }}">
         {{ title }}
         <div class="right-arrow"></div>
       </a>
