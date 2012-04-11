@@ -5968,3 +5968,6 @@ from badges import util_badges, last_action_cache, topic_exercise_badges
 from phantom_users import util_notify
 from goals.models import GoalList
 from exercises.file_contents import exercise_sha1
+
+# TODO(kamens): remove this after refactor stabilizes and we won't be rolling back
+import models_backwards_compat
