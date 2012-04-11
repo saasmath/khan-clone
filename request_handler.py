@@ -188,7 +188,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         return url + params
 
     def handle_exception(self, e, *args):
-
+        
         title = "Oops. We made a mistake."
         message_html = "We ran into a problem. It's our fault, and we're working on it."
         sub_message_html = "This has been reported to us, and we'll be looking for a fix. If the problem continues, feel free to <a href='/reportissue?type=Defect'>send us a report directly</a>."
