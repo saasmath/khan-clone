@@ -34,7 +34,7 @@ class ObjectProperty(db.BlobProperty):
             value = pickle.loads(str(value))
         except:
             # TODO(benkomalo): it may be useful to detect large swaths
-            # of depickling failures here and logging in.
+            # of depickling failures here and logging it.
             pass
         return super(ObjectProperty, self).make_value_from_datastore(value)
 
