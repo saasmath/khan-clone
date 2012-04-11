@@ -6,6 +6,7 @@ import user_util
 
 from google.appengine.api import memcache
 
+
 class RateLimiter:
     
     def __init__(self, user_data, hourly_limit, desc):
@@ -26,7 +27,8 @@ class RateLimiter:
         return True
 
     def get_key(self):
-        return "rate_limiter_%s_%s" % (self.__class__.__name__, self.user_data.key_email) 
+        return "rate_limiter_%s_%s" % (self.__class__.__name__,
+                                       self.user_data.key_email)
 
     def add_new(self):
         key = self.get_key()
@@ -61,10 +63,14 @@ class RateLimiter:
     def denied_desc(self):
         return self.desc % self.hourly_limit
 
+
 class VoteRateLimiter(RateLimiter):
     def __init__(self, user_data):
-        RateLimiter.__init__(self, user_data, 10, "You can only vote %s times every hour.")
+        RateLimiter.__init__(self, user_data, 10,
+                             "You can only vote %s times every hour.")
+
 
 class FlagRateLimiter(RateLimiter):
     def __init__(self, user_data):
-        RateLimiter.__init__(self, user_data, 10, "You can only flag %s times every hour.")
+        RateLimiter.__init__(self, user_data, 10,
+                             "You can only flag %s times every hour.")

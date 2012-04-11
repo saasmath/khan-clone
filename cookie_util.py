@@ -3,12 +3,14 @@ import logging
 import os
 from app import App
 
+
 def get_cookie_value(key):
     cookies = None
     try:
         cookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE', ''))
     except Cookie.CookieError, error:
-        logging.debug("Ignoring Cookie Error, skipping get cookie: '%s'" % error)
+        logging.debug("Ignoring Cookie Error, skipping get cookie: '%s'"
+                      % error)
 
     if not cookies:
         return None
@@ -19,6 +21,7 @@ def get_cookie_value(key):
         return None
 
     return cookie.value
+
 
 def get_google_cookie():
     """ Retrieves the auth cookie value used to authenticate Google users with
@@ -33,7 +36,9 @@ def get_google_cookie():
     else:
         return get_cookie_value('ACSID')
 
-# Cookie handling from http://appengine-cookbook.appspot.com/recipe/a-simple-cookie-class/
+
+# Cookie handling from
+# http://appengine-cookbook.appspot.com/recipe/a-simple-cookie-class/
 def set_cookie_value(key, value='', max_age=None,
                path='/', domain=None, secure=None, httponly=False,
                version=None, comment=None):
@@ -56,10 +61,12 @@ def set_cookie_value(key, value='', max_age=None,
     cookies_header = cookies[key].output(header='').lstrip()
 
     if httponly:
-        # We have to manually add this part of the header until GAE uses Python 2.6.
+        # We have to manually add this part of the header until GAE
+        # uses Python 2.6.
         cookies_header += "; HttpOnly"
 
     return cookies_header
+
 
 def set_request_cookie(key, value):
     ''' Set a cookie for the remainder of the request
