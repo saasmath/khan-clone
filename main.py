@@ -96,11 +96,6 @@ class VideoDataTest(request_handler.RequestHandler):
         for video in videos:
             self.response.out.write('<P>Title: ' + video.title)
 
-# Handler that displays a topic page if the URL matches
-# a pre-existing topic. (i.e. /math/algebra or just /algebra)
-# NOTE: Since there is no specific route we are matching,
-# this handler is registered as the default handler, so
-# anything it doesn't recognize should return a 404.
 class TopicPage(request_handler.RequestHandler):
 
     @staticmethod
