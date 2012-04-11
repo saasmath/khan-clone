@@ -1299,8 +1299,9 @@ class Topic(search.Searchable, db.Model):
         db.delete(items)
 
         topics = Topic.get_content_topics(version)
-        for topic in topics:
-            logging.info("Indexing topic " + topic.title + " (" + str(topic.key()) + ")")
+        for i, topic in enumerate(topics):
+            logging.info("Indexing topic %i: %s (%s)" % 
+                         (i, topic.title, topic.key()))
             topic.index()
             topic.indexed_title_changed()
 
@@ -1643,13 +1644,41 @@ def _change_default_version(version_number, run_code):
 
     logging.info("done setting new default version")
 
-    setting_model.Setting.topic_admin_task_message("Publish: reindexing new content")
-
+    setting_model.Setting.topic_admin_task_message("Publish: reindexing topics")
+    
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
     
-    #TODO(james): select only the new videos to be reindexed
-    video_models.Video.reindex()
+    setting_model.Setting.topic_admin_task_message("Publish: reindexing videos")
+    if default_version:
+        # get all the changed videos
+        changes = VersionContentChange.all().filter('version =', version).fetch(10000)
+        updated_videos = [c.content for c in changes 
+                          if isinstance(c.content, video_models.Video)]
+        updated_video_keys = [v.key() for v in updated_videos]
+
+        # get the video keys in the old tree 
+        old_topics = Topic.get_all_topics(default_version)
+        old_video_keys = set()
+        for topic in old_topics:
+            old_video_keys.update([k for k in topic.child_keys 
+                                   if k.kind() == "Video" and 
+                                   k not in updated_video_keys])
+
+        # get the video keys in the latest tree
+        latest_topics = Topic.get_all_topics(version)
+        latest_video_keys = set()
+        for topic in latest_topics:
+            latest_video_keys.update([k for k in topic.child_keys 
+                                      if k.kind() == "Video" and
+                                      k not in updated_video_keys])
+
+        # add the videos that are in the latest tree but not the old tree
+        updated_videos.extend(db.get(list(latest_video_keys - old_video_keys)))
+        
+        video_models.Video.reindex(updated_videos)
+    else:
+        video_models.Video.reindex()
 
     # update the new number of videos on the homepage
     vids = video_models.Video.get_all_live()
