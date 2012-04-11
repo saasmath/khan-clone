@@ -11,6 +11,7 @@
 
 {{ js_css_packages.css_package("topic") }}
 {{ js_css_packages.css_package("video") }}
+{{ js_css_packages.css_package("bootstrap-grids") }}
 
 <style>
 	#page_sub_nav { display: none; }
@@ -28,8 +29,8 @@
 <article id="topic-page">
 
 <div class="topic-page-content">
-  <div class="container">
-    <div class="nav-pane">
+  <div class="container row-fluid">
+    <div class="nav-pane span4">
 
       <ul>
         <li data-id="">
@@ -41,7 +42,7 @@
       </ul>
       <div style="clear: both"></div>
     </div>
-    <div class="content-pane indent">
+    <div class="content-pane indent span8">
       <div class="topic-loading">Loading... <img src="/images/throbber.gif"></div>
     </div>
   </div>
