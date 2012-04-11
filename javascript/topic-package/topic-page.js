@@ -76,7 +76,6 @@
             });
 
             this.router = new this.SubTopicRouter();
-            console.log(rootPath)
             this.router.bind("all", Analytics.handleRouterNavigation);
             Backbone.history.start({pushState: true, root: rootPath});
 
