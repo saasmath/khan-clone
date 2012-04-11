@@ -233,7 +233,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
         value = self.email
         return (not facebook_util.is_facebook_user_id(value) and
-                not phantom_util.is_phantom_id(value))
+                not phantom_users.phantom_util.is_phantom_id(value))
 
     @property
     def badge_counts(self):

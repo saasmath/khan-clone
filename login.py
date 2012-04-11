@@ -1,4 +1,3 @@
-
 import datetime
 import logging
 import os
@@ -10,10 +9,6 @@ import auth.cookies
 import auth.passwords
 import cookie_util
 import facebook_util
-import datetime
-import logging
-import os
-import re
 import request_handler
 import shared_jinja
 import transaction_util
@@ -287,7 +282,7 @@ class PostLogin(request_handler.RequestHandler):
                 # from facebook users, so getting an e-mail after the fact
                 # may result in a collision with an existing Google or Khan
                 # account. In those cases, we silently drop the e-mail.
-                existing_user = models.UserData.get_from_user_input_email(fb_email)
+                existing_user = user_models.UserData.get_from_user_input_email(fb_email)
 
                 if (existing_user and
                         existing_user.user_id != user_data.user_id):
@@ -319,7 +314,7 @@ class PostLogin(request_handler.RequestHandler):
 
                 # Look for a matching UnverifiedUser with the same e-mail
                 # to see if the user used Google login to verify.
-                unverified_user = models.UnverifiedUser.get_for_value(
+                unverified_user = user_models.UnverifiedUser.get_for_value(
                         email_now_verified)
                 if unverified_user:
                     unverified_user.delete()
