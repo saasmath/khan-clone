@@ -16,9 +16,11 @@
 
     // Maximum content height
     var maxContentHeight = 0;
-    
+
     window.TopicPage = {
         init: function(topicID) {
+            // TODO(tom): figure out how to invalidate this if we need to change
+            // the schema of a topic.
             $.ajax({
                 url: "/api/v1/topic/" + topicID + "/topic-page?casing=camel",
                 dataType: "json",
