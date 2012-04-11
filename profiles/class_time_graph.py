@@ -1,12 +1,7 @@
-import datetime
-import time
-import logging
-
-from google.appengine.api import users
-
-import setting_model
 import classtime
-import util
+import datetime
+import logging
+import setting_model
 
 def class_time_graph_context(user_data, dt_utc, tz_offset, student_list):
 
