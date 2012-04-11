@@ -107,11 +107,7 @@ class CredentialedUser(db.Model):
             else:
                 db.put(self)
 
-        if db.is_in_transaction():
-            txn()
-        else:
-            xg_on = db.create_transaction_options(xg=True)
-            db.run_in_transaction_options(xg_on, txn)
+        transaction_util.ensure_in_transaction(txn, xg_on=True)
 
     def delete(self):
         # Override delete so that we can also delete associated Credential
@@ -125,10 +121,7 @@ class CredentialedUser(db.Model):
             # to do the actual deletion of this class.
             super(CredentialedUser, self).delete()
 
-        if db.is_in_transaction():
-            txn()
-        else:
-            db.run_in_transaction(txn)
+        transaction_util.ensure_in_transaction(txn)
 
 
 class UserNonce(db.Model):
