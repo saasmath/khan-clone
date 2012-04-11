@@ -10,6 +10,7 @@ import video_models
 import summary_log_models
 import exercise_models
 
+
 class ActivitySummaryExerciseItem:
     def __init__(self):
         self.c_problems = 0
@@ -18,12 +19,14 @@ class ActivitySummaryExerciseItem:
         self.points_earned = 0
         self.exercise = None
 
+
 class ActivitySummaryVideoItem:
     def __init__(self):
         self.seconds_watched = 0
         self.points_earned = 0
         self.playlist_titles = None
         self.video_title = None
+
 
 class DailyActivitySummary:
 
@@ -64,6 +67,7 @@ class DailyActivitySummary:
             summary.hourly_summaries[hour].add_video_log(video_log)
 
         return summary
+
 
 class HourlyActivitySummary:
 
@@ -189,7 +193,7 @@ def daily_activity_summary_map(user_data):
     dt = dt_start
     list_entities_to_put = []
 
-    problem_logs = summary_log_models.ProblemLog.get_for_user_data_between_dts(
+    problem_logs = exercise_models.ProblemLog.get_for_user_data_between_dts(
             user_data, dt_start, dt_end).fetch(100000)
     video_logs = video_models.VideoLog.get_for_user_data_between_dts(
             user_data, dt_start, dt_end).fetch(100000)

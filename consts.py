@@ -59,7 +59,7 @@ MAX_SECONDS_PER_FAST_PROBLEM = 60.0
 INITIAL_SECONDS_PER_FAST_PROBLEM = 4.0
 
 # Maximum number of days we're willing to postpone a review
-MAX_REVIEW_INTERVAL_DAYS = 45
+MAX_REVIEW_INTERVAL_DAYS = 182
 
 # Default number of days we're willing to postpone a review
 DEFAULT_REVIEW_INTERVAL_DAYS = 7

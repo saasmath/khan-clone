@@ -14,8 +14,13 @@ from google.appengine.ext import db
 from google.appengine.ext import deferred
 
 import app
+import exercise_models
+import exercise_video_model
 import obsolete_models
+import setting_model
 import topic_models
+import url_model
+import video_models
 
 
 def exercise_save_data(version, data, exercise=None, put_change=True):
@@ -36,7 +41,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
             data,
             changeable_props)
     else:
-        return topic_models.VersionContentChange.add_new_content(models.Exercise,
+        return topic_models.VersionContentChange.add_new_content(exercise_models.Exercise,
                                                            version,
                                                            data,
                                                            changeable_props,
@@ -48,25 +53,21 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
         tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
 
         logging.info("starting import")
-        version = TopicVersion.get_by_id(version_id)
-        parent = Topic.get_by_id(topic_id, version)
+        version = topic_models.TopicVersion.get_by_id(version_id)
+        parent = topic_models.Topic.get_by_id(topic_id, version)
 
-        topics = Topic.get_all_topics(version, True)
+        topics = topic_models.Topic.get_all_topics(version, True)
         logging.info("got all topics")
         topic_dict = dict((topic.id, topic) for topic in topics)
         topic_keys_dict = dict((topic.key(), topic) for topic in topics)
 
-        videos = Video.get_all()
+        videos = video_models.Video.get_all()
         logging.info("got all videos")
         video_dict = dict((video.readable_id, video) for video in videos)
 
-        exercises = Exercise.get_all_use_cache()
+        exercises = exercise_models.Exercise.get_all_use_cache()
         logging.info("got all exercises")
         exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
-
-        urls = obsolete_models.Url.all()
-        url_dict = dict((url.id, url) for url in urls)
-        logging.info("got all urls")
 
         all_entities_dict = {}
         new_content_keys = []
@@ -92,7 +93,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                 else:
                     kwargs = dict((str(key), value) for key, value in tree.iteritems() if key in ['standalone_title', 'description', 'tags'])
                     kwargs["version"] = version
-                    topic = Topic.insert(title=tree['title'], parent=parent, **kwargs)
+                    topic = topic_models.Topic.insert(title=tree['title'], parent=parent, **kwargs)
                     logging.info("%s: added topic %s" % (pos, topic.title))
                     tree["key"] = topic.key()
                     topic_dict[tree["id"]] = topic
@@ -126,7 +127,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                     changeable_props = ["youtube_id", "url", "title", "description",
                                         "keywords", "duration", "readable_id",
                                         "views"]
-                    video = VersionContentChange.add_new_content(Video,
+                    video = topic_models.VersionContentChange.add_new_content(video_models.Video,
                                                                     version,
                                                                     tree,
                                                                     changeable_props,
@@ -149,7 +150,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                         for readable_id in tree["related_videos"]:
                             video = video_dict[readable_id]
                             tree["related_video_keys"].append(video.key())
-                    exercise = v1.exercise_save_data(version, tree, None, put_change)
+                    exercise = exercise_save_data(version, tree, None, put_change)
                     logging.info("%s: added Exercise %s" % (pos, exercise.name))
                     new_content_keys.append(exercise.key())
                     tree["key"] = exercise.key()
@@ -163,7 +164,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                     tree["key"] = url.key()
                 else:
                     changeable_props = ["tags", "title", "url"]
-                    url = VersionContentChange.add_new_content(Url,
+                    url = topic_models.VersionContentChange.add_new_content(url_model.Url,
                                                                version,
                                                                tree,
                                                                changeable_props,
@@ -185,10 +186,10 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
         add_keys_json_tree(tree_json, parent, do_exercises=False)
 
         # add related_videos prop to exercises
-        evs = ExerciseVideo.all().fetch(10000)
+        evs = exercise_video_model.ExerciseVideo.all().fetch(10000)
         exercise_key_dict = dict((e.key(), e) for e in exercises)
         video_key_dict = dict((v.key(), v) for v in video_dict.values())
-        Exercise.add_related_videos_prop(exercise_key_dict, evs, video_key_dict)
+        exercise_models.Exercise.add_related_videos_prop(exercise_key_dict, evs, video_key_dict)
 
         # exercises need to be done after, because if they reference ExerciseVideos
         # those Videos have to already exist
@@ -238,7 +239,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                 video = all_entities_dict[node["key"]]
                 logging.info("%i/%i Updating any change to Video %s" % (i, len(nodes), video.title))
 
-                change = VersionContentChange.add_content_change(video,
+                change = topic_models.VersionContentChange.add_content_change(video,
                     version,
                     node,
                     ["readable_id", "title", "youtube_id", "description", "keywords"])
@@ -249,7 +250,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                 exercise = all_entities_dict[node["key"]]
                 logging.info("%i/%i Updating any changes to Exercise %s" % (i, len(nodes), exercise.name))
 
-                change = v1.exercise_save_data(version, node, exercise)
+                change = exercise_save_data(version, node, exercise)
                 if change:
                     logging.info("changed")
 
@@ -259,7 +260,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
 
                 changeable_props = ["tags", "title", "url"]
 
-                change = VersionContentChange.add_content_change(
+                change = topic_models.VersionContentChange.add_content_change(
                     url,
                     version,
                     node,

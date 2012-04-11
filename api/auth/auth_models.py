@@ -4,10 +4,11 @@ import logging
 from google.appengine.ext import db
 
 import auth.tokens
-from user_models import UserData
+import user_models
 
 
-# OAuthMap creates a mapping between our OAuth credentials and our identity providers'.
+# OAuthMap creates a mapping between our OAuth credentials and our
+# identity providers'.
 class OAuthMap(db.Model):
 
     # Our tokens
@@ -56,7 +57,7 @@ class OAuthMap(db.Model):
     def is_mobile_view(self):
         return self.view == "mobile"
 
-    def callback_url_with_request_token_params(self, include_verifier = False):
+    def callback_url_with_request_token_params(self, include_verifier=False):
         params_callback = {
             "oauth_token": self.request_token, 
             "oauth_token_secret": self.request_token_secret
@@ -74,7 +75,7 @@ class OAuthMap(db.Model):
         """
         if self.uses_password():
             user_data = auth.tokens.AuthToken.get_user_for_value(
-                    self.khan_auth_token, UserData.get_from_user_id)
+                    self.khan_auth_token, user_models.UserData.get_from_user_id)
             # Note that we can't "create" a user by username/password logins
             # via the oauth flow, since the signup process for setting a KA
             # account is more involved than just setting a user_id.
@@ -88,15 +89,16 @@ class OAuthMap(db.Model):
             email = None
             user_data = None
             if self.uses_google():
-                user_id, email = get_google_user_id_and_email_from_oauth_map(self)
+                user_id, email = \
+                    get_google_user_id_and_email_from_oauth_map(self)
             elif self.uses_facebook():
                 user_id = get_facebook_user_id_from_oauth_map(self)
                 email = user_id
 
             if user_id:
-                user_data = (UserData.get_from_user_id(user_id) or
-                             UserData.get_from_db_key_email(email) or
-                             UserData.insert_for(user_id, email))
+                user_data = (user_models.UserData.get_from_user_id(user_id) or
+                             user_models.UserData.get_from_db_key_email(email) or
+                             user_models.UserData.insert_for(user_id, email))
             return (user_data, user_id)
 
     def get_user_id(self):
@@ -142,13 +144,15 @@ class OAuthMap(db.Model):
     def get_from_request_token(request_token):
         if not request_token:
             return None
-        return OAuthMap.if_not_expired(OAuthMap.all().filter("request_token =", request_token).get())
+        oauth_map = OAuthMap.all().filter("request_token =", request_token).get()
+        return OAuthMap.if_not_expired(oauth_map)
 
     @staticmethod
     def get_from_access_token(access_token):
         if not access_token:
             return None
-        return OAuthMap.if_not_expired(OAuthMap.all().filter("access_token =", access_token).get())
+        oauth_map = OAuthMap.all().filter("access_token =", access_token).get()
+        return OAuthMap.if_not_expired(oauth_map)
 
 from api.auth.auth_util import append_url_params
 from api.auth.google_util import get_google_user_id_and_email_from_oauth_map

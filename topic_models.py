@@ -25,7 +25,7 @@ from google.appengine.api import taskqueue
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 
-from api.jsonify import jsonify
+from api import jsonify
 import app
 import autocomplete
 import badges
@@ -34,7 +34,6 @@ import exercise_video_model
 import exercises.exercise_util
 import exercise_models
 from knowledgemap import layout
-import homepage
 import layer_cache
 import library
 import object_property
@@ -406,7 +405,7 @@ class Topic(search.Searchable, db.Model):
             "extended_slug": self.get_extended_slug(),
         }
 
-        return jsonify(topic_info, camel_cased=True)
+        return jsonify.jsonify(topic_info, camel_cased=True)
 
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
@@ -828,26 +827,8 @@ class Topic(search.Searchable, db.Model):
             parent.put()
 
         if new_topic.child_keys:
-            child_topic_keys = [c for c in new_topic.child_keys if c.kind() == "Topic"]
-            child_topics = db.get(child_topic_keys)
-            for child in child_topics:
-                child.parent_keys.append(topic.key())
-                child.ancestor_keys.append(topic.key())
-
-            all_descendant_keys = {} # used to make sure we don't loop
-            descendant_keys = {}
-            descendants = child_topics
-            while True: # should iterate n+1 times making n db.gets() where n is the tree depth under topic
-                for descendant in descendants:
-                    descendant_keys.update(dict((key, True) for key in descendant.child_keys if key.kind() == "Topic" and not all_descendant_keys.has_key(key)))
-                if not descendant_keys: # no more topic descendants that we haven't already seen before
-                    break
-
-                all_descendant_keys.update(descendant_keys)
-                descendants = db.get(descendant_keys.keys())
-                for descendant in descendants:
-                    descendant.ancestor_keys = topic.key()
-                descendant_keys = {}
+            # Children should be added after the parent topic is already added to the topic tree
+            raise Exception("Should not insert a new topic with children into the tree.")
 
         return new_topic
 
@@ -1595,7 +1576,7 @@ def _preload_default_version_data(version_number, run_code):
 
     # Preload topic pages
     for topic in Topic.get_all_topics(version=version):
-        topic.get_topic_page_data()
+        topic.get_topic_page_json()
     logging.info("preloaded topic pages")
 
     # Preload topic browser
