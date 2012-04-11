@@ -752,12 +752,19 @@ var KMapEditor = {
 
 
     addPrereq: function() {
+        this.exercises.get(this.selected[0]).prerequisites.push($("#add-prereq").val());
         this.addPath($("#add-prereq").val(), this.selected[0]);
         this.updateForm(this.selected[0]);
         $("#add-prereq").val(0);
     },
 
     deletePrereq: function(prereq) {
+        this.exercises.get(this.selected[0]).prerequisites =
+                $.map(this.exercises.get(this.selected[0]).prerequisites, function(p) {
+            if (p !== prereq) {
+                return p;
+            }
+        });
         this.delPath(prereq, this.selected[0]);
         this.updateForm(this.selected[0]);
     },
