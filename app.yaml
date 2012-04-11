@@ -23,6 +23,8 @@ skip_files:
 - ^(.*/)?.*_test\.html
 - ^requirements\.txt
 - ^agar
+- ^third-party/agar
+- ^third-party/agar-src
 - ^testutil
 - ^tools
 
