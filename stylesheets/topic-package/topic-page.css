@@ -295,6 +295,7 @@ a.main-video-link:hover {
 }
 .content-pane div.subtopics-list.second {
     border-left: solid 1px #ccc;
+    vertical-align:top;
 }
 
 .content-pane .subtopic-header {
@@ -372,8 +373,9 @@ a.main-video-link:hover {
     padding-left: 14px;
 }
 .content-pane div.videos-list ol {
-    float: left;
+    display: inline-block;
     width: 49%;
+    vertical-align: top;
 }
 .content-pane div.videos-list ol.first {
     border-right: solid 1px #ccc;

@@ -149,7 +149,7 @@ class LogSummary(db.Model):
                 log_summary.put()
 
 
-        # if activities is a list, we assume all activities belong to the same period - this is used in classtime.fill_class_summaries_from_logs()
+        # if activities is a list, we assume all activities belong to the same period
         if type(activity) == list:
             activities = activity
             activity = activities[0]

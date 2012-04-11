@@ -239,7 +239,7 @@ def topic_videos(topic_id, version_id = None):
     if topic is None:
         topic = topic_models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
         if topic is None:
-            raise ValueError("Invalid topic readable_id.")
+            return api_invalid_param_response("Could not find topic with ID %s" % topic_id)
 
     videos = topic_models.Topic.get_cached_videos_for_topic(topic, False, version)
     for i, video in enumerate(videos):
@@ -264,7 +264,7 @@ def topic_exercises(topic_id, version_id = None):
     if topic is None:
         topic = topic_models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
         if topic is None:
-            raise ValueError("Invalid topic readable_id.")
+            return api_invalid_param_response("Could not find topic with ID %s" % topic_id)
 
     exercises = topic.get_exercises()
     return exercises
@@ -370,7 +370,7 @@ def topic(topic_id, version_id = None):
     topic = topic_models.Topic.get_by_id(topic_id, version)
 
     if not topic:
-        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
+        return api_invalid_param_response("Could not find topic with ID %s" % topic_id)
 
     return topic.get_visible_data()
 
@@ -541,7 +541,7 @@ def topic_move_child(old_parent_id, version_id = "edit"):
     new_parent_id = request.request_string("new_parent_id")
     new_parent =  topic_models.Topic.get_by_id(new_parent_id, version)
     if not old_parent_topic:
-        return api_invalid_param_response("Could not find topic with ID " + str(old_parent_id))
+        return api_invalid_param_response("Could not find topic with ID %s " % old_parent_id)
 
     new_parent_pos = request.request_string("new_parent_pos")
 
@@ -559,7 +559,7 @@ def topic_ungroup(topic_id, version_id = "edit"):
 
     topic = topic_models.Topic.get_by_id(topic_id, version)
     if not topic:
-        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
+        return api_invalid_param_response("Could not find topic with ID %s" % topic_id)
 
     topic.ungroup()
 
@@ -580,7 +580,7 @@ def topic_children(topic_id, version_id = None):
 
     topic = topic_models.Topic.get_by_id(topic_id, version)
     if not topic:
-        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
+        return api_invalid_param_response("Could not find topic with ID %s" % topic_id)
 
     return db.get(topic.child_keys)
 
@@ -905,7 +905,7 @@ def video_exercises(video_id):
 def video_play_data(topic_id, video_id):
     topic = topic_models.Topic.get_by_id(topic_id)
     if topic is None:
-        raise ValueError("Invalid topic readable_id.")
+        return api_invalid_param_response("Could not find topic with ID %s" % topic_id)
 
     get_topic_data = request.request_bool('topic', default=False);
 
@@ -2366,7 +2366,7 @@ def get_user_goal(id):
     goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
-        return api_invalid_param_response("Could not find goal with ID " + str(id))
+        return api_invalid_param_response("Could not find goal with ID %s" % id)
 
     return goal.get_visible_data(None)
 
@@ -2383,7 +2383,7 @@ def put_user_goal(id):
     goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
-        return api_invalid_param_response("Could not find goal with ID " + str(id))
+        return api_invalid_param_response("Could not find goal with ID %s" % id)
 
     goal_json = request.json
 
@@ -2412,7 +2412,7 @@ def delete_user_goal(id):
     goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
-        return api_invalid_param_response("Could not find goal with ID " + str(id))
+        return api_invalid_param_response("Could not find goal with ID %s" % id)
 
     goal.delete()
 

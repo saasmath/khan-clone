@@ -10,6 +10,7 @@ import video_models
 import summary_log_models
 import exercise_models
 
+
 class ActivitySummaryExerciseItem:
     def __init__(self):
         self.c_problems = 0
@@ -18,12 +19,14 @@ class ActivitySummaryExerciseItem:
         self.points_earned = 0
         self.exercise = None
 
+
 class ActivitySummaryVideoItem:
     def __init__(self):
         self.seconds_watched = 0
         self.points_earned = 0
         self.playlist_titles = None
         self.video_title = None
+
 
 class DailyActivitySummary:
 
@@ -64,6 +67,7 @@ class DailyActivitySummary:
             summary.hourly_summaries[hour].add_video_log(video_log)
 
         return summary
+
 
 class HourlyActivitySummary:
 

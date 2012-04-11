@@ -1,7 +1,5 @@
 import exercise_models
 import video_models
-import util
-import logging
 from templatefilters import seconds_to_time_string
 
 class ProblemPoint:

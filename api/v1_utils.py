@@ -69,10 +69,6 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
         logging.info("got all exercises")
         exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
 
-        urls = obsolete_models.Url.all()
-        url_dict = dict((url.id, url) for url in urls)
-        logging.info("got all urls")
-
         all_entities_dict = {}
         new_content_keys = []
 

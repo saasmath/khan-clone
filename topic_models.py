@@ -1576,7 +1576,7 @@ def _preload_default_version_data(version_number, run_code):
 
     # Preload topic pages
     for topic in Topic.get_all_topics(version=version):
-        topic.get_topic_page_data()
+        topic.get_topic_page_json()
     logging.info("preloaded topic pages")
 
     # Preload topic browser
