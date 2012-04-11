@@ -30,5 +30,6 @@ from promo_record_model import *
 from setting_model import *
 from summary_log_models import *
 from topic_models import *
+from url_model import *
 from user_models import *
 from video_models import *

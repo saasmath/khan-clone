@@ -1,6 +1,7 @@
 import testutil
 from promo_record_model import PromoRecord
 
+
 class PromoRecordTest(testutil.GAEModelTestCase):
     # Shorthand
     def r(self, promo_name, user_id):
@@ -23,4 +24,3 @@ class PromoRecordTest(testutil.GAEModelTestCase):
 
         # Different promo
         self.assertTrue(self.r(p2, u1))
-
