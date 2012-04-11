@@ -600,23 +600,16 @@ footer {
     z-index: 2;
     color: #4D5862;
 }
-    .dark #top-header #stats {
-        color: #ddd;
-    }
     #top-header #stats #page_visitors {
         font-family: Georgia, serif;
         position: absolute;
-        left: 117px;
-        top: -75px;
+        right: 32px;
+        top: 23px;
         font-size:13px;
         font-style: italic;
         font-weight: normal;
         display: none; /* hidden until AJAX call to chartbeat gets the number */
         text-decoration: none;
-    }
-
-    .dark #top-header #user-info {
-        text-shadow: 0 1px 0 #1A222D;
     }
 #nav-and-search {
     /* We're positioning this absolutely because of the iframe jumpy nonsense from the facebook button */
