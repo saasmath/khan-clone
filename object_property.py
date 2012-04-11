@@ -3,8 +3,20 @@
 from google.appengine.ext import db
 import cPickle as pickle
 
-# Use this property to store objects.
 class ObjectProperty(db.BlobProperty):
+    """ A property that can be used to store arbirary objects.
+
+    IMPORTANT: this uses pickle to serialize the object contents
+    and, as a result, is fragile when used with objects that
+    contain non-primitive data, since alterations to their
+    class definitions (moving from one module to another, etc)
+    can make the serialized contents no longer deserializable.
+
+    It is recommended this is only used with primitive types
+    or dicts containing primitive types.
+
+    """
+
     def validate(self, value):
         try:
             result = pickle.dumps(value)
@@ -21,10 +33,19 @@ class ObjectProperty(db.BlobProperty):
         try:
             value = pickle.loads(str(value))
         except:
+            # TODO(benkomalo): it may be useful to detect large swaths
+            # of depickling failures here and logging in.
             pass
         return super(ObjectProperty, self).make_value_from_datastore(value)
 
+
 class UnvalidatedObjectProperty(ObjectProperty):
+    """ An ObjectProperty that always passes validation.
+
+    See ObjectProperty for details.
+
+    """
+
     def validate(self, value):
         # pickle.dumps can be slooooooow,
         # sometimes we just want to trust that the item is pickle'able.

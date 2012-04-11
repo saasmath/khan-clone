@@ -31,6 +31,10 @@ class DailyActivityLog(db.Model):
 
     user = db.UserProperty()
     date = db.DateTimeProperty()
+
+    # TODO(benkomalo): This pickles models and is fragile to breakage!
+    # If the ClassDailyActivity class signature changes or moves
+    # modules, this could break.
     activity_summary = object_property.ObjectProperty()
 
     @staticmethod
@@ -92,6 +96,10 @@ class LogSummary(db.Model):
     start = db.DateTimeProperty()
     end = db.DateTimeProperty()
     summary_type = db.StringProperty()
+
+    # TODO(benkomalo): This pickles models and is fragile to breakage!
+    # If the ClassDailyActivity class signature changes or moves
+    # modules, this could break.
     summary = object_property.UnvalidatedObjectProperty()
     name = db.StringProperty(required=True)
 
