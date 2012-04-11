@@ -412,6 +412,13 @@ var KMapEditor = {
 
     createCanvas: function() {
         var localCoords = $.parseJSON(window.localStorage["map_coords:" + USERNAME] || "{}");
+        if (localCoords.lat === undefined || localCoords.lng === undefined) {
+            localCoords = {
+                lat: -1.1,
+                lng: 1.2,
+                zoom: 8
+            }
+        }
         this.setZoom(localCoords.zoom);
 
         this.raphael = Raphael($("#map")[0]);
