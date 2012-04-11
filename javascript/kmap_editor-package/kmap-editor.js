@@ -46,47 +46,39 @@ var KMapEditor = {
         KMapEditor.enableMapPanning();
         KMapEditor.enableMarqueeSelect();
 
-        // Override .indexOf() to search an array of exercises by name
-        exerciseData.indexOf = function() {
-            var cache = {};
-            var indexOf = function indexOf(search) {
-                if (cache[search] === undefined) {
-                    var i = this.length;
-                    while ((i -= 1) >= 0) {
-                        if (this[i].name === search) {
-                            break;
-                        }
-                    }
-                    cache[search] = i;
-                }
-                return cache[search];
-            };
-            return indexOf;
-        }();
         // Helper method to get exercise by name
-        exerciseData.get = function get(search) {
-            return this[this.indexOf(search)];
+        exerciseData.get = function(search) {
+            var array = this;
+            var index = _.memoize(function(name) {
+                var idx = $.map(array, function(ex, n) {
+                    if (ex.name === name) {
+                        return n;
+                    }
+                });
+                return idx[0];
+            })(search);
+            return this[index];
         };
 
         // reference to the default version
         KMapEditor.defaultVersion = exerciseData;
-        KMapEditor.defaultMap = defaultMapLayout.layout;
+        KMapEditor.defaultMap = defaultMapLayout;
 
         // deep copy the default version and apply the edit version's diff to it
         $.extend(true, KMapEditor.editVersion, exerciseData);
         $.each(changeData, function(n, change) {
             if (change.content.kind === "Exercise") {
-                var exercise = KMapEditor.editVersion[KMapEditor.editVersion.indexOf(change.content.name)];
+                var exercise = KMapEditor.editVersion.get(change.content.name);
                 $.each(change.content_changes, function(key, val) {
                     exercise[key] = val;
                 });
             }
         });
         // If there's no edit maplayout, deep copy the default maplayout
-        if (editMapLayout == null || editMapLayout.layout == null) {
-            $.extend(true, KMapEditor.editMap, defaultMapLayout.layout);
+        if (editMapLayout == null) {
+            $.extend(true, KMapEditor.editMap, defaultMapLayout);
         } else {
-            KMapEditor.editMap = editMapLayout.layout;
+            KMapEditor.editMap = editMapLayout;
         }
 
         // deep copy the edit version to the candidate version
@@ -110,11 +102,11 @@ var KMapEditor = {
         $("div.zoom-button").click(function(event) {
             var newZoomLevel = KMapEditor.zoomLevel;
             if (this.id === "zoom-exercise") {
-                newZoomLevel = this.ZOOM_EXERCISES;
+                newZoomLevel = KMapEditor.ZOOM_EXERCISES;
             } else if (this.id === "zoom-hybrid") {
-                newZoomLevel = this.ZOOM_HYBRID;
+                newZoomLevel = KMapEditor.ZOOM_HYBRID;
             } else if (this.id === "zoom-topic") {
-                newZoomLevel = this.ZOOM_TOPICS;
+                newZoomLevel = KMapEditor.ZOOM_TOPICS;
                 // hide the form since we can't edit topics yet :(
                 KMapEditor.updateForm(null);
             }
@@ -165,9 +157,9 @@ var KMapEditor = {
 
         $('#find-exercise').placeholder();
         initAutocomplete("#find-exercise", false, KMapEditor.findExercise, true, {
-            includeVideos: true,
+            includeVideos: false,
             includeExercises: true,
-            addTypePrefix: true
+            addTypePrefix: false
         });
 
         $("#save-button").click(function() {
