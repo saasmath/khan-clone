@@ -63,8 +63,8 @@
     <section class="topics search-topics">
         {% for topic in topics %}
         {% if topic.matches %}
-        <div class="matching-topic">
-          <h2><a href="{{ topic.relative_url|bingo_redirect_url(["search_topic_clicked_link"]) }}" data-tag="Search Topic Results">{{ topic.standalone_title|escape }}</a></h2>
+        <div class="topic-condensed">
+          <h2><a href="{{ topic.topic_page_url }}" data-tag="Search Topic Results">{{ topic.standalone_title|escape }}</a></h2>
 
           {% if topic.description %}
           <div class="searchresulthighlight topic-description">{{ topic.description|escape }}</div>
@@ -74,7 +74,7 @@
             <ul>
             {% for child_topic in topic.child_topics %}
               <li>
-                <a href="{{ child_topic.relative_url|bingo_redirect_url(["search_topic_clicked_link"]) }}" data-tag="Search Topic Results" class="topic-result"><span class="searchresulthighlight">{{ child_topic.title|escape }}</span></a>
+                <a href="{{ child_topic.topic_page_url }}" data-tag="Search Topic Results" class="topic-result"><span class="searchresulthighlight">{{ child_topic.title|escape }}</span></a>
               </li>
             {% endfor %}
             </ul>

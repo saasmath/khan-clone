@@ -180,6 +180,10 @@ def compile_handlebar_templates():
     return 0 == popen_return_code([sys.executable,
                                    'deploy/compile_handlebar_templates.py'])
 
+def compile_less_stylesheets():
+    print "Compiling less stylesheets"
+    return 0 == popen_return_code([sys.executable,
+                                   'deploy/compile_less.py'])
 def compress_js():
     print "Compressing javascript"
     compress.compress_all_javascript()
@@ -287,6 +291,10 @@ def main():
 
     if not compile_handlebar_templates():
         print "Failed to compile handlebars templates, bailing."
+        return
+
+    if not compile_less_stylesheets():
+        print "Failed to compile less stylesheets, bailing."
         return
 
     compress_js()

@@ -26,10 +26,12 @@ from google.appengine.ext import db
 # for an example of their use.
 #
 
+
 class ShardedCounterConfig(db.Model):
     '''Holds the configuration for a class of `ShardedCounter`s.'''
     name = db.StringProperty(required=True)
     num_shards = db.IntegerProperty(required=True, default=20)
+
 
 class ShardedCounter(db.Model):
     '''`ShardedCounter`s work together to hold a global count.
@@ -39,6 +41,7 @@ class ShardedCounter(db.Model):
     '''
     name = db.StringProperty(required=True)
     count = db.IntegerProperty(required=True, default=0)
+
 
 def get_count(name):
     '''Get the count'''
@@ -52,6 +55,7 @@ def get_count(name):
         logging.error("Error in get_count: %s" % e)
         return 0
     
+
 def _get_config(name):
     """ A safe way to do an atomic get_or_insert that can also be run
     inside of a transaction.
@@ -67,10 +71,12 @@ def _get_config(name):
     else:
         return ShardedCounterConfig.get_or_insert(name, name=name)
 
+
 def add(name, n):
     '''Add n to the counter (n < 0 is valid)'''
     try:
         config = _get_config(name)
+
         def transaction():
             index = random.randint(0, config.num_shards - 1)
             shard_name = name + str(index)
@@ -88,17 +94,19 @@ def add(name, n):
     except Exception, e:
         logging.error("Error in add: %s" % e)
 
+
 def change_number_of_shards(name, num):
     '''Change the number of shards to num'''
     try:
         config = _get_config(name)
+
         def transaction():
             if config.num_shards > num:
                 for i in range(num, config.num_shards):
                     del_shard_name = name + str(i)
                     del_counter = ShardedCounter.get_by_key_name(del_shard_name)
 
-                    keep_index = random.randint(0, num-1)
+                    keep_index = random.randint(0, num - 1)
                     keep_shard_name = name + str(keep_index)
                     keep_counter = ShardedCounter.get_by_key_name(keep_shard_name)
 

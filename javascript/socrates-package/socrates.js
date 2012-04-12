@@ -54,7 +54,7 @@ Socrates.Label = Backbone.View.extend({
     },
 
     render: function() {
-        $(this.el).text("Default label contents");
+        this.$el.text("Default label contents");
         this.moveable(true);
         return this;
     },
@@ -68,12 +68,12 @@ Socrates.Label = Backbone.View.extend({
         this.isMoveable = val;
 
         if (this.isMoveable) {
-            $(this.el)
+            this.$el
                 .addClass("moveable")
                 .resizable()
                 .draggable();
         } else {
-            $(this.el)
+            this.$el
                 .removeClass("moveable")
                 .resizable("destroy")
                 .draggable("destroy");
@@ -83,8 +83,8 @@ Socrates.Label = Backbone.View.extend({
     },
 
     promptForContents: function(evt) {
-        var contents = prompt("Enter label contents", $(this.el).text());
-        $(this.el).text(contents);
+        var contents = prompt("Enter label contents", this.$el.text());
+        this.$el.text(contents);
         if (this.isMoveable) {
             // need to toggle as .text() destroys the corner thing
             this.moveable(false);
@@ -109,7 +109,7 @@ Socrates.InputText = Backbone.View.extend({
         var contents = this.template({
             placeholder: "?"
         });
-        $(this.el).html(contents);
+        this.$el.html(contents);
         this.moveable(true);
         return this;
     },
@@ -123,12 +123,12 @@ Socrates.InputText = Backbone.View.extend({
         this.isMoveable = val;
 
         if (this.isMoveable) {
-            $(this.el)
+            this.$el
                 .addClass("moveable")
                 .resizable()
                 .draggable();
         } else {
-            $(this.el)
+            this.$el
                 .removeClass("moveable")
                 .resizable("destroy")
                 .draggable("destroy");
@@ -237,7 +237,7 @@ Socrates.QuestionView = Backbone.View.extend({
     },
 
     render: function() {
-        $(this.el).html(this.template({
+        this.$el.html(this.template({
             title: this.model.get("title"),
             explainUrl: this.model.get("nested")
         }));
@@ -285,7 +285,7 @@ Socrates.QuestionView = Backbone.View.extend({
 
     hide: function() {
         this.finishRecordingTime();
-        $(this.el).removeClass("visible");
+        this.$el.removeClass("visible");
         return this;
     },
 
@@ -301,7 +301,7 @@ Socrates.QuestionView = Backbone.View.extend({
 
     show: function() {
         this.startTime = +new Date();
-        $(this.el).addClass("visible");
+        this.$el.addClass("visible");
         this.qtip();
         return this;
     },
@@ -626,7 +626,7 @@ Socrates.MasterView = Backbone.View.extend({
     },
 
     render: function() {
-        $(this.el).append(_.pluck(this.views, "el"));
+        this.$el.append(_.pluck(this.views, "el"));
     }
 });
 
@@ -653,7 +653,7 @@ Socrates.Nav = Backbone.View.extend({
     },
 
     render: function() {
-        $(this.el).html(this.template({
+        this.$el.html(this.template({
             questions: this.questionsJson()
         }));
         return this;

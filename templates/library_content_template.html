@@ -8,13 +8,13 @@
             {% if loop.first and topic.depth == 0%}
                 <div class="clear desktop-only"><a name="{{ topic.standalone_title|slugify|escape }}" id="{{ topic.standalone_title|slugify|escape }}">&nbsp;</a></div>
             {% endif %}
-            <div data-role="page" id="{{ topic.id }}" data-theme="b">
+            <div data-role="page" id="{{ topic.id }}-container" data-theme="b">
                 <div data-role="header" class="library-content-header">
                     <a href="#" data-rel="back" data-icon="arrow-l" class="mobile-only">Back</a>
                     {% if topic.depth %}
                         <h2 class='subtopic-{{ topic.depth }}-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.homepage_title|escape}}</h2>
                     {% else %}
-                        <h2 class='topic-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.homepage_title|escape}}</h2>
+                        <h2 class='topic-heading {% if loop.first %}topic-heading-first{% endif %} {% if root_topic and topic.id == root_topic.id %}root-topic{% endif %}'>{{topic.homepage_title|escape}}</h2>
                     {% endif %}
                     <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="mobile-only"></a>
                 </div>
@@ -44,12 +44,14 @@
     
                     <div class="clear desktop-only{% if topic.next_is_subtopic %} subtopic-jump-fix{% endif %}{% if topic.subtopics %} first{% endif %}">
                     {% if topic.next %}
-                        <a name="{{ topic.next.id|slugify|escape }}" id="{{ topic.next.id|slugify|escape }}">&nbsp;</a>
+                        <a name="{{ topic.next.id|slugify|escape }}">&nbsp;</a>
                     {% endif %}
                     </div>
                 </div>
                 {% endif %}
             </div>
+
+            {% if root_topic and topic.id == root_topic.id %}<div class="topic-spacer"></div>{% endif %}
 
             {% if topic.subtopics %}
                 {{loop(topic.subtopics)}}

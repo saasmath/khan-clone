@@ -11,12 +11,14 @@ except ImportError:
 from google.appengine.api import taskqueue
 from mapreduce import control
 
-import models
+import user_models
 import badges
 import models_badges
 import last_action_cache
 
 import custom_badges
+import topic_exercise_badges
+import topic_models
 import streak_badges
 import timed_problem_badges
 import exercise_completion_badges
@@ -25,6 +27,7 @@ import topic_time_badges
 import power_time_badges
 import profile_badges
 import recovery_problem_badges
+import setting_model
 import unfinished_exercise_badges
 import points_badges
 import tenure_badges
@@ -32,13 +35,14 @@ import video_time_badges
 import consecutive_activity_badges
 import discussion_badges
 import feedback_badges
+import exercise_models
 
 import layer_cache
 import request_handler
 import user_util
 
 # Authoritative list of all badges
-@layer_cache.cache()
+@layer_cache.cache_with_key_fxn(lambda: "all_badges:%s" % setting_model.Setting.topic_tree_version())
 def all_badges():
     list_badges = [
         exercise_completion_count_badges.GettingStartedBadge(),
@@ -135,10 +139,14 @@ def all_badges():
 
     ]
 
+    # Add custom badges and topic exercise badges, which both correspond
+    # to datastore entities, to the collection of all badges.
     list_badges.extend(custom_badges.CustomBadge.all())
+    list_badges.extend(topic_exercise_badges.TopicExerciseBadge.all())
+
     return list_badges
 
-@layer_cache.cache()
+@layer_cache.cache_with_key_fxn(lambda: "all_badges_dict:%s" % setting_model.Setting.topic_tree_version())
 def all_badges_dict():
     dict_badges = {}
     for badge in all_badges():
@@ -172,7 +180,7 @@ def get_grouped_user_badges(user_data=None):
     """
 
     if not user_data:
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
 
     user_badges = []
     grouped_badges_dict = {}
@@ -263,7 +271,7 @@ def get_public_user_badges(user_data=None):
 
     """
     if not user_data:
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
         if not user_data:
             return []
 
@@ -282,7 +290,7 @@ class ViewBadges(request_handler.RequestHandler):
 
     @user_util.open_access
     def get(self):
-        user_data = models.UserData.current() or models.UserData.pre_phantom()
+        user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
         grouped_badges = get_grouped_user_badges(user_data)
         self.render_jinja2_template('viewbadges.html', grouped_badges)
 
@@ -323,7 +331,7 @@ class StartNewBadgeMapReduce(request_handler.RequestHandler):
                 name = "UpdateUserBadges",
                 handler_spec = "badges.util_badges.badge_update_map",
                 reader_spec = "mapreduce.input_readers.DatastoreInputReader",
-                reader_parameters = {"entity_kind": "models.UserData"},
+                reader_parameters = {"entity_kind": "user_models.UserData"},
                 mapreduce_parameters = {"processing_rate": 250},
                 shard_count = 64,
                 queue_name = "user-badge-queue"
@@ -364,11 +372,11 @@ def badge_update_map(user_data):
     update_with_no_context(user_data, action_cache=action_cache)
 
     # Update all exercise-context badges
-    for user_exercise in models.UserExercise.get_for_user_data(user_data):
+    for user_exercise in exercise_models.UserExercise.get_for_user_data(user_data):
         update_with_user_exercise(user_data, user_exercise, action_cache=action_cache)
 
     # Update all topic-context badges
-    for user_topic in models.UserTopic.get_for_user_data(user_data):
+    for user_topic in topic_models.UserTopic.get_for_user_data(user_data):
         update_with_user_topic(user_data, user_topic, action_cache=action_cache)
 
     user_data.last_badge_review = datetime.datetime.now()

@@ -1,5 +1,6 @@
 import layer_cache
-from models import Setting, Topic, TopicVersion
+import topic_models
+from setting_model import Setting
 import request_handler
 import shared_jinja
 import time
@@ -44,7 +45,7 @@ def flatten_tree(tree, parent_topics=[]):
 
     child_parent_topics = parent_topics[:]
 
-    if tree.id in Topic._super_topic_ids:
+    if tree.id in topic_models.Topic._super_topic_ids:
         tree.is_super = True
         child_parent_topics.append(tree)
     elif parent_topics:
@@ -86,28 +87,34 @@ def add_next_topic(topics, next_topic=None):
                     topic.next_is_subtopic = True
                 topic.next = topics[i+1]
 
+
+# A number to increment if the layout of the page, as expected by the client
+# side JS changes, and the JS is changed to update it. This version is
+# independent of topic content version, and is to do with code versions
+_layout_version = 1
+
+
 @layer_cache.cache_with_key_fxn(
-        lambda ajax=False, version_number=None: 
-        "library_content_by_topic_%s_v%s" % (
-        "ajax" if ajax else "inline", 
-        version_number if version_number else Setting.topic_tree_version()),
-        layer=layer_cache.Layers.Memcache
-        )
+        lambda ajax=False, version_number=None:
+        "library_content_by_topic_%s_v%s.%s" % (
+        "ajax" if ajax else "inline",
+        version_number if version_number else Setting.topic_tree_version(),
+        _layout_version))
 def library_content_html(ajax=False, version_number=None):
     """" Returns the HTML for the structure of the topics as they will be
-    populated ont he homepage. Does not actually contain the list of video
+    populated on the homepage. Does not actually contain the list of video
     names as those are filled in later asynchronously via the cache.
     """
     if version_number:
-        version = TopicVersion.get_by_number(version_number)
+        version = topic_models.TopicVersion.get_by_number(version_number)
     else:
-        version = TopicVersion.get_default_version()
+        version = topic_models.TopicVersion.get_default_version()
 
-    tree = Topic.get_root(version).make_tree(types = ["Topics", "Video", "Url"])
+    tree = topic_models.Topic.get_root(version).make_tree(types = ["Topics", "Video", "Url"])
     topics = flatten_tree(tree)
 
     # TODO(tomyedwab): Remove this once the confusion over the old Developmental Math playlists settles down
-    developmental_math = Topic(
+    developmental_math = topic_models.Topic(
         id="developmental-math",
         version=version,
         title="Developmental Math",

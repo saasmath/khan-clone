@@ -4,17 +4,26 @@ class QuietException(Exception):
     """
     pass
 
+
 class MissingVideoException(QuietException):
     pass
+
 
 class MissingExerciseException(Exception):
     pass
 
+
 class TumblrException(Exception):
     pass
+
 
 class SmartHistoryLoadException(QuietException):
     pass
 
+
 class InvalidEmailException(QuietException):
+    pass
+
+
+class PageNotFoundException(QuietException):
     pass

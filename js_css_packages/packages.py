@@ -27,7 +27,7 @@ javascript = {
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "jquery.qtip.js",
-            "../../khan-exercises/utils/underscore.js",
+            "underscore.js",
             "underscore-extras.js",
             "keyhandling.js",
             "backbone.js",
@@ -36,9 +36,11 @@ javascript = {
             "bootstrap-modal.js",
             "dropdown.js",
             "../../gae_bingo/static/js/gae_bingo.js",
+            register_conditional_file("less-1.3.0.js", None),
 
             # application code & templates:
-            "streak-bar.handlebars",
+            "small-exercise-icon.handlebars",
+            "skill-bar.handlebars",
             "handlebars-extras.js",
             "cookies.js",
             "pageutil.js",
@@ -64,6 +66,7 @@ javascript = {
             "goals.js",
             "goal-new.js",
             "topics.js",
+            "localStorage.js",
             "analytics.js",
             "profile-model.js",
             "hover-card.js",
@@ -97,6 +100,14 @@ javascript = {
             "submit-area.handlebars",
             "poppler.js",
             "socrates.js",
+        ]
+    },
+    "topic": {
+        "files": [
+            "content-topic-videos.handlebars",
+            "root-topic-view.handlebars",
+            "subtopic-nav.handlebars",
+            "topic-page.js",
         ]
     },
 
@@ -190,6 +201,9 @@ javascript = {
     "maps": {
         "files": [
             "fastmarkeroverlay.js",
+            "knowledgemap-topic.handlebars",
+            "models.js",
+            "views.js",
             "knowledgemap.js",
         ]
     },
@@ -230,6 +244,25 @@ javascript = {
         ]
     },
     "exercises": {
+        "files": [
+            "exercise.handlebars",
+            "exercise-header.handlebars",
+            "stack.handlebars",
+            "card.handlebars",
+            "current-card.handlebars",
+            "card-leaves.handlebars",
+            "problem-template.handlebars",
+            "end-of-stack-card.handlebars",
+            "end-of-review-card.handlebars",
+            "happy-picture-card.handlebars",
+            "calculating-card.handlebars",
+            "handlebars-helpers.js",
+            "exercises.js",
+            "stacks.js",
+            "bottomless-queue.js",
+        ]
+    },
+    "exercise-content": {
         "base_path": "../khan-exercises",
         "base_url": "/khan-exercises",
         "files": [
@@ -253,6 +286,7 @@ javascript = {
             "utils/graphie-helpers.js",
             "utils/graphie-polygon.js",
             "utils/graphie.js",
+            "utils/hints.js",
             "utils/interactive.js",
             "utils/jquery.adhesion.js",
             "utils/jquery.mobile.vmouse.js",
@@ -303,6 +337,14 @@ javascript = {
         ]
     },
 
+    "kmap_editor": {
+        "files": [
+            "../../khan-exercises/utils/raphael.js",
+            "../topicsadmin-package/jquery.ui.draggable.js",
+            "kmap-editor.js",
+        ]
+    },
+
     "highcharts": {
         "files": [
             "highcharts.js"
@@ -323,7 +365,8 @@ stylesheets = {
             "bootstrap-modal.css",
             "bootstrap-dropdown.css",
             "goals.css",
-        ]
+            "skillbar.less",
+        ],
     },
     "mobile": {
         "files": [
@@ -344,6 +387,11 @@ stylesheets = {
             "bootstrap-tables.css",
             "socrates.css",
             "timebar.css",
+        ]
+    },
+    "topic": {
+        "files": [
+            "topic-page.css",
         ]
     },
     "studentlists": {
@@ -379,11 +427,16 @@ stylesheets = {
             "stories.css",
         ]
     },
-    "exercises": {
+    "exercise-content": {
         "base_path": "../khan-exercises/css",
         "base_url": "/khan-exercises/css",
         "files": [
             "khan-exercise.css",
+        ]
+    },
+    "exercises": {
+        "files": [
+            "stacks.less",
         ]
     },
     "topicsadmin": {
@@ -406,6 +459,11 @@ stylesheets = {
     "bootstrap": {
         "files": [
             "bootstrap.css"
+        ]
+    },
+    "kmap_editor": {
+        "files": [
+            "kmap_editor.css"
         ]
     }
 }

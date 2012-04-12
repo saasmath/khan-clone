@@ -38,8 +38,11 @@ def get_xsrf_cookie_value():
 def validate_xsrf_value():
     header_value = os.environ.get(XSRF_HEADER_KEY)
     cookie_value = get_xsrf_cookie_value()
+    if not header_value and not cookie_value:
+        return False   # not using xsrf; we fail of course, but no need to log
     if not header_value or not cookie_value or header_value != cookie_value:
-        logging.info("Mismatch between XSRF header (%s) and cookie (%s)" % (header_value, cookie_value))
+        logging.info("Mismatch between XSRF header (%s) and cookie (%s)"
+                     % (header_value, cookie_value))
         return False
         
     return True

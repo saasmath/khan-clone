@@ -3,14 +3,14 @@ from oauth_provider.models_oauth import Consumer
 from oauth_provider.consts import ACCEPTED
 
 import request_handler
-import models
+import user_models
 import user_util
 import util
 
 class Register(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
-        if models.UserData.current():
+        if user_models.UserData.current():
             self.render_jinja2_template("oauth_provider/register_app.html", {})
         else:
             self.redirect(util.create_login_url(self.request.uri))
@@ -18,7 +18,7 @@ class Register(request_handler.RequestHandler):
     @user_util.open_access
     def post(self):
 
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
         if user_data:
             name = self.request_string("name", default="").strip()
             description = self.request_string("description", default="").strip()

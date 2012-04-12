@@ -4,8 +4,6 @@
     <h2 class="pulls"><a href="{{ post.local_url|escape }}">{{ post.title|escape }}</a></h2>
     <p class="pulled" style="color: #999; font-style: italic; font-family: Georgia;">{{ post.dt }}</p>
     <div id="post-content">{{ post.body }}</div>
-    <p><a class="dsq-comment-count" href="{{ post.local_url|escape }}#disqus_thread">Comments</a></p>
-
     <script type="text/javascript">var disqus_url = "{{post.url|escapejs}}"; var disqus_title ="{{ post.title|escapejs }}";</script><hr/><div id="disqus_thread"></div>
     <script type="text/javascript">
       /**

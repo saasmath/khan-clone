@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import os
 import urllib
 import logging
 import re
@@ -14,6 +13,12 @@ from google.appengine.api import memcache
 import webapp2
 from webapp2_extras.routes import DomainRoute
 
+# It's important to have this prior to the imports below that require imports
+# to request_handler.py. The structure of the imports are such that this
+# module causes a lot of circular imports to happen, so including it once out
+# the way at first seems to fix some of those issues.
+import templatetags #@UnusedImport
+
 import devpanel
 import bulk_update.handler
 import request_cache
@@ -21,7 +26,7 @@ from gae_mini_profiler import profiler
 from gae_bingo.middleware import GAEBingoWSGIMiddleware
 import autocomplete
 import coaches
-import knowledgemap
+import knowledgemap.handlers
 import youtube_sync
 import warmup
 import library
@@ -36,10 +41,12 @@ import util
 import user_util
 import exercise_statistics
 import activity_summary
-import exercises
-import dashboard
+import dashboard.handlers
+import exercises.exercise_util
+import exercises.handlers
 import exercisestats.report
 import exercisestats.report_json
+import exercisestats.exercisestats_util
 import github
 import paypal
 import smarthistory
@@ -51,12 +58,17 @@ import summer
 import common_core
 import unisubs
 import api.jsonify
-import labs
 import socrates
 import labs.explorations
+import kmap_editor
 
-import models
-from models import UserData, Video, Url, ExerciseVideo, Topic
+import topic_models
+import video_models
+from user_models import UserData
+from video_models import Video
+from url_model import Url
+from exercise_video_model import ExerciseVideo
+from topic_models import Topic
 from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
 from coach_resources import util_coach, schools_blog
@@ -64,7 +76,7 @@ from phantom_users import util_notify
 from badges import util_badges, custom_badges
 from mailing_lists import util_mailing_lists
 from profiles import util_profile
-from custom_exceptions import MissingVideoException
+from custom_exceptions import MissingVideoException, PageNotFoundException
 from oauth_provider import apps as oauth_apps
 from phantom_users.cloner import Clone
 from image_cache import ImageCache
@@ -72,6 +84,8 @@ from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
 from importer.handlers import ImportHandler
+
+from gae_bingo.gae_bingo import bingo, ab_test
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -82,10 +96,71 @@ class VideoDataTest(request_handler.RequestHandler):
         for video in videos:
             self.response.out.write('<P>Title: ' + video.title)
 
-def get_mangled_topic_name(topic_name):
-    for char in " :()":
-        topic_name = topic_name.replace(char, "")
-    return topic_name
+class TopicPage(request_handler.RequestHandler):
+
+    @staticmethod
+    def show_topic(handler, topic):
+        parent_topic = db.get(topic.parent_keys[0])
+
+        # If the parent is a supertopic, use that instead
+        if parent_topic.id in Topic._super_topic_ids:
+            topic = parent_topic
+        elif not (topic.id in Topic._super_topic_ids or
+                  topic.has_children_of_type(["Video"])):
+            handler.redirect("/", True)
+            return
+
+        template_values = {
+            "main_topic": topic
+        }
+        handler.render_jinja2_template('viewtopic.html', template_values)
+
+    @user_util.open_access
+    @ensure_xsrf_cookie
+    def get(self, path):
+        """ Display a topic page if the URL matches a pre-existing topic,
+        such as /math/algebra or /algebra
+        
+        NOTE: Since there is no specific route we are matching,
+        this handler is registered as the default handler, 
+        so unrecognized paths will return a 404.
+        """
+        if path.endswith('/'):
+            # Canonical paths do not have trailing slashes
+            path = path[:-1]
+
+        path_list = path.split('/')
+        if len(path_list) > 0:
+            # Only look at the actual topic ID
+            topic = topic_models.Topic.get_by_id(path_list[-1])
+
+            if topic:
+                # Begin topic pages A/B test
+                if user_util.is_current_user_developer():
+                    show_topic_pages = "show"
+                else:
+                    show_topic_pages = ab_test("Show topic pages", ["show", "hide"],
+                        ["topic_pages_view_page", "topic_pages_started_video",
+                         "topic_pages_completed_video"])
+                if show_topic_pages == "hide":
+                    self.redirect("/#%s" % topic.id)
+                bingo("topic_pages_view_page")
+                # End topic pages A/B test
+
+                if path != topic.get_extended_slug():
+                    # If the topic ID is found but the path is incorrect,
+                    # redirect the user to the canonical path
+                    self.redirect("/%s" % topic.get_extended_slug(), True)
+                    return
+
+                TopicPage.show_topic(self, topic)
+                return
+
+        # error(404) sets the status code to 404. Be aware that execution continues
+        # after the .error call.
+        self.error(404)
+        raise PageNotFoundException("Page not found")
+    
 
 # New video view handler.
 # The URI format is a topic path followed by /v/ and then the video identifier, i.e.:
@@ -559,7 +634,7 @@ class ServeUserVideoCss(request_handler.RequestHandler):
         if user_data == None:
             return
 
-        user_video_css = models.UserVideoCss.get_for_user_data(user_data)
+        user_video_css = video_models.UserVideoCss.get_for_user_data(user_data)
         self.response.headers['Content-Type'] = 'text/css'
 
         if user_video_css.version == user_data.uservideocss_version:
@@ -567,16 +642,6 @@ class ServeUserVideoCss(request_handler.RequestHandler):
             self.response.headers['Cache-Control'] = 'public,max-age=1000000'
 
         self.response.out.write(user_video_css.video_css)
-
-class RealtimeEntityCount(request_handler.RequestHandler):
-    @user_util.open_access
-    @user_util.dev_server_only
-    def get(self):
-        default_kinds = 'Exercise'
-        kinds = self.request_string("kinds", default_kinds).split(',')
-        for kind in kinds:
-            count = getattr(models, kind).all().count(10000)
-            self.response.out.write("%s: %d<br>" % (kind, count))
 
 class MemcacheViewer(request_handler.RequestHandler):
     @user_util.developer_only
@@ -615,7 +680,7 @@ application = webapp2.WSGIApplication([
     ('/about/downloads', util_about.ViewDownloads),
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
-    ('/exercisedashboard', exercises.ViewAllExercises),
+    ('/exercisedashboard', knowledgemap.handlers.ViewKnowledgeMap),
 
     ('/stories/submit', stories.SubmitStory),
     ('/stories/?.*', stories.ViewStories),
@@ -631,24 +696,25 @@ application = webapp2.WSGIApplication([
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
-    ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
-    ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
-    ('/review', exercises.ViewExercise),
+    ('/(.*)/e', exercises.handlers.ViewExercise),
+    ('/(.*)/e/([^/]*)', exercises.handlers.ViewExercise),
+    ('/exercise/(.+)', exercises.handlers.ViewExerciseDeprecated), # /exercise/addition_1
+    ('/topicexercise/(.+)', exercises.handlers.ViewTopicExerciseDeprecated), # /topicexercise/addition_and_subtraction
+    ('/exercises', exercises.handlers.ViewExerciseDeprecated), # /exercises?exid=addition_1
+    ('/(review)', exercises.handlers.ViewExercise),
 
-    ('/khan-exercises/exercises/.*', exercises.RawExercise),
-    ('/viewexercisesonmap', exercises.ViewAllExercises),
-    ('/editexercise', exercises.EditExercise),
-    ('/updateexercise', exercises.UpdateExercise),
-    ('/moveexercisemapnodes', exercises.MoveMapNodes),
-    ('/admin94040', exercises.ExerciseAdmin),
+    ('/khan-exercises/exercises/.*', exercises.exercise_util.RawExercise),
+    ('/viewexercisesonmap', knowledgemap.handlers.ViewKnowledgeMap),
+    ('/editexercise', exercises.exercise_util.EditExercise),
+    ('/updateexercise', exercises.exercise_util.UpdateExercise),
+    ('/admin94040', exercises.exercise_util.ExerciseAdmin),
     ('/video/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/v/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/video', ViewVideoDeprecated), # Backwards URL compatibility
     ('/(.*)/v/([^/]*)', ViewVideo),
     ('/reportissue', ReportIssue),
     ('/search', Search),
-    ('/savemapcoords', knowledgemap.SaveMapCoords),
-    ('/saveexpandedallexercises', knowledgemap.SaveExpandedAllExercises),
+    ('/savemapcoords', knowledgemap.handlers.SaveMapCoords),
     ('/crash', Crash),
 
     ('/image_cache/(.+)', ImageCache),
@@ -667,11 +733,11 @@ application = webapp2.WSGIApplication([
     ('/admin/dailyactivitylog', activity_summary.StartNewDailyActivityLogMapReduce),
     ('/admin/youtubesync.*', youtube_sync.YouTubeSync),
     ('/admin/changeemail', ChangeEmail),
-    ('/admin/realtimeentitycount', RealtimeEntityCount),
     ('/admin/unisubs', unisubs.ReportHandler),
     ('/admin/unisubs/import', unisubs.ImportHandler),
 
     ('/devadmin', devpanel.Panel),
+    ('/devadmin/maplayout', kmap_editor.MapLayoutEditor),
     ('/devadmin/emailchange', devpanel.MergeUsers),
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
@@ -766,17 +832,17 @@ application = webapp2.WSGIApplication([
     ('/jobs', RedirectToJobvite),
     ('/jobs/.*', RedirectToJobvite),
 
-    ('/dashboard', dashboard.Dashboard),
-    ('/contentdash', dashboard.ContentDashboard),
-    ('/admin/dashboard/record_statistics', dashboard.RecordStatistics),
-    ('/admin/entitycounts', dashboard.EntityCounts),
-    ('/devadmin/contentcounts', dashboard.ContentCountsCSV),
+    ('/dashboard', dashboard.handlers.Dashboard),
+    ('/contentdash', dashboard.handlers.ContentDashboard),
+    ('/admin/dashboard/record_statistics', dashboard.handlers.RecordStatistics),
+    ('/admin/entitycounts', dashboard.handlers.EntityCounts),
+    ('/devadmin/contentcounts', dashboard.handlers.ContentCountsCSV),
 
     ('/sendtolog', SendToLog),
 
     ('/user_video_css', ServeUserVideoCss),
 
-    ('/admin/exercisestats/collectfancyexercisestatistics', exercisestats.CollectFancyExerciseStatistics),
+    ('/admin/exercisestats/collectfancyexercisestatistics', exercisestats.exercisestats_util.CollectFancyExerciseStatistics),
     ('/exercisestats/report', exercisestats.report.Test),
     ('/exercisestats/exerciseovertime', exercisestats.report_json.ExerciseOverTimeGraph),
     ('/exercisestats/geckoboardexerciseredirect', exercisestats.report_json.GeckoboardExerciseRedirect),
@@ -800,8 +866,8 @@ application = webapp2.WSGIApplication([
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
 
     # Stats about appengine
-    ('/stats/dashboard', dashboard.Dashboard),
-    ('/stats/contentdash', dashboard.ContentDashboard),
+    ('/stats/dashboard', dashboard.handlers.Dashboard),
+    ('/stats/contentdash', dashboard.handlers.ContentDashboard),
     ('/stats/memcache', appengine_stats.MemcacheStatus),
 
     ('/robots.txt', robots.RobotsTxt),
@@ -818,6 +884,11 @@ application = webapp2.WSGIApplication([
     ('/index\.html', PermanentRedirectToHome),
 
     ('/_ah/warmup.*', warmup.Warmup),
+
+    # Topic paths can be anything, so we match everything.
+    # The TopicPage handler will throw a 404 if no page is found.
+    # (For more information see TopicPage handler above)
+    ('/(.*)', TopicPage),
 
 
     ], debug=True)

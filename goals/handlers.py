@@ -15,12 +15,13 @@ from google.appengine.api import users
 
 import request_handler
 import user_util
-from knowledgemap import deserializeMapCoords
+from knowledgemap.knowledgemap_util import deserializeMapCoords
 from library import library_content_html
-from user_util import developer_only
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import create_phantom
-from models import UserData, UserExercise, Exercise, Video, VideoLog
+from user_models import UserData
+from exercise_models import UserExercise, Exercise
+from video_models import Video, VideoLog
 from .models import Goal, GoalList, GoalObjective
 
 class CreateNewGoal(request_handler.RequestHandler):
@@ -31,12 +32,11 @@ class CreateNewGoal(request_handler.RequestHandler):
     def get(self):
         user_data = UserData.current()
 
-        from exercises import exercise_graph_dict_json
+        from exercises.exercise_util import exercise_graph_dict_json
 
         context = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
-            'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': json.dumps(deserializeMapCoords(user_data.map_coords)),
 
             # Get pregenerated library content from our in-memory/memcache
@@ -154,8 +154,8 @@ class CreateRandomGoalData(request_handler.RequestHandler):
                             (objective['exercise'].name, count, hints * count))
                         for i in xrange(1, count):
                             attempt_problem(user_data, user_exercise, i, 1,
-                                'TEST', 'TEST', 'TEST', True, hints, 0, False,
-                                "TEST", 'TEST', '0.0.0.0')
+                                'TEST', 'TEST', 'TEST', True, hints, 0, False, False,
+                                "TEST", '0.0.0.0')
 
                     elif objective['type'] == 'GoalObjectiveWatchVideo':
                         seconds = random.randint(1, 1200)

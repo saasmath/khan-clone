@@ -98,7 +98,7 @@ var Profile = {
         $(".achievement .ach-text").delegate("a", "click", function(event) {
             if (!event.metaKey) {
                 event.preventDefault();
-                Profile.router.navigate("/achievements", true);
+                Profile.router.navigate("achievements", true);
                 $("#achievement-list ul li#category-" + $(this).data("category")).click();
             }
         });
@@ -108,30 +108,34 @@ var Profile = {
      * All the tabs that you could encounter on the profile page.
      */
     subRoutes: {
-        "/achievements": "showAchievements",
-        "/goals/:type": "showGoals",
-        "/goals": "showGoals",
-        "/vital-statistics": "showVitalStatistics",
-        "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
-        "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
-        "/vital-statistics/:graph": "showVitalStatistics",
-        "/coaches": "showCoaches",
+        "achievements": "showAchievements",
+        "goals/:type": "showGoals",
+        "goals": "showGoals",
+        "vital-statistics": "showVitalStatistics",
+        "vital-statistics/problems/:exercise": "showExerciseProblems",
+        "vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
+        "vital-statistics/:graph": "showVitalStatistics",
+        "coaches": "showCoaches",
 
         // Not associated with any tab highlighting.
-        "/settings": "showSettings",
+        "settings": "showSettings",
 
         "": "showDefault",
         // If the user types /profile/username/ with a trailing slash
         // it should work, too
         "/": "showDefault",
 
+        // If any old or crazy vital-statistics route is passed that we no longer support
+        // and therefore hasn't matched yet, just show the default vital statistics graph.
+        "vital-statistics/*path": "showVitalStatistics",
+
         // A minor hack to ensure that if the user navigates to /profile without
         // her username, it still shows the default profile screen. Note that
         // these routes aren't relative to the root URL, but will still work.
-        "/profile": "showDefault",
-        "/profile/": "showDefault",
+        "profile": "showDefault",
+        "profile/": "showDefault",
         // And for the mobile app... hopefully we can find a better fix.
-        "/profile?view=mobile": "showDefault"
+        "profile?view=mobile": "showDefault"
     },
 
     /**
@@ -146,10 +150,10 @@ var Profile = {
      */
     onProfileUpdated_: function() {
         var username = this.profile.get("username");
-        if (username && Profile.profileRoot != ("/profile/" + username)) {
+        if (username && Profile.profileRoot != ("/profile/" + username + "/")) {
             // Profile root changed - we need to reload the page since
             // Backbone.router isn't happy when the root changes.
-            window.location.replace("/profile/" + username);
+            window.location.replace("/profile/" + username + "/");
         }
     },
 
@@ -168,16 +172,14 @@ var Profile = {
         },
 
         showVitalStatistics: function(graph, exercise, timePeriod) {
-            var graph = graph || "activity",
-                exercise = exercise || "addition_1",
-                timePeriod = timePeriod || "last-week",
+            var exercise = exercise || "addition_1",
                 emailEncoded = encodeURIComponent(USER_EMAIL),
                 hrefLookup = {
                     "activity": "/profile/graph/activity?student_email=" + emailEncoded,
                     "focus": "/profile/graph/focus?student_email=" + emailEncoded,
-                    "exercise-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
-                    "exercise-progress": "/api/v1/user/exercises?email=" + emailEncoded,
-                    "exercise-problems": "/profile/graph/exerciseproblems?" +
+                    "skill-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
+                    "skill-progress": "/api/v1/user/exercises?email=" + emailEncoded,
+                    "problems": "/profile/graph/exerciseproblems?" +
                                             "exercise_name=" + exercise +
                                             "&" + "student_email=" + emailEncoded
                 },
@@ -187,6 +189,8 @@ var Profile = {
                     "last-week": "&dt_start=lastweek&dt_end=today",
                     "last-month": "&dt_start=lastmonth&dt_end=today"
                 },
+                graph = !!(hrefLookup[graph]) ? graph : "activity",
+                timePeriod = !!(timePeriodLookup[timePeriod]) ? timePeriod : "",
                 timeURLParameter = timePeriod ? timePeriodLookup[timePeriod] : "",
                 href = hrefLookup[graph] + timeURLParameter;
 
@@ -203,7 +207,7 @@ var Profile = {
 
             this.activateRelatedTab($("#tab-content-vital-statistics").attr("rel") + " " + graph);
             var prettyGraphName = graph.replace(/-/gi, " ");
-            if (graph == "exercise-problems") {
+            if (graph == "problems") {
                 var prettyExName = exercise.replace(/_/gi, " ");
                 this.updateTitleBreadcrumbs([prettyGraphName, prettyExName]);
             }
@@ -221,7 +225,7 @@ var Profile = {
         },
 
         showExerciseProblems: function(exercise) {
-            this.showVitalStatistics("exercise-problems", exercise);
+            this.showVitalStatistics("problems", exercise);
         },
 
         showVitalStatisticsForTimePeriod: function(graph, timePeriod) {
@@ -403,7 +407,7 @@ var Profile = {
         } else if (graphName === "focus") {
             FocusGraph.render();
             Profile.fLoadedGraph = true;
-        } else if (graphName === "exercise-progress") {
+        } else if (graphName === "skill-progress") {
             Profile.loadGraph("/api/v1/exercises");
         } else {
             ExerciseGraphOverTime.render();
@@ -541,7 +545,7 @@ var Profile = {
                 $("#info-hover-container").hide();
                 // Extract the name from the ID, which has been prefixed.
                 var exerciseName = this.id.substring("exercise-".length);
-                Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
+                Profile.router.navigate("vital-statistics/problems/" + exerciseName, true);
             });
         }
     },
@@ -934,18 +938,7 @@ var Profile = {
         var suggestedTemplate = Templates.get("profile.suggested-activity");
 
         var attachProgress = function(activity) {
-            var progress = activity["progress"] || 0;
-            var formattedProgress = progress ?
-                    (100 * progress).toPrecision(4) + "%" :
-                    "not started";
-            activity["streakBar"] = {
-                "proficient": false,
-                "suggested": true,
-                "progressDisplay": formattedProgress,
-                // TODO: is this the right width?
-                "maxWidth": 228,
-                "width": activity["progress"] * 228
-            };
+            activity.progress = activity.progress || 0;
         };
         _.each(activities["exercises"] || [], attachProgress);
         _.each(activities["videos"] || [], attachProgress);

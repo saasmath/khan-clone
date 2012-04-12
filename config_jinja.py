@@ -11,7 +11,7 @@ from webapp2_extras import jinja2
 
 # Bring in our globally available custom templates and tags.
 # When possible, we now use jinja macros instead of these global tags.
-from models import UserData
+from user_models import UserData
 import templatetags
 import templatefilters
 import avatars.templatetags
@@ -25,12 +25,21 @@ import api.auth.xsrf
 import util
 from app import App
 
+_file_dir = os.path.dirname(__file__)
+
 jinja2.default_config = {
-    "template_path": os.path.join(os.path.dirname(__file__), "templates"),
-    "compiled_path": os.path.join(os.path.dirname(__file__), "compiled_templates.zip"),
-    "force_compiled": not App.is_dev_server, # Only use compiled templates in production 
-    "cache_size": 0 if App.is_dev_server else -1, # Only cache in production
-    "auto_reload": App.is_dev_server, # Don't check for template updates in production
+    "template_path": os.path.join(_file_dir, "templates"),
+    "compiled_path": os.path.join(_file_dir, "compiled_templates.zip"),
+
+    # Only use compiled templates in production
+    "force_compiled": not App.is_dev_server,
+
+    # Only cache in production
+    "cache_size": 0 if App.is_dev_server else -1,
+
+    # Don't check for template updates in production
+    "auto_reload": App.is_dev_server,
+
     "globals": {
         "templatetags": templatetags,
         "social": social.templatetags,
@@ -72,4 +81,3 @@ jinja2.default_config = {
         "extensions": [],
         }, 
     }
-

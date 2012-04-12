@@ -2,7 +2,7 @@ cron:
 
 - description: badge update
   url: /admin/startnewbadgemapreduce
-  schedule: every day 00:00
+  schedule: every 72 hours
   timezone: US/Pacific
 
 - description: badge statistics
