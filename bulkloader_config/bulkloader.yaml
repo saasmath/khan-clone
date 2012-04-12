@@ -169,33 +169,6 @@ transformers:
       import_transform: transform.create_foreign_key('TODO: fill in Kind name')
       export_transform: transform.key_id_or_name_as_string
 
-
-- kind: ExercisePlaylist
-  connector: # TODO: Choose a connector here: csv, simplexml, etc...
-  connector_options:
-    # TODO: Add connector options here--these are specific to each connector.
-  property_map:
-    - property: __key__
-      external_name: key
-      export_transform: transform.key_id_or_name_as_string
-
-    - property: __scatter__
-      external_name: __scatter__
-      # Type: ShortBlob Stats: 1 properties of this type in this kind.
-
-    - property: exercise
-      external_name: exercise
-      # Type: Key Stats: 114 properties of this type in this kind.
-      import_transform: transform.create_foreign_key('TODO: fill in Kind name')
-      export_transform: transform.key_id_or_name_as_string
-
-    - property: playlist
-      external_name: playlist
-      # Type: Key Stats: 114 properties of this type in this kind.
-      import_transform: transform.create_foreign_key('TODO: fill in Kind name')
-      export_transform: transform.key_id_or_name_as_string
-
-
 - kind: ExerciseVideo
   connector: # TODO: Choose a connector here: csv, simplexml, etc...
   connector_options:
@@ -387,38 +360,6 @@ transformers:
       external_name: user
       # Type: User Stats: 2452 properties of this type in this kind.
       import_transform: transform.none_if_empty(users.User)  # Assumes email address
-
-
-- kind: Playlist
-  connector: # TODO: Choose a connector here: csv, simplexml, etc...
-  connector_options:
-    # TODO: Add connector options here--these are specific to each connector.
-  property_map:
-    - property: __key__
-      external_name: key
-      export_transform: transform.key_id_or_name_as_string
-
-    - property: __scatter__
-      external_name: __scatter__
-      # Type: ShortBlob Stats: 2 properties of this type in this kind.
-
-    - property: description
-      external_name: description
-      # Type: Text Stats: 44 properties of this type in this kind.
-      import_transform: db.Text
-
-    - property: title
-      external_name: title
-      # Type: String Stats: 48 properties of this type in this kind.
-
-    - property: url
-      external_name: url
-      # Type: String Stats: 48 properties of this type in this kind.
-
-    - property: youtube_id
-      external_name: youtube_id
-      # Type: String Stats: 48 properties of this type in this kind.
-
 
 - kind: ProblemLog
   connector: # TODO: Choose a connector here: csv, simplexml, etc...
@@ -1098,47 +1039,6 @@ transformers:
       # Type: User Stats: 2076522 properties of this type in this kind.
       import_transform: transform.none_if_empty(users.User)  # Assumes email address
 
-
-- kind: UserPlaylist
-  connector: # TODO: Choose a connector here: csv, simplexml, etc...
-  connector_options:
-    # TODO: Add connector options here--these are specific to each connector.
-  property_map:
-    - property: __key__
-      external_name: key
-      export_transform: transform.key_id_or_name_as_string
-
-    - property: __scatter__
-      external_name: __scatter__
-      # Type: ShortBlob Stats: 2638 properties of this type in this kind.
-
-    - property: last_watched
-      external_name: last_watched
-      # Type: Date/Time Stats: 338887 properties of this type in this kind.
-      import_transform: transform.import_date_time('%Y-%m-%dT%H:%M:%S')
-      export_transform: transform.export_date_time('%Y-%m-%dT%H:%M:%S')
-
-    - property: playlist
-      external_name: playlist
-      # Type: Key Stats: 338887 properties of this type in this kind.
-      import_transform: transform.create_foreign_key('TODO: fill in Kind name')
-      export_transform: transform.key_id_or_name_as_string
-
-    - property: seconds_watched
-      external_name: seconds_watched
-      # Type: Integer Stats: 338887 properties of this type in this kind.
-      import_transform: transform.none_if_empty(int)
-
-    - property: title
-      external_name: title
-      # Type: String Stats: 338283 properties of this type in this kind.
-
-    - property: user
-      external_name: user
-      # Type: User Stats: 338887 properties of this type in this kind.
-      import_transform: transform.none_if_empty(users.User)  # Assumes email address
-
-
 - kind: UserVideo
   connector: # TODO: Choose a connector here: csv, simplexml, etc...
   connector_options:
@@ -1242,48 +1142,6 @@ transformers:
     - property: video_title
       external_name: video_title
       # Type: String Stats: 15051261 properties of this type in this kind.
-
-
-- kind: VideoPlaylist
-  connector: # TODO: Choose a connector here: csv, simplexml, etc...
-  connector_options:
-    # TODO: Add connector options here--these are specific to each connector.
-  property_map:
-    - property: __key__
-      external_name: key
-      export_transform: transform.key_id_or_name_as_string
-
-    - property: __scatter__
-      external_name: __scatter__
-      # Type: ShortBlob Stats: 12 properties of this type in this kind.
-
-    - property: last_live_association_generation
-      external_name: last_live_association_generation
-      # Type: Integer Stats: 2351 properties of this type in this kind.
-      import_transform: transform.none_if_empty(int)
-
-    - property: live_association
-      external_name: live_association
-      # Type: Boolean Stats: 2351 properties of this type in this kind.
-      import_transform: transform.regexp_bool('true', re.IGNORECASE)
-
-    - property: playlist
-      external_name: playlist
-      # Type: Key Stats: 2351 properties of this type in this kind.
-      import_transform: transform.create_foreign_key('TODO: fill in Kind name')
-      export_transform: transform.key_id_or_name_as_string
-
-    - property: video
-      external_name: video
-      # Type: Key Stats: 2351 properties of this type in this kind.
-      import_transform: transform.create_foreign_key('TODO: fill in Kind name')
-      export_transform: transform.key_id_or_name_as_string
-
-    - property: video_position
-      external_name: video_position
-      # Type: Integer Stats: 2351 properties of this type in this kind.
-      import_transform: transform.none_if_empty(int)
-
 
 - kind: Video
   connector: # TODO: Choose a connector here: csv, simplexml, etc...

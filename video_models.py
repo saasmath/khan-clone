@@ -345,7 +345,20 @@ class Video(search.Searchable, db.Model):
             'subtitles_html': subtitles_html,
             'videoPoints': awarded_points,
         }
+    
+    @staticmethod
+    def reindex(video_list=None):
+        """ Reindex Videos for search page """
+        if video_list is None:
+            video_list = Video.get_all_live()
 
+        num_videos = len(video_list)
+        for i, video in enumerate(video_list):
+            logging.info("Indexing video %i/%i: %s (%s)" % 
+                         (i, num_videos, video.title, video.key()))
+
+            video.index()
+            video.indexed_title_changed()
 
 class VideoSubtitles(db.Model):
     """Subtitles for a YouTube video

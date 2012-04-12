@@ -130,7 +130,7 @@ class SmartHistoryProxy(request_handler.RequestHandler, blobstore_handlers.Blobs
             logging.info("got too large a file back, sending redirect headers")
             response_headers = {"Location": SMARTHISTORY_URL + str(path)}
             return ["", response_headers, None]    
-        except Exception, e:
+        except urlfetch.Error, e:
             raise SmartHistoryLoadException("Failed loading %s from SmartHistory with Exception: %s" % (path, e))
 
 

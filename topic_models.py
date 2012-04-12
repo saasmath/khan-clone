@@ -37,7 +37,6 @@ from knowledgemap import layout
 import layer_cache
 import library
 import object_property
-import obsolete_models   # TODO(james): remove this dep
 import request_cache
 import search
 import setting_model
@@ -1302,8 +1301,10 @@ class Topic(search.Searchable, db.Model):
         db.delete(items)
 
         topics = Topic.get_content_topics(version)
-        for topic in topics:
-            logging.info("Indexing topic " + topic.title + " (" + str(topic.key()) + ")")
+        num_topics = len(topics)
+        for i, topic in enumerate(topics):
+            logging.info("Indexing topic %i/%i: %s (%s)" % 
+                         (i, num_topics, topic.title, topic.key()))
             topic.index()
             topic.indexed_title_changed()
 
@@ -1463,9 +1464,7 @@ class UserTopic(db.Model):
 
     @staticmethod
     def get_for_user_data(user_data):
-        query = obsolete_models.UserPlaylist.all()
-        query.filter('user =', user_data.user)
-        return query
+        return UserTopic.all().filter('user =', user_data.user)
 
     @staticmethod
     def get_key_name(topic, user_data):
@@ -1615,7 +1614,8 @@ def _preload_default_version_data(version_number, run_code):
 
 
 def _change_default_version(version_number, run_code):
-    setting_model.Setting.topic_admin_task_message("Publish: changing default version")
+    setting_model.Setting.topic_admin_task_message(
+        "Publish: changing default version")
     version = TopicVersion.get_by_id(version_number)
 
     default_version = TopicVersion.get_default_version()
@@ -1635,38 +1635,85 @@ def _change_default_version(version_number, run_code):
 
         version.put()
 
-    # using --high-replication is slow on dev, so instead not using cross-group transactions on dev
-    if app.App.is_dev_server:
-        update_txn()
-    else:
-        xg_on = db.create_transaction_options(xg=True)
-        db.run_in_transaction_options(xg_on, update_txn)
-        # setting the topic tree version in the transaction won't update
-        # memcache as the new values for the setting are not complete till the
-        # transaction finishes ... so updating again outside the txn
-        setting_model.Setting.topic_tree_version(version.number)
+    xg_on = db.create_transaction_options(xg=True)
+    db.run_in_transaction_options(xg_on, update_txn)
+
+    # setting the topic tree version in the transaction won't update
+    # memcache as the new values for the setting are not complete till the
+    # transaction finishes ... so updating again outside the txn
+    setting_model.Setting.topic_tree_version(version.number)
 
     logging.info("done setting new default version")
 
-    setting_model.Setting.topic_admin_task_message("Publish: reindexing new content")
-
-    Topic.reindex(version)
-    logging.info("done fulltext reindexing topics")
-
-    setting_model.Setting.topic_admin_task_message("Publish: creating new edit version")
-
-    TopicVersion.create_edit_version()
-    logging.info("done creating new edit version")
+    # reindexing takes too long, and is only used for search, no need to do it
+    # for dev unless working on the search page
+    if not app.App.is_dev_server:
+        rebuild_search_index(version, default_version)
 
     # update the new number of videos on the homepage
+    logging.info("Updating the new video count")
+    setting_model.Setting.topic_admin_task_message(
+        "Publish: updating video count")  
+
     vids = video_models.Video.get_all_live()
     urls = url_model.Url.get_all_live()
     setting_model.Setting.count_videos(len(vids) + len(urls))
     video_models.Video.approx_count(bust_cache=True)
 
+    setting_model.Setting.topic_admin_task_message(
+        "Publish: creating new edit version")
+
+    logging.info("creating a new edit version")
+    TopicVersion.create_edit_version()
+    logging.info("done creating new edit version")
+
     _do_set_default_deferred_step(_rebuild_content_caches,
                                   version_number,
                                   run_code)
+
+def rebuild_search_index(new_version, old_version=None):
+    # set a message for publishers that we are reindexing topics
+    setting_model.Setting.topic_admin_task_message("Publish: reindexing topics")    
+    
+    Topic.reindex(new_version)
+    logging.info("done fulltext reindexing topics")
+    
+    # set a message for publishers that we are reindexing videos
+    setting_model.Setting.topic_admin_task_message("Publish: reindexing videos")
+    
+    if old_version:
+        # get all the changed videos
+        query = VersionContentChange.all().filter('version =', new_version)
+        changes = query.fetch(10000)
+        updated_videos = [c.content for c in changes 
+                          if isinstance(c.content, video_models.Video)]
+        updated_video_keys = [v.key() for v in updated_videos]
+
+        # get the video keys in the old tree 
+        old_topics = Topic.get_all_topics(old_version)
+        old_video_keys = set()
+        for topic in old_topics:
+            old_video_keys.update([k for k in topic.child_keys 
+                                   if k.kind() == "Video" and 
+                                   k not in updated_video_keys])
+
+        # get the video keys in the latest tree
+        new_topics = Topic.get_all_topics(new_version)
+        latest_video_keys = set()
+        for topic in new_topics:
+            latest_video_keys.update([k for k in topic.child_keys 
+                                      if k.kind() == "Video" and
+                                      k not in updated_video_keys])
+
+        # add the videos that are in the latest tree but not the old tree
+        new_videos = db.get(list(latest_video_keys - old_video_keys))
+        updated_videos.extend(new_videos)
+        
+        video_models.Video.reindex(updated_videos)
+    else:
+        video_models.Video.reindex()
+
+    logging.info("done reindexing videos")
 
 
 def _rebuild_content_caches(version_number, run_code):

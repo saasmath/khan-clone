@@ -16,19 +16,6 @@ indexes:
   - name: parent_kind
   - name: phrases
 
-- kind: VideoPlaylist
-  properties:
-  - name: live_association
-  - name: playlist
-  - name: video_position
-
-- kind: VideoPlaylist
-  properties:
-  - name: live_association
-  - name: playlist
-  - name: video_position
-    direction: asc
-
 - kind: Feedback
   properties:
   - name: deleted
@@ -190,16 +177,6 @@ indexes:
   - name: user
   - name: date
 
-- kind: Playlist
-  properties:
-  - name: __key__
-    direction: desc
-
-- kind: PlaylistVideo
-  properties:
-  - name: playlist
-  - name: video_position
-
 - kind: ProblemLog
   properties:
   - name: correct
@@ -325,26 +302,6 @@ indexes:
   - name: user
   - name: video
   - name: time_watched
-
-- kind: VideoPlaylist
-  properties:
-  - name: __key__
-    direction: desc
-
-- kind: VideoPlaylist
-  properties:
-  - name: live_association
-  - name: video_position
-
-- kind: VideoPlaylist
-  properties:
-  - name: playlist
-  - name: video_position
-
-- kind: VideoPlaylist
-  properties:
-  - name: playlist.title
-  - name: video_position
 
 - kind: _GAEBingoSnapshotLog
   ancestor: yes

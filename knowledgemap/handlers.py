@@ -14,7 +14,8 @@ class ViewKnowledgeMap(request_handler.RequestHandler):
 
     @user_util.open_access
     def get(self):
-        user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
+        user_data = (user_models.UserData.current() or
+                     user_models.UserData.pre_phantom())
         user_exercise_graph = exercise_models.UserExerciseGraph.get(user_data)
 
         show_review_drawer = (not user_exercise_graph.has_completed_review())

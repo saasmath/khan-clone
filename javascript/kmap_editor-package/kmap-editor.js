@@ -412,6 +412,13 @@ var KMapEditor = {
 
     createCanvas: function() {
         var localCoords = $.parseJSON(window.localStorage["map_coords:" + USERNAME] || "{}");
+        if (localCoords.lat === undefined || localCoords.lng === undefined) {
+            localCoords = {
+                lat: -1.1,
+                lng: 1.2,
+                zoom: 8
+            }
+        }
         this.setZoom(localCoords.zoom);
 
         this.raphael = Raphael($("#map")[0]);
@@ -752,12 +759,19 @@ var KMapEditor = {
 
 
     addPrereq: function() {
+        this.exercises.get(this.selected[0]).prerequisites.push($("#add-prereq").val());
         this.addPath($("#add-prereq").val(), this.selected[0]);
         this.updateForm(this.selected[0]);
         $("#add-prereq").val(0);
     },
 
     deletePrereq: function(prereq) {
+        this.exercises.get(this.selected[0]).prerequisites =
+                $.map(this.exercises.get(this.selected[0]).prerequisites, function(p) {
+            if (p !== prereq) {
+                return p;
+            }
+        });
         this.delPath(prereq, this.selected[0]);
         this.updateForm(this.selected[0]);
     },

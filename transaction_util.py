@@ -35,4 +35,3 @@ def ensure_in_transaction(func, *args, **kwargs):
         return db.run_in_transaction_options(options, func, *args, **kwargs)
     else:
         return db.run_in_transaction(func, *args, **kwargs)
-
