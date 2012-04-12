@@ -55,6 +55,11 @@
 {% endblock pagemessage %}
 {% block pagecontent %}
 <article class="search_results" id="search_results">
+    {% if show_update %}
+    <h1>
+        Search index is out of date.  <a href="?update=1">Click here</a> to update.
+    </h1>
+    {% endif %}
     <form id="page_requery" action="/search">
         <input id="search-page-box" type="text" name="page_search_query" value='{{page_search_query|escape}}'>
         <button type="submit">New Search</button>

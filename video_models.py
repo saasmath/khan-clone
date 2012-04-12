@@ -352,9 +352,10 @@ class Video(search.Searchable, db.Model):
         if video_list is None:
             video_list = Video.get_all_live()
 
+        num_videos = len(video_list)
         for i, video in enumerate(video_list):
-            logging.info("Indexing video %i: %s (%s)" % 
-                         (i, video.title, video.key()))
+            logging.info("Indexing video %i/%i: %s (%s)" % 
+                         (i, num_videos, video.title, video.key()))
 
             video.index()
             video.indexed_title_changed()

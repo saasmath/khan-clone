@@ -6,9 +6,10 @@ import re
 import urllib
 import logging
 import layer_cache
-import urllib2
+from google.appengine.api import files, urlfetch
 from knowledgemap import layout
 from youtube_sync import youtube_get_video_data_dict
+
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
 try:
@@ -80,11 +81,11 @@ class EditContent(request_handler.RequestHandler):
 
     def topic_update_from_live(self, edit_version):
         layout.update_from_live(edit_version)
-        request = urllib2.Request("http://www.khanacademy.org/api/v1/topictree")
         try:
-            opener = urllib2.build_opener()
-            f = opener.open(request)
-            topictree = json.load(f)
+            response = urlfetch.fetch(
+                url="http://www.khanacademy.org/api/v1/topictree",
+                deadline=25)
+            topictree = json.loads(response.content)
 
             logging.info("calling /_ah/queue/deferred_import")
 
@@ -94,7 +95,7 @@ class EditContent(request_handler.RequestHandler):
                         _queue="import-queue",
                         _url="/_ah/queue/deferred_import")
 
-        except urllib2.URLError, e:
+        except urlfetch.Error, e:
             logging.exception("Failed to fetch content from khanacademy.org")
   
     def fix_duplicates(self):
@@ -170,12 +171,12 @@ def create_root(version):
 
 @layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
 def getSmartHistoryContent():
-    request = urllib2.Request("http://khan.smarthistory.org/youtube-urls-for-khan-academy.html")
     try:
-        opener = urllib2.build_opener()
-        f = opener.open(request)
-        smart_history = json.load(f)
-    except urllib2.URLError, e:
+        response = urlfetch.fetch(url="http://khan.smarthistory.org/"
+                                  "youtube-urls-for-khan-academy.html", 
+                                  deadline=25)
+        smart_history = json.loads(response.content)
+    except urlfetch.Error, e:
         logging.exception("Failed fetching smarthistory video list")
         smart_history = None
     return smart_history

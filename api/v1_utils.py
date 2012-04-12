@@ -126,7 +126,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                                         "description", "keywords", "duration", 
                                         "readable_id", "views"]
                     video = topic_models.VersionContentChange.add_new_content(
-                                                            Video,
+                                                            video_models.Video,
                                                             version,
                                                             tree,
                                                             changeable_props,
@@ -152,10 +152,10 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                             video = video_dict[readable_id]
                             tree["related_video_keys"].append(video.key())
 
-                    exercise = v1.exercise_save_data(version, 
-                                                     tree, 
-                                                     None, 
-                                                     put_change)
+                    exercise = exercise_save_data(version, 
+                                                  tree, 
+                                                  None, 
+                                                  put_change)
                     logging.info("%s: added Exercise %s" % (pos, exercise.name))
                     new_content_keys.append(exercise.key())
                     tree["key"] = exercise.key()
@@ -170,7 +170,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                 else:
                     changeable_props = ["tags", "title", "url"]
                     url = topic_models.VersionContentChange.add_new_content(
-                                                            Url,
+                                                            url_model.Url,
                                                             version,
                                                             tree,
                                                             changeable_props,
