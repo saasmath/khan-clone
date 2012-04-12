@@ -6,6 +6,7 @@ except ImportError:
 import video_models
 from mock import patch
 
+
 class VideoSubtitlesTest(unittest.TestCase):
     def test_get_key_name(self):
         kn = video_models.VideoSubtitles.get_key_name('en', 'YOUTUBEID')

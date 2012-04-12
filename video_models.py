@@ -178,7 +178,8 @@ class Video(search.Searchable, db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda : "Video.get_all_%s" % (setting_model.Setting.cached_content_add_date()))
+        lambda : "Video.get_all_%s" % (setting_model.Setting.cached_content_add_date()),
+        layer=layer_cache.Layers.Memcache)
     def get_all():
         return Video.all().fetch(100000)
 
@@ -694,7 +695,7 @@ class UserVideo(db.Model):
         if self.completed:
             return 1.0
         elif self.duration <= 0:
-            logging.error("UserVideo.duration has invalid value %r, key: %s" % (self.duration, str(self.key())))
+            logging.info("UserVideo.duration has invalid value %r, key: %s" % (self.duration, str(self.key())))
             return 0.0
         else:
             return min(1.0, float(self.seconds_watched) / self.duration)

@@ -6,6 +6,7 @@ under-13 accounts before the feature is actually ready.
 
 from google.appengine.ext import db
 
+
 class ParentSignup(db.Model):
     # The key_name stores the e-mail.
     pass

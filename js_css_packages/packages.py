@@ -27,7 +27,7 @@ javascript = {
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "jquery.qtip.js",
-            "../../khan-exercises/utils/underscore.js",
+            "underscore.js",
             "underscore-extras.js",
             "keyhandling.js",
             "backbone.js",
@@ -337,6 +337,14 @@ javascript = {
         ]
     },
 
+    "kmap_editor": {
+        "files": [
+            "../../khan-exercises/utils/raphael.js",
+            "../topicsadmin-package/jquery.ui.draggable.js",
+            "kmap-editor.js",
+        ]
+    },
+
     "highcharts": {
         "files": [
             "highcharts.js"
@@ -378,6 +386,7 @@ stylesheets = {
             "bootstrap-alerts.css",
             "bootstrap-tables.css",
             "socrates.css",
+            "timebar.css",
         ]
     },
     "topic": {
@@ -450,6 +459,11 @@ stylesheets = {
     "bootstrap": {
         "files": [
             "bootstrap.css"
+        ]
+    },
+    "kmap_editor": {
+        "files": [
+            "kmap_editor.css"
         ]
     }
 }

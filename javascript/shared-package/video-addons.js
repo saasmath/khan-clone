@@ -428,7 +428,7 @@ var VideoStats = {
                     "Percent (begin)": this.dPercentLastSaved
                 });
                 gae_bingo.bingo(["topic_pages_started_video"]);
-                
+
             }
         }
         // If state is buffering, unstarted, or cued, don't do anything
@@ -613,7 +613,9 @@ function onYouTubePlayerReady(playerID) {
     // Ensure UniSub widget will know about ready players if/when it loads.
     (window.unisubs_readyAPIIDs = window.unisubs_readyAPIIDs || []).push((playerID === "undefined" || !playerID) ? "" : playerID);
 
-    connectYouTubePlayer(player);
+    // defer this call as otherwise any exceptions thrown within will be
+    // swallowed by flash
+    _.defer(function() { connectYouTubePlayer(player); });
 }
 
 // Called by (experimental) iframe youtube player upon load.

@@ -60,6 +60,7 @@ import unisubs
 import api.jsonify
 import socrates
 import labs.explorations
+import kmap_editor
 
 import topic_models
 import video_models
@@ -75,7 +76,7 @@ from phantom_users import util_notify
 from badges import util_badges, custom_badges
 from mailing_lists import util_mailing_lists
 from profiles import util_profile
-from custom_exceptions import MissingVideoException
+from custom_exceptions import MissingVideoException, PageNotFoundException
 from oauth_provider import apps as oauth_apps
 from phantom_users.cloner import Clone
 from image_cache import ImageCache
@@ -95,11 +96,6 @@ class VideoDataTest(request_handler.RequestHandler):
         for video in videos:
             self.response.out.write('<P>Title: ' + video.title)
 
-# Handler that displays a topic page if the URL matches
-# a pre-existing topic. (i.e. /math/algebra or just /algebra)
-# NOTE: Since there is no specific route we are matching,
-# this handler is registered as the default handler, so
-# anything it doesn't recognize should return a 404.
 class TopicPage(request_handler.RequestHandler):
 
     @staticmethod
@@ -122,14 +118,21 @@ class TopicPage(request_handler.RequestHandler):
     @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, path):
+        """ Display a topic page if the URL matches a pre-existing topic,
+        such as /math/algebra or /algebra
+        
+        NOTE: Since there is no specific route we are matching,
+        this handler is registered as the default handler, 
+        so unrecognized paths will return a 404.
+        """
+        if path.endswith('/'):
+            # Canonical paths do not have trailing slashes
+            path = path[:-1]
+
         path_list = path.split('/')
         if len(path_list) > 0:
             # Only look at the actual topic ID
             topic = topic_models.Topic.get_by_id(path_list[-1])
-
-            # Handle a trailing slash
-            if not topic and path_list[-1] == "":
-                topic = topic_models.Topic.get_by_id(path_list[-2])
 
             if topic:
                 # Begin topic pages A/B test
@@ -156,6 +159,7 @@ class TopicPage(request_handler.RequestHandler):
         # error(404) sets the status code to 404. Be aware that execution continues
         # after the .error call.
         self.error(404)
+        raise PageNotFoundException("Page not found")
     
 
 # New video view handler.
@@ -686,6 +690,7 @@ application = webapp2.WSGIApplication([
 
     ('/labs/explorations', labs.explorations.RequestHandler),
     ('/labs/explorations/([^/]+)', labs.explorations.RequestHandler),
+    ('/labs/socrates', socrates.SocratesIndexHandler),
     ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.
@@ -732,6 +737,7 @@ application = webapp2.WSGIApplication([
     ('/admin/unisubs/import', unisubs.ImportHandler),
 
     ('/devadmin', devpanel.Panel),
+    ('/devadmin/maplayout', kmap_editor.MapLayoutEditor),
     ('/devadmin/emailchange', devpanel.MergeUsers),
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),

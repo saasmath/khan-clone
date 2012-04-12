@@ -1,8 +1,13 @@
 """Obsolete wrapper for various data models.
 
 Each of the models in this file have moved somewhere else.  This file
-is only provided for backwards compatibility with code that has
+is provided for backwards compatibility with code that has
 'import models' and expects to get all the models at once.
+
+This is also important for backwards compatibility with
+de-pickling items that contain object instances from the old models
+definition. That de-pickling process would expect the class
+definitions to be in this 'models' module.
 
 Use the following grep command to find imports you need to use in
 the new file:
@@ -31,5 +36,6 @@ from promo_record_model import *
 from setting_model import *
 from summary_log_models import *
 from topic_models import *
+from url_model import *
 from user_models import *
 from video_models import *
