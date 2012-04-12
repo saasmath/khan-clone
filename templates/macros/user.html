@@ -19,7 +19,7 @@
             {% set points = user_data.points %}
         {% endif %}
     {% else %}
-        {% set profile_root = '/profile' %}
+        {% set profile_root = '/profile/' %}
         {% set points = 0 %}
     {% endif %}
     <span id="user-points-container">{{ user_points_content(profile_root, points) }}</span>
@@ -39,10 +39,10 @@
         {% set count = user_data.feedback_notification_count() %}
     {% endif %}
 {% else %}
-    {% set profile_root = '/profile' %}
+    {% set profile_root = '/profile/' %}
     {% set count = 0 %}
 {% endif %}
-<a class="user-notification" href="{{profile_root}}/discussion" title="{{ count }} discussion notification{{count|pluralize}}">
+<a class="user-notification" href="{{profile_root}}discussion" title="{{ count }} discussion notification{{count|pluralize}}">
     {% if count %}
     <img src="{{ "/images/discussions-hi-16px.png"|static_url }}" class="icon"><span class="notification-bubble">{{ count }}</span>
     {% else %}
@@ -57,7 +57,7 @@
     <ul class="dropdown-menu vertical-shadow">
         <li><a class="dropdown-link{% if user_data.is_demo %} show-demo-dialog{% endif %}" href="{{profile_root}}">Visit profile</a></li>
         {% if user_data.has_password() %}
-        <li><a class="dropdown-link" href="{{profile_root}}/settings">Change settings</a></li>
+        <li><a class="dropdown-link" href="{{profile_root}}settings">Change settings</a></li>
         {% endif %}
         <!-- Facebook's JS logout requires the page_logout ID -->
         <li><a id="page_logout" href="{{logout_url}}">Logout</a></li>

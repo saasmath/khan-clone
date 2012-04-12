@@ -1,5 +1,6 @@
 from util import thousands_separated_number
 
+
 class Avatar(object):
     """ Base class for data about an avatar that a user can set on her profile.
 
@@ -22,6 +23,7 @@ class Avatar(object):
         """
         return False
 
+
 class PointsAvatar(Avatar):
     """ A simple avatar that requires the user to have a certain amount
     of energy points before unlocking.
@@ -33,6 +35,7 @@ class PointsAvatar(Avatar):
 
     def is_satisfied_by(self, user_data):
         return user_data.points >= self.min_points
+
 
 class AvatarCategory(object):
     """ A category of Avatars that require similar or identical requirements.
@@ -49,6 +52,7 @@ class AvatarCategory(object):
         """
         return []
 
+
 class AvatarPointsCategory(AvatarCategory):
     """ Builds an AvatarCategory for Avatars that require a number of points
     between min_points (inclusive) and max_points (exclusive).
@@ -57,12 +61,13 @@ class AvatarPointsCategory(AvatarCategory):
     """
     def __init__(self, title, min_points, max_points=-1):
         if max_points == -1:
-            title = "%s (%s+ points)" % (title,
-                                         thousands_separated_number(min_points))
+            title = ("%s (%s+ points)"
+                     % (title, thousands_separated_number(min_points)))
         else:
-            title = "%s (%s - %s points)" % (title,
-                                             thousands_separated_number(min_points),
-                                             thousands_separated_number(max_points))
+            title = ("%s (%s - %s points)"
+                     % (title,
+                        thousands_separated_number(min_points),
+                        thousands_separated_number(max_points)))
         super(AvatarPointsCategory, self).__init__(title)
         self.min_points = min_points
         self.max_points = max_points

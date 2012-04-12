@@ -153,9 +153,8 @@ class LayerCacheDatastoreTest(LayerCacheTest):
         
         # assert that we will now recalculate target
         self.assertEqual("test", self.cache_func("test"))
+ 
 
-
-  
 class LayerCacheLayerTest(LayerCacheTest):
         
     def test_repopulate_missing_inapp_cache_when_reading_from_memcache(self):

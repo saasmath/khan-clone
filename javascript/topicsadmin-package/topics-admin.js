@@ -225,7 +225,7 @@ var TopicTreeEditor = {
         $("#details-view").html("");
 
         $("#topicversion-editor")
-            .html(TopicTreeEditor.versionEditTemplate(version.toJSON()))
+            .html(TopicTreeEditor.versionEditTemplate(_.extend({IS_DEV:window.KA_IS_DEV}, version.toJSON())))
             .delegate( "a.set-default", "click", TopicTreeEditor.setTreeDefault )
             .delegate( "a.show-versions", "click", TopicTreeEditor.showVersionList );
 
@@ -433,14 +433,26 @@ var TopicTreeEditor = {
     },
 
     setTreeDefault: function() {
-        popupGenericMessageBox({
-            title: "Confirm publish topic tree",
-            message: "Marking this version of the topic tree default will publish all changes to the live version of the website. Are you sure?",
-            buttons: [
-                { title: "Yes", action: TopicTreeEditor.doSetTreeDefault },
-                { title: "No", action: hideGenericMessageBox }
-            ]
-        });
+        var confirmationMessage = {
+                buttons: [
+                    { title: "Yes", action: TopicTreeEditor.doSetTreeDefault },
+                    { title: "No", action: hideGenericMessageBox }
+                ]};
+
+        if (window.KA_IS_DEV) {
+            // local edits are not as worrysome
+            $.extend(confirmationMessage, {
+                title: "Commit local topic tree?",
+                message: "Clicking 'yes' here will only publish your changes locally. If you'd like to push your changes to the site, export this tree and import it on khanacademy.org.",
+            });
+        } else {
+            // edits on appspot actually, you know, matter
+            $.extend(confirmationMessage, {
+                title: "Publish this Topic Tree?",
+                message: "Marking this version of the topic tree default will publish all changes to the live version of the website. Are you sure?",
+            });
+        }
+        popupGenericMessageBox(confirmationMessage);
     },
 
     doSetTreeDefault: function() {
@@ -1298,7 +1310,8 @@ TopicTreeEditor.AddExistingItemView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        var el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1444,7 +1457,8 @@ TopicTreeEditor.CreateExerciseView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $( this.template( {type: this.type} ) ).appendTo(document.body).get(0);
+        var el = $( this.template( {type: this.type} ) ).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1502,7 +1516,8 @@ TopicTreeEditor.CreateVideoView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        var el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1594,7 +1609,8 @@ TopicTreeEditor.CreateUrlView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        var el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1642,7 +1658,8 @@ TopicTreeEditor.VersionListView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({})).appendTo(document.body).get(0);
+        var el = $(this.template({})).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1697,7 +1714,8 @@ TopicTreeEditor.SearchView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({})).get(0);
+        var el = $(this.template({})).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },
@@ -1819,7 +1837,8 @@ TopicTreeEditor.ImportExportView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({ import: this.options.import })).appendTo(document.body).get(0);
+        var el = $(this.template({ import: this.options.import })).appendTo(document.body).get(0);
+        this.setElement(el);
         this.delegateEvents();
         return this;
     },

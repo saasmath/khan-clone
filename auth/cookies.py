@@ -4,7 +4,7 @@ from cookie_util import set_request_cookie
 import Cookie
 import auth.tokens
 import logging
-import models
+import user_models
 import os
 
 
@@ -30,7 +30,7 @@ def get_user_from_khan_cookies():
     if not morsel:
         return None
     user_data = auth.tokens.AuthToken.get_user_for_value(
-            morsel.value, models.UserData.get_from_user_id)
+            morsel.value, user_models.UserData.get_from_user_id)
     if user_data:
         return user_data.user_id
     return None

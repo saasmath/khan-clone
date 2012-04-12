@@ -2,7 +2,7 @@ from google.appengine.ext import db
 from mapreduce import control
 from mapreduce import operation as op
 
-import models
+import user_models
 import models_discussion
 import notification
 import util_discussion
@@ -50,7 +50,7 @@ class PageQuestions(request_handler.RequestHandler):
         sort = self.request_int("sort", default=-1)
         video = db.get(video_key)
 
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
 
         if video:
             template_values = video_qa_context(user_data, video, page, qa_expand_key, sort)
@@ -70,7 +70,7 @@ class AddAnswer(request_handler.RequestHandler):
     @user_util.open_access
     def post(self):
 
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
 
         if not user_data:
             self.redirect(util.create_login_url(self.request.uri))
@@ -115,7 +115,7 @@ class AddAnswer(request_handler.RequestHandler):
 class Answers(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
         question_key = self.request.get("question_key")
         question = db.get(question_key)
 
@@ -145,7 +145,7 @@ class AddQuestion(request_handler.RequestHandler):
     @user_util.open_access
     def post(self):
 
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
 
         if not user_data:
             self.redirect(util.create_login_url(self.request.uri))
@@ -185,7 +185,7 @@ class EditEntity(request_handler.RequestHandler):
     @disallow_phantoms
     @user_util.open_access
     def post(self):
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
         if not user_data:
             return
 
@@ -219,7 +219,7 @@ class FlagEntity(request_handler.RequestHandler):
     @user_util.open_access
     def post(self):
         # You have to at least be logged in to flag
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
         if not user_data:
             return
 
@@ -276,7 +276,7 @@ class DeleteEntity(request_handler.RequestHandler):
     @disallow_phantoms
     @user_util.manual_access_checking
     def post(self):
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
         if not user_data:
             return
 

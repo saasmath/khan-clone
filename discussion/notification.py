@@ -10,7 +10,7 @@ import user_util
 import util
 import util_discussion
 import request_handler
-import models
+import user_models
 import models_discussion
 import voting
 
@@ -105,7 +105,7 @@ class VideoFeedbackNotificationList(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
 
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
 
         if not user_data:
             self.redirect(util.create_login_url(self.request.uri))
@@ -210,7 +210,7 @@ def new_answer_for_video_question(video, question, answer):
     notification.user = question.author
     notification.feedback = answer
 
-    user_data = models.UserData.get_from_db_key_email(notification.user.email())
+    user_data = user_models.UserData.get_from_db_key_email(notification.user.email())
     if not user_data:
         return
 
@@ -220,7 +220,7 @@ def new_answer_for_video_question(video, question, answer):
 
 def clear_question_answers_for_current_user(question_key):
 
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if not user_data:
         return

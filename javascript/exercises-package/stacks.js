@@ -107,7 +107,7 @@ Exercises.StackCollection = Backbone.Collection.extend({
 
         var totalLeaves = this.reduce(function(sum, card) {
             // Don't count the fourth leaf for now. We're showing it in a different
-            // way at the end of the stack. TODO (jasonrr/kamens) remove 4th leaf 
+            // way at the end of the stack. TODO (jasonrr/kamens) remove 4th leaf
             // altogether if we keep this implementation
             return Math.min(3, card.get("leavesEarned")) + sum;
         }, 0);
@@ -260,7 +260,7 @@ Exercises.StackView = Backbone.View.extend({
             return this.viewContext(card, index);
         }, this);
 
-        this.el.html(this.template({cards: collectionContext}));
+        this.$el.html(this.template({cards: collectionContext}));
 
         return this;
 
@@ -280,7 +280,7 @@ Exercises.StackView = Backbone.View.extend({
      */
     animatePop: function() {
 
-        return this.el
+        return this.$el
             .find(".card-container")
                 .first()
                     .slideUp(360, function() { $(this).remove(); });
@@ -294,7 +294,7 @@ Exercises.StackView = Backbone.View.extend({
 
         var context = this.viewContext(card, this.collection.length);
 
-        return this.el
+        return this.$el
             .find(".stack")
                 .prepend(
                     $(Templates.get("exercises.card")(context))
@@ -324,7 +324,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
     model: null,
 
     events: {
-        "click .take-a-break": "toDashboard",
+        "click .to-dashboard": "toDashboard",
         "click .more-stacks": "toMoreStacks",
         "click #show-topic-details": "showTopicDetails"
     },
@@ -389,7 +389,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Renders the base card's structure, including leaves
      */
     renderCardContainer: function() {
-        this.el.html(this.template(this.viewContext()));
+        this.$el.html(this.template(this.viewContext()));
     },
 
     /**
@@ -399,7 +399,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
         var context = _.extend({}, this.viewContext(), optionalContext);
 
-        this.el
+        this.$el
             .find(".current-card-contents")
                 .html(
                     $(Templates.get(templateName)(context))
@@ -612,7 +612,21 @@ Exercises.CurrentCardView = Backbone.View.extend({
                         }),
                         startedExercises = _.filter(topicUserExercises, function(userExercise) {
                             return !userExercise.exerciseStates.proficient && userExercise.totalDone > 0;
+                        }),
+                        progressStats = Exercises.sessionStats.progressStats();
+
+                    // Proficient exercises in which proficiency was just
+                    // earned in this current stack need to be marked as such.
+                    //
+                    // TODO: if we stick with this everywhere, we probably want
+                    // to change the actual review model algorithm to stop
+                    // setting recently-earned exercises into review state so
+                    // quickly.
+                    _.each(proficientExercises, function(userExercise) {
+                        userExercise.exerciseStates.justEarnedProficiency = _.any(progressStats.progress, function(stat) {
+                            return stat.exerciseStates.justEarnedProficiency && stat.name == userExercise.exercise;
                         });
+                    });
 
                     return _.extend(
                         {
@@ -623,19 +637,19 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             unstartedExercises: unstartedExercises,
                             proficientExercises: proficientExercises
                         },
-                        Exercises.sessionStats.progressStats(),
+                        progressStats,
                         Exercises.completeStack.stats()
                     );
 
                 },
                 function() {
 
-                    $(Exercises.completeStackView.el).hide();
-                    $(Exercises.currentCardView.el)
-                        .find(".stack-stats p, .small-exercise-icon")
+                    Exercises.completeStackView.$el.hide();
+                    Exercises.currentCardView.$el
+                        .find(".stack-stats p, .small-exercise-icon, .review-explain")
                             .each(Exercises.currentCardView.attachTooltip)
                             .end()
-                        .find(".more-stacks")
+                        .find(".more-stacks, .skill-proficient")
                             .focus();
 
                 }
@@ -673,7 +687,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                     return _.extend({}, Exercises.completeStack.stats(), {reviewsLeft: reviewsLeft});
                 },
                 function() {
-                    $(Exercises.completeStackView.el).hide();
+                    Exercises.completeStackView.$el.hide();
                 }
             );
 
@@ -688,7 +702,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
         this.renderCardContainer();
         this.renderCardContents("exercises.happy-picture-card");
 
-        $(this.el)
+        this.$el
             .find("#next-question-button")
                 .click(function() {
                     Exercises.nextCard();
@@ -740,7 +754,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      */
     showTopicDetails: function() {
         $(".current-topic").slideDown();
-        $(this).hide();
+        $("#show-topic-details").hide();
     },
 
     /**
@@ -762,7 +776,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Update the currently available or earned leaves in current card's view
      */
     updateLeaves: function() {
-        this.el
+        this.$el
             .find(".leaves-container")
                 .html(
                     $(Templates.get("exercises.card-leaves")(this.viewContext()))
@@ -791,7 +805,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Animate current card to right-hand completed stack
      */
     animateToRight: function() {
-        this.el.addClass("shrinkRight");
+        this.$el.addClass("shrinkRight");
 
         // These animation fxns explicitly return null as they are used in deferreds
         // and may one day have deferrable animations (CSS3 animations aren't
@@ -803,7 +817,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Animate card from left-hand completed stack to current card
      */
     animateFromLeft: function() {
-        this.el
+        this.$el
             .removeClass("notransition")
             .removeClass("shrinkLeft");
 
@@ -818,7 +832,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * toRight/fromLeft animations
      */
     moveLeft: function() {
-        this.el
+        this.$el
             .addClass("notransition")
             .removeClass("shrinkRight")
             .addClass("shrinkLeft");
@@ -941,9 +955,12 @@ Exercises.SessionStats = Backbone.Model.extend({
             // Add all current proficiency/review/struggling states
             stat.exerciseStates = userExercise.exerciseStates;
 
+            // Add an extra state to be used when proficiency was just earned
+            // during the current stack.
+            stat.exerciseStates.justEarnedProficiency = stat.exerciseStates.proficient && !stat.startProficient;
+
             stat.endTotalDone = userExercise.totalDone;
             stat.end = userExercise.progress;
-            stat.justEarnedProficiency = stat.exerciseStates.proficient && !stat.startProficient;
 
             // Keep start set at the minimum of starting and current progress.
             // We do this b/c we never want to animate backwards progress --

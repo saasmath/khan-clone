@@ -145,7 +145,13 @@ def access_token():
 
         oauth_map.access_token = token.key_
         oauth_map.access_token_secret = token.secret
+
         oauth_map.put()
+        # Flush the "apply phase" of the above put() to ensure that subsequent
+        # retrievals of this OAuthmap returns fresh data. GAE's HRD can
+        # otherwise take a second or two to propagate the data, and the
+        # client may use the access token quicker than that.
+        oauth_map = OAuthMap.get(oauth_map.key())
 
     except OAuthError, e:
         return oauth_error_response(e)

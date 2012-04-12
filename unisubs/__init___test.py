@@ -14,9 +14,7 @@ from google.appengine.ext import db
 from mock import patch
 from mock import Mock
 
-from models import Video
-from models import VideoSubtitles
-from models import VideoSubtitlesFetchReport
+from video_models import Video, VideoSubtitles, VideoSubtitlesFetchReport
 from testutil import gaetasktime
 import unisubs
 from unisubs import BATCH_SIZE

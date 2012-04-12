@@ -7,15 +7,19 @@ try:
 except ImportError:
     import simplejson as json
 
+import promo_record_model
+import setting_model
+import user_models
 from profiles import templatetags
 import request_handler
 import user_util
 import util
-import models
+import exercise_models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import disallow_phantoms
-from models import StudentList, UserData, CoachRequest
+from user_models import StudentList, UserData
+from coach_resources.coach_request_model import CoachRequest
 from avatars import util_avatars
 from badges import util_badges
 
@@ -144,7 +148,7 @@ class ViewClassProfile(request_handler.RequestHandler):
                     'coach_nickname': coach.nickname,
                     'selected_graph_type': selected_graph_type,
                     'initial_graph_url': initial_graph_url,
-                    'exercises': models.Exercise.get_all_use_cache(),
+                    'exercises': exercise_models.Exercise.get_all_use_cache(),
                     'is_profile_empty': not coach.has_students(),
                     'selected_nav_link': 'coach',
                     "view": self.request_string("view", default=""),
@@ -183,7 +187,7 @@ class ViewProfile(request_handler.RequestHandler):
             user_data = current_user_data
         else:
             user_data = UserData.get_from_url_segment(email_or_username)
-            if (models.UniqueUsername.is_valid_username(email_or_username)
+            if (user_models.UniqueUsername.is_valid_username(email_or_username)
                     and user_data
                     and user_data.username
                     and user_data.username != email_or_username):
@@ -208,7 +212,7 @@ class ViewProfile(request_handler.RequestHandler):
         show_intro = False
 
         if is_self:
-            promo_record = models.PromoRecord.get_for_values(
+            promo_record = promo_record_model.PromoRecord.get_for_values(
                     "New Profile Promo", user_data.user_id)
 
             if promo_record is None:
@@ -219,7 +223,7 @@ class ViewProfile(request_handler.RequestHandler):
                     return
 
                 show_intro = True
-                models.PromoRecord.record_promo("New Profile Promo",
+                promo_record_model.PromoRecord.record_promo("New Profile Promo",
                                                 user_data.user_id,
                                                 skip_check=True)
 
@@ -230,8 +234,8 @@ class ViewProfile(request_handler.RequestHandler):
             'show_intro': show_intro,
             'profile': profile,
             'tz_offset': tz_offset,
-            'count_videos': models.Setting.count_videos(),
-            'count_exercises': models.Exercise.get_count(),
+            'count_videos': setting_model.Setting.count_videos(),
+            'count_exercises': exercise_models.Exercise.get_count(),
             'user_data_student': user_data if has_full_access else None,
             'profile_root': user_data.profile_root,
             "view": self.request_string("view", default=""),
@@ -284,8 +288,8 @@ class UserProfile(object):
         of profile data that the actor has access to, or None if no access
         is allowed.
 
-        user - models.UserData object to retrieve information from
-        actor - models.UserData object corresponding to who is requesting
+        user - user_models.UserData object to retrieve information from
+        actor - user_models.UserData object corresponding to who is requesting
                 the data
         """
         
@@ -374,8 +378,8 @@ class UserProfile(object):
         If the coach has a public profile or if she is coached by the actor,
         more information will be retrieved as allowed.
         
-        coach - models.UserData object to retrieve information from
-        actor - models.UserData object corresponding to who is requesting
+        coach - user_models.UserData object to retrieve information from
+        actor - user_models.UserData object corresponding to who is requesting
                 the data
 
         TODO(marcia): Move away from using email to manage coaches, since

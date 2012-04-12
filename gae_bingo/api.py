@@ -28,7 +28,12 @@ class Experiments(RequestHandler):
             if experiment.canonical_name not in experiment_results:
                 experiment_results[experiment.canonical_name] = experiment
 
-        context = { "experiment_results": experiment_results.values() }
+        # Sort by status primarily, start date secondarily
+        sorted_results = sorted(
+            sorted(experiment_results.values(), key=lambda ex: ex.dt_started, reverse=True),
+            key=lambda ex: ex.status, reverse=True)
+
+        context = { "experiment_results": sorted_results }
 
         self.response.headers["Content-Type"] = "application/json"
         self.response.out.write(jsonify(context))

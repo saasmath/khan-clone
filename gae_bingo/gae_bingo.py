@@ -10,6 +10,7 @@ from .cache import BingoCache, bingo_and_identity_cache
 from .models import create_experiment_and_alternatives, ConversionTypes
 from .identity import identity
 from .config import can_control_experiments
+from .cookies import get_cookie_value
 
 def ab_test(canonical_name,
             alternative_params = None,
@@ -249,12 +250,10 @@ def _find_alternative_for_user(experiment_hashable_name,
 
     if can_control_experiments():
         # If gae_bingo administrator, allow possible override of alternative
-        qs_dict = cgi.parse_qs(os.environ.get("QUERY_STRING") or "")
+        cookie_val = get_cookie_value("GAEBingo_%s" % experiment_hashable_name.replace(" ", "+"))
 
-        alternative_number_override = qs_dict.get("gae_bingo_alternative_number")
-        if alternative_number_override:
-
-            matches = filter(lambda alternative: alternative.number == int(alternative_number_override[0]), alternatives)
+        if cookie_val:
+            matches = filter(lambda alternative: alternative.number == int(cookie_val), alternatives)
             if len(matches) == 1:
                 return matches[0]
 

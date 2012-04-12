@@ -6,6 +6,7 @@ syntax: glob
 *combined.css
 *compressed.css
 *compressed-ie.css
+*.less.css
 *uri.css
 *.espressostorage
 hashed-*.css
