@@ -53,7 +53,9 @@ def _files_to_process(rootdir, blacklist):
     retval = set()
     for root, dirs, files in os.walk(rootdir):
         # Prune the subdirs that are in the blacklist.  We go
-        # backwards so we can use del.
+        # backwards so we can use del.  (Weird os.walk() semantics:
+        # calling del on an element of dirs suppresses os.walk()'s
+        # traversal into that dir.)
         for i in xrange(len(dirs) - 1, -1, -1):
             if os.path.join(root, dirs[i]) in blacklist:
                 del dirs[i]
