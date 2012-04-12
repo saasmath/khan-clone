@@ -947,7 +947,7 @@ var Profile = {
     discussionDeferred_: null,
     noDiscussion_: false,
     populateDiscussion: function() {
-        if (Profile.hasDiscussion_) {
+        if (Profile.noDiscussion_) {
             Profile.showNotification("no-discussion");
         }
 
