@@ -2,6 +2,7 @@ import request_handler
 import user_util
 from redirects.models import CustomRedirect
 
+
 class Redirect(request_handler.RequestHandler):
 
     @user_util.open_access
@@ -11,12 +12,14 @@ class Redirect(request_handler.RequestHandler):
         
         if len(pieces) == 2:
 
-            redirect = CustomRedirect.get_by_key_name(CustomRedirect.get_key_name(pieces[1]))
+            redirect = CustomRedirect.get_by_key_name(
+                CustomRedirect.get_key_name(pieces[1]))
             if redirect:
                 self.redirect(redirect.redirect_to)
                 return
 
         self.redirect("/")
+
 
 class List(request_handler.RequestHandler):
 
@@ -28,6 +31,7 @@ class List(request_handler.RequestHandler):
         }
 
         return self.render_jinja2_template("redirects/list.html", context)
+
 
 class Add(request_handler.RequestHandler):
 
@@ -43,12 +47,13 @@ class Add(request_handler.RequestHandler):
                 redirect_to = "http://%s" % redirect_to
 
             CustomRedirect(
-                    key_name = CustomRedirect.get_key_name(redirect_from),
-                    redirect_from = redirect_from,
-                    redirect_to = redirect_to,
+                    key_name=CustomRedirect.get_key_name(redirect_from),
+                    redirect_from=redirect_from,
+                    redirect_to=redirect_to,
             ).put()
 
         self.redirect("/redirects")
+
 
 class Remove(request_handler.RequestHandler):
 
@@ -58,7 +63,8 @@ class Remove(request_handler.RequestHandler):
         redirect_from = self.request_string("redirect_from")
 
         if redirect_from:
-            redirect = CustomRedirect.get_by_key_name(CustomRedirect.get_key_name(redirect_from))
+            redirect = CustomRedirect.get_by_key_name(
+                CustomRedirect.get_key_name(redirect_from))
 
             if redirect:
                 redirect.delete()

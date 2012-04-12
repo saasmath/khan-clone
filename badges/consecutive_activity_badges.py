@@ -1,6 +1,8 @@
 from badges import Badge, BadgeCategory
 
-# All badges awarded for consecutively performing activity on the site inherit from ConsecutiveActivityBadge
+
+# All badges awarded for consecutively performing activity on the site
+# inherit from ConsecutiveActivityBadge
 class ConsecutiveActivityBadge(Badge):
 
     def is_satisfied_by(self, *args, **kwargs):
@@ -8,10 +10,13 @@ class ConsecutiveActivityBadge(Badge):
         if user_data is None:
             return False
 
-        return user_data.current_consecutive_activity_days() >= self.days_required
+        return (user_data.current_consecutive_activity_days()
+                >= self.days_required)
 
     def extended_description(self):
-        return "Watch part of any video or work on any skill each day for %s consecutive days" % self.days_required
+        return ("Watch part of any video or work on any skill each day for "
+                 "%s consecutive days") % self.days_required
+
 
 class FiveDayConsecutiveActivityBadge(ConsecutiveActivityBadge):
     def __init__(self):
@@ -21,6 +26,7 @@ class FiveDayConsecutiveActivityBadge(ConsecutiveActivityBadge):
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
 
+
 class FifteenDayConsecutiveActivityBadge(ConsecutiveActivityBadge):
     def __init__(self):
         ConsecutiveActivityBadge.__init__(self)
@@ -28,6 +34,7 @@ class FifteenDayConsecutiveActivityBadge(ConsecutiveActivityBadge):
         self.description = "Like Clockwork"
         self.badge_category = BadgeCategory.SILVER
         self.points = 0
+
 
 class ThirtyDayConsecutiveActivityBadge(ConsecutiveActivityBadge):
     def __init__(self):
@@ -37,6 +44,7 @@ class ThirtyDayConsecutiveActivityBadge(ConsecutiveActivityBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 0
 
+
 class HundredDayConsecutiveActivityBadge(ConsecutiveActivityBadge):
     def __init__(self):
         ConsecutiveActivityBadge.__init__(self)
@@ -44,4 +52,3 @@ class HundredDayConsecutiveActivityBadge(ConsecutiveActivityBadge):
         self.description = "10,000 Year Clock"
         self.badge_category = BadgeCategory.GOLD
         self.points = 0
-

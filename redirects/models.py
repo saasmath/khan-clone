@@ -1,5 +1,6 @@
 from google.appengine.ext import db
 
+
 class CustomRedirect(db.Model):
     redirect_from = db.StringProperty()
     redirect_to = db.StringProperty()

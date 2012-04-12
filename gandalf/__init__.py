@@ -4,6 +4,7 @@ from app import App
 from gandalf.cache import GandalfCache
 from gandalf.config import current_logged_in_identity
 
+
 def gandalf(bridge_name):
 
     if not bridge_name:
@@ -15,7 +16,8 @@ def gandalf(bridge_name):
 
     if not bridge:
         if not App.is_dev_server:
-            logging.error("User tried to cross non-existent bridge '%s'" % bridge_name)
+            logging.error("User tried to cross non-existent bridge '%s'"
+                          % bridge_name)
         return False
 
     filters = gandalf_cache.get_filter_models(bridge_name)
@@ -26,7 +28,8 @@ def gandalf(bridge_name):
     if not identity:
         return False
 
-    # A user needs to pass a single whitelist, and pass no blacklists, to pass a bridge
+    # A user needs to pass a single whitelist, and pass no blacklists,
+    # to pass a bridge
     passes_a_whitelist = False
 
     for filter in filters:
@@ -38,4 +41,3 @@ def gandalf(bridge_name):
                 return False
 
     return passes_a_whitelist
-
