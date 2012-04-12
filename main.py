@@ -158,6 +158,61 @@ class TopicPage(request_handler.RequestHandler):
         raise PageNotFoundException("Page not found")
     
 
+class GetSearchIndex(request_handler.RequestHandler):
+
+    @user_util.open_access
+    def get(self):
+        import xml.dom.minidom
+
+        # Fields to index
+        fields = ["title", "description", "keywords"]
+
+        # Other attributes we might want to filter or sort by
+        attrs = ["readable_id"]
+
+        impl = xml.dom.minidom.getDOMImplementation()
+        doc = impl.createDocument(None, "sphinx__docset", None)
+        root = doc.documentElement
+
+        schema_el = doc.createElement("sphinx__schema")
+        for field in fields:
+            field_el = doc.createElement("sphinx__field")
+            field_el.setAttribute("name", field)
+            schema_el.appendChild(field_el)
+
+        for attr in attrs:
+            attr_el = doc.createElement("sphinx__attr")
+            attr_el.setAttribute("name", attr)
+            attr_el.setAttribute("type", "string")
+            schema_el.appendChild(attr_el)
+
+        root.appendChild(schema_el)
+
+        idx = 1
+
+        videos = Video.all()
+        for video in videos:
+            video_el = doc.createElement("sphinx__document")
+            video_el.setAttribute("id", "%d" % idx)
+            idx += 1
+
+            for field in fields:
+                field_el = doc.createElement(field)
+                field_el.appendChild(doc.createTextNode(unicode(getattr(video, field))))
+                video_el.appendChild(field_el)
+
+            for attr in attrs:
+                attr_el = doc.createElement(attr)
+                attr_el.appendChild(doc.createTextNode(unicode(getattr(video, attr))))
+                video_el.appendChild(attr_el)
+
+            root.appendChild(video_el)
+
+        xml = doc.toprettyxml(encoding="utf-8").replace("sphinx__", "sphinx:")
+
+        self.response.headers['Content-Type'] = 'application/xml'
+        self.response.out.write(xml)
+
 # New video view handler.
 # The URI format is a topic path followed by /v/ and then the video identifier, i.e.:
 #   /math/algebra/introduction-to-algebra/v/origins-of-algebra
@@ -905,6 +960,8 @@ application = webapp2.WSGIApplication([
     ('/redirects/remove', redirects.Remove),
 
     ('/importer', ImportHandler),
+
+    ('/get_search_index_content', GetSearchIndex),
 
     # Redirect any links to old JSP version
     ('/.*\.jsp', PermanentRedirectToHome),
