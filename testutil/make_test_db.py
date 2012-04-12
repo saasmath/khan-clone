@@ -2,7 +2,7 @@
 
 """Create a test database that we can run dev_appserver against.
 
-USAGE: [prog] <filename to write test db to>
+USAGE: make_test_db.py <filename to write test db to>
 
 TODO(csilvers): finish this.
 """
@@ -72,12 +72,14 @@ class Users(object):
         # We stub out the time here so the database is deterministic.
         # TODO(csilvers): stub out datetime.datetime.now() and .utcnow()
         # and set these at some specific time.
-        video_models.VideoLog.add_entry(self.user1, exercises_and_videos.video1,
-                                  exercises_and_videos.video1.duration / 10,
-                                  exercises_and_videos.video1.duration / 10 + 1)
-        video_models.VideoLog.add_entry(self.user1, exercises_and_videos.video1,
-                                  exercises_and_videos.video1.duration / 2,
-                                  exercises_and_videos.video1.duration / 2 + 2)
+        video_models.VideoLog.add_entry(
+            self.user1, exercises_and_videos.video1,
+            exercises_and_videos.video1.duration / 10,
+            exercises_and_videos.video1.duration / 10 + 1)
+        video_models.VideoLog.add_entry(
+            self.user1, exercises_and_videos.video1,
+            exercises_and_videos.video1.duration / 2,
+            exercises_and_videos.video1.duration / 2 + 2)
         # TODO(csilvers): make sure the deferred task runs that flushes these.
 
         user_exercise1 = self.user1.get_or_insert_exercise(
@@ -88,11 +90,11 @@ class Users(object):
                                       "one",  # attempt_content
                                       "TODO(csilvers)",  # sha1
                                       "random_seed",     # random seed
-                                      False,     # gotten to the right answer?
-                                      0,         # number of hints tried
-                                      15,        # time taken (in seconds?)
-                                      False,     # being done in review mode?
-                                      False,     # being done in topic/power mode?
+                                      False,  # gotten to the right answer?
+                                      0,      # number of hints tried
+                                      15,     # time taken (in seconds?)
+                                      False,  # being done in review mode?
+                                      False,  # being done in topic/power mode?
                                       "obsolete",   # problem_type
                                       "127.0.0.1",  # ip address
                                       async_problem_log_put=False)
@@ -108,7 +110,8 @@ class Videos(object):
         self.courbet = video_models.Video(
             youtube_id='SvFtmPhbNRw',
             readable_id='courbet--the-artist-s-studio--1854-55',
-            url='http://www.youtube.com/watch?v=SvFtmPhbNRw&feature=youtube_gdata_player',
+            url=('http://www.youtube.com/watch?'
+                 'v=SvFtmPhbNRw&feature=youtube_gdata_player'),
             title=("Courbet's The Artist's Studio, A real allegory summing up "
                    "seven years of my artistic and moral life"),
             description=(u"Gustave Courbet, The Artist's Studio; "
@@ -131,7 +134,8 @@ class Videos(object):
         self.exponents = video_models.Video(
             youtube_id='kITJ6qH7jS0',
             readable_id='exponent-rules-part-1',
-            url='http://www.youtube.com/watch?v=kITJ6qH7jS0&feature=youtube_gdata_player',
+            url=('http://www.youtube.com/watch?'
+                 'v=kITJ6qH7jS0&feature=youtube_gdata_player'),
             title='Exponent Rules Part 1',
             description='Introduction to exponent rules',
             keywords=('Math, exponents, exponent, rules, Khan, Academy, '
@@ -145,7 +149,8 @@ class Videos(object):
         self.equations = video_models.Video(
             youtube_id='9DxrF6Ttws4',
             readable_id='one-step-equations',
-            url='http://www.youtube.com/watch?v=9DxrF6Ttws4&feature=youtube_gdata_player',
+            url=('http://www.youtube.com/watch?'
+                 'v=9DxrF6Ttws4&feature=youtube_gdata_player'),
             title='One Step Equations',
             description='One Step Equations',
             keywords=('One, Step, Equations, CC_39336_A-REI_3'),
@@ -158,7 +163,8 @@ class Videos(object):
         self.domain_and_range = video_models.Video(
             youtube_id='C6F33Ir-sY4',
             readable_id='domain-and-range-1',
-            url='http://www.youtube.com/watch?v=C6F33Ir-sY4&feature=youtube_gdata_player',
+            url=('http://www.youtube.com/watch?'
+                 'v=C6F33Ir-sY4&feature=youtube_gdata_player'),
             title='Domain and Range 1',
             description='U03_L2_T2_we1 : Domain and Range 1',
             keywords=('U03_L2_T2_we1, Domain, and, Range, CC_39336_F-IF_1, '
@@ -172,10 +178,12 @@ class Videos(object):
         self.absolute_value = video_models.Video(
             youtube_id='NvGTCzAfvr0',
             readable_id='absolute-value-1',
-            url='http://www.youtube.com/watch?v=NvGTCzAfvr0&feature=youtube_gdata_player',
+            url=('http://www.youtube.com/watch?'
+                 'v=NvGTCzAfvr0&feature=youtube_gdata_player'),
             title='Absolute Value 1',
             description='U02_L2_T1_we2 : Absolute Value 1',
-            keywords=('U02_L2_T1_we2, Absolute, Value, CC_6_NS_7, CC_6_NS_7_c'),
+            keywords=('U02_L2_T1_we2, Absolute, Value, '
+                      'CC_6_NS_7, CC_6_NS_7_c'),
             duration=202,
             views=99221,
             downloadable_formats=["png"],
