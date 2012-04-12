@@ -72,8 +72,10 @@ def flatten_tree(tree, parent_topics=[]):
     return homepage_topics
 
 def add_next_topic(topics, prev_topic=None, depth=0):
-    """ Goes through the topic tree and populates .next and .next_is_subtopic
-    for each topic and subtopic
+    """ Does a depth first search through the topic tree and keeps the last 
+    topic it has seen in prev_topic variable so as to populates its .next 
+    attribute to point to the current topic and populate .next_is_subtopic to 
+    say if the current topic is a subtopic or not.
     """
     for topic in topics:
         # if we are not the very first topic
