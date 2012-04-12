@@ -62,6 +62,8 @@ class Users(object):
         # It may also be useful to have a phantom user
         self.phantom = phantom_util._create_phantom_user_data()
 
+        # TODO(csilvers): add a facebook-id user and a google-id user
+
     def add_progress(self, exercises_and_videos):
         """Take a list of ExerciseAndVideo objects, set per-user progress."""
         # We can have many VideoLog entries for a single video.
@@ -75,6 +77,7 @@ class Users(object):
         video_models.VideoLog.add_entry(self.user1, exercises_and_videos.video1,
                                   exercises_and_videos.video1.duration / 2,
                                   exercises_and_videos.video1.duration / 2 + 2)
+        # TODO(csilvers): make sure the deferred task runs that flushes these.
 
         user_exercise1 = self.user1.get_or_insert_exercise(
             exercises_and_videos.exercise1)
