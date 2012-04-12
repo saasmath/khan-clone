@@ -988,20 +988,35 @@ var Profile = {
 
                     var jelUnread = $("#tab-content-discussion").find(".unread");
                     if (Profile.profile.get("isSelf") && jelUnread.length !== 0) {
-                        // TODO(marcia): Polish below
+                        var numNew = $('#top-header .notification-bubble').text();
+                        if (numNew !== "") {
+                            var initialPause = 500;
+                            var rampOn = 200;
+                            var hiOn = 1600;
+                            var rampOff = 700;
 
-                        // Fade out notification in top-header
-                        $("#top-header .notification-bubble")
-                            .fadeOut(500, function() {
-                                $("#top-header .user-notification img")
-                                    .attr("src", "/images/discussions-lo-16px.png")
+                            // Throb the highlight color for the new entries.
+                            $(jelUnread.slice(0,parseInt(numNew)))
+                                .delay(initialPause)
+                                .animate({"background-color": "#f2ffd7"}, rampOn)
+                                .delay(hiOn)
+                                .animate({"background-color": "#ebf7fb"}, rampOff);
+
+                            // Fade out notification in top-header. Sync it with
+                            // the fade out of the entry throb.
+                            $("#top-header .notification-bubble")
+                                .delay(initialPause + rampOn + hiOn)
+                                .fadeOut(rampOff, function() {
+                                    $("#top-header .user-notification img")
+                                        .attr("src", "/images/discussions-lo-16px.png")
+                                });
+
+                            // Reset notifications count upon viewing this tab
+                            $.ajax({
+                                type: "PUT",
+                                url: "/api/v1/user/reset_notifications_count"
                             });
-
-                        // Reset notifications count upon viewing this tab
-                        $.ajax({
-                            type: "PUT",
-                            url: "/api/v1/user/reset_notifications_count"
-                        });
+                        }
                     }
                 }
             });
