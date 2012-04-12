@@ -116,7 +116,12 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     last_badge_review = db.DateTimeProperty(indexed=False)
     last_activity = db.DateTimeProperty(indexed=False)
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
+
+    # Last discussion notifications view date in UTC, added Apr 2012
+    last_discussion_view = db.DateTimeProperty(indexed=False)
+    # Count of new notifications since last_discussion_view
     count_feedback_notification = db.IntegerProperty(default= -1, indexed=False)
+
     question_sort_order = db.IntegerProperty(default= -1, indexed=False)
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
@@ -142,7 +147,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     is_profile_public = db.BooleanProperty(default=False, indexed=False)
 
     _serialize_blacklist = [
-            "badges", "count_feedback_notification",
+            "badges", "count_feedback_notification", "last_discussion_view",
             "last_daily_summary", "need_to_reassess", "videos_completed",
             "moderator", "question_sort_order",
             "last_login", "user", "current_user", "map_coords",
@@ -836,10 +841,28 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         return self.videos_completed
 
     def feedback_notification_count(self):
+        """ Return the number of new discussion notifications since the
+        last time the user viewed her notifications
+        """
         if self.count_feedback_notification == -1:
-            self.count_feedback_notification = models_discussion.FeedbackNotification.gql("WHERE user = :1", self.user).count()
+            # Notifications are grouped by question when displayed to users,
+            # though there is a FeedbackNotification for each unread answer
+            notifications = models_discussion.FeedbackNotification.gql(
+                    "WHERE user = :1", self.user)
+
+            questions = set(n.feedback.question_key() for n in notifications
+                            if ((not self.last_discussion_view) or
+                                (n.feedback.date > self.last_discussion_view)))
+
+            self.count_feedback_notification = len(questions)
             self.put()
+
         return self.count_feedback_notification
+
+    def reset_feedback_notifications_count(self):
+        self.count_feedback_notification = 0
+        self.last_discussion_view = datetime.datetime.now()
+        self.put()
 
     def save_goal(self, goal):
         '''save a goal, atomically updating the user_data.has_current_goal when

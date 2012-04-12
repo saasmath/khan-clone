@@ -210,18 +210,6 @@ class FeedbackNotification(db.Model):
     # The question author and recipient of the notification
     user = db.UserProperty()
 
-    @staticmethod
-    def clear_for_user_data(recipient_user_data):
-        """ Delete the FeedbackNotifications for the specified recipient
-        """
-        notifications = FeedbackNotification.gql(
-                "WHERE user = :1", recipient_user_data.user)
-
-        if notifications.count():
-            db.delete(notifications)
-            recipient_user_data.count_feedback_notification = 0
-            recipient_user_data.put()
-
 
 class FeedbackVote(db.Model):
     DOWN = -1

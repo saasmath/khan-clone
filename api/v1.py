@@ -1179,15 +1179,15 @@ def get_user_questions():
     user_data = request.request_visible_student_user_data()
     return notification.get_questions_data(user_data)
 
-@route("/api/v1/user/notifications", methods=["DELETE"])
+@route("/api/v1/user/reset_notifications_count", methods=["PUT"])
 @api.auth.decorators.login_required
 @jsonp
 @jsonify
-def clear_user_notifications():
-    """ Clear the user's notifications
+def reset_notifications_count():
+    """ Reset the user's notifications count back to 0
     """
-    user_data = request.request_visible_student_user_data()
-    notification.clear_notifications_for_user_data(user_data)
+    user_data = user_models.UserData.current()
+    user_data.reset_feedback_notifications_count()
 
 @route("/api/v1/user/coaches", methods=["GET"])
 @api.auth.decorators.login_required

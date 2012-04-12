@@ -980,11 +980,6 @@ var Profile = {
                     if (Profile.profile.get("isSelf") && jelUnread.length !== 0) {
                         // TODO(marcia): Polish below
 
-                        // Fade out blue highlight on questions w unread answers
-                        jelUnread.animate({
-                                "background-color": "#FFF"
-                            }, 1000);
-
                         // Fade out notification in top-header
                         $("#top-header .notification-bubble")
                             .fadeOut(500, function() {
@@ -992,16 +987,11 @@ var Profile = {
                                     .attr("src", "/images/discussions-lo-16px.png")
                             });
 
-                        // Clear notifications upon viewing them in question list
-                        // STOPSHIP(marcia): Uncomment below
-
-                        // $.ajax({
-                        //     type: "DELETE",
-                        //     url: "/api/v1/user/notifications",
-                        //     data: {
-                        //         email: email
-                        //     }
-                        // });
+                        // Reset notifications count upon viewing this tab
+                        $.ajax({
+                            type: "PUT",
+                            url: "/api/v1/user/reset_notifications_count"
+                        });
                     }
                 }
             });
