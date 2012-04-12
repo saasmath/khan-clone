@@ -190,8 +190,8 @@ var Profile = {
                     "last-month": "&dt_start=lastmonth&dt_end=today"
                 },
                 graph = !!(hrefLookup[graph]) ? graph : "activity",
-                timePeriod = !!(timePeriodLookup[timePeriod]) ? timePeriod : "",
-                timeURLParameter = timePeriod ? timePeriodLookup[timePeriod] : "",
+                timePeriod = !!(timePeriodLookup[timePeriod]) ? timePeriod : "last-week",
+                timeURLParameter = timePeriodLookup[timePeriod],
                 href = hrefLookup[graph] + timeURLParameter;
 
             // Known bug: the wrong graph-date-picker item is selected when

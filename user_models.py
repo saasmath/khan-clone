@@ -119,10 +119,10 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     # Last discussion notifications view date in UTC
     last_discussion_view = db.DateTimeProperty(default=datetime.datetime.min,
-                                                indexed=False)
+                                               indexed=False)
     # Count of new notifications since last_discussion_view
     count_feedback_notification = db.IntegerProperty(default= -1,
-                                                        indexed=False)
+                                                     indexed=False)
 
     question_sort_order = db.IntegerProperty(default= -1, indexed=False)
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)

@@ -42,13 +42,16 @@
     {% set profile_root = '/profile/' %}
     {% set count = 0 %}
 {% endif %}
-<a class="user-notification" href="{{profile_root}}discussion" title="{{ count }} discussion notification{{count|pluralize}}">
-    {% if count %}
+{% if count %}
+<a class="user-notification" href="{{profile_root}}discussion" title="{{ count }} new question update{{count|pluralize}}">
     <img src="{{ "/images/discussions-hi-16px.png"|static_url }}" class="icon"><span class="notification-bubble">{{ count }}</span>
-    {% else %}
-    <img src="{{ "/images/discussions-lo-16px.png"|static_url }}" class="icon">
-    {% endif %}
 </a>
+{% else %}
+<a class="user-notification" href="{{profile_root}}discussion" title="No new question updates">
+    <img src="{{ "/images/discussions-lo-16px.png"|static_url }}" class="icon">
+</a>
+{% endif %}
+
 <span class="dropdown">
     <span class="username_and_notification dropdown-toggle">
         <a href="{{profile_root}}" {% if user_data.is_demo %}class="show-demo-dialog"{% endif %}><img class="user-avatar" src="{{ avatars.get_src_for_user(user_data) }}"><span class="user-name">{{username|escape}}</span></a>
