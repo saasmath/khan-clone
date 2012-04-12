@@ -23,4 +23,3 @@ def ensure_in_transaction(func, xg_on=False):
         return db.run_in_transaction_options(options, func)
     else:
         return db.run_in_transaction(func)
-

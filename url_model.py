@@ -10,6 +10,7 @@ import object_property
 import setting_model
 import topic_models
 
+
 class Url(db.Model):
     url = db.StringProperty()
     title = db.StringProperty(indexed=False)
@@ -31,7 +32,7 @@ class Url(db.Model):
         return None
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda :
+    @layer_cache.cache_with_key_fxn(lambda:
         "Url.get_all_%s" %
         setting_model.Setting.cached_content_add_date(),
         layer=layer_cache.Layers.Memcache)
@@ -53,11 +54,11 @@ class Url(db.Model):
     @staticmethod
     def get_by_id_for_version(id, version=None):
         url = Url.get_by_id(id)
-        # if there is a version check to see if there are any updates to the video
+        # if there is a version check to see if there are any updates
+        # to the video
         if version:
-            change = topic_models.VersionContentChange.get_change_for_content(url, version)
+            change = topic_models.VersionContentChange.get_change_for_content(
+                url, version)
             if change:
                 url = change.updated_content(url)
         return url
-
-

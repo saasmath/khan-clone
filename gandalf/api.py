@@ -5,6 +5,7 @@ from gandalf.config import can_control_gandalf
 from gandalf.models import GandalfBridge, GandalfFilter
 from gandalf.filters import BridgeFilter
 
+
 class Bridges(RequestHandler):
     def get(self):
 
@@ -112,7 +113,8 @@ class UpdateFilter(RequestHandler):
 
             context = BridgeFilter.find_subclass(filter_type).initial_context()
 
-            filter = GandalfFilter(bridge=bridge, filter_type=filter_type, context=context, whitelist=whitelist)
+            filter = GandalfFilter(bridge=bridge, filter_type=filter_type,
+                                   context=context, whitelist=whitelist)
             filter.put()
 
         else:

@@ -708,7 +708,7 @@ class UserVideo(db.Model):
         if self.completed:
             return 1.0
         elif self.duration <= 0:
-            logging.error("UserVideo.duration has invalid value %r, key: %s" % (self.duration, str(self.key())))
+            logging.info("UserVideo.duration has invalid value %r, key: %s" % (self.duration, str(self.key())))
             return 0.0
         else:
             return min(1.0, float(self.seconds_watched) / self.duration)

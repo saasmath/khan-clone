@@ -98,7 +98,7 @@ var Profile = {
         $(".achievement .ach-text").delegate("a", "click", function(event) {
             if (!event.metaKey) {
                 event.preventDefault();
-                Profile.router.navigate("/achievements", true);
+                Profile.router.navigate("achievements", true);
                 $("#achievement-list ul li#category-" + $(this).data("category")).click();
             }
         });
@@ -108,17 +108,17 @@ var Profile = {
      * All the tabs that you could encounter on the profile page.
      */
     subRoutes: {
-        "/achievements": "showAchievements",
-        "/goals/:type": "showGoals",
-        "/goals": "showGoals",
-        "/vital-statistics": "showVitalStatistics",
-        "/vital-statistics/problems/:exercise": "showExerciseProblems",
-        "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
-        "/vital-statistics/:graph": "showVitalStatistics",
-        "/coaches": "showCoaches",
+        "achievements": "showAchievements",
+        "goals/:type": "showGoals",
+        "goals": "showGoals",
+        "vital-statistics": "showVitalStatistics",
+        "vital-statistics/problems/:exercise": "showExerciseProblems",
+        "vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
+        "vital-statistics/:graph": "showVitalStatistics",
+        "coaches": "showCoaches",
 
         // Not associated with any tab highlighting.
-        "/settings": "showSettings",
+        "settings": "showSettings",
 
         "": "showDefault",
         // If the user types /profile/username/ with a trailing slash
@@ -127,15 +127,15 @@ var Profile = {
 
         // If any old or crazy vital-statistics route is passed that we no longer support
         // and therefore hasn't matched yet, just show the default vital statistics graph.
-        "/vital-statistics/*path": "showVitalStatistics",
+        "vital-statistics/*path": "showVitalStatistics",
 
         // A minor hack to ensure that if the user navigates to /profile without
         // her username, it still shows the default profile screen. Note that
         // these routes aren't relative to the root URL, but will still work.
-        "/profile": "showDefault",
-        "/profile/": "showDefault",
+        "profile": "showDefault",
+        "profile/": "showDefault",
         // And for the mobile app... hopefully we can find a better fix.
-        "/profile?view=mobile": "showDefault"
+        "profile?view=mobile": "showDefault"
     },
 
     /**
@@ -150,10 +150,10 @@ var Profile = {
      */
     onProfileUpdated_: function() {
         var username = this.profile.get("username");
-        if (username && Profile.profileRoot != ("/profile/" + username)) {
+        if (username && Profile.profileRoot != ("/profile/" + username + "/")) {
             // Profile root changed - we need to reload the page since
             // Backbone.router isn't happy when the root changes.
-            window.location.replace("/profile/" + username);
+            window.location.replace("/profile/" + username + "/");
         }
     },
 
@@ -545,7 +545,7 @@ var Profile = {
                 $("#info-hover-container").hide();
                 // Extract the name from the ID, which has been prefixed.
                 var exerciseName = this.id.substring("exercise-".length);
-                Profile.router.navigate("/vital-statistics/problems/" + exerciseName, true);
+                Profile.router.navigate("vital-statistics/problems/" + exerciseName, true);
             });
         }
     },

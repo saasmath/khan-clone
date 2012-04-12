@@ -106,7 +106,7 @@ Exercises.BottomlessQueue = {
 
     testSessionStorage: function() {
         // Adapted from a comment on http://mathiasbynens.be/notes/localstorage-pattern
-        var enabled, uid = Date.now();
+        var enabled, uid = +(new Date);
         try {
             sessionStorage[uid] = uid;
             enabled = (sessionStorage[uid] == uid);

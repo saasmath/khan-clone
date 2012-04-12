@@ -37,10 +37,9 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
             function() {self.onBadgeMouseout(self.nodeName, newContent);}
         );
 
-        this.el.replaceWith(newContent);
-        this.el = newContent;
+        this.$el.replaceWith(newContent);
+        this.setElement(newContent);
         this.inflated = true;
-        this.delegateEvents();
     },
 
     onTitleClick: function(evt) {
@@ -81,10 +80,10 @@ KnowledgeMapViews.ExerciseRow = KnowledgeMapViews.NodeRow.extend({
 
     showGoalIcon: function(visible) {
         if (visible) {
-            this.el.find(".exercise-goal-icon").show();
+            this.$(".exercise-goal-icon").show();
         }
         else {
-            this.el.find(".exercise-goal-icon").hide();
+            this.$(".exercise-goal-icon").hide();
         }
     }
 
@@ -111,12 +110,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         this.nodeName = this.model.get("name");
         this.filtered = false;
         this.parent = this.options.parent;
-
-        this.updateElement(this.el);
-    },
-
-    updateElement: function(el) {
-        this.el = el;
     },
 
     setFiltered: function(filtered, bounds) {
@@ -144,18 +137,18 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
 
         // set class for css to apply styles
         if (this.filtered) {
-            this.el.addClass("nodeLabelFiltered");
+            this.$el.addClass("nodeLabelFiltered");
         } else {
-            this.el.removeClass("nodeLabelFiltered");
+            this.$el.removeClass("nodeLabelFiltered");
         }
 
     },
 
     setHighlight: function(highlight) {
         if (highlight)
-            this.el.addClass("nodeLabelHighlight");
+            this.$el.addClass("nodeLabelHighlight");
         else
-            this.el.removeClass("nodeLabelHighlight");
+            this.$el.removeClass("nodeLabelHighlight");
     },
 
     /*

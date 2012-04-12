@@ -61,6 +61,7 @@ import api.jsonify
 import socrates
 import labs.explorations
 import layer_cache
+import kmap_editor
 
 import topic_models
 import video_models
@@ -97,11 +98,6 @@ class VideoDataTest(request_handler.RequestHandler):
         for video in videos:
             self.response.out.write('<P>Title: ' + video.title)
 
-# Handler that displays a topic page if the URL matches
-# a pre-existing topic. (i.e. /math/algebra or just /algebra)
-# NOTE: Since there is no specific route we are matching,
-# this handler is registered as the default handler, so
-# anything it doesn't recognize should return a 404.
 class TopicPage(request_handler.RequestHandler):
 
     @staticmethod
@@ -124,25 +120,23 @@ class TopicPage(request_handler.RequestHandler):
     @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, path):
+        """ Display a topic page if the URL matches a pre-existing topic,
+        such as /math/algebra or /algebra
+        
+        NOTE: Since there is no specific route we are matching,
+        this handler is registered as the default handler, 
+        so unrecognized paths will return a 404.
+        """
+        if path.endswith('/'):
+            # Canonical paths do not have trailing slashes
+            path = path[:-1]
+
         path_list = path.split('/')
         if len(path_list) > 0:
             # Only look at the actual topic ID
             topic = topic_models.Topic.get_by_id(path_list[-1])
 
-            # Handle a trailing slash
-            if not topic and path_list[-1] == "":
-                topic = topic_models.Topic.get_by_id(path_list[-2])
-
             if topic:
-                # Begin topic pages A/B test
-                if user_util.is_current_user_developer():
-                    show_topic_pages = "show"
-                else:
-                    show_topic_pages = ab_test("Show topic pages", ["show", "hide"],
-                        ["topic_pages_view_page", "topic_pages_started_video",
-                         "topic_pages_completed_video"])
-                if show_topic_pages == "hide":
-                    self.redirect("/#%s" % topic.id)
                 bingo("topic_pages_view_page")
                 # End topic pages A/B test
 
@@ -725,6 +719,7 @@ application = webapp2.WSGIApplication([
 
     ('/labs/explorations', labs.explorations.RequestHandler),
     ('/labs/explorations/([^/]+)', labs.explorations.RequestHandler),
+    ('/labs/socrates', socrates.SocratesIndexHandler),
     ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.
@@ -771,6 +766,7 @@ application = webapp2.WSGIApplication([
     ('/admin/unisubs/import', unisubs.ImportHandler),
 
     ('/devadmin', devpanel.Panel),
+    ('/devadmin/maplayout', kmap_editor.MapLayoutEditor),
     ('/devadmin/emailchange', devpanel.MergeUsers),
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),

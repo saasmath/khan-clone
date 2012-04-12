@@ -1,8 +1,13 @@
 """Obsolete wrapper for various data models.
 
 Each of the models in this file have moved somewhere else.  This file
-is only provided for backwards compatibility with code that has
+is provided for backwards compatibility with code that has
 'import models' and expects to get all the models at once.
+
+This is also important for backwards compatibility with
+de-pickling items that contain object instances from the old models
+definition. That de-pickling process would expect the class
+definitions to be in this 'models' module.
 
 Use the following grep command to find imports you need to use in
 the new file:

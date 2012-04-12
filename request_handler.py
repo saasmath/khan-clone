@@ -390,7 +390,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         user_data = template_values['user_data']
 
         template_values['username'] = user_data.nickname if user_data else ""
-        template_values['viewer_profile_root'] = user_data.profile_root if user_data else "/profile/nouser"
+        template_values['viewer_profile_root'] = user_data.profile_root if user_data else "/profile/nouser/"
         template_values['points'] = user_data.points if user_data else 0
         template_values['logged_in'] = not user_data.is_phantom if user_data else False
         template_values['http_host'] = os.environ["HTTP_HOST"]
@@ -451,10 +451,13 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         template_values['watch_topic_browser_enabled'] = not self.is_mobile_capable()
 
         # Begin topic pages A/B test
-        show_topic_pages = ab_test("Show topic pages", ["show", "hide"], ["topic_pages_view_page", "topic_pages_started_video", "topic_pages_completed_video"])
+        if template_values['mixpanel_enabled']:
+            show_topic_pages = ab_test("Show topic pages", ["show", "hide"], ["topic_pages_view_page", "topic_pages_started_video", "topic_pages_completed_video"])
+            analytics_bingo = {"name": "Bingo: Topic pages", "value": show_topic_pages}
+            template_values['analytics_bingo'] = analytics_bingo
+        else:
+            show_topic_pages = "hide"
         template_values['show_topic_pages'] = (show_topic_pages == "show")
-        analytics_bingo = {"name": "Bingo: Topic pages", "value": show_topic_pages}
-        template_values['analytics_bingo'] = analytics_bingo
         # End topic pages A/B test
 
         return template_values
