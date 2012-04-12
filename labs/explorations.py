@@ -9,6 +9,7 @@ EXPLORATIONS = [
     'frequency-stability'
 ]
 
+
 class RequestHandler(request_handler.RequestHandler):
     @open_access
     @ensure_xsrf_cookie
@@ -16,6 +17,8 @@ class RequestHandler(request_handler.RequestHandler):
         if not exploration:
             self.render_jinja2_template('labs/explorations/index.html', {})
         elif exploration in EXPLORATIONS:
-            self.render_jinja2_template('labs/explorations/%s.html' % exploration, {})
+            self.render_jinja2_template(
+                'labs/explorations/%s.html' % exploration, {})
         else:
-            raise MissingExerciseException('Missing exploration %s' % exploration)
+            raise MissingExerciseException('Missing exploration %s'
+                                           % exploration)

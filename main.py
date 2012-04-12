@@ -690,6 +690,7 @@ application = webapp2.WSGIApplication([
 
     ('/labs/explorations', labs.explorations.RequestHandler),
     ('/labs/explorations/([^/]+)', labs.explorations.RequestHandler),
+    ('/labs/socrates', socrates.SocratesIndexHandler),
     ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.

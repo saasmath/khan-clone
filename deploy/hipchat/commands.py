@@ -15,7 +15,10 @@ import hipchat.config
 import hipchat.room
 import hipchat.user
 
-class NoConfigException(Exception): pass
+
+class NoConfigException(Exception):
+    pass
+
 
 def init_sys_cfg():
     if exists('hipchat.cfg'):
@@ -27,7 +30,9 @@ def init_sys_cfg():
     else:
         raise NoConfigException
 
-class ArgsException(Exception): pass
+
+class ArgsException(Exception):
+    pass
 
 
 def list_users():
@@ -39,7 +44,9 @@ def add_user():
     try:
         dont_care, email, name, title, is_admin, password, timezone = argv
     except ValueError:
-        raise ArgsException("%s <email> <name> <title> <is_admin> <password> <timezone>" % argv[0])
+        raise ArgsException(
+            "%s <email> <name> <title> <is_admin> <password> <timezone>"
+            % argv[0])
     init_sys_cfg()
     print hipchat.user.User.create(email=email,
                                    name=name,
@@ -56,8 +63,17 @@ def disable_user():
         raise ArgsException("%s <email>" % argv[0])
     init_sys_cfg()
     user_id = hipchat.user.User.show(user_id=email).user_id
-    print hipchat.user.User.update(user_id=user_id,
-                                   password="".join([x('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890:"<\',.>;|\\+=-_~`!@#$%%^&*(){}1234567890[]') for x in itertools.repeat(random.choice, 20)])) #i'm sure there's a better way to do this, but too lazy to do research
+
+    # I'm sure there's a better way to do this, but too lazy to do
+    # research.
+    password = "".join([x('abcdefghijklmnopqrstuvwxyz'
+                          'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                          '1234567890'
+                          ':"<\',.>;|\\+=-_~`!@#$%%^&*(){}'
+                          '1234567890[]')
+                        for x in itertools.repeat(random.choice, 20)])
+
+    print hipchat.user.User.update(user_id=user_id, password=password)
 
 
 def enable_user():

@@ -3,7 +3,9 @@
     <div class="topic-video thumbnail_td">
       <a href="{{ topicInfo.marqueeVideo.href }}" data-tag="Topic Page Root Featured" data-youtube-id="{{ topicInfo.marqueeVideo.youtubeId }}" class="thumbnail_link modal-video">
         <div class="thumb" style="background-image:url('{{ topicInfo.marqueeVideo.thumbUrls.hq }}')"></div>
-        <div class="thumbnail_label"><div class="thumbnail_desc">{{{ topicInfo.marqueeVideo.descHtml }}}</div><div class="thumbnail_teaser">{{{ topicInfo.marqueeVideo.teaserHtml }}}</div></div>
+        <div class="thumbnail_container">
+          <div class="thumbnail_label"><div class="thumbnail_desc">{{{ topicInfo.marqueeVideo.descHtml }}}</div><div class="thumbnail_teaser">{{{ topicInfo.marqueeVideo.teaserHtml }}}</div></div>
+        </div>
       </a>
     </div>
     <div class="topic-info">
