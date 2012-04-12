@@ -1,6 +1,6 @@
 from google.appengine.api import users
 
-from models import UserData
+from user_models import UserData
 from api.decorators import pickle, unpickle, compress, decompress, base64_encode, base64_decode, protobuf_encode, protobuf_decode
 import request_cache
 import layer_cache

@@ -1,12 +1,11 @@
 from __future__ import absolute_import
-import os
 import logging
-import bisect
 import layer_cache
 
 from google.appengine.ext import db
 
-from models import Exercise, Video
+from exercise_models import Exercise
+from video_models import Video
 
 COMMON_CORE_SEPARATOR = '.'
 COMMON_CORE_BASE_URL = 'http://www.corestandards.org/the-standards/mathematics/'

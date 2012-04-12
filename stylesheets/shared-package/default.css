@@ -439,14 +439,6 @@ img {
     -ms-interpolation-mode: bicubic;
     /* Fix IE image scaling so that it isn't crappy */
 }
-input[type=text], input[type=email] {
-    outline: none;
-}
-input[type=text]:focus, input[type=email]:focus {
-    -webkit-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
-    -moz-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
-    box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
-}
 input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
 }
@@ -600,23 +592,16 @@ footer {
     z-index: 2;
     color: #4D5862;
 }
-    .dark #top-header #stats {
-        color: #ddd;
-    }
     #top-header #stats #page_visitors {
         font-family: Georgia, serif;
         position: absolute;
-        left: 117px;
-        top: -75px;
+        right: 32px;
+        top: 23px;
         font-size:13px;
         font-style: italic;
         font-weight: normal;
         display: none; /* hidden until AJAX call to chartbeat gets the number */
         text-decoration: none;
-    }
-
-    .dark #top-header #user-info {
-        text-shadow: 0 1px 0 #1A222D;
     }
 #nav-and-search {
     /* We're positioning this absolutely because of the iframe jumpy nonsense from the facebook button */
@@ -1039,6 +1024,11 @@ footer {
     display: block;
     padding: 0;
 }
+#search-input {
+    /* For jquery-ui autocomplete */
+    z-index: 100;
+    position: relative;
+}
     .simple-input {
         background-color: #fafafa;
         border:1px solid #C6D1AD;
@@ -1046,10 +1036,13 @@ footer {
         padding: 0;
         height: 24px;
         width: 160px;
+        outline: none;
 
-        /* For jquery-ui autocomplete */
-        z-index: 100;
-        position: relative;
+    }
+    .simple-input:focus {
+        -webkit-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
+        -moz-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
+        box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
     }
     .ie .simple-input {
         height: 22px;
@@ -3299,7 +3292,8 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 .mailing_list_container input.email {
     padding: 3px;
-    box-shadow:none;
+    outline: none;
+    box-shadow: none;
 }
 .mailing_list_container input.email:-moz-placeholder,
 .mailing_list_container input.email:invalid {

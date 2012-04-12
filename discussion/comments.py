@@ -6,7 +6,7 @@ try:
 except ImportError:
     import simplejson as json
 
-import models
+import user_models
 import models_discussion
 import util_discussion
 import user_util
@@ -39,7 +39,7 @@ class AddComment(request_handler.RequestHandler):
     @disallow_phantoms
     @user_util.open_access
     def post(self):
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
 
         if not user_data:
             self.redirect(util.create_login_url(self.request.uri))
@@ -76,7 +76,7 @@ class AddComment(request_handler.RequestHandler):
 
 def video_comments_context(video, page=0, comments_hidden=True, sort_order=voting.VotingSortOrder.HighestPointsFirst):
 
-    user_data = models.UserData.current()
+    user_data = user_models.UserData.current()
 
     if page > 0:
         comments_hidden = False # Never hide questions if specifying specific page

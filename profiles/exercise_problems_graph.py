@@ -1,6 +1,5 @@
-import models
-import util
-import logging
+import exercise_models
+import video_models
 from templatefilters import seconds_to_time_string
 
 class ProblemPoint:
@@ -50,7 +49,7 @@ def exercise_problems_graph_context(user_data_student, exid):
     if not exid:
         exid = "addition_1"
 
-    exercise = models.Exercise.get_by_name(exid)
+    exercise = exercise_models.Exercise.get_by_name(exid)
 
     if not exercise:
         return {}
@@ -63,12 +62,12 @@ def exercise_problems_graph_context(user_data_student, exid):
     video_list = []
 
     for exercise_video in related_videos:
-        video_logs = models.VideoLog.get_for_user_data_and_video(user_data_student, exercise_video.key_for_video())
+        video_logs = video_models.VideoLog.get_for_user_data_and_video(user_data_student, exercise_video.key_for_video())
         for video_log in video_logs:
             video_list.append(VideoPoint(video_log))
 
     problem_list = []
-    problem_logs = models.ProblemLog.all().filter('user =', user_data_student.user).filter('exercise =', exid).order("time_done")
+    problem_logs = exercise_models.ProblemLog.all().filter('user =', user_data_student.user).filter('exercise =', exid).order("time_done")
     for problem_log in problem_logs:
         problem_list.append(ProblemPoint(problem_log, sha1))
 
@@ -111,7 +110,7 @@ def exercise_problems_graph_context(user_data_student, exid):
 
     return {
         'student_email': user_data_student.email,
-        'exercise_display_name': models.Exercise.to_display_name(exid),
+        'exercise_display_name': exercise_models.Exercise.to_display_name(exid),
         'exid': exid,
         'problem_list': problem_list,
         'progress': user_exercise.progress_display(),

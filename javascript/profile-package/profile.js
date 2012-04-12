@@ -98,7 +98,7 @@ var Profile = {
         $(".achievement .ach-text").delegate("a", "click", function(event) {
             if (!event.metaKey) {
                 event.preventDefault();
-                Profile.router.navigate("/achievements", true);
+                Profile.router.navigate("achievements", true);
                 $("#achievement-list ul li#category-" + $(this).data("category")).click();
             }
         });
@@ -108,18 +108,17 @@ var Profile = {
      * All the tabs that you could encounter on the profile page.
      */
     subRoutes: {
-        "/achievements": "showAchievements",
-        "/goals/:type": "showGoals",
-        "/goals": "showGoals",
-        "/vital-statistics": "showVitalStatistics",
-        "/vital-statistics/problems/:exercise": "showExerciseProblems",
-        "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
-        "/vital-statistics/:graph": "showVitalStatistics",
-        "/coaches": "showCoaches",
-        "/discussion": "showDiscussion",
-
+        "achievements": "showAchievements",
+        "goals/:type": "showGoals",
+        "goals": "showGoals",
+        "vital-statistics": "showVitalStatistics",
+        "vital-statistics/problems/:exercise": "showExerciseProblems",
+        "vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
+        "vital-statistics/:graph": "showVitalStatistics",
+        "coaches": "showCoaches",
+        "discussion": "showDiscussion",
         // Not associated with any tab highlighting.
-        "/settings": "showSettings",
+        "settings": "showSettings",
 
         "": "showDefault",
         // If the user types /profile/username/ with a trailing slash
@@ -128,15 +127,15 @@ var Profile = {
 
         // If any old or crazy vital-statistics route is passed that we no longer support
         // and therefore hasn't matched yet, just show the default vital statistics graph.
-        "/vital-statistics/*path": "showVitalStatistics",
+        "vital-statistics/*path": "showVitalStatistics",
 
         // A minor hack to ensure that if the user navigates to /profile without
         // her username, it still shows the default profile screen. Note that
         // these routes aren't relative to the root URL, but will still work.
-        "/profile": "showDefault",
-        "/profile/": "showDefault",
+        "profile": "showDefault",
+        "profile/": "showDefault",
         // And for the mobile app... hopefully we can find a better fix.
-        "/profile?view=mobile": "showDefault"
+        "profile?view=mobile": "showDefault"
     },
 
     /**
@@ -151,10 +150,10 @@ var Profile = {
      */
     onProfileUpdated_: function() {
         var username = this.profile.get("username");
-        if (username && Profile.profileRoot != ("/profile/" + username)) {
+        if (username && Profile.profileRoot != ("/profile/" + username + "/")) {
             // Profile root changed - we need to reload the page since
             // Backbone.router isn't happy when the root changes.
-            window.location.replace("/profile/" + username);
+            window.location.replace("/profile/" + username + "/");
         }
     },
 
@@ -270,13 +269,13 @@ var Profile = {
         },
 
         showDiscussion: function() {
-            Profile.populateDiscussion();
-
             $("#tab-content-discussion").show()
                 .siblings().hide();
 
             this.activateRelatedTab("community discussion");
             this.updateTitleBreadcrumbs(["Discussion"]);
+
+            Profile.populateDiscussion();
         },
 
         settingsIframe_: null,
@@ -556,7 +555,7 @@ var Profile = {
                 $("#info-hover-container").hide();
                 // Extract the name from the ID, which has been prefixed.
                 var exerciseName = this.id.substring("exercise-".length);
-                Profile.router.navigate("/vital-statistics/problems/" + exerciseName, true);
+                Profile.router.navigate("vital-statistics/problems/" + exerciseName, true);
             });
         }
     },
@@ -578,7 +577,7 @@ var Profile = {
     showNotification: function(className) {
         var jel = $(".profile-notification").removeClass("uncover-nav");
 
-        if (className === "empty-graph") {
+        if (className === "empty-graph" || className === "no-discussion") {
             jel.addClass("uncover-nav");
         }
 
@@ -946,7 +945,12 @@ var Profile = {
     },
 
     discussionDeferred_: null,
+    noDiscussion_: false,
     populateDiscussion: function() {
+        if (Profile.noDiscussion_) {
+            Profile.showNotification("no-discussion");
+        }
+
         if (Profile.discussionDeferred_) {
             return Profile.discussionDeferred_;
         }
@@ -962,29 +966,29 @@ var Profile = {
                 },
                 dataType: "json",
                 success: function(data) {
-                    var context = data,
-                        template = Templates.get("profile.questions-list");
+                    if (data.length === 0) {
+                        Profile.noDiscussion_ = true;
+                        Profile.showNotification("no-discussion");
+                        return;
+                    }
+
+                    var template = Templates.get("profile.questions-list");
 
                     // Order questions from oldest to newest
-                    context = _.sortBy(context, function(question) {
+                    data = _.sortBy(data, function(question) {
                         return question["lastDate"];
                     });
 
                     // Then reverse to get newest to oldest
-                    context.reverse();
+                    data.reverse();
 
                     $("#tab-content-discussion")
-                        .append(template(context))
+                        .append(template(data))
                         .find("div.timeago").timeago();
 
                     var jelUnread = $("#tab-content-discussion").find(".unread");
                     if (Profile.profile.get("isSelf") && jelUnread.length !== 0) {
                         // TODO(marcia): Polish below
-
-                        // Fade out blue highlight on questions w unread answers
-                        jelUnread.animate({
-                                "background-color": "#FFF"
-                            }, 1000);
 
                         // Fade out notification in top-header
                         $("#top-header .notification-bubble")
@@ -993,16 +997,11 @@ var Profile = {
                                     .attr("src", "/images/discussions-lo-16px.png")
                             });
 
-                        // Clear notifications upon viewing them in question list
-                        // STOPSHIP(marcia): Uncomment below
-
-                        // $.ajax({
-                        //     type: "DELETE",
-                        //     url: "/api/v1/user/notifications",
-                        //     data: {
-                        //         email: email
-                        //     }
-                        // });
+                        // Reset notifications count upon viewing this tab
+                        $.ajax({
+                            type: "PUT",
+                            url: "/api/v1/user/reset_notifications_count"
+                        });
                     }
                 }
             });

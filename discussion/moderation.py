@@ -3,7 +3,7 @@ from google.appengine.api import users
 
 import api.auth.xsrf
 import request_handler
-import models
+import user_models
 import models_discussion
 from badges.discussion_badges import ModeratorBadge
 import user_util
@@ -25,7 +25,7 @@ class ModeratorList(request_handler.RequestHandler):
     @user_util.admin_only
     @api.auth.xsrf.ensure_xsrf_cookie
     def get(self):
-        mods = models.UserData.gql("WHERE moderator = :1", True)
+        mods = user_models.UserData.gql("WHERE moderator = :1", True)
         self.render_jinja2_template('discussion/mod/moderatorlist.html', {
             "mods" : mods,
             "selected_id": "moderatorlist",
@@ -78,7 +78,7 @@ class BannedList(request_handler.RequestHandler):
 
     @user_util.moderator_only
     def get(self):
-        banned_user_data_list = models.UserData.gql("WHERE discussion_banned = :1", True)
+        banned_user_data_list = user_models.UserData.gql("WHERE discussion_banned = :1", True)
         self.render_jinja2_template('discussion/mod/bannedlist.html', {
             "banned_user_data_list" : banned_user_data_list,
             "selected_id": "bannedlist",

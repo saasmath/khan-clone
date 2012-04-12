@@ -65,13 +65,12 @@ Handlebars.registerHelper("reverseEach", function(context, block) {
  * earned and should be animated.
  */
 Handlebars.registerPartial("small-exercise-icon", Templates.get("shared.small-exercise-icon"));
-Handlebars.registerHelper("skill-bar", function(end, start, exerciseStates, justEarnedProficiency) {
+Handlebars.registerHelper("skill-bar", function(end, start, exerciseStates) {
 
     var template = Templates.get("shared.skill-bar"),
         context = _.extend({
                 start: parseFloat(start) || 0,
-                end: parseFloat(end) || 0,
-                justEarnedProficiency: !!(justEarnedProficiency)
+                end: parseFloat(end) || 0
             }, 
             exerciseStates);
     

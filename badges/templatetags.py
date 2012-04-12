@@ -30,7 +30,7 @@ def badge_counts(user_data):
     link_to_profile = "/profile"
     if user_data:
         counts_dict = util_badges.get_badge_counts(user_data)
-        link_to_profile = user_data.profile_root + "/achievements"
+        link_to_profile = user_data.profile_root + "achievements"
     else:
         counts_dict = badges.BadgeCategory.empty_count_dict()
 

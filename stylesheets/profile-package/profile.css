@@ -633,7 +633,7 @@ div.profile-notification {
     background-color: #FFFFFF;
     opacity: 0.90;
     filter:alpha(opacity=90);
-    z-index: 101; /* must overlay the goal name shmedit .simple-input at z-index 100 */
+    z-index: 6; /* Must overlay  #achievement-list > ul li.selected at z-index 5 */
 }
 div.profile-notification.uncover-nav {
     top: 105px;

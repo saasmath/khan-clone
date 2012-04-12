@@ -1,11 +1,12 @@
-import os, logging
+import os
+import logging
 
 from google.appengine.ext import db, deferred
 from google.appengine.api import users
 import user_util
 import util
 from app import App
-from models import UserData
+from user_models import UserData
 from common_core.models import CommonCoreMap
 import request_handler
 import itertools
@@ -18,11 +19,14 @@ import urllib
 import csv
 import StringIO
 
+
 class Panel(request_handler.RequestHandler):
 
     @user_util.developer_only
     def get(self):
-        self.render_jinja2_template('devpanel/panel.html', { "selected_id": "panel" })
+        self.render_jinja2_template('devpanel/panel.html',
+                                    {"selected_id": "panel"})
+
 
 class MergeUsers(request_handler.RequestHandler):
 
@@ -36,7 +40,9 @@ class MergeUsers(request_handler.RequestHandler):
         merge_error = ""
 
         if not merged and bool(source) != bool(target):
-            merge_error = "Both source and target user emails must correspond to existing accounts before they can be merged."
+            merge_error = ("Both source and target user emails must "
+                           "correspond to existing accounts before they can "
+                           "be merged.")
 
         template_values = {
                 "selected_id": "users",
@@ -46,7 +52,8 @@ class MergeUsers(request_handler.RequestHandler):
                 "merge_error": merge_error,
         }
 
-        self.render_jinja2_template("devpanel/mergeusers.html", template_values)
+        self.render_jinja2_template("devpanel/mergeusers.html",
+                                    template_values)
 
     @user_util.developer_only
     def post(self):
@@ -64,8 +71,9 @@ class MergeUsers(request_handler.RequestHandler):
 
             old_source_email = source.email
 
-            # Make source the new official user, because it has all the historical data.
-            # Just copy over target's identifying properties.
+            # Make source the new official user, because it has all
+            # the historical data.  Just copy over target's
+            # identifying properties.
             source.current_user = target.current_user
             source.user_email = target.user_email
             source.user_nickname = target.user_nickname
@@ -77,14 +85,17 @@ class MergeUsers(request_handler.RequestHandler):
             # Delete target
             target.delete()
 
-            self.redirect("/devadmin/emailchange?merged=1&source_email=%s&target_email=%s" % (old_source_email, target.email))
+            self.redirect(("/devadmin/emailchange"
+                           "?merged=1&source_email=%s&target_email=%s")
+                          % (old_source_email, target.email))
             return
 
         self.redirect("/devadmin/emailchange")
         
+
 class Manage(request_handler.RequestHandler):
 
-    @user_util.admin_only # only admins may add devs, devs cannot add devs
+    @user_util.admin_only  # only admins may add devs, devs cannot add devs
     @ensure_xsrf_cookie
     def get(self):
         developers = UserData.all()
@@ -96,6 +107,7 @@ class Manage(request_handler.RequestHandler):
 
         self.render_jinja2_template('devpanel/devs.html', template_values) 
         
+
 class ManageCoworkers(request_handler.RequestHandler):
 
     @user_util.developer_only
@@ -116,6 +128,7 @@ class ManageCoworkers(request_handler.RequestHandler):
 
         self.render_jinja2_template("devpanel/coworkers.html", template_values)
         
+
 def update_common_core_map(cc_file):
     logging.info("Deferred job <update_common_core_map> started")
     reader = csv.reader(cc_file, delimiter='\t')
@@ -162,6 +175,7 @@ def update_common_core_map(cc_file):
 
     return
 
+
 class ManageCommonCore(request_handler.RequestHandler):
 
     @user_util.developer_only
@@ -171,7 +185,8 @@ class ManageCommonCore(request_handler.RequestHandler):
             "selected_id": "commoncore",
         } 
 
-        self.render_jinja2_template("devpanel/uploadcommoncorefile.html", template_values)
+        self.render_jinja2_template("devpanel/uploadcommoncorefile.html",
+                                    template_values)
 
     @user_util.developer_only
     @ensure_xsrf_cookie

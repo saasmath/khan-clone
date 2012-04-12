@@ -3,7 +3,7 @@ import os
 import datetime
 
 from google.appengine.ext import db
-from models import UserData
+from user_models import UserData
 
 class SummerPaypalTransaction(db.Model):
     transaction_id = db.StringProperty()

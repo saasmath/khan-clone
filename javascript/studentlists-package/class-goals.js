@@ -13,7 +13,7 @@ _.extend(ClassProfile, {
         $.each(data, function(idx1, student) {
             student.goal_count = 0;
             student.most_recent_update = null;
-            student.profile_url = student.profile_root + "/goals";
+            student.profile_url = student.profile_root + "goals";
 
             if (student.goals != undefined && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
@@ -38,7 +38,7 @@ _.extend(ClassProfile, {
                         }
                         objective.statusCSS = objective.status ? objective.status : "not-started";
                         objective.objectiveID = idx3;
-                        var base = student.profile_root + "/vital-statistics";
+                        var base = student.profile_root + "vital-statistics";
                         if (objective.type === "GoalObjectiveExerciseProficiency") {
                             objective.url = base + "/problems/" + objective.internal_id;
                         } else if (objective.type === "GoalObjectiveAnyExerciseProficiency") {

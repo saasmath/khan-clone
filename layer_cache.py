@@ -1,7 +1,5 @@
 # the following 3 imports are needed for blobcache
 from __future__ import with_statement
-from google.appengine.api import files
-from google.appengine.ext import blobstore
 
 import datetime
 import logging
@@ -354,6 +352,7 @@ def layer_cache_check_set_return(
                 return result
 
         # could not retrieve item from a permanent cache, raise the error on up
+        logging.exception(e)
         raise e
 
     if isinstance(result, UncachedResult):
@@ -574,7 +573,13 @@ class KeyValueCache(db.Model):
         values = {}
         for (key, key_value) in zip(keys, key_values):
             if key_value and not key_value.is_expired():
-                if key_value.pickled:
+                # legacy entries in key_value cache that were set with 
+                # persist_across_app_versions=True might still be around with
+                # .pickled=None.  Once we are sure they are all expired we can
+                # delete the "or key_value.pickled is None:"
+                # TODO(james): After May 2nd 2012 the default cache time of 25 
+                # days should have ended and the or can be removed.
+                if key_value.pickled or key_value.pickled is None:
                     values[key] = pickle.loads(key_value.value)
                 else:
                     values[key] = key_value.value
