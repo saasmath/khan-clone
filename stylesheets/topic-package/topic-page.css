@@ -195,7 +195,7 @@ a.main-video-link:hover {
     color: black;
     text-decoration: none;
 }
-.topic-page-content > .container > .content-pane .vid-progress {
+.topic-page-content > .container > .content-pane .videos-list .vid-progress {
     display: inline-block;
     padding-left: 14px;
     padding-top: 6px;
@@ -213,9 +213,12 @@ a.main-video-link:hover {
 .content-pane div.subtopics-list a.thumbnail_link:hover {
     text-decoration: none;
 }
-.content-pane div.main-header div.thumbnail_label,
-.content-pane div.subtopics-list div.thumbnail_label {
-    padding: 0px 10px;
+.content-pane div.main-header div.thumbnail_container {
+    width: 300px;
+    position: absolute;
+}
+.content-pane div.main-header div.thumbnail_label {
+    padding: 5px 10px;
     max-width: 280px;
     text-align: left;
     margin-left: 1px;
