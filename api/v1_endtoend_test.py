@@ -15,6 +15,7 @@ except ImportError:
     import unittest                  # python 2.6+
 
 
+@testsize.large()
 def setUpModule():
     handler_test_utils.start_dev_appserver()
 
@@ -29,7 +30,6 @@ class V1EndToEndTest(unittest.TestCase):
         return oauth_test_client.fetch_via_oauth(
             handler_test_utils.appserver_url + path)
 
-    @testsize.large()
     def testUser(self):
         r = self.fetch('/api/v1/user')    
         self.assertTrue("user_id" in r, r)

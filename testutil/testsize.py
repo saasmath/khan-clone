@@ -23,7 +23,7 @@ except ImportError:
 _VALID_SIZES = set(['small', 'medium', 'large'])
 
 _MAX_SIZE = 'large'
-"""Tests of this size or smaller may run"""
+"""Tests of this size and smaller may run"""
 
 
 def set_max_size(size):
@@ -43,7 +43,7 @@ def small():
 
 def medium():
     """Skip unless medium sized tests may run"""
-    if _MAX_SIZE in ['medium', 'large']:
+    if _MAX_SIZE in ('medium', 'large'):
         return lambda func: func
     return unittest.skip("skipping medium tests")
 
