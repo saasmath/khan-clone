@@ -33,6 +33,7 @@ import url_model
 import user_models
 import video_models
 
+
 class Users(object):
     """Various UserData objects."""
     def __init__(self):
@@ -92,8 +93,8 @@ class Users(object):
                                       15,        # time taken (in seconds?)
                                       False,     # being done in review mode?
                                       False,     # being done in topic/power mode?
-                                      "obsolete",  # problem_type
-                                      "127.0.0.1", # ip address
+                                      "obsolete",   # problem_type
+                                      "127.0.0.1",  # ip address
                                       async_problem_log_put=False)
         # TODO(csilvers): finish this 
 
