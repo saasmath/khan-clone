@@ -4,7 +4,7 @@ import logging
 from mapreduce import operation as op
 import facebook_util
 from google.appengine.ext import db
-import topic_models 
+import topic_models
 from reconstructor_patch import ReconstructorPatch
 import cPickle as pickle
 
@@ -103,22 +103,3 @@ def user_topic_migration(user_playlist):
         user_topic.seconds_migrated = user_playlist.seconds_watched
         user_topic.last_watched = user_playlist.last_watched
         yield op.db.Put(user_topic)
-
-
-def count_busted_goals(goal):
-    if isinstance(goal.objectives, list):
-        yield op.counters.Increment("goals_ok")
-    else:
-        yield op.counters.Increment("goals_busted_objectives")
-
-
-def fix_busted_goals(goal):
-    if not isinstance(goal.objectives, list):
-        logging.info("Fixing goal with key: %s" % goal.key())
-
-        with ReconstructorPatch():
-            objectives = pickle.loads(goal._entity['objectives'])
-        goal.objectives = objectives
-
-        logging.info("Fixed goal with key: %s" % goal.key())
-        yield op.db.Put(goal)
