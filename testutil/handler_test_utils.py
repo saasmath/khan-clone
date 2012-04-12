@@ -1,5 +1,4 @@
-"""
-Utilities for end-to-end tests on handlers.
+"""Utilities for end-to-end tests on handlers.
 
 end-to-end tests are tests that send a url to a running server and get
 a response back, and check that response to make sure it is 'correct'.
@@ -33,7 +32,11 @@ TODO(csilvers): create some 'fake' data that can be used for testing.
 
 Useful variables:
    appserver_url: url to access the running dev_appserver instance,
-      e.g. 'http://localhost:8080'
+      e.g. 'http://localhost:8080', or None if it's not running
+   tmpdir: the directory where the dev-appserver is running from,
+      also where its data files are stored
+   pid: the pid the dev-appserver is running on, or None if it's not
+      running
 """
 
 import os
@@ -44,16 +47,13 @@ import tempfile
 import time
 
 appserver_url = None
-
-
-# Vars used only internally, to communicate between start() and stop().
-_tmpdir = None
-_pid = None
+tmpdir = None
+pid = None
 
 
 def start_dev_appserver():
-    """Starts up a dev-appserver instance on an unused port."""
-    global appserver_url, _tmpdir, _pid
+    """Start up a dev-appserver instance on an unused port, return its url."""
+    global appserver_url, tmpdir, pid
 
     # Find the 'root' directory of the project the tests are being
     # run in.
@@ -68,12 +68,12 @@ def start_dev_appserver():
     # Create a 'sandbox' directory that symlinks to ka_root,
     # except for the 'datastore' directory (we don't want to mess
     # with your actual datastore for these tests!)
-    _tmpdir = tempfile.mkdtemp()
+    tmpdir = tempfile.mkdtemp()
     for f in os.listdir(ka_root):
         if 'datastore' not in f:
             os.symlink(os.path.join(ka_root, f),
-                       os.path.join(_tmpdir, f))
-    os.mkdir(os.path.join(_tmpdir, 'datastore'))
+                       os.path.join(tmpdir, f))
+    os.mkdir(os.path.join(tmpdir, 'datastore'))
 
     # Find an unused port to run the appserver on.  There's a small
     # race condition here, but we can hope for the best.  Too bad
@@ -96,16 +96,16 @@ def start_dev_appserver():
             '--high_replication',
             '--address=0.0.0.0',
             ('--datastore_path=%s'
-             % os.path.join(_tmpdir, 'datastore/test.sqlite')),
+             % os.path.join(tmpdir, 'datastore/test.sqlite')),
             ('--blobstore_path=%s'
-             % os.path.join(_tmpdir, 'blobs')),
-            _tmpdir]
+             % os.path.join(tmpdir, 'datastore/blobs')),
+            tmpdir]
     # Its output is noisy, but useful, so store it in tmpdir.  Third
     # arg to open() uses line-buffering so the output is available.
-    dev_appserver_file = os.path.join(_tmpdir, 'dev_appserver.log')
+    dev_appserver_file = os.path.join(tmpdir, 'dev_appserver.log')
     dev_appserver_output = open(dev_appserver_file, 'w', 1)
     print 'NOTE: Starting dev_appserver.py; output in %s' % dev_appserver_file
-    _pid = subprocess.Popen(args,
+    pid = subprocess.Popen(args,
                             stdout=dev_appserver_output,
                             stderr=subprocess.STDOUT).pid
 
@@ -124,26 +124,28 @@ def start_dev_appserver():
     global appserver_url
     appserver_url = 'http://localhost:%d' % dev_appserver_port
 
+    return appserver_url
 
-def stop_dev_appserver():
-    global appserver_url, _tmpdir, _pid
+
+def stop_dev_appserver(delete_tmpdir=True):
+    global appserver_url, tmpdir, pid
 
     # Try very hard to kill the dev_appserver process.
-    if _pid:
+    if pid:
         try:
-            os.kill(_pid, 15)
+            os.kill(pid, 15)
             time.sleep(1)
-            os.kill(_pid, 15)
+            os.kill(pid, 15)
             time.sleep(1)
-            os.kill(_pid, 9)
+            os.kill(pid, 9)
         except OSError:   # Probably 'no such process': the kill succeeded!
             pass
-        _pid = None
+        pid = None
 
     # Now delete the tmpdir we made.
-    if _tmpdir:
-        shutil.rmtree(_tmpdir, ignore_errors=True)
-        _tmpdir = None
+    if deletetmpdir and tmpdir:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+        tmpdir = None
 
     # We're done tearing down!
     appserver_url = None
