@@ -621,8 +621,8 @@ footer {
     font-size: 16px;
     position: relative;
     width: auto;
-    /* Position this at 30 so the white triangle appears on top of the page_sub_nav breadcrumbs border */
-    z-index: 30;
+    /* Must overlay .profile-notification at 101 */
+    z-index: 150;
 }
     #sitewide-navigation a {
         color: #263500;
