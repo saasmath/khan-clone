@@ -51,7 +51,7 @@ quickcheck:
 
 # Run lint checks
 lint:
-	tools/runpep8.sh
+	tools/runpep8.py
 
 # Run unit tests with XML test and code coverage reports
 
