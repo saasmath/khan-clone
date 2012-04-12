@@ -42,6 +42,7 @@ import request_cache
 import search
 import setting_model
 import templatetags
+import transaction_util
 import url_model
 import user_models
 import util
@@ -717,7 +718,7 @@ class Topic(search.Searchable, db.Model):
             db.put(updated_entities)
 
         self.version.update()
-        return db.run_in_transaction(move_txn)
+        return transaction_util.ensure_in_transaction(move_txn)
 
     # Ungroup takes all of a topics children, moves them up a level, then
     # deletes the topic
@@ -890,7 +891,8 @@ class Topic(search.Searchable, db.Model):
             setattr(new_topic, key, kwargs[key])
 
         version.update()
-        return db.run_in_transaction(Topic._insert_txn, new_topic)
+        return transaction_util.ensure_in_transaction(Topic._insert_txn,
+                                                      new_topic)
 
     def update(self, **kwargs):
         if self.version.default:
