@@ -38,7 +38,8 @@ def file_path_to_module(path):
     return path.replace('.py', '').replace(os.sep, '.')
 
 
-def discover_sdk_path():
+def _discover_sdk_path():
+    """Return directory from $PATH where the Google Appengine DSK lives."""
     # adapted from {http://code.google.com/p/bcannon/source/browse/
     # sites/py3ksupport-hrd/run_tests.py}
 
@@ -53,22 +54,30 @@ def discover_sdk_path():
     app_engine_path = os.path.join(os.path.dirname(path), 'google_appengine')
     if not os.path.isdir(app_engine_path):
         raise RuntimeError('%s is not a directory' % app_engine_path)
-    sys.path.append(app_engine_path)
+    return app_engine_path
 
 
-def main(test_spec, should_write_xml, max_size):
+def fix_sys_path(appengine_sdk_dir=None):
+    """Update sys.path for appengine and khan academy imports, also envvars."""
     if 'SERVER_SOFTWARE' not in os.environ:
         os.environ['SERVER_SOFTWARE'] = 'Development'
     if 'CURRENT_VERSION' not in os.environ:
         os.environ['CURRENT_VERSION'] = '764.1'
 
+    if not appengine_sdk_dir:
+        appengine_sdk_dir = _discover_sdk_path()
+    sys.path.append(appengine_sdk_dir)
     import dev_appserver
     dev_appserver.fix_sys_path()
+
     top_project_dir = os.path.realpath(os.path.join(__file__, '../..'))
     sys.path.insert(0, top_project_dir)
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages"))
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages/flask.zip"))
+    
 
+def main(test_spec, should_write_xml, max_size, appengine_sdk_dir=None):
+    # This import needs to happen after fix_sys_path is run.
     from testutil import testsize
     testsize.set_max_size(max_size)
 
@@ -108,10 +117,5 @@ if __name__ == '__main__':
     else:
         TEST_SPEC = os.getcwd()
 
-    if options.sdk:
-        sys.path.append(options.sdk)
-    else:
-        discover_sdk_path()
-
-    result = main(TEST_SPEC, options.xml, options.max_size)
+    result = main(TEST_SPEC, options.xml, options.max_size, options.sdk)
     sys.exit(result)
