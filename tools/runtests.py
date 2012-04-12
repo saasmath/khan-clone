@@ -77,6 +77,8 @@ def fix_sys_path(appengine_sdk_dir=None):
     
 
 def main(test_spec, should_write_xml, max_size, appengine_sdk_dir=None):
+    fix_sys_path(appengine_sdk_dir)
+
     # This import needs to happen after fix_sys_path is run.
     from testutil import testsize
     testsize.set_max_size(max_size)
