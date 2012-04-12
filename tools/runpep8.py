@@ -21,6 +21,12 @@ _BLACKLIST_FILE = os.path.join(os.path.dirname(__file__),
                                'runpep8_blacklist.txt')
 
 
+# W291 trailing whitespace
+# W293 blank line contains whitespace
+_DEFAULT_PEP8_ARGS = ['--repeat',
+                      '--ignore=W291,W293']
+
+
 def _parse_blacklist(blacklist_filename):
     """Read from blacklist filename and returns a set of the contents.
 
@@ -58,14 +64,14 @@ def _files_to_process(rootdir, blacklist):
     return retval
 
 
-def main(rootdir):
-    """Run pep8 on all files in rootdir, using sys.argv as the flag-list."""
+def main(rootdir, pep8_args):
+    """Run pep8 on all files in rootdir, using pep8_args as the flag-list."""
     blacklist = _parse_blacklist(_BLACKLIST_FILE)
     files = _files_to_process(rootdir, blacklist)
-    pep8.process_options(sys.argv + list(files))
+    pep8.process_options(pep8_args + list(files))
     for f in files:
         pep8.input_file(f)   # the weirdly-named function that does the work
 
 
 if __name__ == '__main__':
-    main('.')
+    main('.', [sys.argv[0]] + _DEFAULT_PEP8_ARGS)
