@@ -89,7 +89,7 @@ def add_next_topic(topics, prev_topic=None, depth=0):
                                         prev_topic=topic, 
                                         depth=depth + 1)
         else:
-             # set prev_topic to the current topic        
+            # set prev_topic to the current topic        
             prev_topic = topic
 
     # return last item in the list
