@@ -96,11 +96,6 @@ class VideoDataTest(request_handler.RequestHandler):
         for video in videos:
             self.response.out.write('<P>Title: ' + video.title)
 
-# Handler that displays a topic page if the URL matches
-# a pre-existing topic. (i.e. /math/algebra or just /algebra)
-# NOTE: Since there is no specific route we are matching,
-# this handler is registered as the default handler, so
-# anything it doesn't recognize should return a 404.
 class TopicPage(request_handler.RequestHandler):
 
     @staticmethod
@@ -123,14 +118,21 @@ class TopicPage(request_handler.RequestHandler):
     @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, path):
+        """ Display a topic page if the URL matches a pre-existing topic,
+        such as /math/algebra or /algebra
+        
+        NOTE: Since there is no specific route we are matching,
+        this handler is registered as the default handler, 
+        so unrecognized paths will return a 404.
+        """
+        if path.endswith('/'):
+            # Canonical paths do not have trailing slashes
+            path = path[:-1]
+
         path_list = path.split('/')
         if len(path_list) > 0:
             # Only look at the actual topic ID
             topic = topic_models.Topic.get_by_id(path_list[-1])
-
-            # Handle a trailing slash
-            if not topic and path_list[-1] == "":
-                topic = topic_models.Topic.get_by_id(path_list[-2])
 
             if topic:
                 # Begin topic pages A/B test
@@ -688,6 +690,7 @@ application = webapp2.WSGIApplication([
 
     ('/labs/explorations', labs.explorations.RequestHandler),
     ('/labs/explorations/([^/]+)', labs.explorations.RequestHandler),
+    ('/labs/socrates', socrates.SocratesIndexHandler),
     ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.

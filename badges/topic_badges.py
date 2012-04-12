@@ -1,5 +1,6 @@
 from badges import Badge, BadgeContextType
 
+
 # All badges that may be awarded once-per-Topic inherit from TopicBadge
 class TopicBadge(Badge):
 
@@ -12,7 +13,8 @@ class TopicBadge(Badge):
         if user_topic is None:
             return False
 
-        return self.name_with_target_context(user_topic.title) in user_data.badges
+        return (self.name_with_target_context(user_topic.title)
+                in user_data.badges)
 
     def award_to(self, user_data, *args, **kwargs):
         user_topic = kwargs.get("user_topic", None)
@@ -20,4 +22,3 @@ class TopicBadge(Badge):
             return False
 
         self.complete_award_to(user_data, None, user_topic.title)
-

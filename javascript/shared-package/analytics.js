@@ -17,6 +17,12 @@
 
 (function() {
 
+    // TODO(benkomalo): do this in a more appropriate common library.
+    // Patch Date.now for IE8.
+    var getNow = Date.now || function() {
+        return +(new Date);
+    };
+
     var currentPage = null;
     var currentPageLoadTime = 0;
     var currentTrackingActivity = null;
@@ -39,7 +45,7 @@
                     persistData = $.parseJSON(sessionStorage.getItem("ka_analytics"));
                 } catch (e) { }
 
-                var currentTimeMS = Date.now();
+                var currentTimeMS = getNow();
 
                 // Time out persist data after a minute
                 if (persistData && (currentTimeMS - persistData.timestamp) < 60 * 1000) {
@@ -80,7 +86,7 @@
         // Save the queue to sessionStorage
         storePersistData: function() {
             if (window.sessionStorage) {
-                this.persistData.timestamp = Date.now();
+                this.persistData.timestamp = getNow();
                 var persistDataJSON = JSON.stringify(this.persistData);
 
                 sessionStorage.setItem("ka_analytics", persistDataJSON);
@@ -100,20 +106,20 @@
     };
 
     window.Analytics = {
-        
+
         getVersionNumber: function() {
             return 1;
         },
 
         // Called once on every page load (if MixPanel is enabled)
         trackInitialPageLoad: function(startTime) {
-            var landingPage = (document.referrer.split('/')[2] === "www.khanacademy.org");
+            var landingPage = (document.referrer.split("/")[2] === "www.khanacademy.org");
 
             analyticsStore.loadAndSendPersistData();
 
             // Send the final event before unloading the page
             $(window).unload(function() {
-                Analytics._trackActivityEnd(Date.now());
+                Analytics._trackActivityEnd(getNow());
             });
 
             // Add event handler for decorated links
@@ -138,19 +144,19 @@
             // 4 hour timeout: stop collecting analytics
             setTimeout(function() {
                 // End whatever activity is currently going on
-                var currentTimeMS = Date.now();
+                var currentTimeMS = getNow();
                 Analytics._trackActivityEnd(currentTimeMS);
 
                 // Disable further sending of events
                 currentPage = null;
-            }, 4*60*60*1000);
+            }, 4 * 60 * 60 * 1000);
         },
 
         // Called once on arriving at a page (if MixPanel is enabled)
         // Differs from trackInitialPageLoad because using a Backbone Router
         // to navigate will trigger trackPageLoad.
         trackPageLoad: function(startTime, landingPage) {
-            var currentTimeMS = Date.now();
+            var currentTimeMS = getNow();
             var loadTimeS = (startTime > 0) ? Math.floor((currentTimeMS - startTime) / 1000.0) : 0;
 
             analyticsStore.addEvent({
@@ -174,7 +180,7 @@
             } else {
                 var pageCount = analyticsStore.getTrackingProperty("Session Pages");
                 if (pageCount) {
-                    analyticsStore.setTrackingProperty("Session Pages", pageCount+1);
+                    analyticsStore.setTrackingProperty("Session Pages", pageCount + 1);
                 }
             }
 
@@ -205,7 +211,7 @@
                 return null;
             }
 
-            var currentTimeMS = Date.now();
+            var currentTimeMS = getNow();
 
             this._trackActivityEnd(currentTimeMS);
 
@@ -225,7 +231,7 @@
         // restart the default Page View activity.
         trackActivityEnd: function(event) {
             if (event == currentTrackingActivity) {
-                var currentTimeMS = Date.now();
+                var currentTimeMS = getNow();
                 this._trackActivityEnd(currentTimeMS);
 
                 // Go back to "Page View" mode because nothing else is active
@@ -266,11 +272,11 @@
         // Track an instantaneous event with no duration.
         trackSingleEvent: function(eventName, parameters) {
             if (!currentPage) {
-                eventQueue.push({name: eventName, parameters: parameters});               
+                eventQueue.push({name: eventName, parameters: parameters});
                 return;
             }
 
-            var currentTimeMS = Date.now();
+            var currentTimeMS = getNow();
 
             parameters["Page"] = currentPage;
             parameters[eventName + " Page Time (s)"] = Math.floor((currentTimeMS - currentPageLoadTime) / 1000.0);

@@ -2,9 +2,11 @@ import re
 import subprocess
 import os
 
+
 def popen_results(args):
     proc = subprocess.Popen(args, stdout=subprocess.PIPE)
     return proc.communicate()[0]
+
 
 def pngcrush_image(path, name):
 
@@ -19,6 +21,7 @@ def pngcrush_image(path, name):
     output_move = popen_results(['mv', path_new, path_old])
     print(output_move)
 
+
 def pngcrush_images():
     print "pngcrushing images"
     path = os.path.join(os.path.dirname(__file__), "..", "images")
@@ -28,9 +31,9 @@ def pngcrush_images():
             if name.lower().endswith(".png"):
                 pngcrush_image(root, name)
 
+
 def main():
     pngcrush_images()
 
 if __name__ == "__main__":
     main()
-
