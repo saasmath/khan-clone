@@ -26,10 +26,7 @@ class ReconstructorTest(BaseTest):
             obj = pickle.loads(self.working)
             self.assertIsInstance(obj, list)
 
-    # TODO(benkomalo): this test may be broken due to the models.py split up.
-    # Investigate and fix. If you see this disabled past April 13, 2012, feel
-    # free to delete.
-    def DISABLED_test_patch_should_depickle_new_style_refs(self):
+    def test_patch_should_depickle_new_style_refs(self):
         # first make sure that the busted one doesn't work
         with self.assertRaises(TypeError):
             pickle.loads(self.busted)
