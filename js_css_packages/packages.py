@@ -6,6 +6,8 @@
 #
 
 transformations = {}
+
+
 def register_conditional_file(debug_name, prod_name):
     """ Registers a file that has two versions: one for debug and one for
     production.
@@ -27,7 +29,7 @@ javascript = {
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "jquery.qtip.js",
-            "../../khan-exercises/utils/underscore.js",
+            "underscore.js",
             "underscore-extras.js",
             "keyhandling.js",
             "backbone.js",
@@ -386,6 +388,7 @@ stylesheets = {
             "bootstrap-alerts.css",
             "bootstrap-tables.css",
             "socrates.css",
+            "timebar.css",
         ]
     },
     "topic": {

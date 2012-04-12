@@ -48,7 +48,8 @@ class UpdatedOnTest(unittest.TestCase):
         t = TestModel.all().get()
         dt_after_delayed_put = t.updated_on
 
-        self.assertGreater(dt_after_delayed_put - dt_after_read, timedelta(0, 1, 0))
+        self.assertGreater(dt_after_delayed_put - dt_after_read,
+                           timedelta(0, 1, 0))
 
     @testsize.medium()
     def test_auto_now_disabled(self):

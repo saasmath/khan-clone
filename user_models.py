@@ -256,7 +256,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         else:
             root += self.prettified_user_email
 
-        return root
+        return root + "/"
 
     # Return data about the user that we'd like to track in MixPanel
     @staticmethod

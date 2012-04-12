@@ -3,6 +3,7 @@ from time import mktime
 import cPickle as pickle
 import datetime as dt
 
+
 class ExerciseStatisticShard(db.Model):
     exid = db.StringProperty(required=True)
     start_dt = db.DateTimeProperty(required=True)
@@ -16,6 +17,7 @@ class ExerciseStatisticShard(db.Model):
         unix_end = int(mktime(end_dt.timetuple()))
         key_name = "%s_%d_%d_%s" % (exid, unix_start, unix_end, cursor)
         return key_name
+
 
 class ExerciseStatistic(db.Model):
     exid = db.StringProperty(required=True)
@@ -50,11 +52,12 @@ class ExerciseStatistic(db.Model):
 
     @staticmethod
     def get_by_dates_and_exids(exids, dates):
-        # TODO: Optimizations: we could either parallelize the datastore calls or
-        #     do a batch get of all the keys to reduce round trips
+        # TODO: Optimizations: we could either parallelize the
+        # datastore calls or do a batch get of all the keys to reduce
+        # round trips
         ex_stats = []
         for exid in exids:
-            ex_stats += [ ExerciseStatistic.get_by_date(exid, d) for d in dates ]
+            ex_stats += [ExerciseStatistic.get_by_date(exid, d) for d in dates]
 
         return filter(lambda x: x != None, ex_stats)
 

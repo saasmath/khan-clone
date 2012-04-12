@@ -41,20 +41,6 @@ mapreduce:
     - name: processing_rate
       default: 350
 
-- name: BackfillUserDataHasCurrentGoal
-  mapper:
-    input_reader: mapreduce.input_readers.DatastoreInputReader
-    handler: backfill.fix_has_current_goal
-    params:
-    - name: entity_kind
-      default: models.Goal
-    - name: shard_count
-      default: 64
-    - name: queue_name
-      default: backfill-mapreduce-queue
-    - name: processing_rate
-      default: 350
-
 - name: BackfillUserTopicMigration
   mapper:
     input_reader: mapreduce.input_readers.DatastoreInputReader
@@ -68,31 +54,3 @@ mapreduce:
       default: backfill-mapreduce-queue
     - name: processing_rate
       default: 450
-
-- name: CountBustedGoals
-  mapper:
-    input_reader: mapreduce.input_readers.DatastoreInputReader
-    handler:  backfill.count_busted_goals
-    params:
-    - name: entity_kind
-      default: goals.models.Goal
-    - name: shard_count
-      default: 64
-    - name: queue_name
-      default: backfill-mapreduce-queue
-    - name: processing_rate
-      default: 350
-
-- name: FixBustedGoals
-  mapper:
-    input_reader: mapreduce.input_readers.DatastoreInputReader
-    handler:  backfill.fix_busted_goals
-    params:
-    - name: entity_kind
-      default: goals.models.Goal
-    - name: shard_count
-      default: 64
-    - name: queue_name
-      default: backfill-mapreduce-queue
-    - name: processing_rate
-      default: 350

@@ -25,7 +25,7 @@
                 url: "/api/v1/topic/" + topicID + "/topic-page?casing=camel",
                 dataType: "json",
                 success: function(rootTopic) {
-                    rootPath = "/" + rootTopic.extendedSlug;
+                    rootPath = "/" + rootTopic.extendedSlug + "/";
                     TopicPage.finishInit(rootPath, rootTopic);
                 }
             });
@@ -49,12 +49,12 @@
 
             $(".topic-page-content").on("click", ".topic-page-content a.subtopic-link", function() {
                 selectedID = $(this).attr("data-id");
-                self.router.navigate("/" + selectedID, true);
+                self.router.navigate(selectedID, true);
                 return false;
             });
             $(".topic-page-content").on("click", ".topic-page-content a.subtopic-link-and-scroll", function() {
                 selectedID = $(this).attr("data-id");
-                self.router.navigate("/" + selectedID, true);
+                self.router.navigate(selectedID, true);
                 $("body").animate( {scrollTop:0}, 200, "easeInOutCubic");
                 return false;
             });

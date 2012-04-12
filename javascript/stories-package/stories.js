@@ -35,7 +35,7 @@ Stories.render = function(storyData) {
     Stories.router = new Stories.StoryRouter();
     Backbone.history.start({
         pushState: true,
-        root: "/stories"
+        root: "/stories/"
     });
 
 };
@@ -181,7 +181,7 @@ Stories.FullView = Backbone.View.extend({
 
         $(this.el)
             .html(this.template(this.model))
-           .find(".prev-btn")
+            .find(".prev-btn")
                 .not(".disabled")
                     .click(function() { Stories.navigateTo(model.prev_story); })
                     .end()
@@ -196,7 +196,7 @@ Stories.FullView = Backbone.View.extend({
 
 Stories.navigateTo = function(model) {
     if (model) {
-        Stories.router.navigate("/" + model.name, true);
+        Stories.router.navigate(model.name, true);
     }
     else {
         Stories.router.navigate("");
@@ -207,7 +207,7 @@ Stories.StoryRouter = Backbone.Router.extend({
 
     routes: {
         "": "showNone",
-        "/:story": "showStory"
+        ":story": "showStory"
     },
 
     showNone: function() {
