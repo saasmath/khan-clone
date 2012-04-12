@@ -10,8 +10,8 @@ class ConsecutiveActivityBadge(Badge):
         if user_data is None:
             return False
 
-        return (user_data.current_consecutive_activity_days()
-                >= self.days_required)
+        return (user_data.current_consecutive_activity_days() >=
+                self.days_required)
 
     def extended_description(self):
         return ("Watch part of any video or work on any skill each day for "

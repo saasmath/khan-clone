@@ -61,8 +61,8 @@ def retrieve_facebook_access_token(oauth_map):
         pass
 
     if expires_seconds:
-        oauth_map.expires = (datetime.datetime.now()
-                             + datetime.timedelta(seconds=expires_seconds))
+        oauth_map.expires = (datetime.datetime.now() +
+                             datetime.timedelta(seconds=expires_seconds))
 
     return oauth_map
 

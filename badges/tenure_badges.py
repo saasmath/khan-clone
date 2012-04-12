@@ -13,15 +13,15 @@ class TenureBadge(Badge):
             return False
 
         # Make sure they've been a member for at least X years
-        if user_data.joined is None or (util.seconds_since(user_data.joined)
-                                        < self.seconds_required):
+        if user_data.joined is None or (util.seconds_since(user_data.joined) <
+                                        self.seconds_required):
             return False
 
         return True
 
     def extended_description(self):
-        return ("Remain a member of the Khan Academy for %s"
-                % seconds_to_time_string(self.seconds_required))
+        return ("Remain a member of the Khan Academy for %s" %
+                seconds_to_time_string(self.seconds_required))
 
 
 class YearOneBadge(TenureBadge):

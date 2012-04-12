@@ -13,8 +13,8 @@ class TopicBadge(Badge):
         if user_topic is None:
             return False
 
-        return (self.name_with_target_context(user_topic.title)
-                in user_data.badges)
+        return (self.name_with_target_context(user_topic.title) in
+                user_data.badges)
 
     def award_to(self, user_data, *args, **kwargs):
         user_topic = kwargs.get("user_topic", None)

@@ -45,8 +45,8 @@ def add_user():
         dont_care, email, name, title, is_admin, password, timezone = argv
     except ValueError:
         raise ArgsException(
-            "%s <email> <name> <title> <is_admin> <password> <timezone>"
-            % argv[0])
+            "%s <email> <name> <title> <is_admin> <password> <timezone>" %
+            argv[0])
     init_sys_cfg()
     print hipchat.user.User.create(email=email,
                                    name=name,
