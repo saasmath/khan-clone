@@ -269,13 +269,13 @@ var Profile = {
         },
 
         showDiscussion: function() {
-            Profile.populateDiscussion();
-
             $("#tab-content-discussion").show()
                 .siblings().hide();
 
             this.activateRelatedTab("community discussion");
             this.updateTitleBreadcrumbs(["Discussion"]);
+
+            Profile.populateDiscussion();
         },
 
         settingsIframe_: null,
@@ -577,7 +577,7 @@ var Profile = {
     showNotification: function(className) {
         var jel = $(".profile-notification").removeClass("uncover-nav");
 
-        if (className === "empty-graph") {
+        if (className === "empty-graph" || className === "no-discussion") {
             jel.addClass("uncover-nav");
         }
 
@@ -945,7 +945,12 @@ var Profile = {
     },
 
     discussionDeferred_: null,
+    noDiscussion_: false,
     populateDiscussion: function() {
+        if (Profile.hasDiscussion_) {
+            Profile.showNotification("no-discussion");
+        }
+
         if (Profile.discussionDeferred_) {
             return Profile.discussionDeferred_;
         }
@@ -961,19 +966,24 @@ var Profile = {
                 },
                 dataType: "json",
                 success: function(data) {
-                    var context = data,
-                        template = Templates.get("profile.questions-list");
+                    if (data.length === 0) {
+                        Profile.noDiscussion_ = true;
+                        Profile.showNotification("no-discussion");
+                        return;
+                    }
+
+                    var template = Templates.get("profile.questions-list");
 
                     // Order questions from oldest to newest
-                    context = _.sortBy(context, function(question) {
+                    data = _.sortBy(data, function(question) {
                         return question["lastDate"];
                     });
 
                     // Then reverse to get newest to oldest
-                    context.reverse();
+                    data.reverse();
 
                     $("#tab-content-discussion")
-                        .append(template(context))
+                        .append(template(data))
                         .find("div.timeago").timeago();
 
                     var jelUnread = $("#tab-content-discussion").find(".unread");
