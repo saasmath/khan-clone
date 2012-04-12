@@ -143,7 +143,7 @@ def stop_dev_appserver(delete_tmpdir=True):
         pid = None
 
     # Now delete the tmpdir we made.
-    if deletetmpdir and tmpdir:
+    if delete_tmpdir and tmpdir:
         shutil.rmtree(tmpdir, ignore_errors=True)
         tmpdir = None
 
