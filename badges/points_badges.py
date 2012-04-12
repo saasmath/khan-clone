@@ -14,8 +14,8 @@ class PointBadge(Badge):
         return user_data.points >= self.required_points
 
     def extended_description(self):
-        return ("Earn %s energy points"
-                % util.thousands_separated_number(self.required_points))
+        return ("Earn %s energy points" %
+                util.thousands_separated_number(self.required_points))
 
 
 class TenThousandaireBadge(PointBadge):

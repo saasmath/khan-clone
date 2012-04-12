@@ -16,8 +16,8 @@ def gandalf(bridge_name):
 
     if not bridge:
         if not App.is_dev_server:
-            logging.error("User tried to cross non-existent bridge '%s'"
-                          % bridge_name)
+            logging.error("User tried to cross non-existent bridge '%s'" %
+                          bridge_name)
         return False
 
     filters = gandalf_cache.get_filter_models(bridge_name)

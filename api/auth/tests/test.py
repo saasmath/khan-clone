@@ -35,8 +35,8 @@ def get_access_token():
 
 def get_api_resource():
 
-    resource_url = (raw_input("Resource relative url (/api/v1/playlists): ")
-                    or "/api/v1/playlists")
+    resource_url = (raw_input("Resource relative url (/api/v1/playlists): ") or
+                    "/api/v1/playlists")
 
     client = TestOAuthClient(SERVER_URL, CONSUMER_KEY, CONSUMER_SECRET)
     response = client.access_resource(resource_url, ACCESS_TOKEN)
