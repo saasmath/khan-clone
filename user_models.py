@@ -117,10 +117,12 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     last_activity = db.DateTimeProperty(indexed=False)
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
 
-    # Last discussion notifications view date in UTC, added Apr 2012
-    last_discussion_view = db.DateTimeProperty(indexed=False)
+    # Last discussion notifications view date in UTC
+    last_discussion_view = db.DateTimeProperty(default=datetime.datetime.min,
+                                                indexed=False)
     # Count of new notifications since last_discussion_view
-    count_feedback_notification = db.IntegerProperty(default= -1, indexed=False)
+    count_feedback_notification = db.IntegerProperty(default= -1,
+                                                        indexed=False)
 
     question_sort_order = db.IntegerProperty(default= -1, indexed=False)
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
@@ -851,8 +853,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
                     "WHERE user = :1", self.user)
 
             questions = set(n.feedback.question_key() for n in notifications
-                            if ((not self.last_discussion_view) or
-                                (n.feedback.date > self.last_discussion_view)))
+                            if n.feedback.date > self.last_discussion_view)
 
             self.count_feedback_notification = len(questions)
             self.put()
@@ -861,7 +862,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     def reset_feedback_notifications_count(self):
         self.count_feedback_notification = 0
-        self.last_discussion_view = datetime.datetime.now()
+        self.last_discussion_view = datetime.datetime.utcnow()
         self.put()
 
     def save_goal(self, goal):
