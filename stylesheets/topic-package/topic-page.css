@@ -72,34 +72,37 @@ a.main-video-link:hover {
 }
 
 .topic-page-content > .container > .nav-pane {
-/*    display: inline-block;*/
+    display: inline-block;
     background-color: #f4f4f5;
     border-right: solid 1px #ccc;
-/*    width: 300px;
+    width: 300px;
     padding-left: 10px;
-*/    padding-bottom: 10px;
-/*    margin-bottom: -510px;*/
+    padding-bottom: 10px;
+    margin-bottom: -510px;
+}
+
+.topic-page-content > .container > .nav-pane-spacer {
+    display: inline-block;
+    width: 330px;
+    height: 100%;
 }
 
 .topic-page-content > .container > .nav-pane h2 {
     font-family: "MuseoSans500", sans-serif;
-    font-size: 22px;
+    font-size: 25px;
     line-height: 32px;
     margin: 10px 0px;
-    padding-left:8px;
 }
 
 .topic-page-content > .container > .nav-pane > ul {
-    width: 100%;
+    width: 240px;
     margin-top: 0px;
-    padding: 12px 0 3px 0;
+    padding: 3px 0;
+    padding-top: 12px;
 }
-
-/*All elements in the nav row*/
 .topic-page-content > .container > .nav-pane > ul > li {
     position: relative;
-    float: right;
-    width: 95%;
+    width: 302px;
 }
 .topic-page-content > .container > .nav-pane > ul > li.subheading {
     padding-top: 20px;
@@ -120,8 +123,7 @@ a.main-video-link:hover {
     letter-spacing: 0;
     font-family: MuseoSans300;
     color: #333;
-/*    width: 271px;*/
-    text-overflow:ellipsis;
+    width: 271px;
     font-weight: normal;
     font-size: 16px;
     padding: 8px 8px;
@@ -140,7 +142,6 @@ a.main-video-link:hover {
     margin-top: -4px;
     right: 8px;
 }
-/* This is the h2 header */
 .topic-page-content > .container > .nav-pane > ul > li.selected > a {
     text-decoration: none;
     background-color: #fff;
@@ -148,22 +149,20 @@ a.main-video-link:hover {
     border-top: solid 1px #ccc;
     border-bottom: solid 1px #ccc;
     border-right: solid 1px #fff;
-    float:right;
-    margin-right:-1px;
-    width:95%;
+    padding: 7px 21px 7px 7px;
 }
 .topic-page-content > .container > .nav-pane > ul > li.selected > a > .right-arrow {
     right: 9px;
 }
 
 .topic-page-content > .container > .content-pane {
-/*    display: inline-block;
-*/    vertical-align: top;
-/*    width: 1162px*/
+    display: inline-block;
+    vertical-align: top;
+    width: 1162px
 }
 .topic-page-content > .container > .content-pane.indent {
-/*    width: 790px;*/
-    margin-left: 16px;
+    width: 66%;
+    padding-left: 16px;
 }
 
 .topic-page-content > .container > .content-pane .topic-loading {
@@ -267,11 +266,11 @@ a.main-video-link:hover {
     background-position: 0px -37px;
     width: 300px;
     height: 160px;
-/*    border: 1px solid #aaa;*/
-/*    -webkit-box-shadow: 0 0 3px #ccc;
+    border: 1px solid #aaa;
+    -webkit-box-shadow: 0 0 3px #ccc;
     -moz-box-shadow: 0 0 3px #ccc;
     box-shadow: 0 0 3px #ccc;
-*/    background-size: 300px 234px;
+    background-size: 300px 234px;
 }
 
 .content-pane div.main-header .topic-video {
@@ -290,8 +289,8 @@ a.main-video-link:hover {
     overflow: hidden;
 }
 .content-pane div.subtopics-list {
-/*    width: 390px;*/
-/*    display: inline-block;*/
+    width: 390px;
+    display: inline-block;
     margin-left: -1px;
 }
 .content-pane div.subtopics-list.second {
@@ -307,7 +306,7 @@ a.main-video-link:hover {
 }
 .content-pane div.subtopics-list .subtopic {
     position: relative;
-/*    float: left;*/
+    float: left;
     width: 100%;
     height: 102px;
 }
@@ -327,37 +326,26 @@ a.main-video-link:hover {
     vertical-align: top;
 }
 .content-pane div.subtopics-list .thumb {
+    display: inline-block;
     background-position: no-repeat top left;
-    position:absolute;
-    top:10px;
-/*    width: 140px;
-*/    height: 80px;
-      width:35%;
-/*      max-width:140px;*/
-      overflow: hidden;
-/*    border: 1px solid #aaa;*/
-/*    -webkit-box-shadow: 0 0 3px #ccc;*/
-/*    -moz-box-shadow: 0 0 3px #ccc;*/
-/*    box-shadow: 0 0 3px #ccc;*/
+    width: 140px;
+    height: 80px;
+    border: 1px solid #aaa;
+    -webkit-box-shadow: 0 0 3px #ccc;
+    -moz-box-shadow: 0 0 3px #ccc;
+    box-shadow: 0 0 3px #ccc;
     background-size: 140px 80px;
-/*    margin: 10px 5px 10px 14px;*/
-}
-
-.content-pane div.subtopics-list .thumb img {
-  width:140px;
-  height:80px;
-  margin-left:10%;
+    margin: 10px 5px 10px 14px;
 }
 
 .content-pane div.subtopics-list .topic-info {
     position: relative;
-    left:40%;
-/*    display: inline-block;*/
-/*    width: 224px;*/
+    display: inline-block;
+    width: 224px;
     height: 68px;
     padding-top: 10px;
     padding-bottom: 20px;
-/*    vertical-align: top;*/
+    vertical-align: top;
 }
 .content-pane div.subtopics-list .topic-info .topic-title {
     font-family: "MuseoSans500", sans-serif;
@@ -375,7 +363,7 @@ a.main-video-link:hover {
     position: absolute;
     font-size: 10pt;
     left: 0px;
-    bottom: 10px;
+    bottom: 5px;
 }
 
 .content-pane div.videos-list .videos-header {

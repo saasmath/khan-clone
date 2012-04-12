@@ -12,38 +12,34 @@
     </div>
   </div>
   <div class="subtopic-header">Topics</div>
-  <div class="subtopic-list-container row-fluid">
-    <div class="subtopics-list first span6">
-      {{#each subtopicsA }}
-        <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{else}}first{{/if}}">
-          <a class="subtopic-link-and-scroll row-fluid" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
-            <div class="thumb">
-              <img src="{{ thumbnailLink.thumbUrls.hq }}">
-            </div>
-            <div class="topic-info">
-              <div class="topic-title">{{ title }}</div>
-              <div class="topic-description">{{{ ellipsis description descriptionTruncateLength }}}</div>
-              <div class="topic-video-count">Browse {{ childCount }} videos</div>
-            </div>  
-          </a>
-        </div>
-      {{/each}}
-    </div>
-    <div class="subtopics-list second span6">
-      {{#each subtopicsB }}
-        <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{else}}first{{/if}}">
-          <a class="subtopic-link-and-scroll row-fluid" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
-            <div class="thumb span4">
-              <img src="{{ thumbnailLink.thumbUrls.hq }}">
-            </div>
-            <div class="topic-info span8">
-              <div class="topic-title">{{ title }}</div>
-              <div class="topic-description">{{{ ellipsis description descriptionTruncateLength }}}</div>
-              <div class="topic-video-count">Browse {{ childCount }} videos</div>
-            </div>  
-          </a>
-        </div>
-      {{/each}}
-    </div>
+  <div class="subtopic-list-container">
+  <div class="subtopics-list first">
+    {{#each subtopicsA }}
+      <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{else}}first{{/if}}">
+        <a class="subtopic-link-and-scroll" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
+          <div class="thumb" style="background-image:url('{{ thumbnailLink.thumbUrls.hq }}')"></div>
+        <div class="topic-info">
+          <div class="topic-title">{{ title }}</div>
+          <div class="topic-description">{{{ ellipsis description descriptionTruncateLength }}}</div>
+          <div class="topic-video-count">Browse {{ childCount }} videos</div>
+        </div>  
+        </a>
+      </div>
+    {{/each}}
+  </div>
+  <div class="subtopics-list second">
+    {{#each subtopicsB }}
+      <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{else}}first{{/if}}">
+        <a class="subtopic-link-and-scroll" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
+          <div class="thumb" style="background-image:url('{{ thumbnailLink.thumbUrls.hq }}')"></div>
+        <div class="topic-info">
+          <div class="topic-title">{{ title }}</div>
+          <div class="topic-description">{{{ ellipsis description descriptionTruncateLength }}}</div>
+          <div class="topic-video-count">Browse {{ childCount }} videos</div>
+        </div>  
+        </a>
+      </div>
+    {{/each}}
+  </div>
   </div>
 </div>
