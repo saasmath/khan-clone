@@ -1,13 +1,12 @@
-import math
-
 from jinja2.utils import escape
 
 from api import jsonify as apijsonify
 from templatefilters import slugify
-import models
 import shared_jinja
 import layer_cache
-from models import Exercise
+import exercise_models
+import setting_model
+import topic_models
 import util
 
 
@@ -70,8 +69,8 @@ def exercise_message(exercise, user_exercise_graph, sees_graph=False,
             for prereq in exercise.prerequisites:
                 if prereq not in proficient_exercises:
                     suggested_prereqs.append({
-                          'ka_url': Exercise.get_relative_url(prereq),
-                          'display_name': Exercise.to_display_name(prereq),
+                          'ka_url': exercise_models.Exercise.get_relative_url(prereq),
+                          'display_name': exercise_models.Exercise.to_display_name(prereq),
                           })
         exercise_states['suggested_prereqs'] = apijsonify.jsonify(
                 suggested_prereqs)
@@ -89,42 +88,17 @@ def user_points(user_data):
 
     return {"points": points}
 
-def streak_bar(user_exercise_dict):
-    progress = user_exercise_dict["progress"]
-
-    bar_max_width = 228
-    bar_width = min(1.0, progress) * bar_max_width
-
-    levels = []
-    if user_exercise_dict["summative"]:
-        c_levels = user_exercise_dict["num_milestones"]
-        level_offset = bar_max_width / float(c_levels)
-        for ix in range(c_levels - 1):
-            levels.append(math.ceil((ix + 1) * level_offset) + 1)
-
-    template_values = {
-        "is_suggested": user_exercise_dict["suggested"],
-        "is_proficient": user_exercise_dict["proficient"],
-        "float_progress": progress,
-        "progress": models.UserExercise.to_progress_display(progress),
-        "bar_width": bar_width,
-        "bar_max_width": bar_max_width,
-        "levels": levels
-    }
-
-    return shared_jinja.get().render_template("streak_bar.html", **template_values)
-
 @layer_cache.cache_with_key_fxn(lambda browser_id, version_number=None:
     "Templatetags.topic_browser_%s_%s" % (
     browser_id, 
-    version_number if version_number else models.Setting.topic_tree_version()))
+    version_number if version_number else setting_model.Setting.topic_tree_version()))
 def topic_browser(browser_id, version_number=None):
     if version_number:
-        version = models.TopicVersion.get_by_number(version_number)
+        version = topic_models.TopicVersion.get_by_number(version_number)
     else:
         version = None
 
-    root = models.Topic.get_root(version)
+    root = topic_models.Topic.get_root(version)
     if not root:
         return ""
 
@@ -132,8 +106,8 @@ def topic_browser(browser_id, version_number=None):
 
     # TODO(tomyedwab): Remove this once the confusion over the old Developmental Math playlists settles down
     if not version:
-        version = models.TopicVersion.get_default_version()
-    developmental_math = models.Topic(
+        version = topic_models.TopicVersion.get_default_version()
+    developmental_math = topic_models.Topic(
         id="developmental-math",
         version=version,
         title="Developmental Math",
@@ -156,7 +130,7 @@ def topic_browser_tree(tree, level=0):
         if not child.has_children_of_type(["Topic", "Video", "Url"]):
             continue
 
-        if not child.children or child.id in models.Topic._super_topic_ids:
+        if not child.children or child.id in topic_models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
                 continue
@@ -183,7 +157,7 @@ def topic_browser_tree(tree, level=0):
 
     return s
 
-def topic_browser_get_topics(tree, level=0):
+def topic_browser_get_topics(tree, level=0, show_topic_pages=False):
     """ Return a two-level tree of topics that we use to build the
         topic browser in the page header. """
 
@@ -196,7 +170,7 @@ def topic_browser_get_topics(tree, level=0):
         if not child.has_children_of_type(["Topic", "Video", "Url"]):
             continue
 
-        if not child.children or child.id in models.Topic._super_topic_ids:
+        if not child.children or child.id in topic_models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
                 continue
@@ -208,7 +182,7 @@ def topic_browser_get_topics(tree, level=0):
             # Show leaf node as a link
             item_list.append({
                 "level": level,
-                "href": child.relative_url,
+                "href": child.topic_page_url if show_topic_pages else child.relative_url,
                 "title": child.title,
                 "has_divider": needs_divider
             })
@@ -218,7 +192,7 @@ def topic_browser_get_topics(tree, level=0):
         elif level == 0:
 
             # First level gets a popup menu for children
-            child_list = topic_browser_get_topics(child, level=level + 1)
+            child_list = topic_browser_get_topics(child, level=level + 1, show_topic_pages=show_topic_pages)
 
             item_list.append({
                 "level": level,
@@ -238,7 +212,7 @@ def topic_browser_get_topics(tree, level=0):
                 "title": child.title
             })
 
-            item_list += topic_browser_get_topics(child, level=level + 1)
+            item_list += topic_browser_get_topics(child, level=level + 1, show_topic_pages=show_topic_pages)
 
             needs_divider = True
 
@@ -246,24 +220,26 @@ def topic_browser_get_topics(tree, level=0):
 
     return item_list
 
-@layer_cache.cache_with_key_fxn(lambda version_number=None:
-    "Templatetags.topic_browser_data_%s" % (
-    version_number if version_number else models.Setting.topic_tree_version()))
-def topic_browser_data(version_number=None):
+@layer_cache.cache_with_key_fxn(lambda version_number=None, show_topic_pages=False:
+    "Templatetags.topic_browser_data_%s_%s_v1" % (
+    version_number if version_number else setting_model.Setting.topic_tree_version(),
+    "ST" if show_topic_pages else "HT"
+    ))
+def topic_browser_data(version_number=None, show_topic_pages=False):
     """ Returns the JSON data necessary to render the topic browser embedded
         in the page header on the client. """
 
     if version_number:
-        version = models.TopicVersion.get_by_number(version_number)
+        version = topic_models.TopicVersion.get_by_number(version_number)
     else:
         version = None
 
-    root = models.Topic.get_root(version)
+    root = topic_models.Topic.get_root(version)
     if not root:
         return ""
 
     tree = root.make_tree(types = ["Topics"])
-    topics_list = topic_browser_get_topics(tree)
+    topics_list = topic_browser_get_topics(tree, show_topic_pages=show_topic_pages)
 
     return apijsonify.jsonify(topics_list)
 

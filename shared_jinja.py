@@ -5,11 +5,13 @@ import request_cache
 from app import App
 
 SHARED_APP = None
+
+
 @request_cache.cache()
 def get():
     # Make sure configuration is imported before we ever initialize,
     # which should only happen once per request
-    import config_jinja #@UnusedImport
+    import config_jinja  # @UnusedImport
 
     global SHARED_APP
     if SHARED_APP is None:

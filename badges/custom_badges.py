@@ -1,19 +1,15 @@
 import request_handler
 import user_util
 import util_badges
+import user_models
 from badges import Badge, BadgeCategory
 from models_badges import CustomBadgeType
-from models import UserData
 
 class CustomBadge(Badge):
 
     @staticmethod
     def all():
-        custom_badges = []
-        custom_badge_types = CustomBadgeType.all().fetch(1000)
-        for custom_badge_type in custom_badge_types:
-            custom_badges.append(CustomBadge(custom_badge_type))
-        return custom_badges
+        return [CustomBadge(badge_type) for badge_type in CustomBadgeType.all()]
 
     def __init__(self, custom_badge_type):
         Badge.__init__(self)
@@ -101,7 +97,7 @@ class AwardCustomBadge(request_handler.RequestHandler):
             emails = map(lambda email: email.strip(), emails)
 
             for email in emails:
-                user_data = UserData.get_from_user_input_email(email)
+                user_data = user_models.UserData.get_from_user_input_email(email)
                 if user_data:
                     if not custom_badge_awarded.is_already_owned_by(user_data):
                         custom_badge_awarded.award_to(user_data)

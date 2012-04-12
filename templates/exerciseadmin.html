@@ -47,12 +47,11 @@
         var mapParams = {
             'mapCoords': {{ map_coords }},
             'admin': true,
-            'container': 'container'
+            'container': 'container',
+            'graph_dict_data': {{ graph_dict_data }}
         }
         adminKnowledgeMap = new KnowledgeMap(mapParams);
     });
-
-    var graph_dict_data = {{ graph_dict_data }};
 </script>
 {%- raw -%}
     <script id="exercise-admin-tmpl" type="text/html">
@@ -76,10 +75,6 @@
                                 Name (file name without .html)
                             </label>
                             <input id="name" type="text" name="name" size="40" />
-                            <span style="padding-left: 20px;">
-                                <input id="summative" name="summative" type="checkbox" value="1" />
-                                <label style="display:inline;" for="summative">Summative</label>
-                            </span>
                             <span style="padding-left: 20px;">
                                 <input type="submit" value="Add Exercise" />
                             </span>

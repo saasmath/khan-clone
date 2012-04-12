@@ -2,14 +2,10 @@ import datetime
 import logging
 import copy
 
-from google.appengine.api import users
-from google.appengine.ext import deferred
-
-from asynctools import AsyncMultiTask, QueryTask
-
 import util
-from models import UserExercise, Exercise, UserData, ProblemLog, VideoLog, LogSummary, LogSummaryTypes
-import activity_summary
+import exercise_models
+import video_models
+from summary_log_models import LogSummary, LogSummaryTypes
 
 def dt_to_utc(dt, timezone_adjustment):
     return dt - timezone_adjustment
@@ -17,53 +13,7 @@ def dt_to_utc(dt, timezone_adjustment):
 def dt_to_ctz(dt, timezone_adjustment):
     return dt + timezone_adjustment
 
-# bulk loads the entire class data for the day
-def reload_class(user_data_coach, dt_start_utc):
-    students_data = user_data_coach.get_students_data()
-    dt_start_utc1 = datetime.datetime(dt_start_utc.year, dt_start_utc.month, dt_start_utc.day)
-
-    for student_data in students_data:
-        deferred.defer(fill_class_summaries_from_logs, user_data_coach, [student_data], dt_start_utc1)
-
-    if dt_start_utc1 != dt_start_utc:
-        dt_start_utc2 =  dt_start_utc1 + datetime.timedelta(days = 1)
-        for student_data in students_data:
-            deferred.defer(fill_class_summaries_from_logs, user_data_coach, [student_data], dt_start_utc2)
-
-#bulk loader of student data into the LogSummaries where there is one LogSummary per day per coach
-#can get in memory trouble if handling a large class - so break it up and send only one student at a time
-def fill_class_summaries_from_logs(user_data_coach, students_data, dt_start_utc):
-    dt_end_utc = dt_start_utc + datetime.timedelta(days = 1)    
-
-   # Asynchronously grab all student data at once
-    async_queries = []
-    for user_data_student in students_data:
-        query_problem_logs = ProblemLog.get_for_user_data_between_dts(user_data_student, dt_start_utc, dt_end_utc)
-        query_video_logs = VideoLog.get_for_user_data_between_dts(user_data_student, dt_start_utc, dt_end_utc)
-
-        async_queries.append(query_problem_logs)
-        async_queries.append(query_video_logs)
-
-    # Wait for all queries to finish
-    results = util.async_queries(async_queries, limit=10000)
-
-    for i, user_data_student in enumerate(students_data):
-        logging.info("working on student "+str(user_data_student.user))
-        problem_and_video_logs = []
-
-        problem_logs = results[i * 2].get_result()
-        video_logs = results[i * 2 + 1].get_result()
-        
-        for problem_log in problem_logs:
-            problem_and_video_logs.append(problem_log)
-        for video_log in video_logs:
-            problem_and_video_logs.append(video_log)
-
-        problem_and_video_logs = sorted(problem_and_video_logs, key=lambda log: log.time_started())
-
-        if problem_and_video_logs:       
-            LogSummary.add_or_update_entry(user_data_coach, problem_and_video_logs, ClassDailyActivitySummary, LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
-    
+   
 class ClassTimeAnalyzer:
 
     def __init__(self, timezone_offset = 0, downtime_minutes = 30):
@@ -164,8 +114,8 @@ class ClassTimeAnalyzer:
         async_queries = []
         for user_data_student in students_data:
 
-            query_problem_logs = ProblemLog.get_for_user_data_between_dts(user_data_student, self.dt_to_utc(dt_start_ctz), self.dt_to_utc(dt_end_ctz))
-            query_video_logs = VideoLog.get_for_user_data_between_dts(user_data_student, self.dt_to_utc(dt_start_ctz), self.dt_to_utc(dt_end_ctz))
+            query_problem_logs = exercise_models.ProblemLog.get_for_user_data_between_dts(user_data_student, self.dt_to_utc(dt_start_ctz), self.dt_to_utc(dt_end_ctz))
+            query_video_logs = video_models.VideoLog.get_for_user_data_between_dts(user_data_student, self.dt_to_utc(dt_start_ctz), self.dt_to_utc(dt_end_ctz))
 
             async_queries.append(query_problem_logs)
             async_queries.append(query_video_logs)
@@ -347,8 +297,8 @@ class ClassTimeChunk:
         has_video = False
 
         for activity in self.activities:
-            has_exercise = has_exercise or type(activity) == ProblemLog
-            has_video = has_video or type(activity) == VideoLog
+            has_exercise = has_exercise or type(activity) == exercise_models.ProblemLog
+            has_video = has_video or type(activity) == video_models.VideoLog
 
         if has_exercise and has_video:
             self.cached_activity_class = "exercise_video"
@@ -416,10 +366,10 @@ class ClassTimeChunk:
             dict_target = None
             name_activity = None
 
-            if type(activity) == ProblemLog:
+            if type(activity) == exercise_models.ProblemLog:
                 name_activity = activity.exercise
                 dict_target = dict_exercises
-            elif type(activity) == VideoLog:
+            elif type(activity) == video_models.VideoLog:
                 name_activity = activity.video_title
                 dict_target = dict_videos
 
@@ -444,9 +394,9 @@ class ClassTimeChunk:
         for key in dict_exercises:
             if len(desc_exercises) > 0:
                 desc_exercises += "<br/>"
-            desc_exercises += " - <em>%s</em>" % Exercise.to_display_name(key)
+            desc_exercises += " - <em>%s</em>" % exercise_models.Exercise.to_display_name(key)
         if len(desc_exercises) > 0:
-            desc_exercises = "<br/><b>Exercises:</b><br/>" + desc_exercises
+            desc_exercises = "<br/><b>Skills:</b><br/>" + desc_exercises
 
         desc = ("<b>%s</b> - <b>%s</b><br/>(<em>~%.0f min.</em>)" % (self.start.strftime("%I:%M%p"), self.end.strftime("%I:%M%p"), self.minutes_spent())) + "<br/>" + desc_videos + desc_exercises
 
@@ -610,11 +560,11 @@ class UserAdjacentActivitySummary:
     #updates the activity class based upon the new activity
     def update_activity_class(self, activity):
         if self.activity_class is None:
-            if type(activity) == ProblemLog:
+            if type(activity) == exercise_models.ProblemLog:
                 self.activity_class = "exercise"
-            elif type(activity) == VideoLog:
+            elif type(activity) == video_models.VideoLog:
                 self.activity_class = "video"
-            elif (self.activity_class == "exercise" and type(activity) == VideoLog) or (self.activity_class == "video" and type(activity) == ProblemLog): 
+            elif (self.activity_class == "exercise" and type(activity) == video_models.VideoLog) or (self.activity_class == "video" and type(activity) == exercise_models.ProblemLog): 
                 self.activity_class = "exercise_video"
         return self.activity_class
 
@@ -644,10 +594,10 @@ class UserAdjacentActivitySummary:
         dict_target = None
         name_activity = None
 
-        if type(activity) == ProblemLog:
+        if type(activity) == exercise_models.ProblemLog:
             name_activity = activity.exercise
             dict_target = self.dict_exercises
-        elif type(activity) == VideoLog:
+        elif type(activity) == video_models.VideoLog:
             name_activity = activity.video_title
             dict_target = self.dict_videos
 
@@ -674,9 +624,9 @@ class UserAdjacentActivitySummary:
         for key in self.dict_exercises:
             if len(desc_exercises) > 0:
                 desc_exercises += "<br/>"
-            desc_exercises += " - <em>%s</em>" % Exercise.to_display_name(key)
+            desc_exercises += " - <em>%s</em>" % exercise_models.Exercise.to_display_name(key)
         if len(desc_exercises) > 0:
-            desc_exercises = "<br/><b>Exercises:</b><br/>" + desc_exercises
+            desc_exercises = "<br/><b>Skills:</b><br/>" + desc_exercises
  
         desc = ("<b>%s</b> - <b>%s</b><br/>(<em>~%.0f min.</em>)" % (self.start.strftime("%I:%M%p"), self.end.strftime("%I:%M%p"), self.minutes_spent())) + "<br/>" + desc_videos + desc_exercises
 

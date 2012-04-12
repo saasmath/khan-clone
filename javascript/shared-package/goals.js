@@ -162,13 +162,13 @@ var Goal = Backbone.Model.extend({
     },
 
     defaultExerciseProcessGoalAttrs_: {
-        title: "Complete Five Exercises",
+        title: "Complete Five Skills",
         objectives: [
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" }
         ]
     },
 
@@ -194,7 +194,10 @@ var GoalCollection = Backbone.Collection.extend({
     model: Goal,
 
     initialize: function() {
-        this.updateActive();
+        // Since Backbone 0.9 initialize no longer has access to the collection.
+        // So, after creating a GoalCollection, make sure to manually call
+        // updateActive().
+        // See https://github.com/documentcloud/backbone/issues/814
 
         // ensure updateActive is called whenever the collection changes
         this.bind("add", this.updateActive, this);
@@ -259,8 +262,8 @@ var GoalCollection = Backbone.Collection.extend({
     findActiveGoal: function() {
         var matchingGoal = null;
 
-        if (window.location.pathname.indexOf("/exercise") === 0 && window.userExerciseName) {
-            matchingGoal = this.findGoalWithObjective(userExerciseName,
+        if (window.location.pathname.indexOf("/exercise") === 0 && typeof Exercises !== "undefined" && Exercises.exercise) {
+            matchingGoal = this.findGoalWithObjective(Exercises.exercise.name,
                 "GoalObjectiveExerciseProficiency",
                 "GoalObjectiveAnyExerciseProficiency");
         } else if (window.location.pathname.indexOf("/video") === 0 &&
@@ -300,7 +303,7 @@ var GoalBookView = Backbone.View.extend({
     needsRerender: true,
 
     initialize: function() {
-        $(this.el)
+        this.$el
             .delegate(".close-button", "click", $.proxy(this.hide, this))
 
             // listen to archive button on goals
@@ -349,7 +352,7 @@ var GoalBookView = Backbone.View.extend({
 
         var that = this;
         // animate on the way down
-        return $(this.el).slideDown("fast", function() {
+        return this.$el.slideDown("fast", function() {
             // listen for escape key
             $(document).bind("keyup.goalbook", function(e) {
                 if (e.which == 27) {
@@ -378,7 +381,7 @@ var GoalBookView = Backbone.View.extend({
         if (completedEls.length > 0) {
             this.animateThenHide(completedEls);
         } else {
-            return $(this.el).slideUp("fast");
+            return this.$el.slideUp("fast");
         }
     },
 
@@ -406,14 +409,13 @@ var GoalBookView = Backbone.View.extend({
         }, this);
         // wait for the animation to complete and then close the goalbook
         this.animateGoalToHistory(els).then($.proxy(function() {
-           $(this.el).slideUp("fast").promise().then($.proxy(function() {
+           this.$el.slideUp("fast").promise().then($.proxy(function() {
                 this.model.remove(goals);
            }, this));
        }, this));
     },
 
     render: function() {
-        var jel = $(this.el);
         // delay rendering until the view is actually visible
         if (!this.isVisible) {
             this.needsRerender = true;
@@ -422,7 +424,7 @@ var GoalBookView = Backbone.View.extend({
             KAConsole.log("rendering GoalBookView", this);
             this.needsRerender = false;
             var json = _.pluck(this.model.models, "attributes");
-            jel.html(this.template({
+            this.$el.html(this.template({
                 goals: json,
                 profileRoot: KA.profileRoot
             }));
@@ -477,7 +479,7 @@ var GoalSummaryView = Backbone.View.extend({
     template: Templates.get("shared.goal-summary-area"),
 
     initialize: function(args) {
-        $(this.el).delegate("#goals-drawer", "click",
+        this.$el.delegate("#goals-drawer", "click",
             $.proxy(args.goalBookView.show, args.goalBookView));
 
         this.model.bind("change", this.render, this);
@@ -491,11 +493,11 @@ var GoalSummaryView = Backbone.View.extend({
         KAConsole.log("rendering GoalSummaryView", this);
         var active = this.model.active() || null;
         if (active !== null) {
-            $(this.el).html(this.template(active.attributes));
+            this.$el.html(this.template(active.attributes));
         }
         else {
             // todo: put create a goal button here?
-            $(this.el).empty();
+            this.$el.empty();
         }
         return this;
     },
@@ -539,7 +541,7 @@ var NewGoalView = Backbone.View.extend({
 
     render: function() {
         var context = this.model.processGoalContext();
-        $(this.el).html(this.template(context));
+        this.$el.html(this.template(context));
         this.hookup();
         return this;
     },
@@ -620,7 +622,8 @@ var NewGoalDialog = Backbone.View.extend({
         var context = this.model.processGoalContext();
         // As we're assigning to this.el, event handlers need to be rebound
         // after each render.
-        this.el = $(this.template(context)).appendTo(document.body).get(0);
+        var el = $(this.template(context)).appendTo(document.body).get(0);
+        this.setElement(el);
         this.newGoalView = new NewGoalView({
             el: this.$(".viewcontents"),
             model: this.model
@@ -633,7 +636,7 @@ var NewGoalDialog = Backbone.View.extend({
         // rerender every time we show this in case some process goals should
         // be disabled
         this.newGoalView.render();
-        return $(this.el).modal({
+        return this.$el.modal({
             keyboard: true,
             backdrop: true,
             show: true
@@ -645,7 +648,7 @@ var NewGoalDialog = Backbone.View.extend({
         this.$(".info").hide();
 
         // now hide the dialog
-        return $(this.el).modal("hide");
+        return this.$el.modal("hide");
     }
 });
 
@@ -656,19 +659,20 @@ var NewCustomGoalDialog = Backbone.View.extend({
     render: function() {
         // As we're assigning to this.el, event handlers need to be rebound
         // after each render.
-        this.el = $(this.template()).appendTo(document.body).get(0);
+        var el = $(this.template()).appendTo(document.body).get(0);
+        this.setElement(el);
         this.innerEl = this.$(".modal-body").get(0);
 
         // turn on fading just before we animate so that dragging is fast
-        var $el = $(this.el);
-        $el.bind("shown", function() { $el.removeClass("fade"); });
-        $el.bind("hide", function() { $el.addClass("fade"); });
+        var $el = this.$el;
+        this.$el.on("shown", function() { $el.removeClass("fade"); });
+        this.$el.on("hide", function() { $el.addClass("fade"); });
 
         return this;
     },
 
     _show: function() {
-        return $(this.el).modal({
+        return this.$el.modal({
             keyboard: false,
             backdrop: true,
             show: true
@@ -706,7 +710,7 @@ var NewCustomGoalDialog = Backbone.View.extend({
     },
 
     hide: function() {
-        $(this.el).modal("hide");
+        this.$el.modal("hide");
     },
 
     waitForMapsPackage: function(html) {
@@ -723,6 +727,7 @@ var NewCustomGoalDialog = Backbone.View.extend({
 
 $(function() {
     window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
+    window.GoalBook.updateActive();
     APIActionResults.register("updateGoals",
         $.proxy(GoalBook.incrementalUpdate, window.GoalBook));
 

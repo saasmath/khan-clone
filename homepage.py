@@ -3,27 +3,30 @@ import random
 
 from jinja2.utils import escape
 
+import exercise_models
 import library
 import request_handler
 import user_util
-import models
+import user_models
+import video_models
 import layer_cache
+import setting_model
 import templatetags
-import util
+import topic_models
 from app import App
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
 
 ITEMS_PER_SET = 4
 
-def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
+def thumbnail_link_dict(video = None, exercise = None, thumb_url = None, parent_topic = None):
 
     link_dict = None
 
     if video:
         link_dict = {
-            "href": "/video/%s" % video.readable_id,
-            "thumb_urls": models.Video.youtube_thumbnail_urls(video.youtube_id),
+            "href": ("/video/%s" % video.readable_id) if not parent_topic else ("/%s/v/%s" % (parent_topic.get_extended_slug(), video.readable_id)),
+            "thumb_urls": video_models.Video.youtube_thumbnail_urls(video.youtube_id),
             "title": video.title,
             "desc_html": templatetags.video_name_and_progress(video),
             "teaser_html": video.description,
@@ -49,7 +52,7 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
 
     if link_dict:
 
-        if len(link_dict["teaser_html"]) > 60:
+        if link_dict["teaser_html"] and len(link_dict["teaser_html"]) > 60:
             link_dict["teaser_html"] = link_dict["teaser_html"][:60] + "&hellip;"
 
         return link_dict
@@ -58,11 +61,11 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
 
 @layer_cache.cache_with_key_fxn(
         lambda *args, **kwargs: "new_and_noteworthy_link_sets_%s" % 
-            models.Setting.topic_tree_version(),
+            setting_model.Setting.topic_tree_version(),
         expiration=86400
         )
 def new_and_noteworthy_link_sets():
-    topic = models.Topic.get_by_id("new-and-noteworthy")
+    topic = topic_models.Topic.get_by_id("new-and-noteworthy")
     if topic is None:
         return []
     videos = topic.get_cached_videos_for_topic(topic)
@@ -77,7 +80,7 @@ def new_and_noteworthy_link_sets():
         # Temporary hard-coding of a couple exercises - eventually can take exercises in the topic - but not until they all have splashthumbnails
         topic.tags = ['derivative_intuition', 'inequalities_on_a_number_line', 'multiplication_4', 'solid_geometry']
         for tag in topic.tags:
-            exercise = models.Exercise.get_by_name(tag)
+            exercise = exercise_models.Exercise.get_by_name(tag)
             if exercise:
                 exercises.append(exercise)
 
@@ -134,7 +137,7 @@ class ViewHomePage(request_handler.RequestHandler):
     def get(self):
         version_number = None
 
-        if models.UserData.current() and models.UserData.current().developer:
+        if user_models.UserData.current() and user_models.UserData.current().developer:
             version_number = self.request_string('version', default=None)
 
         thumbnail_link_sets = new_and_noteworthy_link_sets()
@@ -143,7 +146,7 @@ class ViewHomePage(request_handler.RequestHandler):
         marquee_video = {
             "youtube_id": "gM95HHI4gLk",
             "href": "/video?v=%s" % "gM95HHI4gLk",
-            "thumb_urls": models.Video.youtube_thumbnail_urls("gM95HHI4gLk"),
+            "thumb_urls": video_models.Video.youtube_thumbnail_urls("gM95HHI4gLk"),
             "title": "Salman Khan talk at TED 2011",
             "key": "",
         }
@@ -172,7 +175,7 @@ class ViewHomePage(request_handler.RequestHandler):
 
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
-        default = models.TopicVersion.get_default_version()
+        default = topic_models.TopicVersion.get_default_version()
         if App.is_dev_server and default is None:
             library_content = "<h1>Content not initialized. <a href=\"/devadmin/content?autoupdate=1\">Click here</a> to autoupdate from khanacademy.org."
         elif version_number:
@@ -186,10 +189,10 @@ class ViewHomePage(request_handler.RequestHandler):
             
         from gae_bingo.gae_bingo import ab_test, create_redirect_url
 
-        donate_button_test = ab_test("donate_button",
+        donate_button_test = ab_test("hp_donate_button",
                                      {"button":1, "text":99},
-                                     conversion_name=['hp_click', 'paypal'])
-        donate_redirect_url = create_redirect_url("/donate", "hp_click")
+                                     conversion_name=['hp_donate_button_click', 'hp_donate_button_paypal'])
+        donate_redirect_url = create_redirect_url("/donate", "hp_donate_button_click")
 
         template_values = {
                             'marquee_video': marquee_video,
@@ -197,8 +200,7 @@ class ViewHomePage(request_handler.RequestHandler):
                             'library_content': library_content,
                             'DVD_list': DVD_list,
                             'is_mobile_allowed': True,
-                            'approx_vid_count': models.Video.approx_count(),
-                            'exercise_count': models.Exercise.get_count(),
+                            'approx_vid_count': video_models.Video.approx_count(),
                             'link_heat': self.request_bool("heat", default=False),
                             'version_number': version_number,
                             'donate_button_test': donate_button_test,

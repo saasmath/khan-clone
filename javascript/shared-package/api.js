@@ -61,8 +61,28 @@ var APIActionResults = {
 
     },
 
+    /**
+     * Converts our Python code's underscore_variable_notation to camelCase
+     *
+     * TODO: can remove when all of our API calls use casing:camel, see
+     * APIActionResults.register above.
+     */
+    toCamelCase: function(prop) {
+        // From http://stackoverflow.com/questions/6660977/convert-hyphens-to-camel-case-camelcase
+        return prop.replace(/_([a-z])/g, function (match) { return match[1].toUpperCase() });
+    },
+
+    /**
+     * Register both prop and the camelCase version of prop as an API event
+     * listener.
+     *
+     * TODO: when all of our API calls use casing:camel, we won't need
+     * toCamelCase because everything will register with APIActionResults using
+     * the camelCased variable name.
+     */
     register: function(prop, fxn) {
         this.hooks[this.hooks.length] = {prop: prop, fxn: fxn};
+        this.hooks[this.hooks.length] = {prop: APIActionResults.toCamelCase(prop), fxn: fxn};
     }
 };
 
@@ -96,6 +116,9 @@ $(function() { APIActionResults.register("user_info_html",
 // show point animation above progress bar when in exercise pages
 $(function() {
 
+    // TODO: this point animation isn't hooked up to new power mode. Restore
+    // it.
+    // https://trello.com/card/restore-mario-points-coolness/4f3f43cd45533a1b3a065a1d/86
     var updatePointDisplay = function(data) {
         if (jQuery(".single-exercise").length > 0 && data.points > 0) {
             var coin = jQuery("<div>+" + data.points + "</div>").addClass("energy-points-badge");
@@ -110,9 +133,3 @@ $(function() {
 
     APIActionResults.register("points_earned", updatePointDisplay);
 });
-
-// Update the "reviewing X exercises" heading counter and also change the
-// heading to indicate reviews are done when appropriate
-if (typeof Review !== "undefined") {
-    $(function() { APIActionResults.register("reviews_left", Review.updateCounter); });
-}

@@ -16,7 +16,9 @@ from google.appengine.ext import db
 
 import request_handler
 import user_util
-from models import UserData, UserVideo, VideoLog, UserExercise, ProblemLog
+from user_models import UserData
+from video_models import UserVideo, VideoLog
+from exercise_models import UserExercise, ProblemLog
 from goals.models import Goal
 from api.jsonify import jsonify
 from api.auth.tests.test import TestOAuthClient
@@ -158,6 +160,7 @@ class ImportHandler(request_handler.RequestHandler):
         self.response.write("\n\n")
 
     def setup_oauth(self, url="http://www.khanacademy.org"):
+        # TODO(csilvers): rewrite this to not use code with "Test" in the name!
         self.client = TestOAuthClient(url, secrets.ka_api_consumer_key,
             secrets.ka_api_consumer_secret)
 

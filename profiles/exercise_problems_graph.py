@@ -1,8 +1,6 @@
-import models
-import util
-import logging
+import exercise_models
+import video_models
 from templatefilters import seconds_to_time_string
-from exercises import exercise_contents
 
 class ProblemPoint:
     def __init__(self, problem_log, current_sha1):
@@ -10,8 +8,6 @@ class ProblemPoint:
         self.time_done = problem_log.time_done
         self.correct = problem_log.correct
         self.count_hints = problem_log.count_hints
-        self.exercise_non_summative = problem_log.exercise_non_summative
-        self.exercise_non_summative_display_name = models.Exercise.to_display_name(problem_log.exercise_non_summative)
         self.dt = problem_log.time_done
         self.problem_number = max(problem_log.problem_number, 1)
         self.video_point = None
@@ -53,25 +49,25 @@ def exercise_problems_graph_context(user_data_student, exid):
     if not exid:
         exid = "addition_1"
 
-    exercise = models.Exercise.get_by_name(exid)
+    exercise = exercise_models.Exercise.get_by_name(exid)
 
     if not exercise:
         return {}
 
     user_exercise = user_data_student.get_or_insert_exercise(exercise)
 
-    sha1 = exercise_contents(exercise)[4]
+    sha1 = exercise.sha1
 
     related_videos = exercise.related_videos_query()
     video_list = []
 
     for exercise_video in related_videos:
-        video_logs = models.VideoLog.get_for_user_data_and_video(user_data_student, exercise_video.key_for_video())
+        video_logs = video_models.VideoLog.get_for_user_data_and_video(user_data_student, exercise_video.key_for_video())
         for video_log in video_logs:
             video_list.append(VideoPoint(video_log))
 
     problem_list = []
-    problem_logs = models.ProblemLog.all().filter('user =', user_data_student.user).filter('exercise =', exid).order("time_done")
+    problem_logs = exercise_models.ProblemLog.all().filter('user =', user_data_student.user).filter('exercise =', exid).order("time_done")
     for problem_log in problem_logs:
         problem_list.append(ProblemPoint(problem_log, sha1))
 
@@ -114,7 +110,7 @@ def exercise_problems_graph_context(user_data_student, exid):
 
     return {
         'student_email': user_data_student.email,
-        'exercise_display_name': models.Exercise.to_display_name(exid),
+        'exercise_display_name': exercise_models.Exercise.to_display_name(exid),
         'exid': exid,
         'problem_list': problem_list,
         'progress': user_exercise.progress_display(),

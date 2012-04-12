@@ -31,7 +31,7 @@ class TimedProblemBadge(ExerciseBadge):
         return False
 
     def extended_description(self):
-        return "Quickly & correctly answer %s exercise problems in a row (time limit depends on exercise difficulty)" % str(self.problems_required)
+        return "Quickly & correctly answer %s skill problems in a row (time limit depends on skill difficulty)" % str(self.problems_required)
 
 class NiceTimedProblemBadge(TimedProblemBadge):
 

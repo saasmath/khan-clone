@@ -12,7 +12,8 @@ import util
 import user_util
 import request_handler
 
-from models import UserData, CoachRequest, StudentList
+from user_models import UserData, StudentList
+from coach_resources.coach_request_model import CoachRequest
 from badges import util_badges
 
 from profiles.util_profile import ExercisesOverTimeGraph, ExerciseProblemsGraph
@@ -90,7 +91,7 @@ class ViewCoaches(request_handler.RequestHandler):
         """
         user_data = UserData.current()
         if user_data:
-            self.redirect(user_data.profile_root + "/coaches")
+            self.redirect(user_data.profile_root + "coaches")
         else:
             self.redirect(util.create_login_url(self.request.uri))
 

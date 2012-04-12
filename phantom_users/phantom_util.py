@@ -4,11 +4,11 @@ import logging
 import hashlib
 from functools import wraps
 
-import models
+import user_models
 from api import api_util
 from cookie_util import set_request_cookie
 
-# TODO: consolidate this with the constants in models.py:UserData
+# TODO: consolidate this with the constants in user_models.py:UserData
 PHANTOM_ID_EMAIL_PREFIX = "http://nouserid.khanacademy.org/"
 PHANTOM_MORSEL_KEY = 'ureg_id'
 
@@ -38,15 +38,15 @@ def _create_phantom_user_data():
     """ Create a phantom user data.
     """
     user_id = _create_phantom_user_id()
-    user_data = models.UserData.insert_for(user_id, user_id)
+    user_data = user_models.UserData.insert_for(user_id, user_id)
 
     # Make it appear like the cookie was already set
     cookie = _get_cookie_from_phantom(user_data)
     set_request_cookie(PHANTOM_MORSEL_KEY, str(cookie))
 
-    # Bust the cache so later calls to models.UserData.current() return
+    # Bust the cache so later calls to user_models.UserData.current() return
     # the phantom user
-    return models.UserData.current(bust_cache=True)
+    return user_models.UserData.current(bust_cache=True)
 
 def _get_cookie_from_phantom(phantom_user_data):
     """ Return the cookie value for a phantom user.
@@ -62,7 +62,7 @@ def create_phantom(method):
 
     @wraps(method)
     def wrapper(self, *args, **kwargs):
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
 
         if not user_data:
             user_data = _create_phantom_user_data()
@@ -78,7 +78,7 @@ def api_create_phantom(method):
 
     @wraps(method)
     def wrapper(*args, **kwargs):
-        if models.UserData.current():
+        if user_models.UserData.current():
             return method(*args, **kwargs)
         else:
             user_data = _create_phantom_user_data()
@@ -101,7 +101,7 @@ def disallow_phantoms(method, redirect_to='/login'):
 
     @wraps(method)
     def wrapper(self, *args, **kwargs):
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
 
         if user_data and user_data.is_phantom:
             self.redirect(redirect_to)
@@ -114,7 +114,7 @@ def api_disallow_phantoms(method):
     """
     @wraps(method)
     def wrapper(*args, **kwargs):
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
         if user_data and user_data.is_phantom:
             return api_util.api_unauthorized_response("Phantom users are not allowed.")
         else:

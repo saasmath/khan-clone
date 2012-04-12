@@ -307,7 +307,7 @@
             </p>
 
             <p>
-                Marcos works on the design of exercises, the website and anything else.
+                Marcos works on the design of interactive education experiences, the website and anything else.
             </p>
             <p>
                 Before the Khan Academy, Marcos worked on social computing at CMU's HCI Institute &amp; with Lisa Strausfeld at Pentagram. He has an SB from MIT and an MFA from RISD.
@@ -498,6 +498,25 @@
 
     <div class="clear"></div>
 
+    <div class="team-card">
+        <div class="card-photo vertical-shadow">
+            <img src="/images/headshots/stephanie.jpg" id="stephanie" />
+        </div>
+        <div class="card-info">
+            <h2 class="pulls">Stephanie</h2>
+            <h3>Software Engineer</h3>
+            <p class="contact-links">
+                <a href="http://twitter.com/stchangg" class="contact-twitter">Twitter</a>
+            </p>
+            <p>
+                Stephanie loves to learn about all kinds of things. At Khan Academy, she wants to help make learning more fun for millions of people.
+            </p>
+            <p>
+                Stephanie graduated from Duke with a B.S. in Electrical and Computer Engineering, but learned most of what she knows from the Internetz.
+            </p>
+        </div>
+    </div>  
+
 	<div class="team-card">
         <div class="card-photo vertical-shadow">
             <img src="/images/headshots/toby.jpg" />
@@ -527,8 +546,12 @@
 <script type="text/javascript" charset="utf-8">
 $(function(){
     $('#jason').hover(
-        function(){$('#jason').attr('src', '/images/headshots/jason-rawr.jpg');},
-        function(){$('#jason').attr('src', '/images/headshots/jason.jpg');}
+        function(){$(this).attr('src', '/images/headshots/jason-rawr.jpg');},
+        function(){$(this).attr('src', '/images/headshots/jason.jpg');}
+    );
+    $('#stephanie').hover(
+        function(){$(this).attr('src', '/images/headshots/jason-rawr.jpg');},
+        function(){$(this).attr('src', '/images/headshots/stephanie.jpg');}
     );
 });
 </script>

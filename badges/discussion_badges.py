@@ -1,5 +1,6 @@
 from badges import Badge, BadgeCategory
 
+
 class FirstFlagBadge(Badge):
 
     def __init__(self):
@@ -9,10 +10,12 @@ class FirstFlagBadge(Badge):
         self.points = 0
 
     def extended_description(self):
-        return "Flag your first question, comment, or answer beneath a video for a moderator's attention"
+        return ("Flag your first question, comment, or answer beneath a "
+                "video for a moderator's attention")
 
     def is_manually_awarded(self):
         return True
+
 
 class FirstUpVoteBadge(Badge):
 
@@ -23,10 +26,12 @@ class FirstUpVoteBadge(Badge):
         self.points = 0
 
     def extended_description(self):
-        return "Cast your first up vote for a helpful question, answer, or comment beneath a video"
+        return ("Cast your first up vote for a helpful question, answer, "
+                "or comment beneath a video")
 
     def is_manually_awarded(self):
         return True
+
 
 class FirstDownVoteBadge(Badge):
 
@@ -37,10 +42,12 @@ class FirstDownVoteBadge(Badge):
         self.points = 0
 
     def extended_description(self):
-        return "Cast your first down vote for an unhelpful question, answer, or comment beneath a video"
+        return ("Cast your first down vote for an unhelpful question, "
+                "answer, or comment beneath a video")
 
     def is_manually_awarded(self):
         return True
+
 
 class ModeratorBadge(Badge):
 
@@ -54,7 +61,8 @@ class ModeratorBadge(Badge):
         self.is_hidden_if_unknown = True
 
     def extended_description(self):
-        return "Become a moderator of questions, answers, and comments beneath videos"
+        return ("Become a moderator of questions, answers, and comments "
+                "beneath videos")
 
     def is_manually_awarded(self):
         return True

@@ -8,6 +8,7 @@ import unittest
 
 from accuracy_model import AccuracyModel
 
+
 class TestSequenceFunctions(unittest.TestCase):
 
     @staticmethod
@@ -24,24 +25,33 @@ class TestSequenceFunctions(unittest.TestCase):
                       str_sequence,
                       minimum_accuracy=0.94,
                       minimum_attempts=5):
-        return TestSequenceFunctions.model_from_str(str_sequence).is_struggling(
+        model = TestSequenceFunctions.model_from_str(str_sequence)
+        return model.is_struggling(
                 param=1.8,
                 minimum_accuracy=minimum_accuracy,
                 minimum_attempts=minimum_attempts)
 
-    def setUp(self):
-        self.sim = lambda str_sequence: AccuracyModel.simulate(TestSequenceFunctions.to_bool_generator(str_sequence))
-        self.lt = lambda seq_smaller, seq_larger: self.assertTrue(self.sim(seq_smaller) < self.sim(seq_larger))
+    def sim(self, str_sequence):
+        gen = TestSequenceFunctions.to_bool_generator(str_sequence)
+        return AccuracyModel.simulate(gen)
+
+    def lt(self, seq_smaller, seq_larger):
+        self.assertTrue(self.sim(seq_smaller) < self.sim(seq_larger))
 
     def test_bounded_in_0_1_interval(self):
-        sequences = ['', '1', '0', '000', '111', '1' * 100, '0' * 5000, '1' * 5000, '1101111110111']
+        sequences = ['', '1', '0', '000', '111', '1' * 100, '0' * 5000,
+                     '1' * 5000, '1101111110111']
         for seq in sequences:
             self.assertTrue(0 <= self.sim(seq) <= 1.0)
 
     def test_more_is_stronger(self):
-        # Longer streaks should give the model greater confidence, manifesting as more extreme predictions
-        self.assertTrue(self.sim('') < self.sim('1') < self.sim('11') < self.sim('111') < self.sim('1111'))
-        self.assertTrue(self.sim('') > self.sim('0') > self.sim('00') > self.sim('000') > self.sim('0000'))
+        # Longer streaks should give the model greater confidence,
+        # manifesting as more extreme predictions
+        self.assertTrue(self.sim('') < self.sim('1') < self.sim('11') <
+                        self.sim('111') < self.sim('1111'))
+
+        self.assertTrue(self.sim('') > self.sim('0') > self.sim('00') >
+                        self.sim('000') > self.sim('0000'))
 
     def test_weigh_recent_more(self):
         # Should weigh more recent answers greater
@@ -85,10 +95,12 @@ class TestSequenceFunctions(unittest.TestCase):
 
     def test_struggling_sanity(self):
         # all correct -> not struggling
-        for i in range(50): self.assertFalse(self.is_struggling('1' * i))
+        for i in range(50):
+            self.assertFalse(self.is_struggling('1' * i))
 
         # a heck of a lot incorrect -> struggling
-        for i in range(20, 50): self.assertTrue(self.is_struggling('0' * i))
+        for i in range(20, 50):
+            self.assertTrue(self.is_struggling('0' * i))
 
         # a heck of a lot of no progress -> struggling
         for i in range(10, 20):

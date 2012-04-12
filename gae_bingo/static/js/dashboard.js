@@ -77,6 +77,53 @@ var GAEDashboard = {
         });
     },
 
+    setCookie: function(canonicalName, alternativeNumber, expiryDays)
+    {
+        var expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + expiryDays);
+        var cookieValue = escape(alternativeNumber);
+        if (expiryDays !== null) {
+            cookieValue = cookieValue + "; expires=" + expiryDate.toUTCString();
+        }
+        cookieValue = cookieValue + "; path=/";
+        document.cookie = "GAEBingo_" + canonicalName.replace(/\W/g, "+") + "=" + cookieValue;
+    },
+
+    readCookie: function(canonicalName) {
+        var nameEQ = "GAEBingo_" + canonicalName.replace(/\W/g, "+") + "=";
+        var ca = document.cookie.split(";");
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == " ") {
+                c = c.substring(1, c.length);
+            }
+            if (c.indexOf(nameEQ) === 0) {
+                return c.substring(nameEQ.length, c.length);
+            }
+        }
+        return null;
+    },
+
+    eraseCookie: function(canonicalName) {
+        this.setCookie(canonicalName, "", -1);
+    },
+
+    updateAlternatives: function(canonicalName) {
+        $( "div.experiment-container[data-canonical-name=\"" + canonicalName + "\"]")
+            .find( ".preview-alternative" )
+                .each(function(el) {
+                    alternativeNum = GAEDashboard.readCookie(canonicalName);
+                    if (alternativeNum == $(this).data("alternative-number")) {
+                        $(this).text("Stop previewing this");
+                        $(this).addClass("previewing");
+                    } else {
+                        $(this).text("Preview this");
+                        $(this).removeClass("previewing");
+                    }
+                });
+    },
+    
+
     loadConversionsContent: function(experimentName) {
         $.ajax({
             url: "/gae_bingo/api/v1/experiments/conversions",
@@ -119,8 +166,21 @@ var GAEDashboard = {
 
                             $(this).replaceWith($(this).data("replace-with"));
 
-                        });
+                        })
+                        .end()
+                    .find( ".preview-alternative" )
+                        .click(function(e) {
+                            alternativeNum = GAEDashboard.readCookie($(this).data("canonical-name"));
+                            if (alternativeNum == $(this).data("alternative-number")) {
+                                GAEDashboard.eraseCookie($(this).data("canonical-name"));
+                            } else {
+                                GAEDashboard.setCookie($(this).data("canonical-name"), $(this).data("alternative-number"), 365);
+                            }
+                            GAEDashboard.updateAlternatives(data.canonical_name);
+                        })
+                        .end();
 
+                GAEDashboard.updateAlternatives(data.canonical_name);
                 GAEDashboard.renderHighchart(data);
 
             }

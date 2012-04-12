@@ -6,6 +6,7 @@ import request_handler
 import user_util
 from google.appengine.api import memcache
 
+
 class MemcacheStatus(request_handler.RequestHandler):
     """
     Handles request to show information about the current state of memcache.

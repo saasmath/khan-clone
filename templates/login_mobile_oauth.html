@@ -81,12 +81,9 @@
                     </li>
                 </ul>
 
-                {% if use_new %}
                 <div class="horizontal-separator">
                     <span class="separator-text">OR</span>
                 </div>
-
-                <input type="hidden" name="use_new" value="1">
 
                 <div class="pw-login">
                     <img src="/images/hand-tree.png" width="75" height="75" class="tree">
@@ -103,7 +100,6 @@
                     <div class="field-error" id="login-fail-message">{{ error or "&nbsp;" }}</div>
                     <input tabindex=3 id="submit-button" class="simple-button action-gradient green" value="Login" type="submit">
                 </div>
-                {% endif %}
 
                 {% if not anointed %}
                     <p>By logging in, you agree to give this application access to your personal Khan Academy usage data.</p>

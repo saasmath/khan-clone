@@ -4,7 +4,7 @@ import logging
 
 from google.appengine.ext import db
 
-import models
+import user_models
 from app import App
 import request_cache
 import layer_cache
@@ -63,7 +63,9 @@ class Feedback(db.Model):
         self.children_cache = [] # For caching each question's answers during render
 
     def clear_cache_for_video(self):
-        layer_cache.BlobCache.delete(Feedback.cache_key_for_video(self.video()), namespace=App.version)
+        layer_cache.ChunkedResult.delete(
+            Feedback.cache_key_for_video(self.video()), namespace=App.version,
+            cache_class=layer_cache.KeyValueCache)
 
     def delete(self):
         db.delete(self)
@@ -181,7 +183,7 @@ class Feedback(db.Model):
         if self.author_user_id is not None:
             return self.author_user_id
         else:
-            user_data = models.UserData.get_from_user(self.author)
+            user_data = user_models.UserData.get_from_user(self.author)
             if user_data is not None:
                 return user_data.user_id
             else:
