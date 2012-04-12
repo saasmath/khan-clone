@@ -135,15 +135,6 @@ class TopicPage(request_handler.RequestHandler):
             topic = topic_models.Topic.get_by_id(path_list[-1])
 
             if topic:
-                # Begin topic pages A/B test
-                if user_util.is_current_user_developer():
-                    show_topic_pages = "show"
-                else:
-                    show_topic_pages = ab_test("Show topic pages", ["show", "hide"],
-                        ["topic_pages_view_page", "topic_pages_started_video",
-                         "topic_pages_completed_video"])
-                if show_topic_pages == "hide":
-                    self.redirect("/#%s" % topic.id)
                 bingo("topic_pages_view_page")
                 # End topic pages A/B test
 
