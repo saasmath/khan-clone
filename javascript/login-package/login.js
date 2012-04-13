@@ -13,9 +13,10 @@ var Login = Login || {};
  * fields of the login page are hosted in an iframe so it can be sent
  * over https. Google/FB logins are in the outer container.
  */
-Login.initLoginPage = function() {
+Login.initLoginPage = function(options) {
     $("#login-facebook").click(function(e) {
-        Login.connectWithFacebook();
+        Login.connectWithFacebook(
+            options["continueUrl"], true /* requireEmail */);
     });
 };
 
