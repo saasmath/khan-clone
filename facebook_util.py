@@ -52,7 +52,8 @@ def delete_fb_cookies(handler):
 
 def get_facebook_user_id_from_oauth_map(oauth_map):
     if oauth_map:
-        return get_user_id_from_profile(get_profile_from_fb_token(oauth_map.facebook_access_token))
+        profile = _get_profile_from_fb_token(oauth_map.facebook_access_token)
+        return get_user_id_from_profile(profile)
     return None
 
 def get_user_id_from_profile(profile):
@@ -118,7 +119,7 @@ def get_profile_from_cookie_key_value(cookie_key, cookie_value):
             App.facebook_app_secret)
 
     if fb_auth_dict:
-        profile = get_profile_from_fb_token(fb_auth_dict["access_token"])
+        profile = _get_profile_from_fb_token(fb_auth_dict["access_token"])
 
         if profile:
             return profile
@@ -126,7 +127,7 @@ def get_profile_from_cookie_key_value(cookie_key, cookie_value):
     # Don't cache any missing results in memcache
     return layer_cache.UncachedResult(None)
 
-def get_profile_from_fb_token(access_token):
+def _get_profile_from_fb_token(access_token):
 
     if App.facebook_app_secret is None:
         return None
