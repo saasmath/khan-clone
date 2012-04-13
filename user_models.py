@@ -295,22 +295,57 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
         return properties_list
 
+    # TODO(benkomalo): change create_if_none to default to False. 
+    #     We really should not be creating accounts in any call to this method,
+    #     and only create accounts through an explicit user flow to get a
+    #     chance to do things like existing-email clashing detection.
     @staticmethod
     @request_cache.cache()
-    def current():
-        user_id = util.get_current_user_id(bust_cache=True)
-        email = user_id
+    def current(create_if_none=True):
+        """Determine the current logged in user and return it.
+        
+        Arguments:
+            create_if_none: Whether or not to create a new user if valid
+                auth credentials are detected, but no existing user was found
+                for those credentials.
 
+        Returns:
+            The user_models.UserData object corresponding to the logged in
+            user, or phantom user. Returns None if no phantom or user
+            was detected.
+        """
+
+        user_id = util.get_current_user_id(bust_cache=True)
         google_user = users.get_current_user()
         if google_user:
             email = google_user.email()
+        else:
+            email = user_id
+            
+        # Always try to retrieve by user_id. Note that for _really_ old users,
+        # we didn't have user_id values, and we used a "db_key_email". That
+        # value never changes (it's an e-mail for most users, but is a URI
+        # for facebook users).
+        existing = (UserData.get_from_user_id(user_id) or
+                    UserData.get_from_db_key_email(email))
+        if existing:
+            return existing
 
-        if user_id:
-            # Once we have rekeyed legacy entities,
-            # we will be able to simplify this.
-            return (UserData.get_from_user_id(user_id) or
-                    UserData.get_from_db_key_email(email) or
-                    UserData.insert_for(user_id, email))
+        # If no user exists by the user_id, it could be that the user logged
+        # in as a different third party auth provider than what she
+        # initially registered with (logging now with FB instead of Google).
+        # Look for a matching e-mail address (this time the email value
+        # tries to be a real email for FB users, not a URI).
+        if not google_user:
+            fb_profile = facebook_util.get_profile_from_cookies()
+            fb_email = fb_profile and fb_profile.get("email", "")
+            email = fb_email or user_id
+
+        existing = UserData.get_from_user_input_email(email)
+        if existing:
+            return existing
+        elif create_if_none:
+            return UserData.insert_for(user_id, email)
         return None
 
     @staticmethod

@@ -250,7 +250,7 @@ class PostLogin(request_handler.RequestHandler):
 
         self._consume_auth_token()
 
-        user_data = UserData.current()
+        user_data = UserData.current(create_if_none=True)
         if not user_data:
             # Nobody is logged in - clear any expired Facebook cookies
             # that may be hanging around.
@@ -266,14 +266,10 @@ class PostLogin(request_handler.RequestHandler):
 
         first_time = not user_data.last_login
 
-        # Update email address if it has changed
-        current_google_user = users.get_current_user()
-        if current_google_user:
-            if current_google_user.email() != user_data.email:
-                user_data.user_email = current_google_user.email()
-        elif user_data.is_facebook_user:
+        if user_data.is_facebook_user and not user_data.has_sendable_email():
             # Facebook can give us the user's e-mail if the user granted
-            # us permission to see it.
+            # us permission to see it - try to update existing users with
+            # emails, if we don't already have one for them.
             profile = facebook_util.get_profile_from_cookies()
             fb_email = profile and profile.get("email", "")
             if fb_email:
@@ -281,7 +277,8 @@ class PostLogin(request_handler.RequestHandler):
                 # from facebook users, so getting an e-mail after the fact
                 # may result in a collision with an existing Google or Khan
                 # account. In those cases, we silently drop the e-mail.
-                existing_user = user_models.UserData.get_from_user_input_email(fb_email)
+                existing_user = \
+                    user_models.UserData.get_from_user_input_email(fb_email)
 
                 if (existing_user and
                         existing_user.user_id != user_data.user_id):
@@ -596,6 +593,15 @@ class CompleteSignup(request_handler.RequestHandler):
                 # The user already has a KA login - redirect them to their profile
                 self.redirect(user_data.profile_root)
                 return
+            elif not user_data.has_sendable_email():
+                # This is a case where a Facebook user logged in and tried
+                # to signup for a KA password. Unfortunately, since we don't
+                # have their e-mail, we can't let them proceed, since, without
+                # a valid e-mail we can't reset passwords, etc.
+                logging.error("User tried to signup for password with "
+                              "no email associated with the account")
+                self.redirect("/")
+                return
             else:
                 # Here we have a valid user, and need to transfer their identity
                 # to the inner iframe that will be hosted on https.
@@ -626,10 +632,15 @@ class CompleteSignup(request_handler.RequestHandler):
             self.redirect("/")
             return
 
-        if not valid_token and user_data and user_data.has_password():
-            # The user already has a KA login - redirect them to their profile
-            self.redirect(user_data.profile_root)
-            return
+        if not valid_token and user_data:
+            if user_data.has_password():
+                # The user already has a KA login - redirect them to
+                # their profile
+                self.redirect(user_data.profile_root)
+                return
+            elif not user_data.has_sendable_email():
+                self.redirect("/")
+                return
 
         values = {}
         if valid_token:

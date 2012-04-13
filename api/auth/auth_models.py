@@ -96,8 +96,12 @@ class OAuthMap(db.Model):
                 email = user_id
 
             if user_id:
+                # TODO(benkomalo): consolidate this with logic in PostLogin
+                # since it will likely have to duplicate logic re: first time
+                # logins for Google/FB users and doing the proper connections.
                 user_data = (user_models.UserData.get_from_user_id(user_id) or
                              user_models.UserData.get_from_db_key_email(email) or
+                             user_models.UserData.get_from_user_input_email(email) or
                              user_models.UserData.insert_for(user_id, email))
             return (user_data, user_id)
 
