@@ -3,7 +3,7 @@ try:
 except ImportError:
     import unittest
 
-from agar.test.base_test import BaseTest
+from third_party.agar.test import BaseTest
 from google.appengine.ext import db
 
 # TODO(benkomalo): move away form using testutil.GAEModelTestCase to

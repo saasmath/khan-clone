@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from agar.test.base_test import BaseTest
+from third_party.agar.test import BaseTest
 
 import auth.tokens
 import user_models

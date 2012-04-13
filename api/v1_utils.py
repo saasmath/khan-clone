@@ -32,7 +32,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
                         "prerequisites", "covers", "seconds_per_fast_problem",
-                        "related_videos", "short_display_name"]
+                        "related_videos", "description", "short_display_name"]
     if exercise:
         return topic_models.VersionContentChange.add_content_change(exercise,
             version,
