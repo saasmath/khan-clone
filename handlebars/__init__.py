@@ -24,10 +24,14 @@ def handlebars_to_login_redirect_href(context, destination):
 def handlebars_commafy(context, number):
     return re.sub(r'(\d)(?=(\d{3})+$)', r'\1,', str(number))
 
+def handlebars_arraylength(context, array):
+    return len(array)
+
 handlebars_helpers = {
     "repeat": handlebars_repeat,
     "toLoginRedirectHref": handlebars_to_login_redirect_href,
-    "commafy": handlebars_commafy
+    "commafy": handlebars_commafy,
+    "arrayLength": handlebars_arraylength
 }
 
 def handlebars_dynamic_load(package, name):

@@ -186,11 +186,8 @@ def resolve(context, *segments):
         if segment in (None, ""):
             continue
         if type(context) in (list, tuple):
-            if segment == 'length':
-                context = len(context)
-            else:
-                offset = int(segment)
-                context = context[offset]
+            offset = int(segment)
+            context = context[offset]
         else:
             context = context.get(segment)
     return context
@@ -203,7 +200,6 @@ def _each(this, options, context):
             scope = Scope(local_context, this)
             result.grow(options['fn'](scope))
     return result
-
 
 def _if(this, options, context):
     if callable(context):
