@@ -1144,19 +1144,27 @@ li.profile-tab {
 }
 #tab-content-discussion .question {
     line-height: 18px;
-    padding: 10px;
+    padding: 10px 5px 10px 10px;
     border-bottom: 1px solid #CCC;
     color: #777;
 }
 #tab-content-discussion .question.unread {
     background-color: #EBF7fB;
 }
+#tab-content-discussion .question .ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#tab-content-discussion .question .content {
+    font-style: italic;
+}
 #tab-content-discussion .question .discussion-link:hover {
     color: #005987;
 }
 #tab-content-discussion .question .timeago {
     float: right;
-    padding-left: 20px;
+    padding: 0 5px 0 20px;
     color: #BBB;
     font-size: 12px;
 }
