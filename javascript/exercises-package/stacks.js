@@ -764,7 +764,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Navigate to exercise dashboard
      */
     toDashboard: function() {
-        window.location = "/exercisedashboard/";
+        window.location = "/exercisedashboard";
     },
 
     /**
