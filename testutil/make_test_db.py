@@ -28,6 +28,7 @@ from google.appengine.ext.remote_api import remote_api_stub
 import exercise_models
 import exercise_video_model
 from exercises import exercise_util
+from knowledgemap import layout
 from phantom_users import phantom_util
 from testutil import handler_test_utils
 import topic_models
@@ -373,10 +374,18 @@ class Topics(object):
             'last_edited_by': None
             }
 
-        # It looks like library.add_next_topic requires that the topic
-        # with the standalone_title that sorts last (alphabetically)
-        # have no sub-topics.  Probably a bug, but I work around it by
-        # making sure this topic is last (it has no sub-topics).
+        other_fields = {
+            'standalone_title': 'Mathematics (other)',
+            'id': 'math-other',
+            'extended_slug': '',
+            'description': 'Miscellaneous math topics',
+            'tags': ['math'],
+            'hide': False,
+            'created_on': datetime.datetime(2012, 1, 21, 20, 37, 54, 265414),
+            'updated_on': datetime.datetime(2012, 1, 23, 21, 28, 37, 146678),
+            'last_edited_by': None
+            }
+
         equations_fields = {
             'standalone_title': 'One-Step Equations',
             'id': 'basic-equations',
@@ -403,8 +412,6 @@ class Topics(object):
 
         math = topic_models.Topic.insert('Mathematics [early]',
                                          self.early_root, **math_fields)
-        self.add_content_to(videos.domain_and_range, math)
-        self.add_content_to(videos.absolute_value, math)
 
         exponents = topic_models.Topic.insert('Exponents (Basic) [early]',
                                               math, **exponents_fields)
@@ -416,9 +423,14 @@ class Topics(object):
         self.add_content_to(exercises.equations, equations)
         self.add_content_to(videos.equations, equations)        
 
-        # In the early tree, we don't have an art topic, so courbet is
-        # a direct child of the root topic.
-        self.add_content_to(videos.courbet, self.early_root)
+        other = topic_models.Topic.insert('Other [early]',
+                                          math, **other_fields)
+        self.add_content_to(videos.domain_and_range, other)
+        self.add_content_to(videos.absolute_value, other)
+
+        art = topic_models.Topic.insert('Art History [early]',
+                                        self.early_root, **art_fields)
+        self.add_content_to(videos.courbet, art)
 
         # The late-topic-version tree.
         self.late_root = topic_models.Topic(
@@ -430,8 +442,6 @@ class Topics(object):
 
         math = topic_models.Topic.insert('Mathematics [late]',
                                          self.late_root, **math_fields)
-        self.add_content_to(videos.domain_and_range, math)
-        self.add_content_to(videos.absolute_value, math)
 
         exponents = topic_models.Topic.insert('Exponents (Basic) [late]',
                                               math, **exponents_fields)
@@ -442,6 +452,11 @@ class Topics(object):
                                               math, **equations_fields)
         self.add_content_to(exercises.equations, equations)
         self.add_content_to(videos.equations, equations)        
+
+        other = topic_models.Topic.insert('Other [late]',
+                                          math, **other_fields)
+        self.add_content_to(videos.domain_and_range, other)
+        self.add_content_to(videos.absolute_value, other)
 
         art = topic_models.Topic.insert('Art History [late]',
                                         self.late_root, **art_fields)
@@ -458,7 +473,8 @@ class Topics(object):
 
         # Add in a hidden topic as well, with a url of its own
         art_of_math = topic_models.Topic.insert('Mathematics of Art',
-                                                art, **art_of_math_fields)
+                                                self.late_root,
+                                                **art_of_math_fields)
         art_of_math_video_url = url_model.Url(
             url='http://www.youtube.com/watch?v=vb4OrqPBQyA',
             title='Mathematics & art',
@@ -483,7 +499,22 @@ class Topics(object):
 
 class MapLayout(object):
     """TODO(csilvers): talk to ben eater about creating some test ones."""
-    pass
+    def __init__(self, topic_versions):
+        """Create a MapLayout object for each topic-tree we have."""
+        for (i, version) in enumerate((topic_versions.earliest_version,
+                                       topic_versions.latest_version)):
+            l = layout.MapLayout.get_for_version(version)
+            l.layout = { 'polylines': [], 'topics': []}
+            # We'll just make this a tree.  The x-pos will be offset by 1
+            # for latest_version so we can distinguish the versions in tests.
+            tree = topic_models.Topic.get_root(version)
+            # This updates l.layout in place.
+            self.place_tree(l.layout, tree, None, y=0, xmin=i, xmax=80+i)
+            l.put()
+
+    def place_tree(self, layout_map, node, parent_x_y, y, xmin, xmax):
+        # TODO(csilvers): do something reasonable here.
+        pass
 
 
 class CommonCoreMap(object):
@@ -536,9 +567,9 @@ def main(db_filename):
         topic_versions = TopicVersions(users)
         print >>sys.stderr, 'Making topic trees'
         topics = Topics(users, topic_versions, exercises, videos)
-
         print >>sys.stderr, 'Making map layout'
-        map_layout = MapLayout()
+        map_layout = MapLayout(topic_versions)
+
         print >>sys.stderr, 'Making common core map'
         common_core_map = CommonCoreMap()
         
