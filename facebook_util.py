@@ -71,6 +71,21 @@ def get_user_id_from_profile(profile):
 
     return None
 
+def get_fb_email_from_cookies():
+    """Return the e-mail of the current logged in Facebook user, if possible.
+    
+    A user's Facebook e-mail is the one specified as her primary e-mail account
+    in Facebook (not user@facebook.com).
+
+    This may return None if no valid Facebook credentials were found, or
+    if the user did not allow us to see her e-mail address.
+    """
+    
+    profile = get_profile_from_cookies()
+    if profile:
+        return profile.get("email", None)
+    return None
+
 def get_profile_from_cookies():
 
     if App.facebook_app_secret is None:

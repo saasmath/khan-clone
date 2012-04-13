@@ -270,8 +270,7 @@ class PostLogin(request_handler.RequestHandler):
             # Facebook can give us the user's e-mail if the user granted
             # us permission to see it - try to update existing users with
             # emails, if we don't already have one for them.
-            profile = facebook_util.get_profile_from_cookies()
-            fb_email = profile and profile.get("email", "")
+            fb_email = facebook_util.get_fb_email_from_cookies()
             if fb_email:
                 # We have to be careful - we haven't always asked for emails
                 # from facebook users, so getting an e-mail after the fact

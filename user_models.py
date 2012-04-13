@@ -337,8 +337,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         # Look for a matching e-mail address (this time the email value
         # tries to be a real email for FB users, not a URI).
         if not google_user:
-            fb_profile = facebook_util.get_profile_from_cookies()
-            fb_email = fb_profile and fb_profile.get("email", "")
+            fb_email = facebook_util.get_fb_email_from_cookies()
             email = fb_email or user_id
 
         existing = UserData.get_from_user_input_email(email)
