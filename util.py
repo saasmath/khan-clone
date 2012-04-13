@@ -23,7 +23,7 @@ import urlparse
 
 def current_req_has_auth_credentials():
     """Determine whether or not the current request has valid credentials."""
-    return get_current_user_id() is None
+    return get_current_user_id() is not None
 
 
 # TODO(benkomalo): kill this method! Clients interested in the current user
