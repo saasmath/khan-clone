@@ -994,7 +994,7 @@ var Profile = {
                         var rampOff = 700;
 
                         // Throb the highlight color for the new entries.
-                        $("#tab-content-discussion .question").slice(0, newNotificationCount)
+                        $("#tab-content-discussion .unread").slice(0, newNotificationCount)
                             .delay(initialPause)
                             .animate({"background-color": "#cef3ff"}, rampOn)
                             .delay(hiOn)
