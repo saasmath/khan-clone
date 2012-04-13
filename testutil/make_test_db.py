@@ -498,23 +498,37 @@ class Topics(object):
 
 
 class MapLayout(object):
-    """TODO(csilvers): talk to ben eater about creating some test ones."""
+    """MapLayout objects connect topics which contain exercises in a graph."""
     def __init__(self, topic_versions):
         """Create a MapLayout object for each topic-tree we have."""
+        self.layout = {}
         for (i, version) in enumerate((topic_versions.earliest_version,
                                        topic_versions.latest_version)):
-            l = layout.MapLayout.get_for_version(version)
-            l.layout = { 'polylines': [], 'topics': []}
-            # We'll just make this a tree.  The x-pos will be offset by 1
-            # for latest_version so we can distinguish the versions in tests.
-            tree = topic_models.Topic.get_root(version)
-            # This updates l.layout in place.
-            self.place_tree(l.layout, tree, None, y=0, xmin=i, xmax=80+i)
-            l.put()
-
-    def place_tree(self, layout_map, node, parent_x_y, y, xmin, xmax):
-        # TODO(csilvers): do something reasonable here.
-        pass
+            mlayout = { 'polylines': [], 'topics': {}}
+            mlayout['topics']['basic-equations'] = {
+                'icon_url': '/images/power-mode/badges/default-40x40.png',
+                'id': 'basic-equations',
+                'standalone_title': 'One-Step Equations',
+                'x': i,
+                'y': 6,
+                }
+            mlayout['topics']['basic-exponents'] = {
+                'icon_url': '/images/power-mode/badges/default-40x40.png',
+                'id': 'basic-exponents',
+                'standalone_title': 'Basic Exponents',
+                'x': i,
+                'y': 16,
+                }
+            mlayout['polylines'].append(
+                {'path': [{'x': i, 'y': 6}, {'x': i, 'y': 16}]},
+                )
+            
+            self.layout[version.number] = layout.MapLayout(
+                    key_name=layout.MapLayout.key_for_version(version),
+                    version=version,
+                    layout=mlayout)
+            self.layout[version.number].put()
+            db.get(self.layout[version.number].key())
 
 
 class CommonCoreMap(object):
