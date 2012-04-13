@@ -234,13 +234,28 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @staticmethod
     def get_from_url_segment(segment):
+        """ Retrieves a user by a URL segment, as expected to be built from
+        the user's UserData.profile_root value.
+        
+        Arguments:
+            segment - A string for the segment to query the user by, typically
+                 URI encoded (though this method will try to be flexible).
+        """
         username_or_email = None
 
         if segment:
-            segment = urllib.unquote(segment).decode('utf-8').strip()
             if segment.startswith("_fb"):
-                username_or_email = segment.replace("_fb", facebook_util.FACEBOOK_ID_PREFIX)
+                username_or_email = segment.replace(
+                    "_fb", facebook_util.FACEBOOK_ID_PREFIX)
             elif segment.startswith("_em"):
+                if segment.find('@') == -1:
+                    # Likely encoded
+                    segment = urllib.unquote(segment)
+                try:
+                    segment = segment.decode('utf-8').strip()
+                except UnicodeDecodeError, e:
+                    logging.warning("Can't decode profile URL [%s]" % segment)
+                    return None
                 username_or_email = segment.replace("_em", "")
             else:
                 username_or_email = segment
