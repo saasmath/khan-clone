@@ -505,6 +505,8 @@ class MapLayout(object):
         for (i, version) in enumerate((topic_versions.earliest_version,
                                        topic_versions.latest_version)):
             mlayout = { 'polylines': [], 'topics': {}}
+            # TODO(csilvers): just add every topic that has an
+            # exercise as a child.
             mlayout['topics']['basic-equations'] = {
                 'icon_url': '/images/power-mode/badges/default-40x40.png',
                 'id': 'basic-equations',

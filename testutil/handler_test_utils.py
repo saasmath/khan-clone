@@ -51,8 +51,31 @@ tmpdir = None
 pid = None
 
 
-def start_dev_appserver():
-    """Start up a dev-appserver instance on an unused port, return its url."""
+def start_dev_appserver(db=None):
+    """Start up a dev-appserver instance on an unused port, return its url.
+
+    This function creates a sandbox directory, and symlinks the entire
+    'current' directory tree (the one in which this file is found) to
+    the sandbox directory, excepting directories that hold the
+    database.  This makes sure that work on the dev_appserver won't
+    change your current environment.
+
+    It starts looking on port 9000 for a free port, and will check
+    10000 ports, so it should be able to start up no matter what.
+
+    This function sets the module-global variables appserver_url,
+    tmpdir, and pid.  Applications are free to examine these.  They
+    are None if a dev_appserver instance isn't currently running.
+
+    Arguments:
+       db: if not None, this file is copied into the sandbox
+         datastore/ directory, and is used as the starting db for the
+         test datastore.  It should be specified relative to the
+         app-root of the current directory tree (the directory where
+         app.yaml lives).  Note that since this file is copied, there
+         are no changes made to the db file you specify.  If None, an
+         empty db file is used.
+    """
     global appserver_url, tmpdir, pid
 
     # Find the 'root' directory of the project the tests are being
@@ -74,6 +97,9 @@ def start_dev_appserver():
             os.symlink(os.path.join(ka_root, f),
                        os.path.join(tmpdir, f))
     os.mkdir(os.path.join(tmpdir, 'datastore'))
+    if db:
+        shutil.copy(os.path.join(ka_root, db),
+                    os.path.join(tmpdir, 'datastore', 'test.sqlite'))
 
     # Find an unused port to run the appserver on.  There's a small
     # race condition here, but we can hope for the best.  Too bad
