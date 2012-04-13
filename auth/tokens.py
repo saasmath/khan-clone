@@ -30,8 +30,7 @@ def _from_timestamp(s):
 
 
 class TokenError(Exception):
-    """Generic error type used when something goes wrong in minting
-    tokens of any type."""
+    """Indicates an error when minting tokens of any type."""
     pass
 
 
@@ -68,7 +67,7 @@ class BaseSecureToken(object):
 
         Returns:
             A string representing a secure signature from the given payload.
-        
+
         Raises:
             TokenError: Raised if the payload arguments are invalid.
         """
@@ -106,7 +105,7 @@ class BaseSecureToken(object):
 
     @classmethod
     def for_value(cls, token_value):
-        """Parses a string intended to be an secure token value.
+        """Parse a string intended to be an secure token value.
 
         Returns None if the string is invalid, and an instance of the token
         otherwise. Note that this essentially only checks well-formedness,
@@ -134,7 +133,7 @@ class BaseSecureToken(object):
     DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 24 * 60 * 60
 
     def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
-        """Determines whether or not the specified token is expired.
+        """Determine whether or not the specified token is expired.
 
         Note that tokens encapsulate timestamp on creation, so the application
         may change the expiry lengths at any time and invalidate historical
@@ -146,7 +145,7 @@ class BaseSecureToken(object):
         return not dt or (now - dt) > time_to_expiry
 
     def validate_signature_for(self, user_data):
-        """Validates the signature for this token against the expected
+        """Validate the signature for this token against the expected
         value for a token for the specified user."""
 
         # The default implementation is to just re-build the signature
@@ -155,7 +154,7 @@ class BaseSecureToken(object):
         return expected == self.signature
 
     def is_authentic(self, user_data):
-        """Determines if the token is valid for a given user.
+        """Determine if the token is valid for a given user.
 
         Users may invalidate all existing auth tokens by changing his/her
         password.
