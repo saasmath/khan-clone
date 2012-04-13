@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import datetime
 from app import App
-from agar.test import BaseTest
+from third_party.agar.test import BaseTest
 
 import auth.tokens as tokens
 import testutil

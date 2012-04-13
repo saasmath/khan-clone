@@ -25,7 +25,6 @@ MAX_TEST_SIZE = medium
 COVERAGE_OMIT = *_test.py
 COVERAGE_OMIT += */google_appengine/*
 COVERAGE_OMIT += third_party/*
-COVERAGE_OMIT += agar/*
 COVERAGE_OMIT += api/packages/*
 COVERAGE_OMIT += asynctools/*
 COVERAGE_OMIT += atom/*
