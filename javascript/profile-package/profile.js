@@ -966,7 +966,7 @@ var Profile = {
                 },
                 dataType: "json",
                 success: function(data) {
-                    if (data.length === 0) {
+                    if (data.questions.length === 0) {
                         Profile.noDiscussion_ = true;
                         Profile.showNotification("no-discussion");
                         return;
