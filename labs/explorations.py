@@ -6,7 +6,8 @@ import request_handler
 EXPLORATIONS = [
     # Crypto
     'frequency-fingerprint',
-    'frequency-stability'
+    'frequency-stability',
+    'perfect-secrecy'
 ]
 
 class RequestHandler(request_handler.RequestHandler):
