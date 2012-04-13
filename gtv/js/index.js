@@ -191,7 +191,7 @@ gtv.jq.TemplatePage.prototype.makeGrid = function( index) {
 
   var behaviors = {
     itemsPerRow: 1,
-    rowsPerPage:20 
+    rowsPerPage:100 
   };
 
   var gridParms = {
