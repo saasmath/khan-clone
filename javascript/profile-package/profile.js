@@ -991,14 +991,14 @@ var Profile = {
                         var numNew = $('#top-header .notification-bubble').text();
                         if (numNew !== "") {
                             var initialPause = 500;
-                            var rampOn = 200;
-                            var hiOn = 1600;
+                            var rampOn = 400;
+                            var hiOn = 600;
                             var rampOff = 700;
 
                             // Throb the highlight color for the new entries.
                             $(jelUnread.slice(0,parseInt(numNew)))
                                 .delay(initialPause)
-                                .animate({"background-color": "#f2ffd7"}, rampOn)
+                                .animate({"background-color": "#cef3ff"}, rampOn)
                                 .delay(hiOn)
                                 .animate({"background-color": "#ebf7fb"}, rampOff);
 
