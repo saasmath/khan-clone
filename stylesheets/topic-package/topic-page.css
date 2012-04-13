@@ -195,7 +195,7 @@ a.main-video-link:hover {
     color: black;
     text-decoration: none;
 }
-.topic-page-content > .container > .content-pane .vid-progress {
+.topic-page-content > .container > .content-pane .videos-list .vid-progress {
     display: inline-block;
     padding-left: 14px;
     padding-top: 6px;
@@ -213,8 +213,11 @@ a.main-video-link:hover {
 .content-pane div.subtopics-list a.thumbnail_link:hover {
     text-decoration: none;
 }
-.content-pane div.main-header div.thumbnail_label,
-.content-pane div.subtopics-list div.thumbnail_label {
+.content-pane div.main-header div.thumbnail_container {
+    width: 300px;
+    position: absolute;
+}
+.content-pane div.main-header div.thumbnail_label {
     padding: 5px 10px;
     max-width: 280px;
     text-align: left;
@@ -277,7 +280,7 @@ a.main-video-link:hover {
     display: inline-block;
     width: 316px;
     vertical-align: top;
-    padding-left: 14px;
+    padding-left: 20px;
 }
 .content-pane div.main-header .topic-video a {
     display: block;
@@ -287,6 +290,7 @@ a.main-video-link:hover {
 
 .content-pane div.subtopic-list-container {
     overflow: hidden;
+    margin-left: 6px;
 }
 .content-pane div.subtopics-list {
     width: 390px;
@@ -302,7 +306,7 @@ a.main-video-link:hover {
     font-family: "MuseoSans500", sans-serif;
     font-size: 20px;
     margin: 22px 0 12px 0;
-    padding-left: 14px;
+    padding-left: 20px;
 }
 .content-pane div.subtopics-list .subtopic {
     position: relative;
@@ -370,11 +374,12 @@ a.main-video-link:hover {
     font-family: "MuseoSans500", sans-serif;
     font-size: 20px;
     margin: 22px 0 12px 0;
-    padding-left: 14px;
+    padding-left: 20px;
 }
 .content-pane div.videos-list ol {
-    float: left;
+    display: inline-block;
     width: 49%;
+    vertical-align: top;
 }
 .content-pane div.videos-list ol.first {
     border-right: solid 1px #ccc;

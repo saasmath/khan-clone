@@ -256,7 +256,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         else:
             root += self.prettified_user_email
 
-        return root
+        return root + "/"
 
     # Return data about the user that we'd like to track in MixPanel
     @staticmethod
@@ -478,8 +478,8 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
                                     key_name)
                 return user_data
 
-            xg_on = db.create_transaction_options(xg=True)
-            user_data = db.run_in_transaction_options(xg_on, create_txn)
+            user_data = transaction_util.ensure_in_transaction(create_txn,
+                                                               xg_on=True)
 
         else:
             # No username means we don't have to do manual transactions.

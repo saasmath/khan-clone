@@ -11,6 +11,7 @@ except ImportError:
 
 import hipchat.config
 
+
 def partial(func, *args, **keywords):
     def newfunc(*fargs, **fkeywords):
         newkeywords = keywords.copy()

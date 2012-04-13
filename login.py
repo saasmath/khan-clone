@@ -20,6 +20,7 @@ import os
 import re
 import request_handler
 import shared_jinja
+import transaction_util
 import uid
 import user_util
 import util

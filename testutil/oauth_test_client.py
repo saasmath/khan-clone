@@ -229,7 +229,8 @@ def fetch_via_oauth(url_to_fetch,
           This is who the oauth process will say is logging in (the
           'resource provider').  This user must exist in the khan db.
           You can create a user via
-             user_data = user_models.UserData.insert_for('random_string', 'a@b.com')
+             user_data = user_models.UserData.insert_for('random_string',
+                                                         'a@b.com')
              user_data.set_password('password')
           If you pass in None, we will use an 'internal' user we create.
 

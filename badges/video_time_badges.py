@@ -1,7 +1,9 @@
 from badges import Badge, BadgeCategory
 from templatefilters import seconds_to_time_string
 
-# All badges awarded for spending a certain amount of time watching videos, total
+
+# All badges awarded for spending a certain amount of time watching
+# videos, total
 class VideoTimeBadge(Badge):
 
     def is_satisfied_by(self, *args, **kwargs):
@@ -13,7 +15,9 @@ class VideoTimeBadge(Badge):
         return user_data.total_seconds_watched >= self.seconds_required
 
     def extended_description(self):
-        return "Watch %s of video" % seconds_to_time_string(self.seconds_required)
+        return ("Watch %s of video" %
+                seconds_to_time_string(self.seconds_required))
+
 
 class ActOneSceneOneBadge(VideoTimeBadge):
     def __init__(self):

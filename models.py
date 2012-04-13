@@ -1,8 +1,13 @@
 """Obsolete wrapper for various data models.
 
 Each of the models in this file have moved somewhere else.  This file
-is only provided for backwards compatibility with code that has
+is provided for backwards compatibility with code that has
 'import models' and expects to get all the models at once.
+
+This is also important for backwards compatibility with
+de-pickling items that contain object instances from the old models
+definition. That de-pickling process would expect the class
+definitions to be in this 'models' module.
 
 Use the following grep command to find imports you need to use in
 the new file:
@@ -10,7 +15,7 @@ cat <filename> | fgrep -o -w -e datetime -e logging -e json -e json -e math -e u
 
 To find out classes that are defined in this file that may be moving
 outside (and thus will also need to be imported) use:
-cat <filename> | fgrep -o -w -e BackupModel -e Setting -e Exercise -e UserExercise -e CoachRequest -e StudentList -e UserVideoCss -e UniqueUsername -e NicknameIndex -e UnverifiedUser -e UserData -e TopicVersion -e VersionContentChange -e Topic -e Url -e Video -e Playlist -e UserPlaylist -e UserTopic -e UserVideo -e VideoLog -e DailyActivityLog -e LogSummaryTypes -e LogSummaryShardConfig -e LogSummary -e ProblemLog -e VideoPlaylist -e ExerciseVideo -e UserExerciseCache -e UserExerciseGraph -e PromoRecord -e VideoSubtitles -e VideoSubtitlesFetchReport -e ParentSignup | sort -u
+cat <filename> | fgrep -o -w -e BackupModel -e Setting -e Exercise -e UserExercise -e CoachRequest -e StudentList -e UserVideoCss -e UniqueUsername -e NicknameIndex -e UnverifiedUser -e UserData -e TopicVersion -e VersionContentChange -e Topic -e Url -e Video -e UserTopic -e UserVideo -e VideoLog -e DailyActivityLog -e LogSummaryTypes -e LogSummaryShardConfig -e LogSummary -e ProblemLog -e ExerciseVideo -e UserExerciseCache -e UserExerciseGraph -e PromoRecord -e VideoSubtitles -e VideoSubtitlesFetchReport -e ParentSignup | sort -u
 
 The remaining circular dependencies
    exercise_models: exercise_video_models
@@ -25,11 +30,11 @@ from backup_model import *
 from coach_resources.coach_request_model import *
 from exercise_video_model import *
 from exercise_models import *
-from obsolete_models import *
 from parent_signup_model import *
 from promo_record_model import *
 from setting_model import *
 from summary_log_models import *
 from topic_models import *
+from url_model import *
 from user_models import *
 from video_models import *

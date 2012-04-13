@@ -1,6 +1,7 @@
 import layer_cache
 from avatars import AvatarPointsCategory, PointsAvatar
 
+
 @layer_cache.cache()
 def all_avatars():
     """ Authoritative list of all avatars available to users. """
@@ -24,10 +25,12 @@ def all_avatars():
         PointsAvatar("ospiceman", "Old Spice Man", "/images/avatars/old-spice-man.png", 100000),
     ]
 
+
 @layer_cache.cache()
 def avatars_by_name():
     """ Full list of avatars in a dict, keyed by their unique names """
     return dict([(avatar.name, avatar) for avatar in all_avatars()])
+
 
 def avatar_for_name(name=None):
     """ Returns the avatar for the specified name.
@@ -39,6 +42,7 @@ def avatar_for_name(name=None):
         return avatars[name]
     
     return all_avatars()[0]
+
 
 @layer_cache.cache()
 def avatars_by_category():

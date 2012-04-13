@@ -1,6 +1,7 @@
 import exercise_models
 from badges import Badge, BadgeContextType
 
+
 # All badges that may be awarded once-per-Exercise inherit from ExerciseBadge
 class ExerciseBadge(Badge):
 
@@ -21,4 +22,3 @@ class ExerciseBadge(Badge):
             return False
 
         self.complete_award_to(user_data, user_exercise.exercise_model, exercise_models.Exercise.to_display_name(user_exercise.exercise))
-

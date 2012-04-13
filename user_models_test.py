@@ -6,7 +6,8 @@ except ImportError:
 from agar.test.base_test import BaseTest
 from google.appengine.ext import db
 
-# TODO(benkomalo): move away form using testutil.GAEModelTestCase to agar.test.BaseTest
+# TODO(benkomalo): move away form using testutil.GAEModelTestCase to
+# agar.test.BaseTest
 import custom_exceptions
 import coaches
 import exercise_models
@@ -167,6 +168,7 @@ class UserDataCoachTest(BaseTest):
         requests_for_renesmee = CoachRequest.get_for_student(renesmee).fetch(1000)
         self.assertEqual(0, len(requests_for_renesmee))
 
+
 class UsernameTest(testutil.GAEModelTestCase):
     def tearDown(self):
         # Clear all usernames just to be safe
@@ -198,13 +200,13 @@ class UsernameTest(testutil.GAEModelTestCase):
 
     def test_bad_user_name_fails_validation(self):
         self.assertFalse(self.validate(''))
-        self.assertFalse(self.validate('a')) # Too short
-        self.assertFalse(self.validate('4scoresand7years')) # Must start with letter
+        self.assertFalse(self.validate('a'))  # Too short
+        self.assertFalse(self.validate('4score7yrs'))  # Must start with letter
         self.assertFalse(self.validate('.dotsarebadtoo'))
         self.assertFalse(self.validate('!nvalid'))
         self.assertFalse(self.validate('B@dCharacters'))
         self.assertFalse(self.validate('I cannot read instructions'))
-        self.assertFalse(self.validate(u'h\u0400llojello')) # Cyrillic chars
+        self.assertFalse(self.validate(u'h\u0400llojello'))  # Cyrillic chars
         self.assertFalse(self.validate('mrpants@khanacademy.org'))
 
     def test_good_user_name_validates(self):
@@ -275,9 +277,11 @@ class UsernameTest(testutil.GAEModelTestCase):
                 u2.user_id,
                 UserData.get_from_username("superbob").user_id)
 
+
 class ProfileSegmentTest(testutil.GAEModelTestCase):
     def to_url(self, user):
         return user.prettified_user_email
+
     def from_url(self, segment):
         return UserData.get_from_url_segment(segment)
 
@@ -319,7 +323,7 @@ class UserDataCreationTest(testutil.GAEModelTestCase):
 
     def insert_user(self, user_id, email, username=None, password=None):
         return UserData.insert_for(user_id, email, username, password)
-    
+
     def test_creation_without_username(self):
         added = [
             self.insert_user("larry", "email1@gmail.com"),
@@ -332,7 +336,7 @@ class UserDataCreationTest(testutil.GAEModelTestCase):
         self.assertEqual(3, UserData.all().count())
         self.assertEqual(set(["larry", "curly", "moe"]),
                          set(user.user_id for user in UserData.all()))
-        
+
         # "Re-adding" moe doesn't duplicate.
         self.flush([self.insert_user("moe", "email3@gmail.com")])
         self.assertEqual(3, UserData.all().count())
@@ -340,16 +344,16 @@ class UserDataCreationTest(testutil.GAEModelTestCase):
     def test_creation_with_bad_username(self):
         self.assertTrue(self.insert_user("larry", "email1@gmail.com", "!!!!!")
                         is None)
-        
+
     def test_creation_with_existing_username(self):
         self.flush([self.insert_user("larry", "email1@gmail.com", "larry")])
         self.assertEqual(1, UserData.all().count())
         self.assertEqual("larry", UserData.all()[0].user_id)
         self.assertEqual("larry", UserData.all()[0].username)
 
-        self.assertTrue(self.insert_user("larry2", "tooslow@gmail.com", "larry")
-                        is None)
-        
+        self.assertTrue(self.insert_user("larry2", "tooslow@gmail.com",
+            "larry") is None)
+
     @testsize.medium()
     def test_creation_with_password(self):
         self.flush([self.insert_user("larry",
@@ -369,7 +373,7 @@ class UserConsumptionTest(testutil.GAEModelTestCase):
         exercise = exercise_models.Exercise(name=name)
         exercise.put()
         return exercise
-        
+
     @testsize.medium()
     def test_user_identity_consumption(self):
         superman = UserData.insert_for(
@@ -395,7 +399,7 @@ class UserConsumptionTest(testutil.GAEModelTestCase):
         self.assertEqual(clark.key(),
                          UserData.get_from_user_id("superman@gmail.krypt").key())
         self.assertTrue(clark.validate_password("Password1"))
-        
+
     def test_user_exercise_preserved_after_consuming(self):
         # A user goes on as a phantom...
         phantom = UserData.insert_for("phantom", "phantom")
@@ -415,7 +419,7 @@ class UserConsumptionTest(testutil.GAEModelTestCase):
         jimmy = UserData.insert_for("justjoinedjimmy@gmail.com",
                                     email="justjoinedjimmy@gmail.com")
         phantom.consume_identity(jimmy)
-        
+
         # Make sure we can still see the old user exercises
         shouldbejimmy = UserData.get_from_user_id("justjoinedjimmy@gmail.com")
         user_exercises = (exercise_models.UserExercise.

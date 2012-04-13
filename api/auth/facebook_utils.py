@@ -6,7 +6,9 @@ from flask import request, redirect
 from app import App
 
 from api import route
-from api.auth.auth_util import pretty_error_response, oauth_error_response, get_response, get_parsed_params, authorize_token_redirect, OAuthBadRequestError
+from api.auth.auth_util import (pretty_error_response, oauth_error_response,
+                                get_response, get_parsed_params,
+                                authorize_token_redirect, OAuthBadRequestError)
 from api.auth.auth_models import OAuthMap
 from api.auth import decorators
 
@@ -15,12 +17,14 @@ from oauth_provider.oauth import OAuthError
 FB_URL_OAUTH_DIALOG = "https://www.facebook.com/dialog/oauth"
 FB_URL_ACCESS_TOKEN = "https://graph.facebook.com/oauth/access_token"
 
+
 def facebook_request_token_handler(oauth_map):
     # Start Facebook request token process
     params = {
                 "client_id": App.facebook_app_id,
                 "redirect_uri": get_facebook_token_callback_url(oauth_map),
-                # Request offline_access so client apps don't have to deal w/ expiration
+                # Request offline_access so client apps don't have to
+                # deal w/ expiration
                 "scope": "offline_access",
             }
 
@@ -29,6 +33,7 @@ def facebook_request_token_handler(oauth_map):
         params["display"] = "touch"
 
     return redirect("%s?%s" % (FB_URL_OAUTH_DIALOG, urllib.urlencode(params)))
+
 
 def retrieve_facebook_access_token(oauth_map):
     # Start Facebook access token process
@@ -56,9 +61,11 @@ def retrieve_facebook_access_token(oauth_map):
         pass
 
     if expires_seconds:
-        oauth_map.expires = datetime.datetime.now() + datetime.timedelta(seconds=expires_seconds)
+        oauth_map.expires = (datetime.datetime.now() +
+                             datetime.timedelta(seconds=expires_seconds))
 
     return oauth_map
+
 
 # Associate our request or access token with Facebook's tokens
 @route("/api/auth/facebook_token_callback", methods=["GET"])
@@ -86,6 +93,7 @@ def facebook_token_callback():
     oauth_map.put()
 
     return authorize_token_redirect(oauth_map)
+
 
 def get_facebook_token_callback_url(oauth_map):
     return "%sapi/auth/facebook_token_callback?oauth_map_id=%s" % (

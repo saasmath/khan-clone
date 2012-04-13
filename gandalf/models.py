@@ -5,6 +5,7 @@ from google.appengine.ext import db
 from gandalf.object_property import UnvalidatedObjectProperty
 from gandalf.filters import BridgeFilter
 
+
 class GandalfBridge(db.Model):
     date_created = db.DateTimeProperty(auto_now_add=True, indexed=False)
 
@@ -25,7 +26,8 @@ class GandalfBridge(db.Model):
         if days_running < 1:
             return "Running for less than a day"
         else:
-            return "Running for %s day%s" % (days_running, ("" if days_running == 1 else "s"))
+            return "Running for %s day%s" % (
+                days_running, ("" if days_running == 1 else "s"))
 
 
 class GandalfFilter(db.Model):
