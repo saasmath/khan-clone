@@ -4,7 +4,8 @@ import logging
 from mapreduce import operation as op
 import facebook_util
 from google.appengine.ext import db
-import topic_models 
+import topic_models
+import user_models
 from reconstructor_patch import ReconstructorPatch
 import cPickle as pickle
 
@@ -122,3 +123,21 @@ def fix_busted_goals(goal):
 
         logging.info("Fixed goal with key: %s" % goal.key())
         yield op.db.Put(goal)
+
+def update_feedback_author_user_id(feedback):
+    """ Backfill Feedback entities' author_user_id property."""
+    if feedback.author_user_id:
+        return
+
+    author_user = feedback.author
+
+    if not author_user:
+        return
+
+    author_user_data = user_models.UserData.get_from_user(author_user)
+
+    if not author_user_data:
+        return
+
+    feedback.author_user_id = author_user_data.user_id
+    yield op.db.Put(feedback)
