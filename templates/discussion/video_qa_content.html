@@ -1,8 +1,7 @@
 {% import 'macros/discussion.html' as discussion %}
 
 {% for question in questions %}
-    <a name="q_{{ question.key() }}"></a>
-    <div class="question_container {% if qa_expand_key == question.key().__str__() %}question_container_expanded{% endif %}">
+    <div id="{{question.key()}}" class="question_container {% if qa_expand_key == question.key().__str__() %}question_container_expanded{% endif %}">
         <input type="hidden" name="entity_key" value="{{ question.key() }}">
         <div class="question {% if question.appears_as_deleted_to(UserData.current()) %}deleted{% endif %}" data-question_key="{{ question.key() }}">
             {{ discussion.vote_tools(question) }}

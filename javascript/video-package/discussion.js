@@ -317,13 +317,15 @@ var QA = {
         if (!fInitialLoad) Throbber.hide();
         VideoControls.initJumpLinks();
 
-        var hash = "qa";
-        if (data.qa_expand_key) {
-            hash = "q_" + data.qa_expand_key;
-        }
+        if (fInitialLoad && data.qa_expand_key) {
+            // Scroll to expanded question if specified
+            var jelQuestion = $("#" + data.qa_expand_key);
 
-        if (!fInitialLoad || hash != "qa") {
-            document.location = "#" + hash;
+            if (jelQuestion.length !== 0) {
+                $("html, body").animate({
+                    scrollTop: jelQuestion.offset().top
+                });
+            }
         }
     },
 
