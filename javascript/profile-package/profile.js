@@ -989,14 +989,15 @@ var Profile = {
 
                     if (Profile.profile.get("isSelf") && newNotificationCount !== 0) {
                         var initialPause = 500;
-                        var rampOn = 400;
-                        var hiOn = 600;
-                        var rampOff = 700;
+                        var rampOn = 500;
+                        var hiOn = 300;
+                        var rampOff = 300;
 
                         // Throb the highlight color for the new entries.
                         $("#tab-content-discussion .unread").slice(0, newNotificationCount)
+                            .css({"background-color": "#fff"})
                             .delay(initialPause)
-                            .animate({"background-color": "#cef3ff"}, rampOn)
+                            .animate({"background-color": "#dcf2fa"}, rampOn)
                             .delay(hiOn)
                             .animate({"background-color": "#ebf7fb"}, rampOff);
 
