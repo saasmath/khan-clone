@@ -92,15 +92,15 @@ class PostLoginTest(testutil.GAEModelTestCase):
                               user_email=email or fb_user_id)
 
     def test_basic_google_login_for_new_user(self):
-        self.assertEquals(0, _user_count())
+        self.assertEquals(0, _user_counts())
         self.fake_google_login(123, "joe@gmail.com")
-        self.assertEquals(1, _user_count())
+        self.assertEquals(1, _user_counts())
         self.assertEquals("joe@gmail.com", _cur_user().email)
 
     def test_basic_fb_login_for_new_user(self):
-        self.assertEquals(0, _user_count())
+        self.assertEquals(0, _user_counts())
         self.fake_fb_login(123, "fbuser@gmail.com")
-        self.assertEquals(1, _user_count())
+        self.assertEquals(1, _user_counts())
         self.assertEquals("fbuser@gmail.com", _cur_user().email)
 
     def test_fb_login_for_existing_user(self):
@@ -108,14 +108,14 @@ class PostLoginTest(testutil.GAEModelTestCase):
         # their email yet, because historically we didn't ask.
         existing = self.make_fb_user(123)
         self.assertFalse(existing.has_sendable_email())
-        self.assertEquals(1, _user_count())
+        self.assertEquals(1, _user_counts())
 
         # Have them login, but this time FB gave us their e-mail.
         self.fake_fb_login(123, "fbuser@gmail.com")
 
         # At this point, that same user should have just gotten their email
         # updated since there were no conflicts with other accounts.
-        self.assertEquals(1, _user_count())
+        self.assertEquals(1, _user_counts())
         self.assertEquals(existing.key(), _cur_user().key())
         self.assertEquals("fbuser@gmail.com",
                           _cur_user().email)
@@ -138,11 +138,11 @@ class PostLoginTest(testutil.GAEModelTestCase):
         current = _cur_user()
 
         self.assertEquals(
-            2, _user_count(),
+            2, _user_counts(),
             msg="New user shouldn't be created on FB email change")
 
         self.assertNotEquals(
-            user1.key(), current.key()
+            user1.key(), current.key(),
             msg="Shouldn't have logged in as the Google user")
 
         self.assertEquals(
@@ -171,7 +171,7 @@ class PostLoginTest(testutil.GAEModelTestCase):
         # we can properly merge, we can't update the e-mail of that Google
         # user .
         current = _cur_user()
-        self.assertEquals(2, _user_count())
+        self.assertEquals(2, _user_counts())
         self.assertEquals(
             user1.key(), current.key(),
             msg="Google user should still have access to old account")
