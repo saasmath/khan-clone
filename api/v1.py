@@ -795,7 +795,9 @@ def get_exercises():
 def get_exercise(exercise_name, version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id) if version_id else None
     exercise = models.Exercise.get_by_name(exercise_name, version)
-    if exercise and not hasattr(exercise, "related_videos"):
+    # TODO(james): rename related_videos to related_video_readable_ids
+    # then save these on the exercise and video objects
+    if exercise:
         exercise_videos = exercise.related_videos_query()
         exercise.related_videos = map(lambda exercise_video: exercise_video.video.readable_id, exercise_videos)
     return exercise
