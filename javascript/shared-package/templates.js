@@ -57,6 +57,7 @@ Templates.get = function(name) {
     var ret = Templates.cache_[name] ||
         (Templates.cache_[name] = Templates.fromScript_(name));
     return function(params) {
+//        KAConsole.log("TEMPLATE", name, JSON.stringify(params)); // Helpful for extracting sample data for unit tests
         return ret(params);
     };
 };

@@ -2,6 +2,7 @@ import sys
 import re
 import urllib
 import logging
+import copy
 from app import App
 
 from pybars import Compiler
@@ -27,11 +28,24 @@ def handlebars_commafy(context, number):
 def handlebars_arraylength(context, array):
     return len(array)
 
+def handlebars_multiply(context, num1, num2):
+    val = unicode(float(num1) * float(num2))
+    if val[-2:] == u".0":
+        return val[:-2]
+    return val
+
+def handlebars_skillbar(context, end=0, start=0, exerciseStates={}):
+    subcontext = copy.copy(exerciseStates)
+    subcontext.update({"start": start, "end": end})
+    return handlebars_template("shared", "skill-bar", subcontext)
+
 handlebars_helpers = {
     "repeat": handlebars_repeat,
     "toLoginRedirectHref": handlebars_to_login_redirect_href,
     "commafy": handlebars_commafy,
-    "arrayLength": handlebars_arraylength
+    "arrayLength": handlebars_arraylength,
+    "multiply": handlebars_multiply,
+    "skill-bar": handlebars_skillbar
 }
 
 def handlebars_dynamic_load(package, name):
