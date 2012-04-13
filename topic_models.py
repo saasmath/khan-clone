@@ -41,6 +41,7 @@ import request_cache
 import search
 import setting_model
 import templatetags
+import transaction_util
 import url_model
 import user_models
 import util
@@ -716,7 +717,7 @@ class Topic(search.Searchable, db.Model):
             db.put(updated_entities)
 
         self.version.update()
-        return db.run_in_transaction(move_txn)
+        return transaction_util.ensure_in_transaction(move_txn)
 
     # Ungroup takes all of a topics children, moves them up a level, then
     # deletes the topic
@@ -754,7 +755,8 @@ class Topic(search.Searchable, db.Model):
 
         new_topic = util.clone_entity(self, **kwargs)
 
-        return db.run_in_transaction(Topic._insert_txn, new_topic)
+        return transaction_util.ensure_in_transaction(Topic._insert_txn,
+                                                      new_topic)
 
     def add_child(self, child, pos=None):
         if self.version.default:
@@ -779,7 +781,7 @@ class Topic(search.Searchable, db.Model):
             db.put(entities_updated)
 
         self.version.update()
-        return db.run_in_transaction(add_txn)
+        return transaction_util.ensure_in_transaction(add_txn)
 
     def delete_child(self, child):
         if self.version.default:
@@ -810,7 +812,7 @@ class Topic(search.Searchable, db.Model):
                     db.delete(descendants)
 
         self.version.update()
-        db.run_in_transaction(delete_txn)
+        transaction_util.ensure_in_transaction(delete_txn)
 
     def delete_tree(self):
         parents = db.get(self.parent_keys)
@@ -889,7 +891,8 @@ class Topic(search.Searchable, db.Model):
             setattr(new_topic, key, kwargs[key])
 
         version.update()
-        return db.run_in_transaction(Topic._insert_txn, new_topic)
+        return transaction_util.ensure_in_transaction(Topic._insert_txn,
+                                                      new_topic)
 
     def update(self, **kwargs):
         if self.version.default:
@@ -1633,8 +1636,7 @@ def _change_default_version(version_number, run_code):
 
         version.put()
 
-    xg_on = db.create_transaction_options(xg=True)
-    db.run_in_transaction_options(xg_on, update_txn)
+    transaction_util.ensure_in_transaction(update_txn, xg_on=True)
 
     # setting the topic tree version in the transaction won't update
     # memcache as the new values for the setting are not complete till the

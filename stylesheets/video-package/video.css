@@ -125,6 +125,9 @@
     /* without the following, 7 extra pixels sneak in from somewhere? */
     height: 480px;
 }
+#page-container .youtube-video {
+    padding-bottom: 4px;
+}
 .subtitles-warning {
     display: none;
     margin-left: 256px;

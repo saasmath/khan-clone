@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from agar.test.base_test import BaseTest
+from third_party.agar.test import BaseTest
 
 import models
 import exercises.exercise_util
