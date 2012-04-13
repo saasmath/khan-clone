@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """Run pep8 on every non-blacklisted python file under the current directory.
 
