@@ -7,7 +7,7 @@ except ImportError:
 from google.appengine.ext import db
 
 import object_property
-import models
+import topic_models
 import logging
 import urllib2
 
@@ -40,8 +40,8 @@ def topics_layout(user_data, user_exercise_graph):
     and suggested info already filled in.
     """
 
-    version = models.TopicVersion.get_default_version()
-    topics = models.Topic.get_visible_topics(version)
+    version = topic_models.TopicVersion.get_default_version()
+    topics = topic_models.Topic.get_visible_topics(version)
     layout = MapLayout.get_for_version(version).layout
 
     if not layout:

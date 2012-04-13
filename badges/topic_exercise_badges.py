@@ -1,9 +1,7 @@
-import string
-
 from google.appengine.ext import db
 
 import object_property
-import models
+import topic_models
 from badges import Badge, BadgeCategory
 from templatefilters import slugify
 
@@ -16,7 +14,7 @@ def sync_with_topic_version(version):
     """
 
     # Get all topics with live exercises as direct children
-    topics = models.Topic.get_exercise_topics(version)
+    topics = topic_models.Topic.get_exercise_topics(version)
 
     entities_to_put = []
 

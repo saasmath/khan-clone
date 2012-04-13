@@ -2,7 +2,6 @@ from __future__ import absolute_import
 import os
 import logging
 
-import request_handler
 import user_util
 from google.appengine.ext.webapp import template
 from coach_resources import util_coach

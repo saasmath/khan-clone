@@ -271,7 +271,7 @@ PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED.extend([{
 # Each DVD needs to stay under 4.4GB
 
 DVDs_dict = {
-    'Math': [ # 3.85GB
+    'Math': [  # 3.85GB
         'Arithmetic',
         'Pre-algebra',
         'Algebra',
@@ -281,28 +281,28 @@ DVDs_dict = {
         'Statistics',
         'Precalculus',
     ],
-    'Advanced Math': [ # 4.11GB
+    'Advanced Math': [  # 4.11GB
         'Calculus',
         'Differential Equations',
         'Linear Algebra',
     ],
-    'Math Worked Examples': [ # 3.92GB
+    'Math Worked Examples': [  # 3.92GB
         'Developmental Math',
         'Developmental Math 2',
         'Algebra I Worked Examples',
         'ck12.org Algebra 1 Examples',
         'Singapore Math',
     ],
-    'Chemistry': [ # 2.92GB
+    'Chemistry': [  # 2.92GB
         'Chemistry',
         'Organic Chemistry',
     ],
-    'Science': [ # 3.24GB
+    'Science': [  # 3.24GB
         'Cosmology and Astronomy',
         'Biology',
         'Physics',
     ],
-    'Finance': [ # 2.84GB
+    'Finance': [  # 2.84GB
         'Finance',
         'Banking and Money',
         'Valuation and Investing',
@@ -313,7 +313,7 @@ DVDs_dict = {
         'Current Economics',
         'Currency',
     ],
-    'Test Prep': [ # 3.37GB
+    'Test Prep': [  # 3.37GB
         'MA Tests for Education Licensure (MTEL) -Pre-Alg',
         'California Standards Test: Algebra I',
         'California Standards Test: Algebra II',
@@ -324,7 +324,7 @@ DVDs_dict = {
         'GMAT: Problem Solving',
         'GMAT Data Sufficiency',
     ],
-    'Misc': [ # 1.93GB
+    'Misc': [  # 1.93GB
         'Talks and Interviews',
         'History',
         'Brain Teasers',
@@ -333,7 +333,8 @@ DVDs_dict = {
 
 # replace None with the DVD name above that you want to burn
 # this will restrict the homepage to only show the playlists from that list
-DVD_list = DVDs_dict.get(None) #'Math'
+DVD_list = DVDs_dict.get(None)  # 'Math'
+
 
 def sorted_playlist_titles():
     playlist_titles = []
@@ -341,10 +342,11 @@ def sorted_playlist_titles():
     playlist_titles.extend(UNCATEGORIZED_PLAYLISTS)
     return sorted(set(playlist_titles))
 
+
 def append_playlist_titles(playlist_titles, obj):
     type_obj = type(obj)
     if type_obj == dict:
-        if obj.has_key("items"):
+        if "items" in obj:
             append_playlist_titles(playlist_titles, obj["items"])
         else:
             playlist_titles.append(obj["playlist"])
@@ -356,4 +358,3 @@ if DVD_list:
     topics_list = all_topics_list = DVD_list
 else:
     topics_list = all_topics_list = sorted_playlist_titles()
-

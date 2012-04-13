@@ -15,7 +15,7 @@
         a.attachEvent("onload",d)})(window,document);
         </script>
         {%- endif %}
-        <!--[if lte IE 6]><script src="/javascript/ie-warning.js"></script><script>window.onload=function(){e("/images/ie-warning/")}</script><![endif]-->
+        <!--[if lte IE 7]><script src="/javascript/ie-warning.js"></script><script>window.onload=function(){e("/images/ie-warning/")}</script><![endif]-->
         <script type="text/javascript">
             // TODO: Sweep below into KA
             // TODO: Change USERNAME var since it is actually the user's nickname
@@ -194,13 +194,13 @@
                     </div>
                     <div id="logo">
                         <a id="logo-image" href="/" title="Take me home!" data-tag="Header"></a>
-                    </div>
-                    <div id="stats">
-                        <span id="page_visitors">
-                                <span id="page_num_visitors">
-                                    <!-- Content will get populated by javacript at end of page -->
-                                </span>&nbsp;lessons delivered
-                        </span>
+                        <div id="stats">
+                            <span id="page_visitors">
+                                    <span id="page_num_visitors">
+                                        <!-- Content will get populated by javacript at end of page -->
+                                    </span>&nbsp;lessons delivered
+                            </span>
+                        </div>
                     </div>
                     <div class="clear"></div>
                 </div>
@@ -277,8 +277,10 @@
 
     {% if watch_topic_browser_enabled %}
     <script type="text/javascript">
-    HeaderTopicBrowser.init();
-    HeaderTopicBrowser.setData({{ templatetags.topic_browser_data(show_topic_pages=show_topic_pages) }});
+    $(function() {
+        HeaderTopicBrowser.init();
+        HeaderTopicBrowser.setData({{ templatetags.topic_browser_data(show_topic_pages=show_topic_pages) }});
+    });
     </script>
     {% endif %}
 

@@ -34,6 +34,9 @@ var Coaches = {
 
     onDataLoaded_: function(users) {
         this.coachCollection = new Coaches.CoachCollection(users);
+        // See https://github.com/documentcloud/backbone/issues/814
+        // for why markCoachesAsSaved cannot be called in inititialize
+        this.coachCollection.markCoachesAsSaved();
 
         new Coaches.CoachCollectionView({
             collection: Coaches.coachCollection,
@@ -156,8 +159,6 @@ Coaches.CoachCollection = Backbone.Collection.extend({
         this.bind("add", this.save, this);
         this.bind("remove", this.save, this);
         this.bind("change", this.save, this);
-
-        this.markCoachesAsSaved();
     },
 
     comparator: function(model) {

@@ -1,10 +1,8 @@
 import request_handler
 import user_util
-import util
-from models import UserData
+from user_models import UserData
 from oauth_provider import oauth
 import urllib2, urlparse, cgi
-import logging
 from app import App
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5

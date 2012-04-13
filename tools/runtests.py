@@ -96,7 +96,7 @@ if __name__ == '__main__':
     parser.add_option('--max-size', dest='max_size', metavar='SIZE',
                       choices=['small', 'medium', 'large'],
                       default='medium',
-                      help='run tests this size or smaller ("small", '
+                      help='run tests this size and smaller ("small", '
                            '"medium", "large")')
     parser.add_option('--xml', dest='xml', action='store_true',
                       help='write xUnit XML')

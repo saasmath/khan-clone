@@ -10,6 +10,7 @@ import user_util
 FROM_EMAIL = "no-reply@khan-academy.appspotmail.com"
 TO_EMAIL = "testimonials@khanacademy.org"
 
+
 class SubmitStory(request_handler.RequestHandler):
     @user_util.open_access
     def post(self):
@@ -35,13 +36,14 @@ class SubmitStory(request_handler.RequestHandler):
             subject += " (sharing with others allowed)"
         else:
             subject += " (sharing with others *NOT* allowed)"
-	if not App.is_dev_server:
-            mail.send_mail( \
-                    sender = FROM_EMAIL, \
-                    to = TO_EMAIL, \
-                    subject = subject, \
-                    body = story 
+        if not App.is_dev_server:
+            mail.send_mail(
+                    sender=FROM_EMAIL,
+                    to=TO_EMAIL,
+                    subject=subject,
+                    body=story
                     )
+
 
 class ViewStories(request_handler.RequestHandler):
     @user_util.open_access
@@ -79,7 +81,10 @@ class ViewStories(request_handler.RequestHandler):
         prepend_story("rayana")
 
         # Anonymous stories aren't quite as person, move 'em to the back
-        anonymous_stories = filter(lambda story: story["author"].lower() == "anonymous", stories)
+        anonymous_stories = filter(
+            lambda story: story["author"].lower() == "anonymous",
+            stories)
+
         for anonymous_story in anonymous_stories:
             stories.remove(anonymous_story)
             stories.append(anonymous_story)

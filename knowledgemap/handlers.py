@@ -1,9 +1,10 @@
-from gae_bingo.gae_bingo import bingo, ab_test
+from gae_bingo.gae_bingo import bingo
 
-import models
+import user_models
+import exercise_models
 import request_handler
-from knowledgemap import deserializeMapCoords, serializeMapCoords
-from exercises import exercise_graph_dict_json
+from knowledgemap_util import deserializeMapCoords, serializeMapCoords
+from exercises.exercise_util import exercise_graph_dict_json
 from layout import topics_layout
 from api.jsonify import jsonify
 import user_util
@@ -13,8 +14,9 @@ class ViewKnowledgeMap(request_handler.RequestHandler):
 
     @user_util.open_access
     def get(self):
-        user_data = models.UserData.current() or models.UserData.pre_phantom()
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        user_data = (user_models.UserData.current() or
+                     user_models.UserData.pre_phantom())
+        user_exercise_graph = exercise_models.UserExerciseGraph.get(user_data)
 
         show_review_drawer = (not user_exercise_graph.has_completed_review())
 
@@ -50,7 +52,7 @@ class SaveMapCoords(request_handler.RequestHandler):
 
     @user_util.open_access
     def post(self):
-        user_data = models.UserData.current()
+        user_data = user_models.UserData.current()
 
         if user_data:
             try:

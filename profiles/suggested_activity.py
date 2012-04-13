@@ -1,7 +1,9 @@
 from profiles import recent_activity
 import logging
-import models
 import points
+import exercise_models
+import video_models
+import exercise_video_model
 
 class SuggestedActivity(object):
     """ Suggested exercises and videos for a student.
@@ -15,7 +17,7 @@ class SuggestedActivity(object):
             recent_activities - a list of recent activities so that suggestions
                 can be based on them.
         """
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        user_exercise_graph = exercise_models.UserExerciseGraph.get(user_data)
         return {
             "exercises": SuggestedActivity.get_exercises_for(
                     user_data, user_exercise_graph),
@@ -40,27 +42,6 @@ class SuggestedActivity(object):
                         and entry.seconds_watched > 60),
                 recent_activities)
 
-        # BEGIN TEMP LOOKUPS {
-        # Feb14, 2012 - This is a temporary lookup to the db since
-        # RecentVideoActivity data prior to Feb9 will not have the
-        # is_video_completed flag properly set, and the "recent activity window"
-        # can include those older log entries. Delete this code when the window
-        # slides off of those entries.
-        real_list = []
-        for candidate in recent_incomplete_videos:
-            key_name = models.UserVideo.get_key_name(candidate.youtube_id,
-                                                     user_data)
-            user_video = models.UserVideo.get_by_key_name(key_name)
-            if not user_video:
-                logging.warning("No UserVideo for recently watched vid [%s]" %
-                                candidate.video_title)
-                continue
-            if not user_video.completed:
-                real_list.append(candidate)
-
-        recent_incomplete_videos = real_list
-        # } END TEMP LOOKUPS
-
         max_activities = 2
         suggestions = [SuggestedActivity.from_video_activity(va)
                        for va in recent_incomplete_videos[:max_activities]]
@@ -69,17 +50,17 @@ class SuggestedActivity(object):
             exercise_graph_dicts = user_exercise_graph.suggested_graph_dicts()
 
             completed = set([
-                models.UserVideo.video.get_value_for_datastore(uv)
-                for uv in models.UserVideo.get_completed_user_videos(user_data)
+                video_models.UserVideo.video.get_value_for_datastore(uv)
+                for uv in video_models.UserVideo.get_completed_user_videos(user_data)
             ])
-            # STOPSHIP: this results in way too many DB hits - have to figure
-            # out a better way to do this before launch.
+            # TODO(benkomalo): this results in way too many DB hits - have to figure
+            # out a better way to do this.
 
             # Suggest based on upcoming exercises
             for exercise_dict in exercise_graph_dicts:
-                exercise = models.Exercise.get_by_name(exercise_dict['name'])
+                exercise = exercise_models.Exercise.get_by_name(exercise_dict['name'])
                 for exercise_video in exercise.related_videos_query():
-                    if (models.ExerciseVideo.video
+                    if (exercise_video_model.ExerciseVideo.video
                             .get_value_for_datastore(exercise_video)
                             in completed):
                         continue
@@ -111,7 +92,7 @@ class SuggestedActivity(object):
         """
         activity = SuggestedActivity()
         activity.name = exercise_graph_dict["display_name"]
-        activity.url = models.Exercise.get_relative_url(exercise_graph_dict["name"])
+        activity.url = exercise_models.Exercise.get_relative_url(exercise_graph_dict["name"])
         activity.progress = exercise_graph_dict["progress"]
         return activity
 
@@ -131,7 +112,7 @@ class SuggestedActivity(object):
 
     @staticmethod
     def from_video(video):
-        """ Build a SuggestedActivity dict from a models.Video object. """
+        """ Build a SuggestedActivity dict from a video_models.Video object. """
         # TODO(benkomalo): remove this check when there are sanity checks at
         # higher levels. Right now we have to guard against orphaned vids.
         if len(video.topic_string_keys or []) == 0:

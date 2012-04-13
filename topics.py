@@ -1,3 +1,4 @@
+import api.v1_utils    # TODO(csilvers): move this to another file
 import request_handler
 import user_util
 import cgi
@@ -5,9 +6,10 @@ import re
 import urllib
 import logging
 import layer_cache
-import urllib2
+from google.appengine.api import files, urlfetch
 from knowledgemap import layout
 from youtube_sync import youtube_get_video_data_dict
+
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
 try:
@@ -29,10 +31,12 @@ from api.auth.decorators import developer_required
 from google.appengine.ext import db
 
 
-import models
-from models import Topic, TopicVersion, Video, Url
-from models import Playlist
-        
+from topic_models import Topic, TopicVersion
+from video_models import Video
+from url_model import Url
+import topic_models
+import video_models
+
 class EditContent(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
@@ -77,47 +81,29 @@ class EditContent(request_handler.RequestHandler):
 
     def topic_update_from_live(self, edit_version):
         layout.update_from_live(edit_version)
-        request = urllib2.Request("http://www.khanacademy.org/api/v1/topictree")
         try:
-            opener = urllib2.build_opener()
-            f = opener.open(request)
-            topictree = json.load(f)
+            response = urlfetch.fetch(
+                url="http://www.khanacademy.org/api/v1/topictree",
+                deadline=25)
+            topictree = json.loads(response.content)
 
             logging.info("calling /_ah/queue/deferred_import")
 
             # importing the full topic tree can be too large so pickling and compressing
-            deferred.defer(models.topictree_import_task, "edit", "root", True,
+            deferred.defer(api.v1_utils.topictree_import_task, "edit", "root", True,
                         zlib.compress(pickle.dumps(topictree)),
                         _queue="import-queue",
                         _url="/_ah/queue/deferred_import")
 
-        except urllib2.URLError, e:
+        except urlfetch.Error, e:
             logging.exception("Failed to fetch content from khanacademy.org")
-
-    def topic_migration(self):
-        logging.info("deleting all existing topics")
-        db.delete(models.Topic.all())
-        db.delete(models.TopicVersion.all())
-        db.delete(models.Url.all())
-
-        version = models.TopicVersion.all().filter("edit =", True).get()
-        if version is None:
-            version = models.TopicVersion.create_new_version()
-            version.edit = True
-            version.put()
-        logging.info("starting migration")
-        create_root(version)
-        logging.info("created root")
-        logging.info("loading playlists")
-        deferred.defer(load_videos, version)
-        print "migration started... progress can be monitored in the logs"
-
+  
     def fix_duplicates(self):
         dry_run = self.request.get('dry_run', False)
-        video_list = [v for v in models.Video.all()]
+        video_list = [v for v in video_models.Video.all()]
         video_dict = dict()
 
-        version = models.TopicVersion.get_by_id("edit")
+        version = topic_models.TopicVersion.get_by_id("edit")
 
         videos_to_update = []
         
@@ -134,14 +120,14 @@ class EditContent(request_handler.RequestHandler):
                 canonical_key_id = 0
                 canonical_readable_id = None
                 for video in videos:
-                    if models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).get():
+                    if topic_models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).get():
                         canonical_key_id = video.key().id()
                     if not canonical_readable_id or len(video.readable_id) < len(canonical_readable_id):
                         canonical_readable_id = video.readable_id
                 
                 def print_video(video, is_canonical, dup_idx):
                     canon_str = "CANONICAL" if is_canonical else "DUPLICATE"
-                    topic_strings = "|".join([topic.id for topic in models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).run()])
+                    topic_strings = "|".join([topic.id for topic in topic_models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).run()])
                     print "%d,%s,%d,%s,%s,%s,%s,%s" % (video_idx, canon_str, dup_idx, str(video.key()), video.readable_id, video.youtube_id, video.title, topic_strings)
 
                 for video in videos:
@@ -183,145 +169,14 @@ def create_root(version):
             id="root",
             version=version)
 
-
-# temporary function to load videos into the topics - will remove after deploy
-def load_videos(version, title=None):
-    root = Topic.get_by_id("root", version)
-                    
-    if title is None:
-        playlist = Playlist.all().order('title').get()
-    else:
-        playlist = Playlist.all().filter('title = ', title).get()
-    
-    title = playlist.title
-    
-    nextplaylist = Playlist.all().filter('title >', title).order('title').get()
-    if nextplaylist:
-        next_title = nextplaylist.title
-
-    playlists = [playlist]
-    # playlists = Playlist.all().order('title').fetch(100000)
-    for i, p in enumerate(playlists):
-        videos = p.get_videos()
-        content_keys = [v.key() for v in videos]
-        added = 0
-        for i, v in enumerate(videos):
-            for e in v.related_exercises():
-                if e.key() not in content_keys:
-                    content_keys.insert(i + added, e.key())
-                    added += 1
-
-        topic = Topic.insert(title=p.title,
-                     parent=root,
-                     description=p.description,
-                     tags=p.tags,
-                     child_keys=content_keys)
-    
-    logging.info("loading " + title)
-    
-    if nextplaylist:
-        deferred.defer(load_videos, version, next_title)
-    else:
-        deferred.defer(hide_topics, version)
-
-
-# temporary function for marking topics not in topics_list.py as
-# hidden - will remove after deploy
-def hide_topics(version):
-    from topics_list import topics_list
-    logging.info("hiding topics")
-
-    root = Topic.get_by_id("root", version)
-    topics = Topic.all().ancestor(root).fetch(10000)
-    for topic in topics:
-        if topic.title not in topics_list:
-            topic.hide = True
-            topic.put()
-        else:
-            topic.hide = False
-            topic.put()
-
-    logging.info("hid topics")
-    deferred.defer(recreate_topic_list_structure)
-
-
-# temporary function for copying the topic structure in topics_list.py
-# will remove after deploy
-def recursive_copy_topic_list_structure(parent, topic_list_part):
-    delete_topics = {}
-    for topic_dict in topic_list_part:
-        logging.info(topic_dict["name"])
-        if "playlist" in topic_dict:
-            topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
-            if topic:
-                logging.info(topic_dict["name"] + " is already created")
-            else:
-                version = TopicVersion.get_edit_version()
-                root = Topic.get_root(version)
-                topic = Topic.get_by_title_and_parent(topic_dict["playlist"], root)
-                if topic:
-                    delete_topics[topic.key()] = topic
-                    logging.info("copying %s to parent %s" %
-                                (topic_dict["name"], parent.title))
-                    topic.copy(title=topic_dict["name"], parent=parent,
-                               standalone_title=topic.title)
-                else:
-                    logging.error("Topic not found! %s" % (topic_dict["playlist"]))
-        else:
-            topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
-            if topic:
-                logging.info(topic_dict["name"] + " is already created")
-            else:
-                logging.info("adding %s to parent %s" %
-                             (topic_dict["name"], parent.title))
-                topic = Topic.insert(title=topic_dict["name"], parent=parent)
-
-        if "items" in topic_dict:
-            delete_topics.update(
-                recursive_copy_topic_list_structure(topic,
-                                                    topic_dict["items"]))
-
-    return delete_topics
-
-
-# temporary function for copying the topic structure in topics_list.py ... will remove after deploy
-def recreate_topic_list_structure():
-    import topics_list
-    logging.info("recreating topic_list structure")
-
-    version = TopicVersion.get_edit_version()
-    root = Topic.get_by_id("root", version)
-    delete_topics = recursive_copy_topic_list_structure(root, topics_list.PLAYLIST_STRUCTURE)
-    for topic in delete_topics.values():
-        topic.delete_tree()
-    deferred.defer(importSmartHistory)
-
-
-# temporary function to load smarthistory the first time during migration
-def importSmartHistory():
-    edit = models.TopicVersion.get_edit_version()
-    ImportSmartHistory.importIntoVersion(edit)
-    edit.set_default_version()
-    new_edit = TopicVersion.create_edit_version()
-
-                
-# temporary function to remove playlist from the fulltext index...
-# will remove after we run it once after it gets deployed
-def removePlaylistIndex():
-    import search
-
-    items = search.StemmedIndex.all(keys_only=True).filter("parent_kind", "Playlist").fetch(10000)
-    db.delete(items)
-
-
 @layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
 def getSmartHistoryContent():
-    request = urllib2.Request("http://khan.smarthistory.org/youtube-urls-for-khan-academy.html")
     try:
-        opener = urllib2.build_opener()
-        f = opener.open(request)
-        smart_history = json.load(f)
-    except urllib2.URLError, e:
+        response = urlfetch.fetch(url="http://khan.smarthistory.org/"
+                                  "youtube-urls-for-khan-academy.html", 
+                                  deadline=25)
+        smart_history = json.loads(response.content)
+    except urlfetch.Error, e:
         logging.exception("Failed fetching smarthistory video list")
         smart_history = None
     return smart_history
@@ -331,8 +186,8 @@ class ImportSmartHistory(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
         """update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)"""
-        default = models.TopicVersion.get_default_version()
-        edit = models.TopicVersion.get_edit_version()
+        default = topic_models.TopicVersion.get_default_version()
+        edit = topic_models.TopicVersion.get_edit_version()
         
         logging.info("importing into edit version")
         # if there are any changes to the edit version
@@ -417,7 +272,7 @@ class ImportSmartHistory(request_handler.RequestHandler):
                 if youtube_id not in video_dict:
                     # make sure it didn't get imported before, but never put 
                     # into a topic
-                    query = models.Video.all()
+                    query = video_models.Video.all()
                     video = query.filter("youtube_id =", youtube_id).get()
 
                     if video is None:
@@ -431,8 +286,8 @@ class ImportSmartHistory(request_handler.RequestHandler):
                         if video_data:
                             video_data["title"] = title
                             video_data["extra_properties"] = extra_properties
-                            video = models.VersionContentChange.add_new_content(
-                                                                models.Video,
+                            video = topic_models.VersionContentChange.add_new_content(
+                                                                video_models.Video,
                                                                 version,
                                                                 video_data)
                         else:
@@ -460,8 +315,8 @@ class ImportSmartHistory(request_handler.RequestHandler):
                 logging.info("adding %i %s %s to %s" % 
                              (i, href, title, parent_title))
                 
-                models.VersionContentChange.add_new_content(
-                    models.Url, 
+                topic_models.VersionContentChange.add_new_content(
+                    Url, 
                     version,
                     {"title": title,
                      "url": href

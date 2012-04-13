@@ -3,7 +3,9 @@
     <div class="topic-video thumbnail_td">
       <a href="{{ topicInfo.marqueeVideo.href }}" data-tag="Topic Page Root Featured" data-youtube-id="{{ topicInfo.marqueeVideo.youtubeId }}" class="thumbnail_link modal-video">
         <div class="thumb" style="background-image:url('{{ topicInfo.marqueeVideo.thumbUrls.hq }}')"></div>
-        <div class="thumbnail_label"><div class="thumbnail_desc">{{{ topicInfo.marqueeVideo.descHtml }}}</div><div class="thumbnail_teaser">{{{ topicInfo.marqueeVideo.teaserHtml }}}</div></div>
+        <div class="thumbnail_container">
+          <div class="thumbnail_label"><div class="thumbnail_desc">{{{ topicInfo.marqueeVideo.descHtml }}}</div><div class="thumbnail_teaser">{{{ topicInfo.marqueeVideo.teaserHtml }}}</div></div>
+        </div>
       </a>
     </div>
     <div class="topic-info">
@@ -12,11 +14,11 @@
     </div>
   </div>
   <div class="subtopic-header">Topics</div>
+  <div class="subtopic-list-container">
   <div class="subtopics-list first">
     {{#each subtopicsA }}
       <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{else}}first{{/if}}">
         <a class="subtopic-link-and-scroll" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
-          {{#if number}}<div class="number">{{ number }}</div>{{/if}}
           <div class="thumb" style="background-image:url('{{ thumbnailLink.thumbUrls.hq }}')"></div>
         <div class="topic-info">
           <div class="topic-title">{{ title }}</div>
@@ -27,7 +29,7 @@
       </div>
     {{/each}}
   </div>
-  <div class="subtopics-list">
+  <div class="subtopics-list second">
     {{#each subtopicsB }}
       <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{else}}first{{/if}}">
         <a class="subtopic-link-and-scroll" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
@@ -40,5 +42,6 @@
         </a>
       </div>
     {{/each}}
+  </div>
   </div>
 </div>

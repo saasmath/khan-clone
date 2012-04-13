@@ -8,10 +8,9 @@ from google.appengine.ext import db
 from object_property import ObjectProperty
 from templatefilters import timesince_ago, seconds_to_time_string
 
-from models import Exercise, UserVideo, Video
+import exercise_models
 import util
 import logging
-
 
 class Goal(db.Model):
     # data
@@ -318,7 +317,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         self.exercise_name = json['internal_id']
 
     def url(self):
-        exercise = Exercise.get_by_name(self.exercise_name)
+        exercise = exercise_models.Exercise.get_by_name(self.exercise_name)
         if not exercise:
             logging.warn("Exercise [%s] not found for goal" % self.exercise_name)
             return ""
@@ -362,7 +361,7 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
 
     def url(self):
         if self.exercise_name:
-            return Exercise.get_relative_url(self.exercise_name)
+            return exercise_models.Exercise.get_relative_url(self.exercise_name)
         else:
             return "/exercisedashboard"
 
@@ -385,7 +384,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
         self.video_readable_id = video.readable_id
         self.description = video.title
 
-        user_video = UserVideo.get_for_video_and_user_data(video, user_data)
+        user_video = video_models.UserVideo.get_for_video_and_user_data(video, user_data)
         if user_video:
             self.progress = user_video.progress
         else:
@@ -394,17 +393,17 @@ class GoalObjectiveWatchVideo(GoalObjective):
     def init_from_json(self, json):
         super(GoalObjectiveWatchVideo, self).init_from_json(json)
         self.video_readable_id = json['internal_id']
-        self.video_key = Video.get_for_readable_id(self.video_readable_id).key()
+        self.video_key = video_models.Video.get_for_readable_id(self.video_readable_id).key()
 
     def url(self):
-        return Video.get_relative_url(self.video_readable_id)
+        return video_models.Video.get_relative_url(self.video_readable_id)
 
     def internal_id(self):
         return self.video_readable_id
 
     def record_progress(self, user_data, user_video):
         obj_key = self.video_key
-        video_key = UserVideo.video.get_value_for_datastore(user_video)
+        video_key = video_models.UserVideo.video.get_value_for_datastore(user_video)
         if obj_key == video_key:
             self.progress = user_video.progress
             return True
@@ -419,11 +418,11 @@ class GoalObjectiveAnyVideo(GoalObjective):
         super(GoalObjectiveAnyVideo, self).init_from_json(json)
         self.video_readable_id = json['internal_id'] or None
         if self.video_readable_id:
-            self.video_key = Video.get_for_readable_id(self.video_readable_id).key()
+            self.video_key = video_models.Video.get_for_readable_id(self.video_readable_id).key()
 
     def url(self):
         if self.video_readable_id:
-            return Video.get_relative_url(self.video_readable_id)
+            return video_models.Video.get_relative_url(self.video_readable_id)
         else:
             return "/#browse"
 
@@ -436,3 +435,9 @@ class GoalObjectiveAnyVideo(GoalObjective):
         self.video_readable_id = video.readable_id
         self.description = video.title
         return True
+
+
+# TODO(benkomalo): there is a circular import among the models files that
+# needs to be resolved. Avoid this issue for now by including this at the
+# bottom.
+import video_models

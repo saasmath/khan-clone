@@ -3,12 +3,14 @@ import os
 import datetime
 
 from google.appengine.ext import db
-from models import UserData
+from user_models import UserData
+
 
 class SummerPaypalTransaction(db.Model):
     transaction_id = db.StringProperty()
     student_email = db.StringProperty()
     status = db.StringProperty()
+
 
 class SummerStudent(db.Model):
     email = db.StringProperty()
@@ -59,6 +61,7 @@ class SummerStudent(db.Model):
     def to_dict(self):
         return dict([(p, getattr(self, p)) for p in self.properties()])
 
+
 class SummerParentData(db.Model):
     first_name = db.StringProperty()
     last_name = db.StringProperty()
@@ -74,4 +77,5 @@ class SummerParentData(db.Model):
     students = db.ListProperty(db.Key)
 
     def to_dict(self):
-        return dict([(p, unicode(getattr(self, p))) for p in self.properties()])
+        return dict([(p, unicode(getattr(self, p)))
+                     for p in self.properties()])

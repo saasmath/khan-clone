@@ -13,7 +13,7 @@ from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 import webapp2
 import shared_jinja
 
-from custom_exceptions import MissingVideoException, MissingExerciseException, SmartHistoryLoadException, QuietException
+from custom_exceptions import MissingVideoException, MissingExerciseException, SmartHistoryLoadException, PageNotFoundException, QuietException
 from app import App
 import cookie_util
 
@@ -80,18 +80,18 @@ class RequestInputHandler(object):
 
     def request_user_data(self, key):
         email = self.request_string(key)
-        return UserData.get_possibly_current_user(email)
+        return user_models.UserData.get_possibly_current_user(email)
 
     def request_visible_student_user_data(self):
         """ Return overridden user data allowed. Otherwise, return the
         currently logged in user.
         """
         override_user_data = self.request_student_user_data()
-        return UserData.get_visible_user(override_user_data)
+        return user_models.UserData.get_visible_user(override_user_data)
 
     def request_user_data_by_user_id(self):
         user_id = self.request_string("userID")
-        return UserData.get_from_user_id(user_id)
+        return user_models.UserData.get_from_user_id(user_id)
 
     # get the UserData instance based on the querystring. The precedence is:
     # 1. email
@@ -103,7 +103,7 @@ class RequestInputHandler(object):
             email = self.request_student_email_legacy()
         else:
             email = self.request_student_email()
-        return UserData.get_possibly_current_user(email)
+        return user_models.UserData.get_possibly_current_user(email)
 
     def request_student_email_legacy(self):
         email = self.request_string("email")
@@ -188,8 +188,8 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         return url + params
 
     def handle_exception(self, e, *args):
-
-        title = "Oops. We broke our streak."
+        
+        title = "Oops. We made a mistake."
         message_html = "We ran into a problem. It's our fault, and we're working on it."
         sub_message_html = "This has been reported to us, and we'll be looking for a fix. If the problem continues, feel free to <a href='/reportissue?type=Defect'>send us a report directly</a>."
 
@@ -218,6 +218,12 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             # 404s are very common with Smarthistory as bots have gotten hold of bad urls, silencing these reports and log as info instead
             title = "This page of the Smarthistory section of Khan Academy does not exist"
             message_html = "Go to <a href='/'>our Smarthistory homepage</a> to find more art history content."
+            sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
+
+        elif type(e) is PageNotFoundException:
+
+            title = "Sorry, we can't find what you're looking for."
+            message_html = "This page doesn't seem to be around. <a href='/'>Head to our homepage</a> instead."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         if isinstance(e, QuietException):
@@ -378,13 +384,13 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         template_values['None'] = None
 
         if not template_values.has_key('user_data'):
-            user_data = UserData.current()
+            user_data = user_models.UserData.current()
             template_values['user_data'] = user_data
 
         user_data = template_values['user_data']
 
         template_values['username'] = user_data.nickname if user_data else ""
-        template_values['viewer_profile_root'] = user_data.profile_root if user_data else "/profile/nouser"
+        template_values['viewer_profile_root'] = user_data.profile_root if user_data else "/profile/nouser/"
         template_values['points'] = user_data.points if user_data else 0
         template_values['logged_in'] = not user_data.is_phantom if user_data else False
         template_values['http_host'] = os.environ["HTTP_HOST"]
@@ -425,7 +431,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             template_values['mixpanel_id'] = gae_bingo.identity.identity()
 
         if not template_values['hide_analytics']:
-            superprops_list = UserData.get_analytics_properties(user_data)
+            superprops_list = user_models.UserData.get_analytics_properties(user_data)
 
             # Create a superprops dict for MixPanel with a version number
             # Bump the version number if changes are made to the client-side analytics
@@ -436,8 +442,8 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             template_values['ga_custom_vars'] = superprops_list[0:4]
 
         if user_data:
-            goals = GoalList.get_current_goals(user_data)
-            goals_data = [g.get_visible_data() for g in goals]
+            user_goals = goals.models.GoalList.get_current_goals(user_data)
+            goals_data = [g.get_visible_data() for g in user_goals]
             if goals_data:
                 template_values['global_goals'] = jsonify(goals_data)
 
@@ -445,10 +451,13 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         template_values['watch_topic_browser_enabled'] = not self.is_mobile_capable()
 
         # Begin topic pages A/B test
-        show_topic_pages = ab_test("Show topic pages", ["show", "hide"], ["topic_pages_view_page", "topic_pages_started_video", "topic_pages_completed_video"])
+        if template_values['mixpanel_enabled']:
+            show_topic_pages = ab_test("Show topic pages", ["show", "hide"], ["topic_pages_view_page", "topic_pages_started_video", "topic_pages_completed_video"])
+            analytics_bingo = {"name": "Bingo: Topic pages", "value": show_topic_pages}
+            template_values['analytics_bingo'] = analytics_bingo
+        else:
+            show_topic_pages = "hide"
         template_values['show_topic_pages'] = (show_topic_pages == "show")
-        analytics_bingo = {"name": "Bingo: Topic pages", "value": show_topic_pages}
-        template_values['analytics_bingo'] = analytics_bingo
         # End topic pages A/B test
 
         return template_values
@@ -476,7 +485,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         else:
             self.response.out.write(json_string)
 
-from models import UserData
+import goals.models
+import user_models
 import util
-from goals.models import GoalList
 from gandalf import gandalf

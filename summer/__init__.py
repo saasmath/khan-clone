@@ -23,7 +23,7 @@ from google.appengine.ext import db
 from google.appengine.api import mail
 
 import facebook_util
-from models import UserData
+from user_models import UserData
 from .models import SummerPaypalTransaction, SummerStudent, SummerParentData
 
 PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr"

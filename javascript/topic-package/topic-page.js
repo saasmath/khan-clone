@@ -13,14 +13,19 @@
 
     // All the video information sorted by YouTube ID
     var videosDict = {};
-    
+
+    // Maximum content height
+    var maxContentHeight = 0;
+
     window.TopicPage = {
         init: function(topicID) {
+            // TODO(tom): figure out how to invalidate this if we need to change
+            // the schema of a topic.
             $.ajax({
                 url: "/api/v1/topic/" + topicID + "/topic-page?casing=camel",
                 dataType: "json",
                 success: function(rootTopic) {
-                    rootPath = "/" + rootTopic.extendedSlug;
+                    rootPath = "/" + rootTopic.extendedSlug + "/";
                     TopicPage.finishInit(rootPath, rootTopic);
                 }
             });
@@ -44,12 +49,12 @@
 
             $(".topic-page-content").on("click", ".topic-page-content a.subtopic-link", function() {
                 selectedID = $(this).attr("data-id");
-                self.router.navigate("/" + selectedID, true);
+                self.router.navigate(selectedID, true);
                 return false;
             });
             $(".topic-page-content").on("click", ".topic-page-content a.subtopic-link-and-scroll", function() {
                 selectedID = $(this).attr("data-id");
-                self.router.navigate("/" + selectedID, true);
+                self.router.navigate(selectedID, true);
                 $("body").animate( {scrollTop:0}, 200, "easeInOutCubic");
                 return false;
             });
@@ -73,6 +78,26 @@
             this.router = new this.SubTopicRouter();
             this.router.bind("all", Analytics.handleRouterNavigation);
             Backbone.history.start({pushState: true, root: rootPath});
+
+            $(window).resize(function() {
+                TopicPage.growContent();
+            });
+        },
+        growContent: function() {
+            var containerEl = $(".topic-page-content .content-pane");
+
+            var curHeight = containerEl.children("div").height();
+            maxContentHeight = Math.max(maxContentHeight, curHeight);
+
+            var containerHeight = $(window).height();
+            var yTopPadding = containerEl.offset().top;
+            var yBottomPadding = $("#end-of-page-spacer").outerHeight(true);
+            var minContentHeight = containerHeight - (yTopPadding + yBottomPadding);
+
+            var targetHeight = Math.max(maxContentHeight, minContentHeight);
+
+            containerEl.css("min-height", targetHeight + "px");
+            $(".nav-pane").css("min-height", targetHeight + "px");
         },
 
         SubTopicRouter: Backbone.Router.extend({
@@ -85,16 +110,6 @@
                 if (subtopicID.charAt(0) === '/') {
                     subtopicID = subtopicID.substr(1);
                 }
-
-                // Try to retain maximum content pane height
-                var containerEl = $(".topic-page-content .content-pane");
-                var minHeight = containerEl.css("min-height");
-                if (minHeight == "none") {
-                    minHeight = containerEl.height();
-                } else {
-                    minHeight = Math.max(containerEl.height(), minHeight.substr(0,minHeight.length-2)*1);
-                }
-                containerEl.css("min-height", minHeight);
 
                 KAConsole.log("Switching to subtopic: " + subtopicID);
                 if (subtopicID === "") {
@@ -141,6 +156,9 @@
                         .end()
                     .find("li[data-id=\"" + selectedTopicID + "\"]")
                         .addClass("selected");
+
+                // Try to retain maximum content pane height
+                TopicPage.growContent();
             }
         }),
 

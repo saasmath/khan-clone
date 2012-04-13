@@ -1,7 +1,8 @@
-import models   # TODO(csilvers): fix this circular import
+import exercise_models
 from notifications import UserNotifier
 import request_handler
 import user_util
+import user_models
 
 
 def welcome(user_data):
@@ -21,7 +22,7 @@ def update(user_data, user_exercise, threshold=False, isProf=False, gotBadge=Fal
 
     if user_exercise != None:
         numquest = user_exercise.total_done
-        prof = str(models.Exercise.to_display_name(user_exercise.exercise))
+        prof = str(exercise_models.Exercise.to_display_name(user_exercise.exercise))
 
     numbadge = user_data.badges
     numpoint = user_data.points
@@ -56,4 +57,4 @@ def update(user_data, user_exercise, threshold=False, isProf=False, gotBadge=Fal
 class ToggleNotify(request_handler.RequestHandler):
     @user_util.open_access
     def post(self):
-        UserNotifier.clear_login()
+        UserNotifier.clear_login_notifications(user_models.UserData.current())
