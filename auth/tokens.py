@@ -49,6 +49,32 @@ class BaseSecureToken(object):
         self._value_internal = None
 
     @staticmethod
+    def sign_payload(user_data, timestamp, *payload_args):
+        """ Signs a given payload for use in a secure token.
+
+        Arguments:
+            user_data: The user object that this secure token should belong
+                to (must have a non-empty user_id property)
+
+            timestamp: The timestamp for this signature
+
+            payload_args: Additional values to be used in the payload.
+                Must specify at least one value. IMPORTANT - these values
+                cannot contain newline characters!
+
+        Returns:
+            A string representing a secure signature from the given payload.
+        """
+
+        if len(payload_args) == 0:
+            raise "Need a payload to sign for token signature"
+        payload = "\n".join([user_data.user_id] +
+                            list(payload_args) +
+                            [timestamp])
+        secret = App.token_recipe_key
+        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+    @staticmethod
     def make_token_signature(user_data, timestamp):
         """ Subclasses should override this so to return a unique signature
         a user given a particular token type.
@@ -173,13 +199,9 @@ class AuthToken(BaseSecureToken):
 
         """
 
-        payload = "\n".join([
-                user_data.user_id,
-                user_data.credential_version,
-                timestamp
-                ])
-        secret = App.token_recipe_key
-        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        return BaseSecureToken.sign_payload(user_data,
+                                            timestamp,
+                                            user_data.credential_version)
 
     @staticmethod
     def get_user_for_value(token_value, id_to_model):
@@ -217,26 +239,16 @@ class TransferAuthToken(BaseSecureToken):
     @staticmethod
     def make_token_signature(user_data, timestamp):
         nonce = UserNonce.make_for(user_data, "https_transfer").value
-        payload = "\n".join([
-                user_data.user_id,
-                nonce,
-                timestamp
-                ])
-        secret = App.token_recipe_key
-        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        return BaseSecureToken.sign_payload(user_data, timestamp, nonce)
 
     def validate_signature_for(self, user_data):
         nonce_entity = UserNonce.get_for(user_data, "https_transfer")
         if nonce_entity is None:
             return False
         nonce = nonce_entity.value
-        payload = "\n".join([
-                user_data.user_id,
-                nonce,
-                self.timestamp
-                ])
-        secret = App.token_recipe_key
-        expected = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        expected = BaseSecureToken.sign_payload(user_data,
+                                                self.timestamp,
+                                                nonce)
         return expected == self.signature
 
     # Force a short expiry for these tokens.
@@ -260,14 +272,10 @@ class PasswordResetToken(BaseSecureToken):
             raise "Can't make password reset token for user w/no password."
 
         nonce = UserNonce.make_for(user_data, "pw_reset").value
-        payload = "\n".join([
-                user_data.user_id,
-                nonce,
-                user_data.credential_version,
-                timestamp
-                ])
-        secret = App.token_recipe_key
-        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        return BaseSecureToken.sign_payload(user_data,
+                                            timestamp,
+                                            nonce,
+                                            user_data.credential_version)
 
     def validate_signature_for(self, user_data):
         nonce_entity = UserNonce.get_for(user_data, "pw_reset")
@@ -275,14 +283,10 @@ class PasswordResetToken(BaseSecureToken):
             return False
 
         nonce = nonce_entity.value
-        payload = "\n".join([
-                user_data.user_id,
-                nonce,
-                user_data.credential_version,
-                self.timestamp
-                ])
-        secret = App.token_recipe_key
-        expected = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        expected = BaseSecureToken.sign_payload(user_data,
+                                                self.timestamp,
+                                                nonce,
+                                                user_data.credential_version)
         return expected == self.signature
 
     # Force a short expiry for these tokens.
