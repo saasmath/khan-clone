@@ -1177,7 +1177,10 @@ def get_user_questions():
     """ Get data associated with a user's questions and unread answers
     """
     user_data = request.request_visible_student_user_data()
-    return notification.get_questions_data(user_data)
+    return {
+        'questions': notification.get_questions_data(user_data),
+        'feedback_notification_count': user_data.feedback_notification_count(),
+    }
 
 @route("/api/v1/user/reset_notifications_count", methods=["PUT"])
 @api.auth.decorators.login_required

@@ -972,51 +972,48 @@ var Profile = {
                         return;
                     }
 
-                    var template = Templates.get("profile.questions-list");
+                    var template = Templates.get("profile.questions-list"),
+                        newNotificationCount = data.feedbackNotificationCount;
 
                     // Order questions from oldest to newest
-                    data = _.sortBy(data, function(question) {
+                    var questions = _.sortBy(data.questions, function(question) {
                         return question["lastDate"];
                     });
 
                     // Then reverse to get newest to oldest
-                    data.reverse();
+                    questions.reverse();
 
                     $("#tab-content-discussion")
-                        .append(template(data))
+                        .append(template(questions))
                         .find("div.timeago").timeago();
 
-                    var jelUnread = $("#tab-content-discussion").find(".unread");
-                    if (Profile.profile.get("isSelf") && jelUnread.length !== 0) {
-                        var numNew = $('#top-header .notification-bubble').text();
-                        if (numNew !== "") {
-                            var initialPause = 500;
-                            var rampOn = 400;
-                            var hiOn = 600;
-                            var rampOff = 700;
+                    if (Profile.profile.get("isSelf") && newNotificationCount !== 0) {
+                        var initialPause = 500;
+                        var rampOn = 400;
+                        var hiOn = 600;
+                        var rampOff = 700;
 
-                            // Throb the highlight color for the new entries.
-                            $(jelUnread.slice(0,parseInt(numNew)))
-                                .delay(initialPause)
-                                .animate({"background-color": "#cef3ff"}, rampOn)
-                                .delay(hiOn)
-                                .animate({"background-color": "#ebf7fb"}, rampOff);
+                        // Throb the highlight color for the new entries.
+                        $("#tab-content-discussion .question").slice(0, newNotificationCount)
+                            .delay(initialPause)
+                            .animate({"background-color": "#cef3ff"}, rampOn)
+                            .delay(hiOn)
+                            .animate({"background-color": "#ebf7fb"}, rampOff);
 
-                            // Fade out notification in top-header. Sync it with
-                            // the fade out of the entry throb.
-                            $("#top-header .notification-bubble")
-                                .delay(initialPause + rampOn + hiOn)
-                                .fadeOut(rampOff, function() {
-                                    $("#top-header .user-notification img")
-                                        .attr("src", "/images/discussions-lo-16px.png")
-                                });
-
-                            // Reset notifications count upon viewing this tab
-                            $.ajax({
-                                type: "PUT",
-                                url: "/api/v1/user/reset_notifications_count"
+                        // Fade out notification in top-header. Sync it with
+                        // the fade out of the entry throb.
+                        $("#top-header .notification-bubble")
+                            .delay(initialPause + rampOn + hiOn)
+                            .fadeOut(rampOff, function() {
+                                $("#top-header .user-notification img")
+                                    .attr("src", "/images/discussions-lo-16px.png")
                             });
-                        }
+
+                        // Reset notifications count upon viewing this tab
+                        $.ajax({
+                            type: "PUT",
+                            url: "/api/v1/user/reset_notifications_count"
+                        });
                     }
                 }
             });
