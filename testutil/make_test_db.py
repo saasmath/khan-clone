@@ -21,6 +21,8 @@ except ImportError, why:
     sys.exit(('Import error: %s.  ' % why) +
              'You must run make_test_db from the root of the website tree.')
 
+from google.appengine.ext import db
+from google.appengine.ext import deferred
 from google.appengine.ext.remote_api import remote_api_stub
 
 import exercise_models
@@ -276,7 +278,7 @@ class TopicVersions(object):
             number=2,
             title=None,
             description=None,
-            default=True,
+            default=False,
             edit=False)
         self.earliest_version.put()
 
@@ -293,6 +295,13 @@ class TopicVersions(object):
             edit=True)
         self.latest_version.put()
 
+    def set_default_version_and_update_stats(self):
+        """Make earliest_version the default version (after editing/etc)."""
+        # This also calls topic_models._rebuild_content_caches
+        # TODO(csilvers): create VersionContentChange and start this
+        # earlier in the chaining-process, perhaps at _check_for_problems?
+        topic_models._change_default_version(self.latest_version.number, '')
+
 
 class Topics(object):
     """Various Topic trees, attached to our TopicVersions."""
@@ -306,7 +315,6 @@ class Topics(object):
         # relationships.
         root_fields = {
             'standalone_title': 'The Root of All Knowledge',
-            'key_name': topic_models.Topic.get_new_key_name(),
             'id': 'root',
             'extended_slug': '',
             'description': 'All concepts fit into the root of all knowledge',
@@ -370,7 +378,7 @@ class Topics(object):
         # have no sub-topics.  Probably a bug, but I work around it by
         # making sure this topic is last (it has no sub-topics).
         equations_fields = {
-            'standalone_title': '~ One-Step Equations ~',
+            'standalone_title': 'One-Step Equations',
             'id': 'basic-equations',
             'extended_slug': '',
             'description': 'A topic I made up for this test',
@@ -386,28 +394,25 @@ class Topics(object):
         # manually, but after that we can use a convenience routine.
 
         # The early-topic-version tree.
-        # We have to make this version not-default to make changes to it.
-        topic_versions.earliest_version.default = False
-        topic_versions.earliest_version.put()
-
         self.early_root = topic_models.Topic(
             title='The Root of All Knowledge',
             version=topic_versions.earliest_version,
+            key_name=topic_models.Topic.get_new_key_name(),
             **root_fields)
         self.early_root.put()
 
-        math = topic_models.Topic.insert('Mathematics', self.early_root,
-                                         **math_fields)
+        math = topic_models.Topic.insert('Mathematics [early]',
+                                         self.early_root, **math_fields)
         self.add_content_to(videos.domain_and_range, math)
         self.add_content_to(videos.absolute_value, math)
 
-        exponents = topic_models.Topic.insert('Exponents (Basic)', math,
-                                              **exponents_fields)
+        exponents = topic_models.Topic.insert('Exponents (Basic) [early]',
+                                              math, **exponents_fields)
         self.add_content_to(exercises.exponents, exponents)
         self.add_content_to(videos.exponents, exponents)        
 
-        equations = topic_models.Topic.insert('Equations (one-step)', math,
-                                              **equations_fields)
+        equations = topic_models.Topic.insert('Equations (one-step) [early]',
+                                              math, **equations_fields)
         self.add_content_to(exercises.equations, equations)
         self.add_content_to(videos.equations, equations)        
 
@@ -415,32 +420,31 @@ class Topics(object):
         # a direct child of the root topic.
         self.add_content_to(videos.courbet, self.early_root)
 
-        topic_versions.earliest_version.default = True
-        topic_versions.earliest_version.put()
-
         # The late-topic-version tree.
         self.late_root = topic_models.Topic(
-            title='The Root of All Knowledge',
+            title='The Root of All Knowledge [late]',
             version=topic_versions.latest_version,
+            key_name=topic_models.Topic.get_new_key_name(),
             **root_fields)
+        self.late_root.put()
 
-        math = topic_models.Topic.insert('Mathematics', self.late_root,
-                                         **math_fields)
+        math = topic_models.Topic.insert('Mathematics [late]',
+                                         self.late_root, **math_fields)
         self.add_content_to(videos.domain_and_range, math)
         self.add_content_to(videos.absolute_value, math)
 
-        exponents = topic_models.Topic.insert('Exponents (Basic)', math,
-                                              **exponents_fields)
+        exponents = topic_models.Topic.insert('Exponents (Basic) [late]',
+                                              math, **exponents_fields)
         self.add_content_to(exercises.exponents, exponents)
         self.add_content_to(videos.exponents, exponents)        
 
-        equations = topic_models.Topic.insert('Equations (one-step)', math,
-                                              **exponents_fields)
+        equations = topic_models.Topic.insert('Equations (one-step) [late]',
+                                              math, **equations_fields)
         self.add_content_to(exercises.equations, equations)
         self.add_content_to(videos.equations, equations)        
 
-        art = topic_models.Topic.insert('Art History', self.late_root,
-                                        **art_fields)
+        art = topic_models.Topic.insert('Art History [late]',
+                                        self.late_root, **art_fields)
         self.add_content_to(videos.courbet, art)
         # Let's also test having a Url entity as a child.
         art_video_url = url_model.Url(
@@ -453,8 +457,8 @@ class Topics(object):
         self.add_content_to(art_video_url, art)
 
         # Add in a hidden topic as well, with a url of its own
-        art_of_math = topic_models.Topic.insert('Mathematics of Art', art,
-                                                **art_of_math_fields)
+        art_of_math = topic_models.Topic.insert('Mathematics of Art',
+                                                art, **art_of_math_fields)
         art_of_math_video_url = url_model.Url(
             url='http://www.youtube.com/watch?v=vb4OrqPBQyA',
             title='Mathematics & art',
@@ -464,8 +468,9 @@ class Topics(object):
         art_of_math_video_url.put()
         self.add_content_to(art_of_math_video_url, art_of_math)
 
-        # TODO(csilvers): call *_root.make_tree() here?
-        # TODO(csilvers): create VersionContentChange
+        # Now that we've set up the topic trees, let's make one of
+        # them the default.  This also updates some internal caches.
+        topic_versions.set_default_version_and_update_stats()
 
     def add_content_to(self, content_object, parent):
         """Add an exercise, video, or url as a child of topic-node 'parent'."""
@@ -494,17 +499,29 @@ def SetPromoRecords(user):
     pass
 
 
+def stub():
+    """Do all the function-stubbing we need to do."""
+    # Most important: make sure we can talk to the dev-appserver.
+    remote_api_stub.ConfigureRemoteApi(
+        None,
+        '/_ah/remote_api',
+        auth_func=(lambda: ('test', 'test')),   # username/password
+        servername=handler_test_utils.appserver_url[len('http://'):])
+    os.environ['SERVER_SOFTWARE'] = 'Development (remote-api)/1.0'
+
+    # We want to do 'deferred' tasks immediately.
+    def fake_defer(fn, *fn_args, **defer_kwargs):
+        """fn_args are for fn, defer_kwargs are for deferred.defer."""
+        fn(*fn_args)
+    deferred.defer = fake_defer
+
+
 def main(db_filename):
     """Start a dev_appserver, create db entries on it, and exit."""
     handler_test_utils.start_dev_appserver()
     try:
-        remote_api_stub.ConfigureRemoteApi(
-            None,
-            '/_ah/remote_api',
-            auth_func=(lambda: ('test', 'test')),   # username/password
-            servername=handler_test_utils.appserver_url[len('http://'):])
-        os.environ['SERVER_SOFTWARE'] = 'Development (remote-api)/1.0'
-    
+        stub()
+
         print >>sys.stderr, 'Making users'
         users = Users()
 
