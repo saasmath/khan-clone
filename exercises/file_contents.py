@@ -5,7 +5,10 @@ import layer_cache
 from js_css_packages import templatetags
 from custom_exceptions import MissingExerciseException
 
-@layer_cache.cache_with_key_fxn(lambda exercise: "exercise_sha1_%s" % exercise.name, layer=layer_cache.Layers.InAppMemory)
+
+@layer_cache.cache_with_key_fxn(
+    lambda exercise: "exercise_sha1_%s" % exercise.name,
+    layer=layer_cache.Layers.InAppMemory)
 def exercise_sha1(exercise):
     sha1 = None
 
@@ -20,7 +23,10 @@ def exercise_sha1(exercise):
     else:
         return layer_cache.UncachedResult(sha1)
 
-@layer_cache.cache_with_key_fxn(lambda exercise_file: "exercise_raw_html_%s" % exercise_file, layer=layer_cache.Layers.InAppMemory)
+
+@layer_cache.cache_with_key_fxn(
+    lambda exercise_file: "exercise_raw_html_%s" % exercise_file,
+    layer=layer_cache.Layers.InAppMemory)
 def raw_exercise_contents(exercise_file):
     if templatetags.use_compressed_packages():
         exercises_dir = "../khan-exercises/exercises-packed"
@@ -29,7 +35,8 @@ def raw_exercise_contents(exercise_file):
         exercises_dir = "../khan-exercises/exercises"
         safe_to_cache = False
 
-    path = os.path.join(os.path.dirname(__file__), "%s/%s" % (exercises_dir, exercise_file))
+    path = os.path.join(os.path.dirname(__file__),
+                        "%s/%s" % (exercises_dir, exercise_file))
 
     f = None
     contents = ""
@@ -54,5 +61,3 @@ def raw_exercise_contents(exercise_file):
         # we are displaying an unpacked exercise, either locally or in prod
         # with a querystring override. It's unsafe to cache this.
         return layer_cache.UncachedResult(contents)
-
-

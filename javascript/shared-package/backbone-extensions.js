@@ -20,7 +20,8 @@ window.IncrementalCollection = Backbone.Collection.extend({
 
             var attrs = {};
             attrs[this.idAttribute] = id;
-            ret = this._add(attrs);
+            ret = new this.model(attrs);
+            this.add(ret, {silent: true});
         }
         if (!ret.__inited) {
             if (!ret.__callbacks) {

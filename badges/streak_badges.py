@@ -1,7 +1,9 @@
 from badges import BadgeCategory
 from exercise_badges import ExerciseBadge
 
-# All badges awarded for completing a streak of certain length inherit from StreakBadge
+
+# All badges awarded for completing a streak of certain length inherit
+# from StreakBadge
 class StreakBadge(ExerciseBadge):
 
     def is_satisfied_by(self, *args, **kwargs):
@@ -12,7 +14,9 @@ class StreakBadge(ExerciseBadge):
         return user_exercise.longest_streak >= self.streak_required
 
     def extended_description(self):
-        return "Correctly answer %s problems in a row in a single skill" % str(self.streak_required)
+        return ("Correctly answer %s problems in a row in a single skill" %
+                str(self.streak_required))
+
 
 class NiceStreakBadge(StreakBadge):
 
@@ -23,6 +27,7 @@ class NiceStreakBadge(StreakBadge):
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
 
+
 class GreatStreakBadge(StreakBadge):
     def __init__(self):
         StreakBadge.__init__(self)
@@ -30,6 +35,7 @@ class GreatStreakBadge(StreakBadge):
         self.description = "Great Streak"
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
+
 
 class AwesomeStreakBadge(StreakBadge):
     def __init__(self):
@@ -39,6 +45,7 @@ class AwesomeStreakBadge(StreakBadge):
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
 
+
 class RidiculousStreakBadge(StreakBadge):
     def __init__(self):
         StreakBadge.__init__(self)
@@ -46,6 +53,7 @@ class RidiculousStreakBadge(StreakBadge):
         self.description = "Ridiculous Streak"
         self.badge_category = BadgeCategory.SILVER
         self.points = 0
+
 
 class LudicrousStreakBadge(StreakBadge):
     def __init__(self):

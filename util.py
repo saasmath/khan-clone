@@ -1,6 +1,7 @@
 import auth.cookies
 import os
 import datetime
+import re
 import urllib
 import request_cache
 import logging
@@ -102,7 +103,18 @@ def create_post_login_url(dest_url):
             return "/postlogin?continue=%s" % urllib.quote_plus(dest_url)
 
 def create_logout_url(dest_url):
-    return "/logout?continue=%s" % urllib.quote_plus(dest_url)
+    # If the user is viewing a profile page (their own or someone else's)
+    # or a coaching page (class_profile or students), go to the home page
+    # on logout.
+    #
+    # Even if the profile page is visible publicly, it doesn't seem like
+    # staying there is a particular win. And being kicked to the login
+    # screen for the coach pages seems a little awkward.
+    #
+    if re.search(r'/profile\b|/class_profile\b|/students\b', dest_url):
+        return "/logout"
+    else:
+        return "/logout?continue=%s" % urllib.quote_plus(dest_url)
 
 def seconds_since(dt):
     return seconds_between(dt, datetime.datetime.now())

@@ -24,6 +24,7 @@ from exercise_models import UserExercise, Exercise
 from video_models import Video, VideoLog
 from .models import Goal, GoalList, GoalObjective
 
+
 class CreateNewGoal(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
@@ -37,7 +38,8 @@ class CreateNewGoal(request_handler.RequestHandler):
         context = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
-            'map_coords': json.dumps(deserializeMapCoords(user_data.map_coords)),
+            'map_coords': json.dumps(
+                deserializeMapCoords(user_data.map_coords)),
 
             # Get pregenerated library content from our in-memory/memcache
             # two-layer cache
@@ -45,14 +47,15 @@ class CreateNewGoal(request_handler.RequestHandler):
         }
         self.render_jinja2_template("goals/creategoal.html", context)
 
+
 class CreateRandomGoalData(request_handler.RequestHandler):
     first_names = ["Aston", "Stratford", "Leanian", "Patwin", "Renaldo",
         "Welford", "Maher", "Gregorio", "Roth", "Gawain", "Fiacre",
-        "Coillcumhann", "Honi", "Westcot", "Walden", "Onfroi", "Merlow", "Atol",
+        "Coillcumhann", "Honi", "Westcot", "Walden", "Onfroi", "Merlow",
         "Gimm", "Dumont", "Weorth", "Corcoran", "Sinley", "Perekin", "Galt",
         "Tequiefah", "Zina", "Hemi Skye", "Adelie", "Afric", "Laquinta",
         "Molli", "Cimberleigh", "Morissa", "Alastriona", "Ailisa", "Leontina",
-        "Aruba", "Marilda", "Ascencion", "Lidoine", "Winema", "Eraman",
+        "Aruba", "Marilda", "Ascencion", "Lidoine", "Winema", "Eraman", "Atol",
         "Karline", "Edwinna", "Yseult", "Florencia", "Bethsaida", "Aminah",
         "Onida"]
     last_names = ["Smith", "Jackson", "Martin", "Brown", "Roy", "Tremblay",
@@ -153,9 +156,10 @@ class CreateRandomGoalData(request_handler.RequestHandler):
                             "Starting exercise: %s (%i problems, %i hints)" %
                             (objective['exercise'].name, count, hints * count))
                         for i in xrange(1, count):
-                            attempt_problem(user_data, user_exercise, i, 1,
-                                'TEST', 'TEST', 'TEST', True, hints, 0, False, False,
-                                "TEST", '0.0.0.0')
+                            attempt_problem(
+                                user_data, user_exercise, i, 1, 'TEST', 'TEST',
+                                'TEST', True, hints, 0, False, False, "TEST",
+                                '0.0.0.0')
 
                     elif objective['type'] == 'GoalObjectiveWatchVideo':
                         seconds = random.randint(1, 1200)

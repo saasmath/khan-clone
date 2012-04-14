@@ -1,7 +1,7 @@
 {% extends "page_template.html" %}
 
 {% block meta_page_title %}{{ title|escape }} | {% endblock meta_page_title %}
-{% block meta_description %}Practice {{ title|lower|escape }} with Khan Academy's free online exercises.{% endblock %}
+{% block meta_description %}{% if description %}{{ description|escape }}{% else %}Practice {{ title|lower|escape }} with Khan Academy's free online exercises.{% endif %}{% endblock %}
 
 {% block pagecss %}
 

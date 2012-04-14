@@ -91,7 +91,7 @@ class ViewCoaches(request_handler.RequestHandler):
         """
         user_data = UserData.current()
         if user_data:
-            self.redirect(user_data.profile_root + "/coaches")
+            self.redirect(user_data.profile_root + "coaches")
         else:
             self.redirect(util.create_login_url(self.request.uri))
 

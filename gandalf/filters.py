@@ -6,21 +6,26 @@ import operator
 
 from gandalf.config import current_logged_in_identity_string
 
+
 class BridgeFilter(object):
     name = None
     filename = None
 
     @staticmethod
     def _matches(context, identity):
-        raise NotImplementedError("This filter needs to implement a '_matches' method")
+        raise NotImplementedError(
+            "This filter needs to implement a '_matches' method")
 
     @classmethod
     def passes_filter(cls, filter, identity):
-        return cls._matches(filter.context, identity) and filter.percentage > BridgeFilter._identity_percentage(filter.key())
+        return (cls._matches(filter.context, identity) and
+                (filter.percentage >
+                     BridgeFilter._identity_percentage(filter.key())))
 
     @staticmethod
     def _identity_percentage(key):
-        sig = hashlib.md5(str(key) + current_logged_in_identity_string()).hexdigest()
+        sig = hashlib.md5(str(key) +
+                          current_logged_in_identity_string()).hexdigest()
         return int(sig, base=16) % 100
 
     @staticmethod
@@ -49,7 +54,8 @@ class BridgeFilter(object):
         if not cls.filename:
             return ""
 
-        path = os.path.join(os.path.dirname(__file__), "templates/filters/%s" % cls.filename)
+        path = os.path.join(os.path.dirname(__file__),
+                            "templates/filters/%s" % cls.filename)
 
         with open(path) as f:
             html = f.read()
@@ -86,10 +92,14 @@ class NumberOfProficientExercisesBridgeFilter(BridgeFilter):
         except ValueError:
             return False
 
-        return {'=': operator.eq, '>=': operator.ge, '<=': operator.le}[context['comp']](
-            number_of_proficiencies,
-            exercises,
-        )
+        comparer_map = {
+            '=': operator.eq,
+            '>=': operator.ge,
+            '<=': operator.le
+        }
+
+        comparer = comparer_map[context['comp']]
+        return comparer(number_of_proficiencies, exercises)
 
     @staticmethod
     def initial_context():

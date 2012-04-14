@@ -36,10 +36,7 @@ from optparse import OptionParser
 def main():
     kinds = ('Exercise',
              'Video',
-             'Playlist',
              'ExerciseVideo',
-             'ExercisePlaylist',
-             'VideoPlaylist',
              'StemmedIndex',
              'LiteralIndex',
              )

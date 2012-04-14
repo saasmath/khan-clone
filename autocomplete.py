@@ -4,6 +4,7 @@ import video_models
 from url_model import Url
 from setting_model import Setting
 
+
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "video_title_dicts_%s" % (
     version_number or Setting.topic_tree_version()))
@@ -18,7 +19,9 @@ def video_title_dicts(version_number=None):
         "key": str(video.key()),
         "relative_url": "/video/%s" % video.readable_id,
         "id": video.readable_id
-    }, [v for v in video_models.Video.get_all_live(version=version) if v is not None])
+    }, [v for v in video_models.Video.get_all_live(version=version)
+        if v is not None])
+
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "url_title_dicts_%s" % (
@@ -35,6 +38,7 @@ def url_title_dicts(version_number=None):
         "ka_url": url.url,
         "id": url.key().id()
     }, Url.get_all_live(version=version))
+
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "topic_title_dicts_%s" % (
@@ -53,5 +57,4 @@ def topic_title_dicts(version_number=None):
         "key": str(topic.key()),
         "relative_url": topic.relative_url,
         "id": topic.id
-    },  topic_list)
-
+    }, topic_list)
