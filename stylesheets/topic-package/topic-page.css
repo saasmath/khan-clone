@@ -131,15 +131,6 @@ a.main-video-link:hover {
     line-height: 18px;
 }
 .topic-page-content > .container > .nav-pane > ul > li > a > .right-arrow {
-    border-color: transparent transparent transparent black;
-    border-width: 4px;
-    border-style: solid;
-    width: 0px;
-    height: 0px;
-
-    position: absolute;
-    top: 50%;
-    margin-top: -4px;
     right: 8px;
 }
 .topic-page-content > .container > .nav-pane > ul > li.selected > a {

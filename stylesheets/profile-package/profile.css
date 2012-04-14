@@ -1136,7 +1136,18 @@ li.profile-tab {
 .user-profile-controls {
     margin-top: 10px;
 }
-
+.user-profile-controls .dropdown {
+    position: static;
+}
+.user-profile-controls .dropdown-toggle .caret {
+    margin-top: 8px;
+}
+.user-profile-controls .dropdown-toggle:hover,
+.user-profile-controls .dropdown-toggle:active,
+.user-profile-controls .dropdown-toggle.toggled {
+    color: #263500;
+    background-color: #e7f5c4;
+}
 #tab-content-discussion .graph-picker {
     margin-bottom: 0;
     margin-left: -10px;
