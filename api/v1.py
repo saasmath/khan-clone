@@ -1177,20 +1177,7 @@ def get_user_questions():
     """ Get data associated with a user's questions and unread answers
     """
     user_data = request.request_visible_student_user_data()
-    return {
-        'questions': notification.get_questions_data(user_data),
-        'feedback_notification_count': user_data.feedback_notification_count(),
-    }
-
-@route("/api/v1/user/reset_notifications_count", methods=["PUT"])
-@api.auth.decorators.login_required
-@jsonp
-@jsonify
-def reset_notifications_count():
-    """ Reset the user's notifications count back to 0
-    """
-    user_data = user_models.UserData.current()
-    user_data.reset_feedback_notifications_count()
+    return notification.get_questions_data(user_data)
 
 @route("/api/v1/user/coaches", methods=["GET"])
 @api.auth.decorators.login_required

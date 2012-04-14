@@ -46,10 +46,6 @@
 <a class="user-notification" href="{{profile_root}}discussion" title="New updates to {{count}} question{{count|pluralize}}">
     <img src="{{ "/images/discussions-hi-16px.png"|static_url }}" class="icon"><span class="notification-bubble">{{ count }}</span>
 </a>
-{% else %}
-<a class="user-notification" href="{{profile_root}}discussion" title="Updates to questions">
-    <img src="{{ "/images/discussions-lo-16px.png"|static_url }}" class="icon">
-</a>
 {% endif %}
 
 <span class="dropdown">

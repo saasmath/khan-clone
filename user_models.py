@@ -116,11 +116,6 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     last_badge_review = db.DateTimeProperty(indexed=False)
     last_activity = db.DateTimeProperty(indexed=False)
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
-
-    # Last discussion notifications view date in UTC
-    last_discussion_view = db.DateTimeProperty(default=datetime.datetime.min,
-                                               indexed=False)
-    # Count of new notifications since last_discussion_view
     count_feedback_notification = db.IntegerProperty(default= -1,
                                                      indexed=False)
 
@@ -852,18 +847,12 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             notifications = models_discussion.FeedbackNotification.gql(
                     "WHERE user = :1", self.user)
 
-            questions = set(n.feedback.question_key() for n in notifications
-                            if n.feedback.date > self.last_discussion_view)
+            questions = set(n.feedback.question_key() for n in notifications)
 
             self.count_feedback_notification = len(questions)
             self.put()
 
         return self.count_feedback_notification
-
-    def reset_feedback_notifications_count(self):
-        self.count_feedback_notification = 0
-        self.last_discussion_view = datetime.datetime.utcnow()
-        self.put()
 
     def save_goal(self, goal):
         '''save a goal, atomically updating the user_data.has_current_goal when

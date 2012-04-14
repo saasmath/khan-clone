@@ -965,18 +965,17 @@ var Profile = {
                     casing: "camel"
                 },
                 dataType: "json",
-                success: function(data) {
-                    if (data.questions.length === 0) {
+                success: function(questions) {
+                    if (questions.length === 0) {
                         Profile.noDiscussion_ = true;
                         Profile.showNotification("no-discussion");
                         return;
                     }
 
-                    var template = Templates.get("profile.questions-list"),
-                        newNotificationCount = data.feedbackNotificationCount;
+                    var template = Templates.get("profile.questions-list");
 
                     // Order questions from oldest to newest
-                    var questions = _.sortBy(data.questions, function(question) {
+                    questions = _.sortBy(questions, function(question) {
                         return question["lastDate"];
                     });
 
@@ -987,34 +986,17 @@ var Profile = {
                         .append(template(questions))
                         .find("div.timeago").timeago();
 
-                    if (Profile.profile.get("isSelf") && newNotificationCount !== 0) {
+                    if (Profile.profile.get("isSelf")) {
                         var initialPause = 500;
                         var rampOn = 500;
                         var hiOn = 300;
                         var rampOff = 300;
 
-                        // Throb the highlight color for the new entries.
-                        $("#tab-content-discussion .unread").slice(0, newNotificationCount)
-                            .css({"background-color": "#fff"})
+                        $("#tab-content-discussion .unread")
                             .delay(initialPause)
                             .animate({"background-color": "#dcf2fa"}, rampOn)
                             .delay(hiOn)
                             .animate({"background-color": "#ebf7fb"}, rampOff);
-
-                        // Fade out notification in top-header. Sync it with
-                        // the fade out of the entry throb.
-                        $("#top-header .notification-bubble")
-                            .delay(initialPause + rampOn + hiOn)
-                            .fadeOut(rampOff, function() {
-                                $("#top-header .user-notification img")
-                                    .attr("src", "/images/discussions-lo-16px.png")
-                            });
-
-                        // Reset notifications count upon viewing this tab
-                        $.ajax({
-                            type: "PUT",
-                            url: "/api/v1/user/reset_notifications_count"
-                        });
                     }
                 }
             });
