@@ -51,17 +51,21 @@ class PageQuestions(request_handler.RequestHandler):
         video = db.get(video_key)
 
         user_data = user_models.UserData.current()
+        if qa_expand_key:
+            # Clear unread answer notification for expanded question
+            notification.clear_question_answers_for_current_user(qa_expand_key)
+
+        count = user_data.feedback_notification_count() if user_data else 0
 
         if video:
             template_values = video_qa_context(user_data, video, page, qa_expand_key, sort)
             html = self.render_jinja2_template_to_string("discussion/video_qa_content.html", template_values)
-            self.render_json({"html": html, "page": page, "qa_expand_key": qa_expand_key})
-
-        if qa_expand_key > 0:
-            # If a QA question is being expanded, we want to clear notifications for its
-            # answers before we render page_template so the notification icon shows
-            # its updated count. 
-            notification.clear_question_answers_for_current_user(qa_expand_key)
+            self.render_json({
+                "html": html,
+                "page": page,
+                "qa_expand_key": qa_expand_key,
+                "count_notifications": count,
+            })
 
         return
 

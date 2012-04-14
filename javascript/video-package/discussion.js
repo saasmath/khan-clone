@@ -326,6 +326,13 @@ var QA = {
                     scrollTop: jelQuestion.offset().top
                 });
             }
+
+            if (data.count_notifications) {
+                $("#top-header .notification-bubble")
+                    .text(data.count_notifications);
+            } else {
+                $("#top-header .user-notification").hide();
+            }
         }
     },
 
