@@ -55,9 +55,9 @@
 <span class="dropdown">
     <span class="username_and_notification dropdown-toggle">
         <a href="{{profile_root}}" {% if user_data.is_demo %}class="show-demo-dialog"{% endif %}><img class="user-avatar" src="{{ avatars.get_src_for_user(user_data) }}"><span class="user-name">{{username|escape}}</span></a>
-        <b class="caret"></b>
+        <span class="caret"></span>
     </span>
-    <ul class="dropdown-menu vertical-shadow">
+    <ul class="dropdown-menu vertical-shadow-strong">
         <li><a class="dropdown-link{% if user_data.is_demo %} show-demo-dialog{% endif %}" href="{{profile_root}}">Visit profile</a></li>
         {% if user_data.has_password() %}
         <li><a class="dropdown-link" href="{{profile_root}}settings">Change settings</a></li>
