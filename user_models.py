@@ -315,7 +315,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             was detected.
         """
 
-        user_id = util.get_current_user_id(bust_cache=True)
+        user_id = util.get_current_user_id_unsafe(bust_cache=True)
         google_user = users.get_current_user()
         if google_user:
             email = google_user.email()

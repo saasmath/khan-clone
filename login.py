@@ -258,7 +258,7 @@ class PostLogin(request_handler.RequestHandler):
 
             logging.critical(("Missing UserData during PostLogin, " +
                               "with id: %s, cookies: (%s), google user: %s") %
-                             (util.get_current_user_id(),
+                             (util.get_current_user_id_unsafe(),
                               os.environ.get('HTTP_COOKIE', ''),
                               users.get_current_user()))
             self._finish_and_redirect(cont)

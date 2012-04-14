@@ -23,7 +23,7 @@ import urlparse
 
 def current_req_has_auth_credentials():
     """Determine whether or not the current request has valid credentials."""
-    return get_current_user_id() is not None
+    return get_current_user_id_unsafe() is not None
 
 
 # TODO(benkomalo): kill this method! Clients interested in the current user
@@ -31,9 +31,8 @@ def current_req_has_auth_credentials():
 # invalid user_id values (though if it's non-empty, then we know that the user
 # is logged in.)
 @request_cache.cache()
-def get_current_user_id():
-    """Retrieve the user_id of the user that would be created by the current
-    request, if it has valid auth credentials.
+def get_current_user_id_unsafe():
+    """Get the user_id a new user would get for the current auth credentials.
 
     Typically, this is the user_id of the current, logged in user. However,
     it's really important to note that it may correspond to a user_id that
@@ -64,7 +63,7 @@ def _get_current_user_id_from_oauth_map(oauth_map):
     return oauth_map.get_user_id()
 
 # get_current_user_from_cookies_unsafe is labeled unsafe because it should
-# never be used in our JSONP-enabled API. All calling code should just use get_current_user_id.
+# never be used in our JSONP-enabled API. Clients should do XSRF checks.
 def _get_current_user_id_from_cookies_unsafe():
     user = users.get_current_user()
 
