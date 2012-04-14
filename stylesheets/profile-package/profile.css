@@ -1148,9 +1148,6 @@ li.profile-tab {
     border-bottom: 1px solid #CCC;
     color: #777;
 }
-#tab-content-discussion .question.unread {
-    background-color: #EBF7fB;
-}
 #tab-content-discussion .question .ellipsis {
     white-space: nowrap;
     overflow: hidden;
