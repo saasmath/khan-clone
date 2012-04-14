@@ -49,7 +49,7 @@ class V1EndToEndTest(unittest.TestCase):
 
     def test_topicversion__version__topics__with_content(self):
         """2 is the non-default version in our test db."""
-        r = self.fetch('/api/v1/topicvresion/2/topics/with_content')
+        r = self.fetch('/api/v1/topicversion/2/topics/with_content')
         # Topic-version 2 appends '[early]' to all titles.
         self.assertIn("[early]", r)
 
