@@ -266,7 +266,11 @@ class PostLogin(request_handler.RequestHandler):
 
         first_time = not user_data.last_login
 
-        if user_data.is_facebook_user and not user_data.has_sendable_email():
+        if not user_data.has_sendable_email():
+
+            if not user_data.is_facebook_user:
+                raise Exception("Non-FB users should have a valid email")
+
             # Facebook can give us the user's e-mail if the user granted
             # us permission to see it - try to update existing users with
             # emails, if we don't already have one for them.
