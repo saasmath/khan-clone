@@ -331,12 +331,59 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         """
 
         user_id = util.get_current_user_id_unsafe(bust_cache=True)
+        if user_id is None:
+            return None
+
         google_user = users.get_current_user()
         if google_user:
             email = google_user.email()
         else:
             email = user_id
             
+        existing = UserData.get_from_request_info(user_id, email)
+        if existing:
+            return existing
+        elif create_if_none:
+            # Try to "upgrade" to a real email for FB users, if possible.
+            if facebook_util.is_facebook_user_id(email):
+                fb_email = facebook_util.get_fb_email_from_cookies()
+                email = fb_email or user_id
+            return UserData.insert_for(user_id, email)
+        return None
+
+    @staticmethod
+    def get_from_request_info(user_id, email=None, oauth_map=None):
+        """Retrieve a user given the specified information for the request.
+
+        This should be used sparingly, typically by login code that can
+        resolve the request information from authentication credentials
+        or tokens in the request.
+
+        Arguments:
+            user_id:
+                The user_id computed from the request credentials.
+                This is typically the user_id of the returned user,
+                if one matches. However, if no existing user matches
+                this user_id, and an existing e-mail matches instead,
+                the result user will have a different user_id.
+
+            email:
+                The e-mail address from the request credentials (may be a URI
+                value for Facebook users).
+
+            oauth_map:
+                The OAuthMap corresponding to this request. If None is
+                provided, this method will look at the cookies for the
+                current request (if cookie auth is allowed).
+        
+        Returns:
+            The existing UserData object matching the parameters, if any.
+            None if no user was found.
+        """
+
+        if not user_id:
+            return None
+
         # Always try to retrieve by user_id. Note that for _really_ old users,
         # we didn't have user_id values, and we used a "db_key_email". That
         # value never changes (it's an e-mail for most users, but is a URI
@@ -351,16 +398,14 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         # initially registered with (logging now with FB instead of Google).
         # Look for a matching e-mail address (this time the email value
         # tries to be a real email for FB users, not a URI).
-        if not google_user:
-            fb_email = facebook_util.get_fb_email_from_cookies()
+        if facebook_util.is_facebook_user_id(user_id):
+            if oauth_map:
+                fb_email = facebook_util.get_fb_email_from_oauth_map(oauth_map)
+            else:
+                fb_email = facebook_util.get_fb_email_from_cookies()
             email = fb_email or user_id
 
-        existing = UserData.get_from_user_input_email(email)
-        if existing:
-            return existing
-        elif create_if_none:
-            return UserData.insert_for(user_id, email)
-        return None
+        return UserData.get_from_user_input_email(email)
 
     @staticmethod
     def pre_phantom():
