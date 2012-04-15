@@ -13,6 +13,9 @@ import request_cache
 
 FACEBOOK_ID_PREFIX = "http://facebookid.khanacademy.org/"
 
+# TODO(benkomalo): rename these methods to have consistent naming
+#   ("facebook" vs "fb")
+
 def is_facebook_user_id(user_id):
     return user_id.startswith(FACEBOOK_ID_PREFIX)
 
@@ -55,6 +58,23 @@ def get_facebook_user_id_from_oauth_map(oauth_map):
         profile = _get_profile_from_fb_token(oauth_map.facebook_access_token)
         return get_user_id_from_profile(profile)
     return None
+
+def get_fb_email_from_oauth_map(oauth_map):
+    """Return the e-mail of the current logged in Facebook user, if possible.
+
+    A user's Facebook e-mail is the one specified as her primary e-mail account
+    in Facebook (not user@facebook.com).
+
+    This may return None if no valid Facebook credentials were found in the
+    OAuthmap.
+    """
+    
+    if oauth_map:
+        profile = _get_profile_from_fb_token(oauth_map.facebook_access_token)
+        if profile:
+            return profile.get("email", None)
+    return None
+
 
 def get_user_id_from_profile(profile):
 
