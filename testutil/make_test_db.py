@@ -56,17 +56,22 @@ class Users(object):
             username='moderatorprofilename')
         self.moderator.set_password(self.moderator.user_id)
         self.moderator.update_nickname('Moderator')
+        self.moderator.moderator = True
+        self.moderator.put()
 
         self.developer = user_models.UserData.insert_for(
             'developer', 'developer@example.com',
             username='developerprofilename')
         self.developer.set_password(self.developer.user_id)
         self.developer.update_nickname('Developer')
+        self.developer.developer = True
+        self.developer.put()
 
         # It may also be useful to have a phantom user
         self.phantom = phantom_util._create_phantom_user_data()
 
         # TODO(csilvers): add a facebook-id user and a google-id user
+        # TODO(csilvers): add an admin user (probably has to be a google id)
 
     def add_progress(self, exercises_and_videos):
         """Take a list of ExerciseAndVideo objects, set per-user progress."""
@@ -422,11 +427,14 @@ class Topics(object):
                                               math, **equations_fields)
         self.add_content_to(exercises.equations, equations)
         self.add_content_to(videos.equations, equations)        
+        # In our early topic-tree, we incorrectly say that absolute
+        # value falls under equations.  (That will be fixed in the
+        # later topic-tree!)
+        self.add_content_to(videos.absolute_value, equations)
 
         other = topic_models.Topic.insert('Other [early]',
                                           math, **other_fields)
         self.add_content_to(videos.domain_and_range, other)
-        self.add_content_to(videos.absolute_value, other)
 
         art = topic_models.Topic.insert('Art History [early]',
                                         self.early_root, **art_fields)
