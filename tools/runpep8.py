@@ -73,6 +73,10 @@ def main(rootdir, pep8_args):
     pep8.process_options(pep8_args + list(files))
     for f in files:
         pep8.input_file(f)   # the weirdly-named function that does the work
+    # Exit with error status when there are pep8 issues
+    count = pep8.get_count()
+    if count:
+        sys.exit(1)
 
 
 if __name__ == '__main__':
