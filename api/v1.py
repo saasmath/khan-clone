@@ -295,6 +295,9 @@ def topic_progress(topic_id):
 @jsonify
 def topictree(version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     return topic_models.Topic.get_by_id("root", version).make_tree()
 
 @route("/api/v1/dev/topictree/problems", methods=["GET"])
