@@ -340,7 +340,12 @@ def topictree_export(version_id = None, topic_id = "root"):
     if version is None:
         return api_invalid_param_response("Could not find version_id %s"
                                           % version_id)
-    return topic_models.Topic.get_by_id(topic_id, version).make_tree(include_hidden=True)
+    topic = topic_models.Topic.get_by_id(topic_id, version)
+    if topic is None:
+        return api_invalid_param_response("Could not find topic-id %s "
+                                          "for version_id %s"
+                                          % (topic_id, version_id))
+    return topic.make_tree(include_hidden=True)
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["PUT"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["PUT"])
