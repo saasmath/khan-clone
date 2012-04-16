@@ -31,8 +31,10 @@ def get_questions_data(user_data):
     # Get unread answers to the above questions
     unread_answers = feedback_answers_for_user_data(user_data)
     for answer in unread_answers:
-        meta_question = dict_meta_questions[str(answer.question_key())]
-        meta_question.mark_has_unread()
+        question_key = str(answer.question_key())
+        if question_key in dict_meta_questions:
+            meta_question = dict_meta_questions[question_key]
+            meta_question.mark_has_unread()
 
     return dict_meta_questions.values()
 
