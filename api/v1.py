@@ -147,11 +147,9 @@ def content_topics(version_id = None):
 @cacheable(caching_age=(60 * 60 * 24 * 60))
 @etag(lambda: models.Setting.topic_tree_version())
 @jsonp
-@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @layer_cache.cache_with_key_fxn(
     lambda: "api_topics_library_compact_%s" % models.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
-@compress
 @jsonify
 def topics_library_compact():
     topics = topic_models.Topic.get_filled_content_topics(types = ["Video", "Url"])
@@ -289,13 +287,11 @@ def topic_progress(topic_id):
 @api.auth.decorators.open_access
 @etag(lambda version_id = None: version_id)
 @jsonp
-@decompress
 @layer_cache.cache_with_key_fxn(
     (lambda version_id = None: "api_topictree_%s_%s" % (version_id,
         models.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
-@compress
 @jsonify
 def topictree(version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
@@ -315,13 +311,11 @@ def topic_tree_problems(version_id = "edit"):
 @route("/api/v1/dev/topictree", methods=["GET"])
 @api.auth.decorators.developer_required
 @jsonp
-@decompress
 @layer_cache.cache_with_key_fxn(
     (lambda version_id = None, topic_id = "root": "api_topictree_export_%s_%s" % (version_id,
         models.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
-@compress
 @jsonify
 def topictree_export(version_id = None, topic_id = "root"):
     version = topic_models.TopicVersion.get_by_id(version_id)
@@ -704,12 +698,10 @@ def set_explore_url(video_id):
 @api.auth.decorators.open_access
 @etag(lambda: models.Setting.topic_tree_version())
 @jsonp
-@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
     lambda: "api_library_%s" % models.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
-@compress
 @jsonify
 def playlists_library():
     tree = topic_models.Topic.get_by_id("root").make_tree()
@@ -756,14 +748,12 @@ def playlists_library():
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @api.auth.decorators.open_access
 @jsonp
-@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
     lambda fresh=False: (
         None if fresh else
         "api_library_list_%s" % models.Setting.topic_tree_version()),
     layer=layer_cache.Layers.Memcache)
-@compress
 @jsonify
 def playlists_library_list(fresh=False):
     topics = topic_models.Topic.get_filled_content_topics(types = ["Video", "Url"])
