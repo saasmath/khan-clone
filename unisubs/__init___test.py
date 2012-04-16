@@ -6,8 +6,8 @@ import urllib
 from unittest2 import TestCase
 import webapp2
 
-from agar.test import BaseTest
-from agar.test import MockUrlfetchTest
+from third_party.agar.test import BaseTest
+from third_party.agar.test import MockUrlfetchTest
 from google.appengine.api import urlfetch
 from google.appengine.api.urlfetch import DownloadError
 from google.appengine.ext import db

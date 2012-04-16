@@ -353,7 +353,7 @@ def layer_cache_check_set_return(
 
         # could not retrieve item from a permanent cache, raise the error on up
         logging.exception(e)
-        raise e
+        raise
 
     if isinstance(result, UncachedResult):
         # Don't cache this result, just return it

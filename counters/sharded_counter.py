@@ -104,14 +104,17 @@ def change_number_of_shards(name, num):
             if config.num_shards > num:
                 for i in range(num, config.num_shards):
                     del_shard_name = name + str(i)
-                    del_counter = ShardedCounter.get_by_key_name(del_shard_name)
+                    del_counter = ShardedCounter.get_by_key_name(
+                        del_shard_name)
 
                     keep_index = random.randint(0, num - 1)
                     keep_shard_name = name + str(keep_index)
-                    keep_counter = ShardedCounter.get_by_key_name(keep_shard_name)
+                    keep_counter = ShardedCounter.get_by_key_name(
+                        keep_shard_name)
 
                     if keep_counter is None:
-                        keep_counter = ShardedCounter(key_name=shard_name, name=name)
+                        keep_counter = ShardedCounter(key_name=shard_name,
+                                                      name=name)
                     keep_counter.count += del_counter.count
 
                     keep_counter.put()

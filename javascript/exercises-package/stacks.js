@@ -649,7 +649,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                         .find(".stack-stats p, .small-exercise-icon, .review-explain")
                             .each(Exercises.currentCardView.attachTooltip)
                             .end()
-                        .find(".more-stacks, .skill-proficient")
+                        .find(".default-action")
                             .focus();
 
                 }
@@ -688,6 +688,9 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 },
                 function() {
                     Exercises.completeStackView.$el.hide();
+                    Exercises.currentCardView.$el
+                        .find(".default-action")
+                            .focus();
                 }
             );
 

@@ -60,10 +60,12 @@ import unisubs
 import api.jsonify
 import socrates
 import labs.explorations
+import layer_cache
 import kmap_editor
 
 import topic_models
 import video_models
+import user_models
 from user_models import UserData
 from video_models import Video
 from url_model import Url
@@ -135,15 +137,6 @@ class TopicPage(request_handler.RequestHandler):
             topic = topic_models.Topic.get_by_id(path_list[-1])
 
             if topic:
-                # Begin topic pages A/B test
-                if user_util.is_current_user_developer():
-                    show_topic_pages = "show"
-                else:
-                    show_topic_pages = ab_test("Show topic pages", ["show", "hide"],
-                        ["topic_pages_view_page", "topic_pages_started_video",
-                         "topic_pages_completed_video"])
-                if show_topic_pages == "hide":
-                    self.redirect("/#%s" % topic.id)
                 bingo("topic_pages_view_page")
                 # End topic pages A/B test
 
@@ -469,8 +462,43 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
 
 class Search(request_handler.RequestHandler):
 
+    @user_util.admin_only
+    def update(self):
+        if App.is_dev_server:
+            new_version = topic_models.TopicVersion.get_default_version()
+            old_version_number = layer_cache.KeyValueCache.get(
+                "last_dev_topic_vesion_indexed")
+            
+            # no need to update if current version matches old version
+            if new_version.number == old_version_number:
+                return False
+
+            if old_version_number:
+                old_version = topic_models.TopicVersion.get_by_id(
+                                                            old_version_number)
+            else:
+                old_version = None
+
+            topic_models.rebuild_search_index(new_version, old_version)
+    
+            layer_cache.KeyValueCache.set("last_dev_topic_vesion_indexed", 
+                                          new_version.number)
+
     @user_util.open_access
     def get(self):
+
+        show_update = False
+        if App.is_dev_server and user_util.is_current_user_admin():
+            update = self.request_bool("update", False)
+            if update:
+                self.update()
+
+            version_number = layer_cache.KeyValueCache.get(
+                "last_dev_topic_vesion_indexed")
+            default_version = topic_models.TopicVersion.get_default_version()
+            if version_number != default_version.number:
+                show_update = True
+
         query = self.request.get('page_search_query')
         template_values = {'page_search_query': query}
         query = query.strip()
@@ -587,6 +615,7 @@ class Search(request_handler.RequestHandler):
                     topic.child_topics = [t for t in child_topics if t.has_content()]
 
         template_values.update({
+                           'show_update': show_update,
                            'topics': topics,
                            'videos': filtered_videos,
                            'video_exercises': video_exercises,
@@ -690,6 +719,7 @@ application = webapp2.WSGIApplication([
 
     ('/labs/explorations', labs.explorations.RequestHandler),
     ('/labs/explorations/([^/]+)', labs.explorations.RequestHandler),
+    ('/labs/socrates', socrates.SocratesIndexHandler),
     ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.

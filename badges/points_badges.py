@@ -1,7 +1,9 @@
 import util
 from badges import Badge, BadgeCategory
 
-# All badges awarded for getting a certain number of points inherit from PointBadge
+
+# All badges awarded for getting a certain number of points inherit
+# from PointBadge
 class PointBadge(Badge):
 
     def is_satisfied_by(self, *args, **kwargs):
@@ -12,7 +14,9 @@ class PointBadge(Badge):
         return user_data.points >= self.required_points
 
     def extended_description(self):
-        return "Earn %s energy points" % util.thousands_separated_number(self.required_points)
+        return ("Earn %s energy points" %
+                util.thousands_separated_number(self.required_points))
+
 
 class TenThousandaireBadge(PointBadge):
     def __init__(self):
@@ -22,6 +26,7 @@ class TenThousandaireBadge(PointBadge):
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
 
+
 class HundredThousandaireBadge(PointBadge):
     def __init__(self):
         PointBadge.__init__(self)
@@ -29,6 +34,7 @@ class HundredThousandaireBadge(PointBadge):
         self.description = "Ten to the Fifth"
         self.badge_category = BadgeCategory.SILVER
         self.points = 0
+
 
 class FiveHundredThousandaireBadge(PointBadge):
     def __init__(self):
@@ -38,6 +44,7 @@ class FiveHundredThousandaireBadge(PointBadge):
         self.badge_category = BadgeCategory.GOLD
         self.points = 0
 
+
 class MillionaireBadge(PointBadge):
     def __init__(self):
         PointBadge.__init__(self)
@@ -45,6 +52,7 @@ class MillionaireBadge(PointBadge):
         self.description = "Millionaire"
         self.badge_category = BadgeCategory.PLATINUM
         self.points = 0
+
 
 class TenMillionaireBadge(PointBadge):
     def __init__(self):

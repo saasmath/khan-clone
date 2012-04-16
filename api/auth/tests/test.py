@@ -5,10 +5,11 @@ from oauth import OAuthToken
 
 CONSUMER_KEY = ""
 CONSUMER_SECRET = ""
-SERVER_URL = "" # http://local.kamenstestapp.appspot.com:8084
+SERVER_URL = ""  # http://local.kamenstestapp.appspot.com:8084
 
 REQUEST_TOKEN = None
 ACCESS_TOKEN = None
+
 
 def get_request_token():
     global REQUEST_TOKEN
@@ -23,6 +24,7 @@ def get_request_token():
 
     REQUEST_TOKEN = OAuthToken(request_token_key, request_token_secret)
 
+
 def get_access_token():
     global ACCESS_TOKEN
 
@@ -30,9 +32,11 @@ def get_access_token():
     client = TestOAuthClient(SERVER_URL, CONSUMER_KEY, CONSUMER_SECRET)
     ACCESS_TOKEN = client.fetch_access_token(REQUEST_TOKEN)
 
+
 def get_api_resource():
 
-    resource_url = raw_input("Resource relative url (/api/v1/playlists): ") or "/api/v1/playlists"
+    resource_url = (raw_input("Resource relative url (/api/v1/playlists): ") or
+                    "/api/v1/playlists")
 
     client = TestOAuthClient(SERVER_URL, CONSUMER_KEY, CONSUMER_SECRET)
     response = client.access_resource(resource_url, ACCESS_TOKEN)
@@ -40,6 +44,7 @@ def get_api_resource():
     print "\n"
     print response
     print "\n"
+
 
 def run_tests():
     global CONSUMER_KEY, CONSUMER_SECRET, SERVER_URL
@@ -62,6 +67,7 @@ def run_tests():
             get_api_resource()
         except Exception, e:
             print "Error: %s" % e
+
 
 def main():
     run_tests()

@@ -4,7 +4,7 @@ class BadgeContextType:
     Attributes:
         NONE: Context-less badges, which means they can only be earned once.
         EXERCISE: Exercise badges (can earn one for every Exercise).
-        TOPIC: Playlist badges (one for every Playlist).
+        TOPIC: Topic badges (one for every Topic).
         FEEDBACK: Feedback badges (one for every piece of discussion Feedback).
     """
     NONE = 0
