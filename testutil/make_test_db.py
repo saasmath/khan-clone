@@ -409,7 +409,7 @@ class Topics(object):
 
         # The early-topic-version tree.
         self.early_root = topic_models.Topic(
-            title='The Root of All Knowledge',
+            title='The Root of All Knowledge [early]',
             version=topic_versions.earliest_version,
             key_name=topic_models.Topic.get_new_key_name(),
             **root_fields)
