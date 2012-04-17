@@ -269,7 +269,9 @@ class PostLogin(request_handler.RequestHandler):
         if not user_data.has_sendable_email():
 
             if not user_data.is_facebook_user:
-                raise Exception("Non-FB users should have a valid email")
+                raise AssertionError(
+                    "Non-FB users should have a valid email. User: [%s]" %
+                    user_data)
 
             # Facebook can give us the user's e-mail if the user granted
             # us permission to see it - try to update existing users with
@@ -285,9 +287,9 @@ class PostLogin(request_handler.RequestHandler):
 
                 if (existing_user and
                         existing_user.user_id != user_data.user_id):
-                    logging.error("FB user gave us e-mail and it "
-                                  "corresponds to an existing account. "
-                                  "Ignoring e-mail value.")
+                    logging.warning("FB user gave us e-mail and it "
+                                    "corresponds to an existing account. "
+                                    "Ignoring e-mail value.")
                 else:
                     user_data.user_email = fb_email
 
