@@ -19,14 +19,14 @@ class ObjectProperty(db.BlobProperty):
 
     def validate(self, value):
         try:
-            result = pickle.dumps(value)
+            result = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
             return value
         except pickle.PicklingError, e:
             return super(ObjectProperty, self).validate(value)
 
     def get_value_for_datastore(self, model_instance):
         result = super(ObjectProperty, self).get_value_for_datastore(model_instance)
-        result = pickle.dumps(result)
+        result = pickle.dumps(result, pickle.HIGHEST_PROTOCOL)
         return db.Blob(result)
 
     def make_value_from_datastore(self, value):

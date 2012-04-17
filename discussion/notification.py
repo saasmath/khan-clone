@@ -31,26 +31,22 @@ def get_questions_data(user_data):
     # Get unread answers to the above questions
     unread_answers = feedback_answers_for_user_data(user_data)
     for answer in unread_answers:
-        meta_question = dict_meta_questions[str(answer.question_key())]
-        meta_question.mark_has_unread()
+        question_key = str(answer.question_key())
+        if question_key in dict_meta_questions:
+            meta_question = dict_meta_questions[question_key]
+            meta_question.mark_has_unread()
 
     return dict_meta_questions.values()
 
 class MetaQuestion(object):
     """ Data associated with a user's question, including the target video
     and notifications count.
-    
-    TODO(marcia): I am awful at naming things, help!
     """
     @staticmethod
     def from_question(question, viewer_user_data):
-        """ Construct a MetaQuestion (ugh, the name!) from a
-        models_discussion.Feedback entity
-        """
+        """ Construct a MetaQuestion from a Feedback entity """
         meta = MetaQuestion()
 
-        # TODO(marcia): Is this too much junk to send down,
-        # when we only need the readable_id and title?
         video = question.video()
         meta.video = video
 
@@ -93,55 +89,6 @@ class MetaQuestion(object):
             self.answerer_count = len(answerer_user_ids)
             self.last_date = max([answer.date for answer in viewable_answers])
 
-
-class VideoFeedbackNotificationList(request_handler.RequestHandler):
-
-    @user_util.open_access
-    def get(self):
-
-        user_data = user_models.UserData.current()
-
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
-
-        answers = feedback_answers_for_user_data(user_data)
-
-        # Whenever looking at this page, make sure the feedback count is recalculated
-        # in case the user was notified about deleted or flagged posts.
-        user_data.count_feedback_notification = -1
-        user_data.put()
-
-        dict_videos = {}
-        dict_answers = {}
-
-        for answer in answers:
-
-            video = answer.video()
-
-            dict_votes = models_discussion.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
-            voting.add_vote_expando_properties(answer, dict_votes)
-
-            if video == None or type(video).__name__ != "Video":
-                continue
-
-            video_key = video.key()
-            dict_videos[video_key] = video
-            
-            if dict_answers.has_key(video_key):
-                dict_answers[video_key].append(answer)
-            else:
-                dict_answers[video_key] = [answer]
-        
-        videos = sorted(dict_videos.values(), key=lambda video: video.first_topic().title + video.title)
-
-        context = {
-                    "email": user_data.email,
-                    "videos": videos,
-                    "dict_answers": dict_answers
-                  }
-
-        self.render_jinja2_template('discussion/video_feedback_notification_list.html', context)
 
 class VideoFeedbackNotificationFeed(request_handler.RequestHandler):
 

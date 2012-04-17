@@ -71,23 +71,33 @@ def flatten_tree(tree, parent_topics=[]):
 
     return homepage_topics
 
-def add_next_topic(topics, next_topic=None):
-    topic_prev = None
-    for i, topic in enumerate(topics):
+def add_next_topic(topics, prev_topic=None, depth=0):
+    """ Does a depth first search through the topic tree and keeps the last 
+    topic it has seen in prev_topic variable so as to populates its .next 
+    attribute to point to the current topic and populate .next_is_subtopic to 
+    say if the current topic is a subtopic or not.
+    """
+    for topic in topics:
+        # if we are not the very first topic
+        if prev_topic:
+            # set the previous topic's next and next_is_subtopic attributes
+            prev_topic.next = topic
+            if depth > 0:
+                prev_topic.next_is_subtopic = True
+            
         if topic.subtopics:
-            topic.next = topic.subtopics[0]
-            topic.next_is_subtopic = True
-            for subtopic in topic.subtopics:
-                add_next_topic(topic.subtopics, next_topic=topics[i+1])
+            # set prev_topic to the last item in the subtopic list
+            prev_topic = add_next_topic(topic.subtopics, 
+                                        prev_topic=topic, 
+                                        depth=depth + 1)
         else:
-            if i+1 == len(topics):
-                topic.next = next_topic
-            else:
-                if next_topic:
-                    topic.next_is_subtopic = True
-                topic.next = topics[i+1]
+            # set prev_topic to the current topic        
+            prev_topic = topic
 
+    # return last item in the list
+    return prev_topic
 
+     
 # A number to increment if the layout of the page, as expected by the client
 # side JS changes, and the JS is changed to update it. This version is
 # independent of topic content version, and is to do with code versions

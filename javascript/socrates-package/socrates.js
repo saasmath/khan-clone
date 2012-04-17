@@ -150,6 +150,10 @@ Socrates.InputText = Backbone.View.extend({
 });
 
 Socrates.Bookmark = Backbone.Model.extend({
+    defaults: {
+        complete: false
+    },
+
     seconds: function() {
         return Socrates.Question.timeToSeconds(this.get("time"));
     },
@@ -216,6 +220,7 @@ Socrates.QuestionView = Backbone.View.extend({
     events: {
         "submit form": "submit",
         "click .submit-area a.skip": "skip",
+        "click .close": "skip",
         "click .submit-area a.see-answer": "seeAnswerClicked"
     },
 
@@ -574,6 +579,8 @@ Socrates.QuestionView = Backbone.View.extend({
 
         // tell the user if they got it right or wrong
         if (response.correct) {
+            this.model.set({"complete": true});
+
             this.$(".submit-area .alert-error").hide();
             this.$(".submit-area .alert-success").show();
 
@@ -626,26 +633,28 @@ Socrates.MasterView = Backbone.View.extend({
 Socrates.Nav = Backbone.View.extend({
     template: Templates.get("socrates.socrates-nav"),
 
+    initialize: function() {
+        this.model.bind("change", this.render, this);
+    },
+
+    questionsJson: function() {
+        return this.model.
+            filter(function(i) {return i.constructor == Socrates.Question;}).
+            map(function(question) {
+                var pc = question.seconds() / this.options.videoDuration * 100;
+                return {
+                    title: question.get("title"),
+                    time: question.get("time"),
+                    slug: question.slug(),
+                    percentage: pc,
+                    complete: question.get("complete") ? "complete" : ""
+                };
+            }, this);
+    },
+
     render: function() {
-        // want to render list of toplevel items only
-        var sections = [];
-        this.model.each(function(item) {
-            var json = {
-                title: item.get("title"),
-                time: item.get("time"),
-                slug: item.slug(),
-                nested: []
-            };
-
-            if (item.get("nested")) {
-                _.last(sections).nested.push(json);
-            } else {
-                sections.push(json);
-            }
-        });
-
         this.$el.html(this.template({
-            sections: sections
+            questions: this.questionsJson()
         }));
         return this;
     }
@@ -672,8 +681,26 @@ Socrates.QuestionRouter = Backbone.Router.extend({
     initialize: function(options) {
         _.defaults(options, this.constructor.defaults);
 
-        this.beep = new Audio(options.beepUrl);
-        this.beep.volume = options.beepVolume;
+        this.beep = new Audio("");
+        var mimeTypes = {
+            "ogg": "audio/ogg",
+            "mp3": "audio/mpeg",
+            "wav": "audio/x-wav"
+        };
+        var ext;
+        var match = _.find(mimeTypes, function(i, k) {
+            if (this.beep.canPlayType(mimeTypes[k]) !== "") {
+                ext = k;
+                return true;
+            }
+            return false;
+        }, this);
+        if (match) {
+            this.beep.src = options.beepUrl + "." + ext;
+            this.beep.volume = options.beepVolume;
+        } else {
+            this.beep = null;
+        }
 
         this.videoControls = options.videoControls;
 
@@ -782,7 +809,9 @@ Socrates.QuestionRouter = Backbone.Router.extend({
     videoTriggeredQuestion: function(question) {
         // pause the video
         this.videoControls.pause();
-        this.beep.play();
+        if (this.beep != null) {
+            this.beep.play();
+        }
 
         // update the fragment in the URL
         this.navigate(question.slug());
@@ -876,7 +905,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
     }
 }, {
     defaults: {
-        beepUrl: "/sounds/72126__kizilsungur__sweetalertsound2.wav",
+        beepUrl: "/sounds/72126__kizilsungur__sweetalertsound2",
         beepVolume: 0.3
     }
 });
@@ -923,11 +952,15 @@ Socrates.init = function(youtubeId) {
 
 
     // Render views
-    window.nav = new Socrates.Nav({
-        el: ".socrates-nav",
-        model: Bookmarks
+    VideoControls.invokeWhenReady(function() {
+        var duration = VideoControls.player.getDuration();
+        window.nav = new Socrates.Nav({
+            el: ".socrates-nav",
+            model: Bookmarks,
+            videoDuration: duration
+        });
+        nav.render();
     });
-    nav.render();
 
     window.masterView = new Socrates.MasterView({
         el: ".video-overlay",

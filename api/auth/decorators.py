@@ -56,17 +56,19 @@ def verify_and_cache_oauth_or_cookie(request):
 
         # Store the OAuthMap containing all auth info in the request
         # global for easy access during the rest of this request.
-        # We do this now because get_current_user_id() accesses oauth_map.
+        # We do this now because current_req_has_auth_credentials()
+        # accesses oauth_map.
         flask.g.oauth_map = OAuthMap.get_from_access_token(token.key_)
 
-        if not util.get_current_user_id():
+        if not util.current_req_has_auth_credentials():
             # If our OAuth provider thinks you're logged in but the
             # identity providers we consume (Google/Facebook)
             # disagree, we act as if our token is no longer valid.
             del flask.g.oauth_map
             raise OAuthError("Unable to get current user from oauth token")
 
-        # (We can do all the other global-setting after get_current_user_id.)
+        # (We can do all the other global-setting after
+        #  current_req_has_auth_credentials.)
         # Store enough information from the consumer token that we can
         # do anointed checks.
         # TODO(csilvers): is it better to just store all of
@@ -76,9 +78,9 @@ def verify_and_cache_oauth_or_cookie(request):
 
     elif util.allow_cookie_based_auth():
         # TODO(csilvers): this duplicates a lot of calls
-        # (get_current_user_id calls allow_cookie_based_auth too).
+        # (current_req_has_auth_credentials calls allow_cookie_based_auth too).
         # Simplify.
-        if not util.get_current_user_id():
+        if not util.current_req_has_auth_credentials():
             logging.warning("Cookie: %s" % os.environ.get('HTTP_COOKIE',''))
             raise OAuthError("Unable to read user value from cookies/oauth map")
 

@@ -345,7 +345,20 @@ class Video(search.Searchable, db.Model):
             'subtitles_html': subtitles_html,
             'videoPoints': awarded_points,
         }
+    
+    @staticmethod
+    def reindex(video_list=None):
+        """ Reindex Videos for search page """
+        if video_list is None:
+            video_list = Video.get_all_live()
 
+        num_videos = len(video_list)
+        for i, video in enumerate(video_list):
+            logging.info("Indexing video %i/%i: %s (%s)" % 
+                         (i, num_videos, video.title, video.key()))
+
+            video.index()
+            video.indexed_title_changed()
 
 class VideoSubtitles(db.Model):
     """Subtitles for a YouTube video
@@ -622,7 +635,7 @@ def _set_css_deferred(user_data_key, video_key, status, version):
         css['started'].discard(id)
         css['completed'].add(id)
 
-    uvc.pickled_dict = pickle.dumps(css)
+    uvc.pickled_dict = pickle.dumps(css, pickle.HIGHEST_PROTOCOL)
     uvc.load_pickled()
 
     # if set_css_deferred runs out of order then we bump the version number
@@ -734,7 +747,8 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def get_for_user_data(user_data):
-        p = pickle.dumps({'started': set([]), 'completed': set([])})
+        p = pickle.dumps({'started': set([]), 'completed': set([])}, 
+                         pickle.HIGHEST_PROTOCOL)
         return UserVideoCss.get_or_insert(UserVideoCss._key_for(user_data),
                                           user=user_data.user,
                                           video_css='',

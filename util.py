@@ -1,6 +1,7 @@
 import auth.cookies
 import os
 import datetime
+import re
 import urllib
 import request_cache
 import logging
@@ -21,25 +22,50 @@ from api.auth.auth_util import current_oauth_map, allow_cookie_based_auth
 import uid
 import urlparse
 
+def current_req_has_auth_credentials():
+    """Determine whether or not the current request has valid credentials."""
+    return get_current_user_id_unsafe() is not None
+
+
+# TODO(benkomalo): kill this method! Clients interested in the current user
+# should use user_models.UserData.current() instead, as this may be returning
+# invalid user_id values (though if it's non-empty, then we know that the user
+# is logged in.)
 @request_cache.cache()
-def get_current_user_id():
+def get_current_user_id_unsafe():
+    """Get the user_id a new user would get for the current auth credentials.
+
+    Typically, this is the user_id of the current, logged in user. However,
+    it's really important to note that it may correspond to a user_id that
+    doesn't belong to any user. For example, if third-party
+    credentials are provided (e.g. valid Facebook tokens), and we
+    resolve them to point to an existing, different user (through e-mail
+    e-mail matching or other means), this would return a user_id value
+    that's constructed from the Facebook credentials, even though
+    the user_id of the current logged in user is something different.
+
+    Returns:
+        A string value for the user_id, or None if no valid auth credentials
+        are detected in the request.
+    """
+
     user_id = None
 
     oauth_map = current_oauth_map()
     if oauth_map:
-        user_id = get_current_user_id_from_oauth_map(oauth_map)
+        user_id = _get_current_user_id_from_oauth_map(oauth_map)
 
     if not user_id and allow_cookie_based_auth():
-        user_id = get_current_user_id_from_cookies_unsafe()
+        user_id = _get_current_user_id_from_cookies_unsafe()
 
     return user_id
 
-def get_current_user_id_from_oauth_map(oauth_map):
+def _get_current_user_id_from_oauth_map(oauth_map):
     return oauth_map.get_user_id()
 
 # get_current_user_from_cookies_unsafe is labeled unsafe because it should
-# never be used in our JSONP-enabled API. All calling code should just use get_current_user_id.
-def get_current_user_id_from_cookies_unsafe():
+# never be used in our JSONP-enabled API. Clients should do XSRF checks.
+def _get_current_user_id_from_cookies_unsafe():
     user = users.get_current_user()
 
     user_id = None
@@ -77,7 +103,18 @@ def create_post_login_url(dest_url):
             return "/postlogin?continue=%s" % urllib.quote_plus(dest_url)
 
 def create_logout_url(dest_url):
-    return "/logout?continue=%s" % urllib.quote_plus(dest_url)
+    # If the user is viewing a profile page (their own or someone else's)
+    # or a coaching page (class_profile or students), go to the home page
+    # on logout.
+    #
+    # Even if the profile page is visible publicly, it doesn't seem like
+    # staying there is a particular win. And being kicked to the login
+    # screen for the coach pages seems a little awkward.
+    #
+    if re.search(r'/profile\b|/class_profile\b|/students\b', dest_url):
+        return "/logout"
+    else:
+        return "/logout?continue=%s" % urllib.quote_plus(dest_url)
 
 def seconds_since(dt):
     return seconds_between(dt, datetime.datetime.now())

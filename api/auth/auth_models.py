@@ -75,7 +75,8 @@ class OAuthMap(db.Model):
         """
         if self.uses_password():
             user_data = auth.tokens.AuthToken.get_user_for_value(
-                    self.khan_auth_token, user_models.UserData.get_from_user_id)
+                    self.khan_auth_token,
+                    user_models.UserData.get_from_user_id)
             # Note that we can't "create" a user by username/password logins
             # via the oauth flow, since the signup process for setting a KA
             # account is more involved than just setting a user_id.
@@ -95,11 +96,22 @@ class OAuthMap(db.Model):
                 user_id = get_facebook_user_id_from_oauth_map(self)
                 email = user_id
 
-            if user_id:
-                user_data = (user_models.UserData.get_from_user_id(user_id) or
-                             user_models.UserData.get_from_db_key_email(email) or
-                             user_models.UserData.insert_for(user_id, email))
-            return (user_data, user_id)
+            if not user_id:
+                return (None, None)
+
+            existing = user_models.UserData.get_from_request_info(
+                    user_id, email, self)
+
+            if existing:
+                # Note that existing.user_id may be different than
+                # user_id computed above.
+                return (existing, existing.user_id)
+
+            # TODO(benkomalo): consolidate this with logic in PostLogin
+            # since it will likely have to duplicate logic re: first time
+            # logins for Google/FB users and doing the proper connections.
+            user_data = user_models.UserData.insert_for(user_id, email)
+            return (user_data, user_data.user_id)
 
     def get_user_id(self):
         """ Returns the authenticated user_id for this OAuthMap
@@ -144,7 +156,8 @@ class OAuthMap(db.Model):
     def get_from_request_token(request_token):
         if not request_token:
             return None
-        oauth_map = OAuthMap.all().filter("request_token =", request_token).get()
+        oauth_map = OAuthMap.all().filter("request_token =",
+                                          request_token).get()
         return OAuthMap.if_not_expired(oauth_map)
 
     @staticmethod

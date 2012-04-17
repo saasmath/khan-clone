@@ -9,6 +9,7 @@ from .models import ExerciseStatistic
 
 import datetime as dt
 
+
 class Test(request_handler.RequestHandler):
     @user_util.developer_only
     def get(self):
@@ -27,7 +28,8 @@ class Test(request_handler.RequestHandler):
         key_name = ExerciseStatistic.make_key(exid, bounds[0], bounds[1])
         ex = ExerciseStatistic.get_by_key_name(key_name)
         if not ex:
-            raise Exception("No ExerciseStatistic found with key_name %s", key_name)
+            raise Exception("No ExerciseStatistic found with key_name %s",
+                            key_name)
 
         return self.render_hist(ex.histogram[hist])
 
@@ -37,7 +39,10 @@ class Test(request_handler.RequestHandler):
         problem_logs = problem_log_query.fetch(1000)
 
         problem_logs.sort(key=lambda log: log.time_taken)
-        grouped = dict((k, sum(1 for i in v)) for (k, v) in groupby(problem_logs, key=lambda log: log.time_taken))
+        grouped = dict((k, sum(1 for i in v))
+                       for (k, v)
+                       in groupby(problem_logs,
+                                  key=lambda log: log.time_taken))
         return self.render_hist(grouped)
 
     def render_hist(self, data):
@@ -45,7 +50,7 @@ class Test(request_handler.RequestHandler):
         hist = []
         total = sum(data[k] for k in data)
         cumulative = 0
-        for time in range(max_t+2):
+        for time in range(max_t + 2):
             count = data.get(time, 0)
             cumulative += count
             hist.append({
@@ -57,6 +62,10 @@ class Test(request_handler.RequestHandler):
                 'percent_cumulative_tenth': 10.0 * cumulative / total,
             })
 
-        context = { 'selected_nav_link': 'practice', 'hist': hist, 'total': total }
+        context = {
+            'selected_nav_link': 'practice',
+            'hist': hist,
+            'total': total
+        }
 
         self.render_jinja2_template('exercisestats/test.html', context)

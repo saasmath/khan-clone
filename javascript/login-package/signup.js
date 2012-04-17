@@ -17,7 +17,9 @@ Login.initSignupPage = function() {
     }
 
     $("#login-facebook").click(function(e) {
-        Login.connectWithFacebook("/postlogin?completesignup=1");
+        Login.connectWithFacebook(
+                "/postlogin?completesignup=1",
+                true /* requireEmail */);
     });
 
     var dateData = $("#birthday-picker").data("date");
