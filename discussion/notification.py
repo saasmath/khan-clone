@@ -25,8 +25,8 @@ def get_questions_data(user_data):
     for question in questions:
         qa_expand_key = str(question.key())
         meta_question = MetaQuestion.from_question(question, user_data)
-
-        dict_meta_questions[qa_expand_key] = meta_question
+        if meta_question:
+            dict_meta_questions[qa_expand_key] = meta_question
 
     # Get unread answers to the above questions
     unread_answers = feedback_answers_for_user_data(user_data)
@@ -45,9 +45,11 @@ class MetaQuestion(object):
     @staticmethod
     def from_question(question, viewer_user_data):
         """ Construct a MetaQuestion from a Feedback entity """
-        meta = MetaQuestion()
-
         video = question.video()
+        if not video:
+            return
+
+        meta = MetaQuestion()
         meta.video = video
 
         # HACK(marcia): The reason we need to send the topic is to construct
