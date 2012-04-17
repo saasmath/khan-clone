@@ -1,5 +1,4 @@
 import os
-import logging
 
 from google.appengine.api import users
 from google.appengine.ext import db
@@ -173,13 +172,18 @@ def clear_question_answers_for_current_user(question_key):
 
     question = models_discussion.Feedback.get(question_key)
     if not question:
-        return;
+        return
+
+    deleted_notification = False
 
     feedback_keys = question.children_keys()
     for key in feedback_keys:
         notifications = models_discussion.FeedbackNotification.gql("WHERE user = :1 AND feedback = :2", user_data.user, key)
         if notifications.count():
+            deleted_notification = True
             db.delete(notifications)
 
-    user_data.count_feedback_notification = -1
-    user_data.put()
+    if deleted_notification:
+        count = user_data.count_feedback_notification
+        user_data.count_feedback_notification = count - 1
+        user_data.put()

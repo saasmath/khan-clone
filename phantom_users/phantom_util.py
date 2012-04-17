@@ -12,27 +12,31 @@ from cookie_util import set_request_cookie
 PHANTOM_ID_EMAIL_PREFIX = "http://nouserid.khanacademy.org/"
 PHANTOM_MORSEL_KEY = 'ureg_id'
 
+
 def is_phantom_id(user_id):
     return user_id.startswith(PHANTOM_ID_EMAIL_PREFIX)
+
 
 def get_phantom_user_id_from_cookies():
     cookies = None
     try:
-        cookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE',''))
+        cookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE', ''))
     except Cookie.CookieError, error:
         logging.critical("Ignoring Cookie Error: '%s'" % error)
         return None
 
     morsel = cookies.get(PHANTOM_MORSEL_KEY)
     if morsel and morsel.value:
-        return PHANTOM_ID_EMAIL_PREFIX+morsel.value
+        return PHANTOM_ID_EMAIL_PREFIX + morsel.value
     else:
         return None
+
 
 def _create_phantom_user_id():
     rs = os.urandom(20)
     random_string = hashlib.md5(rs).hexdigest()
     return PHANTOM_ID_EMAIL_PREFIX + random_string
+
 
 def _create_phantom_user_data():
     """ Create a phantom user data.
@@ -48,10 +52,12 @@ def _create_phantom_user_data():
     # the phantom user
     return user_models.UserData.current(bust_cache=True)
 
+
 def _get_cookie_from_phantom(phantom_user_data):
     """ Return the cookie value for a phantom user.
     """
     return phantom_user_data.email.split(PHANTOM_ID_EMAIL_PREFIX)[1]
+
 
 def create_phantom(method):
     '''Decorator used to create phantom users if necessary.
@@ -73,6 +79,7 @@ def create_phantom(method):
         return method(self, *args, **kwargs)
     return wrapper
 
+
 def api_create_phantom(method):
     '''Decorator used to create phantom users in api calls if necessary.'''
 
@@ -84,7 +91,8 @@ def api_create_phantom(method):
             user_data = _create_phantom_user_data()
 
             if not user_data:
-                logging.warning("api_create_phantom failed to create user_data properly")
+                logging.warning("api_create_phantom failed to create "
+                                "user_data properly")
 
             response = method(*args, **kwargs)
 
@@ -95,6 +103,7 @@ def api_create_phantom(method):
             return response
 
     return wrapper
+
 
 def disallow_phantoms(method, redirect_to='/login'):
     '''Decorator used to redirect phantom users.'''
@@ -109,6 +118,7 @@ def disallow_phantoms(method, redirect_to='/login'):
             return method(self, *args, **kwargs)
     return wrapper
 
+
 def api_disallow_phantoms(method):
     """ Decorator used to disallow phantoms in api calls.
     """
@@ -116,7 +126,8 @@ def api_disallow_phantoms(method):
     def wrapper(*args, **kwargs):
         user_data = user_models.UserData.current()
         if user_data and user_data.is_phantom:
-            return api_util.api_unauthorized_response("Phantom users are not allowed.")
+            return api_util.api_unauthorized_response(
+                "Phantom users are not allowed.")
         else:
             return method(*args, **kwargs)
 

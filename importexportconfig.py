@@ -3,11 +3,12 @@ from google.appengine.tools import bulkloader
 
 
 class Playlist(db.Model):
-	youtube_id = db.StringProperty()
-	url = db.StringProperty()
-	title = db.StringProperty()
-	description = db.TextProperty()
-	
+        youtube_id = db.StringProperty()
+        url = db.StringProperty()
+        title = db.StringProperty()
+        description = db.TextProperty()
+
+
 class PlaylistExporter(bulkloader.Exporter):
     def __init__(self):
         bulkloader.Exporter.__init__(self, 'Playlist',
