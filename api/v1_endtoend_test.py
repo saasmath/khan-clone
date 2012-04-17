@@ -114,7 +114,7 @@ class V1EndToEndAuthTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_user_cannot_access_developer_url(self):
-        """Moderator privileges are lower than developer."""
+        """Normal-user privileges are lower than developer."""
         self.assert401Error('/api/v1/dev/topictree')
 
     @testsize.large()
