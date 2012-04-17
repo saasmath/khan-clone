@@ -4,6 +4,10 @@ This includes end-to-end tests of all the handlers in v1.  (It's a
 rather slow test because of that.)  Basically, it sends off a url
 request and makes sure the response is sane.  end-to-end tests require a
 running appengine instance: it will start an instance on an unused port.
+
+To run an individual test from this file, run something like:
+   $ tools/runtests.py --max-size=large \
+     api.v1_endtoend_test.V1EndToEndGetTest.test_user
 """
 
 import urllib2
@@ -23,7 +27,7 @@ def setUpModule():
 
 
 def tearDownModule():
-    handler_test_utils.stop_dev_appserver()
+    handler_test_utils.stop_dev_appserver(delete_tmpdir=False)
 
 
 class V1EndToEndTestBase(unittest.TestCase):
@@ -71,7 +75,39 @@ class V1EndToEndTestBase(unittest.TestCase):
     def assertNotIn(self, needle, haystack):
         self.assertFalse(needle in haystack,
                         'Unexpectedly found "%s" in "%s"' % (needle, haystack))
-    
+
+    def assertHTTPError(self, fetch_url, error_code):
+        """Assert that fetching the given url raises the given HTTP error."""
+        # We can't use assertRaises because we want to examine the assertion.
+        try:
+            self.fetch(fetch_url)
+            self.fail("Fetching %s did not raise an expected HTTP code %d"
+                      % (fetch_url, error_code))
+        except urllib2.HTTPError, why:
+            self.assertIn("HTTP Error %d" % error_code, str(why))
+
+    def assert400Error(self, fetch_url):
+        """Assert that fetching the given url raises HTTP 400/BAD REQUEST."""
+        self.assertHTTPError(fetch_url, 400)
+
+    def assert401Error(self, fetch_url):
+        """Assert that fetching the given url raises HTTP 401/UNAUTHORIZED."""
+        self.assertHTTPError(fetch_url, 401)
+
+
+class V1EndToEndAuthTest(V1EndToEndTestBase):
+    """Test that we correctly deny access when appropriate."""
+    def setUp(self):
+        super(V1EndToEndAuthTest, self).setUp()
+        self.method = 'GET'
+
+    @testsize.large()
+    def test_invalid_password(self):
+        self.password = 'invalid'
+        # This should fail when trying to get the access token.
+        # oauth_test_client raises a RuntimeError in that case.
+        self.assertRaises(RuntimeError, self.fetch, '/api/v1/user')
+
 
 class V1EndToEndGetTest(V1EndToEndTestBase):
     """Test all the GET methods in v1.py, except obsolete /playlist urls."""
@@ -100,14 +136,12 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
     @testsize.large()
     def test_topicversion__version_id__changelist(self):
         # Test that this requires developer access
-        self.assertRaises(urllib2.HTTPError, self.fetch,
-                          '/api/v1/topicversion/2/changelist')
+        self.assert401Error('/api/v1/topicversion/2/changelist')
         # ...even if it's a non-existent url.
-        self.assertRaises(urllib2.HTTPError, self.fetch,
-                          '/api/v1/topicversion/10000/changelist')
+        self.assert401Error('/api/v1/topicversion/10000/changelist')
 
         self.set_user(developer=True)
-        
+
         # early version
         r = self.fetch('/api/v1/topicversion/2/changelist')
         self.assertIn('TODO(csilvers)', r)
@@ -132,20 +166,18 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertNotIn('"title": "Exponent Rules Part 1"', r)
 
         # Test a topic that doesn't exist in one version.
-        r = self.fetch('/api/v1/topicversion/2/topic/art_of_math/videos')
-        self.assertIn('TODO(csilvers)', r)        
+        self.assert400Error('/api/v1/topicversion/2/topic/art_of_math/videos')
         r = self.fetch('/api/v1/topicversion/11/topic/art_of_math/videos')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertEqual('[]', r)   # has a Url child, but not a Video
 
         # Test a super-topic.
         r = self.fetch('/api/v1/topicversion/11/topic/math/videos')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertEqual('[]', r)   # has Topic children, but no Video
 
         # Test a topic-version and topic-id that don't exist at all.
         r = self.fetch('/api/v1/topicversion/1000/topic/art_of_math/videos')
-        self.assertIn('TODO(csilvers)', r)
-        r = self.fetch('/api/v1/topicversion/2/topic/does_not_exist/videos')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertEqual('[]', r)   # probably appropriate to return 400 here
+        self.assert400Error('/api/v1/topicversion/2/topic/no_existe/videos')
 
     @testsize.large()
     def test_topic__topic_id__videos(self):
@@ -155,39 +187,40 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"m3u8": "http://s3.amazonaws.com/KA-youtube-converted/'
                       '9DxrF6Ttws4.m3u8/9DxrF6Ttws4.m3u8"', r)
         self.assertNotIn('"mp4": ', r)   # This video is m3u8-only
-        self.assertIn('"keywords": "One, Step, Equations, CC_39336_A-REI_3"', r)
+        self.assertIn('"keywords": "One, Step, Equations, CC_39336_A-REI_3"',
+                      r)
         self.assertIn('"views": 43923', r)
         self.assertIn('"youtube_id": "9DxrF6Ttws4"', r)
 
+        # Test a url with no videos.
         r = self.fetch('/api/v1/topic/art_of_math/videos')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertEqual('[]', r)
 
     @testsize.large()
     def test_topicversion__version_id__topic__topic_id__exercises(self):
         # Test an early version and a later version.
-        r = self.fetch('/api/v1/topicversion/2/topic/basic-equations/exercises')
+        r = self.fetch('/api/v1/topicversion/2/topic/basic-equations'
+                       '/exercises')
         self.assertIn('"display_name": "One step equations"', r)
         self.assertNotIn('"display_name": "Exponent rules"', r)
 
-        r = self.fetch('/api/v1/topicversion/11/topic/basic-equations/exercises')
+        r = self.fetch('/api/v1/topicversion/11/topic/basic-equations'
+                       '/exercises')
         self.assertIn('"display_name": "One step equations"', r)
         self.assertNotIn('"display_name": "Exponent rules"', r)
 
         # And a super-topic with exercises in various sub-topics
         r = self.fetch('/api/v1/topicversion/11/topic/math/exercises')
-        self.assertIn('"display_name": "One step equations"', r)
-        self.assertIn('"display_name": "Exponent rules"', r)
+        self.assertEqual('[]', r)   # has Topic children, but no exercise
 
         # And one with no exercises.
         r = self.fetch('/api/v1/topicversion/11/topic/art/exercises')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertEqual('[]', r)
 
         # And one in a non-existent topic-version and topic-id.
         r = self.fetch('/api/v1/topicversion/1000/topic/art_of_math/exercises')
-        self.assertIn('TODO(csilvers)', r)
-
-        r = self.fetch('/api/v1/topicversion/2/topic/does_not_exist/exercises')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertEqual('[]', r)
+        self.assert400Error('/api/v1/topicversion/2/topic/no_existe/exercises')
 
     @testsize.large()
     def test_topic__topic_id__exercises(self):
@@ -231,8 +264,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertNotIn('Mathematics of Art', r)  # no hidden topics
         self.assertNotIn('[early]', r)
 
-        r = self.fetch('/api/v1/topicversion/1000/topictree')
-        self.assertIn('TODO(csilvers)', r)
+        self.assert400Error('/api/v1/topicversion/1000/topictree')
 
     @testsize.large()
     def test_topictree(self):
@@ -257,45 +289,68 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_dev__topictree__problems(self):
+        # TODO(james): uncomment once this becomes developer_only in v1.py
+        #self.assert401Error('/api/v1/dev/topictree/problems')
+        self.set_user(developer=True)
         r = self.fetch('/api/v1/dev/topictree/problems')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
     def test_dev__topicversion__version_id__topic__topic_id__topictree(self):
-        self.assertRaises(urllib2.HTTPError, self.fetch,
-                          '/api/v1/topicversion/2/topic/math/topictree')
+        self.assert401Error('/api/v1/dev/topicversion/2/topic/math/topictree')
+
+        # Here we keep track of leading spaces to make sure of indentation.
         self.set_user(developer=True)
-        r = self.fetch('/api/v1/topicversion/2/topic/math/topictree')
-        self.assertIn('TODO(csilvers)', r)
-        r = self.fetch('/api/v1/topicversion/11/topic/math/topictree')
-        self.assertIn('TODO(csilvers)', r)
-        r = self.fetch('/api/v1/topicversion/1000/topic/math/topictree')
-        self.assertIn('TODO(csilvers)', r)
-        r = self.fetch('/api/v1/topicversion/2/topic/does_not_exist/topictree')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/dev/topicversion/2/topic/math/topictree')
+        self.assertIn('                    '
+                      '"title": "Exponent Rules Part 1"', r)
+        self.assertIn('            "id": "basic-equations"', r)
+        self.assertIn('    "standalone_title": "All About Math"', r)
+        self.assertIn('    "title": "Mathematics [early]"', r)
+
+        r = self.fetch('/api/v1/dev/topicversion/11/topic/math/topictree')
+        self.assertIn('                    '
+                      '"title": "Exponent Rules Part 1"', r)
+        self.assertIn('            "id": "basic-equations"', r)
+        self.assertIn('    "standalone_title": "All About Math"', r)
+        self.assertIn('    "title": "Mathematics [late]"', r)
+
+        # In dev mode, we should get hidden topics
+        r = self.fetch('/api/v1/dev/topicversion/11/topic/root/topictree')
+        self.assertIn('Mathematics of Art', r)  # no hidden topics
+
+        self.assert400Error('/api/v1/dev/topicversion/1000/topic/math'
+                            '/topictree')
+        self.assert400Error('/api/v1/dev/topicversion/2/topic/does_not_exist'
+                            '/topictree')
+
         # Try another topic-id, that doesn't have any sub-topics.
-        r = self.fetch('/api/v1/topicversion/1000/topic/art/topictree')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/dev/topicversion/2/topic/art/topictree')
+        self.assertIn('    "title": "Art History [early]"', r)
+        self.assertIn('    "children": []', r)
 
     @testsize.large()
     def test_dev__topicversion__version_id__topictree(self):
-        self.assertRaises(urllib2.HTTPError, self.fetch,
-                          '/api/v1/topicversion/2/topictree')
+        self.assert401Error('/api/v1/dev/topicversion/2/topictree')
         self.set_user(developer=True)
-        r = self.fetch('/api/v1/topicversion/2/topictree')
-        self.assertIn('TODO(csilvers)', r)
-        r = self.fetch('/api/v1/topicversion/11/topictree')
-        self.assertIn('TODO(csilvers)', r)
-        r = self.fetch('/api/v1/topicversion/1000/topictree')
-        self.assertIn('TODO(csilvers)', r)
+
+        r = self.fetch('/api/v1/dev/topicversion/2/topictree')
+        self.assertIn('    "title": "The Root of All Knowledge [early]"', r)
+        self.assertNotIn('[late]', r)
+
+        r = self.fetch('/api/v1/dev/topicversion/11/topictree')
+        self.assertIn('    "title": "The Root of All Knowledge [late]"', r)
+        self.assertNotIn('[early]', r)
+
+        r = self.assert400Error('/api/v1/dev/topicversion/1000/topictree')
 
     @testsize.large()
     def test_dev__topictree(self):
-        self.assertRaises(urllib2.HTTPError, self.fetch,
-                          '/api/v1/topictree')
+        self.assert401Error('/api/v1/dev/topictree')
         self.set_user(developer=True)
         r = self.fetch('/api/v1/dev/topictree')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertIn('    "title": "The Root of All Knowledge [late]"', r)
+        self.assertNotIn('[early]', r)
 
     @testsize.large()
     def test_topicversion__version_id__search__query(self):
@@ -304,7 +359,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"id": "exponent_rules', r)         # exercise
         self.assertIn('"id": "exponent-rules-part-1', r)  # video
         self.assertIn('"title": "Equations (one-step) [early]"', r)
-        self.assertIn('"title": "Domain and Range 1"', r)
+        self.assertNotIn('"title": "Domain and Range 1"', r)
         self.assertNotIn('courbet--the-artist-s-studio--1854-55', r)
 
         r = self.fetch('/api/v1/topicversion/11/search/basic')
@@ -312,7 +367,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"id": "exponent_rules', r)         # exercise
         self.assertIn('"id": "exponent-rules-part-1', r)  # video
         self.assertIn('"title": "Equations (one-step) [late]"', r)
-        self.assertIn('"title": "Domain and Range 1"', r)
+        self.assertNotIn('"title": "Domain and Range 1"', r)
         self.assertNotIn('courbet--the-artist-s-studio--1854-55', r)
 
         r = self.fetch('/api/v1/topicversion/11/search/Studio')
@@ -320,16 +375,16 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('courbet--the-artist-s-studio--1854-55', r)
 
         # This should only match for topicversion 11, not 2.
-        r = self.fetch('/api/v1/topicversion/2/search/Minutes')
-        self.assertIn('TODO(csilvers)', r)
         r = self.fetch('/api/v1/topicversion/11/search/Minutes')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertIn('"title": "The History of Art in 3 Minutes"', r)
+        r = self.fetch('/api/v1/topicversion/2/search/Minutes')
+        self.assertNotIn('Minutes', r)
+
         # Gives no results
         r = self.fetch('/api/v1/topicversion/11/search/NadaNothingZilch')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertIn('"nodes": []', r)
         # Try an invalid topic-version
-        r = self.fetch('/api/v1/topicversion/1000/search/Minutes')
-        self.assertIn('TODO(csilvers)', r)
+        self.assert400Error('/api/v1/topicversion/1000/search/Minutes')
 
     @testsize.large()
     def test_topicversion__version_id__topic__topic_id(self):
@@ -347,15 +402,8 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"standalone_title": "All About Math"', r)
         self.assertNotIn('[early]', r)
 
-        r = self.fetch('/api/v1/topicversion/1000/topic/math')
-        self.assertIn('TODO(csilvers)', r)
-
-        r = self.fetch('/api/v1/topicversion/2/topic/does_not_exist')
-        self.assertIn('TODO(csilvers)', r)
-
-        # Try another topic-id, that doesn't have any sub-topics.
-        r = self.fetch('/api/v1/topicversion/1000/topic/art')
-        self.assertIn('TODO(csilvers)', r)
+        self.assert400Error('/api/v1/topicversion/1000/topic/math')
+        self.assert400Error('/api/v1/topicversion/2/topic/does_not_exist')
 
     @testsize.large()
     def test_topic__topic_id(self):
@@ -368,50 +416,89 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
                       r)
         self.assertIn('"topic_page_url": "/math"', r)
 
-        r = self.fetch('/api/v1/topic/does_not_exist')
-        self.assertIn('TODO(csilvers)', r)
+        self.assert400Error('/api/v1/topic/does_not_exist')
 
     @testsize.large()
     def test_topicversion__version_id__topic__topic_id__topic_page(self):
         # Test an early version and a later version.
-        r = self.fetch('/api/v1/topicversion/2/topic/basic-equations/topic-page')
-        self.assertIn('TODO(csilvers)', r)
-        r = self.fetch('/api/v1/topicversion/11/topic/basic-equations/topic-page')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/topicversion/2/topic/basic-equations'
+                       '/topic-page')
+        self.assertIn('"title": "One Step Equations"', r)
+        self.assertIn('"title": "Absolute Value 1"', r)
+        self.assertIn('"topicPageUrl": "/math/basic-equations"', r)
+
+        r = self.fetch('/api/v1/topicversion/11/topic/basic-equations'
+                       '/topic-page')
+        self.assertIn('"title": "One Step Equations"', r)
+        self.assertNotIn('"title": "Absolute Value 1"', r)
+        self.assertIn('"topicPageUrl": "/math/basic-equations"', r)
+
         # Test a topic that doesn't exist in one version.
         r = self.fetch('/api/v1/topicversion/2/topic/art_of_math/topic-page')
-        self.assertIn('TODO(csilvers)', r)        
+        self.assertEqual('{}', r)
         r = self.fetch('/api/v1/topicversion/11/topic/art_of_math/topic-page')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertIn('"title": "Mathematics of Art"', r)
+
         # Test a super-topic.
         r = self.fetch('/api/v1/topicversion/11/topic/math/topic-page')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertIn('"childCount": 2', r)
+        self.assertIn('"standaloneTitle": "Mathematics (other)"', r)
+        self.assertIn('"title": "Mathematics [late]"', r)
+        self.assertNotIn('[early]', r)
+
         # Test a topic-version and topic-id that don't exist at all.
-        r = self.fetch('/api/v1/topicversion/1000/topic/art_of_math/topic-page')
-        self.assertIn('TODO(csilvers)', r)
-        r = self.fetch('/api/v1/topicversion/2/topic/does_not_exist/topic-page')
-        self.assertIn('TODO(csilvers)', r)
+        self.assert400Error('/api/v1/topicversion/1000/topic/art_of_math'
+                            '/topic-page')
+        self.assert400Error('/api/v1/topicversion/2/topic/noexist/topic-page')
 
     @testsize.large()
     def test_topic__topic_id__topic_page(self):
-        r = self.fetch('/api/v1/topic/<topic_id>/topic-page')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/topic/math/topic-page')
+        self.assertIn('"teaserHtml": "Introduction to exponent rules"', r)
+        self.assertIn('"childCount": 2', r)
+        self.assertIn('"standaloneTitle": "Mathematics (other)"', r)
+        self.assertIn('"title": "Mathematics [late]"', r)
+        self.assertNotIn('[early]', r)
+
+        # Shows hidden topics too.
+        r = self.fetch('/api/v1/topic/art_of_math/topic-page')
+        self.assertIn('"title": "Mathematics of Art"', r)
+
+        r = self.fetch('/api/v1/topic/no-existe/topic-page')
+        self.assertEqual('{}', r)
 
     @testsize.large()
     def test_topicversion__version_id__maplayout(self):
-        r = self.fetch('/api/v1/topicversion/<version_id>/maplayout')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/topicversion/2/maplayout')
+        self.assertIn('"icon_url": '
+                      '"/images/power-mode/badges/default-40x40.png"', r)
+        self.assertIn('"id": "basic-equations"', r),
+        self.assertIn('"standalone_title": "One-Step Equations"', r)
+        self.assertIn('"x": 0', r)
+        self.assertNotIn('"x": 1', r)
+        self.assertIn('"y": 6', r)
+        self.assertIn('"id": "basic-exponents"', r),
+
+        r = self.fetch('/api/v1/topicversion/11/maplayout')
+        self.assertIn('"icon_url": '
+                      '"/images/power-mode/badges/default-40x40.png"', r)
+        self.assertIn('"id": "basic-equations"', r),
+        self.assertIn('"standalone_title": "One-Step Equations"', r)
+        self.assertIn('"x": 1', r)
+        self.assertNotIn('"x": 0', r)
+        self.assertIn('"y": 6', r)
+        self.assertIn('"id": "basic-exponents"', r),
 
     @testsize.large()
     def test_maplayout(self):
         r = self.fetch('/api/v1/maplayout')
         self.assertIn('"icon_url": '
                       '"/images/power-mode/badges/default-40x40.png"', r)
-        self.assertIn('"id": "basic-equations"', r), 
+        self.assertIn('"id": "basic-equations"', r),
         self.assertIn('"standalone_title": "One-Step Equations"', r)
         self.assertIn('"x": 1', r)
         self.assertIn('"y": 6', r)
-        self.assertIn('"id": "basic-exponents"', r), 
+        self.assertIn('"id": "basic-exponents"', r),
 
     @testsize.large()
     def test_topicversion__default__id(self):
@@ -425,23 +512,49 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_topicversion__version_id__topic__topic_id__children(self):
-        r = self.fetch('/api/v1/topicversion/<version_id>/topic/<topic_id>/children')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/topicversion/2/topic/math/children')
+        self.assertIn('"title": "Exponents (Basic) [early]"', r)
+        self.assertIn('"title": "Equations (one-step) [early]"', r)
+        self.assertIn('"title": "Other [early]"', r)
+        self.assertNotIn('[late]', r)
+
+        r = self.fetch('/api/v1/topicversion/11/topic/math/children')
+        self.assertIn('"title": "Exponents (Basic) [late]"', r)
+        self.assertIn('"title": "Equations (one-step) [late]"', r)
+        self.assertIn('"title": "Other [late]"', r)
+        self.assertNotIn('[early]', r)
+
+        r = self.fetch('/api/v1/topicversion/11/topic/art/children')
+        self.assertIn('"readable_id": "courbet--the-artist-s-studio--1854-55"',
+                      r)
+        self.assertIn('"title": "The History of Art in 3 Minutes"', r)
 
     @testsize.large()
     def test_topic__topic_id__children(self):
-        r = self.fetch('/api/v1/topic/<topic_id>/children')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/topic/math/children')
+        self.assertIn('"title": "Exponents (Basic) [late]"', r)
+        self.assertIn('"title": "Equations (one-step) [late]"', r)
+        self.assertIn('"title": "Other [late]"', r)
 
-    @testsize.large()
-    def test_topicversion__version_id__setdefault(self):
-        r = self.fetch('/api/v1/topicversion/<version_id>/setdefault')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/topic/art/children')
+        self.assertIn('"readable_id": "courbet--the-artist-s-studio--1854-55"',
+                      r)
 
     @testsize.large()
     def test_topicversion__version_id(self):
-        r = self.fetch('/api/v1/topicversion/<version_id>')
-        self.assertIn('TODO(csilvers)', r)
+        self.assert401Error('/api/v1/topicversion/2')
+
+        self.set_user(developer=True)
+        r = self.fetch('/api/v1/topicversion/2')
+        self.assertIn('"number": 2', r)
+        self.assertIn('"made_default_on": "2012-04-17T01:37:41Z"', r)
+
+        r = self.fetch('/api/v1/topicversion/11')
+        self.assertIn('"number": 11', r)
+        self.assertIn('"made_default_on": "2012-04-16T16:43:37Z"', r)
+
+        r = self.fetch('/api/v1/topicversion/1000')
+        self.assertEqual('null', r)    # TODO(csilvers): should this be {} ?
 
     @testsize.large()
     def test_topicversions__(self):
@@ -459,8 +572,14 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_topicversion__version_id__unused_content(self):
-        r = self.fetch('/api/v1/topicversion/<version_id>/unused_content')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/topicversion/2/unused_content')
+        self.assertIn('"title": "Mathematics & art"', r)
+        self.assertIn('"title": "The History of Art in 3 Minutes"', r)
+
+        r = self.fetch('/api/v1/topicversion/11/unused_content')
+        self.assertEqual('[]', r)
+
+        self.assert400Error('/api/v1/topicversion/1000/unused_content')
 
     @testsize.large()
     def test_topicversion__version_id__url__url_id(self):
@@ -474,8 +593,17 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_videos__video_id__explore_url(self):
-        r = self.fetch('/api/v1/videos/<video_id>/explore_url')
-        self.assertIn('TODO(csilvers)', r)
+        # A video with an explore-id
+        r = self.fetch('/api/v1/videos/SvFtmPhbNRw/explore_url')
+        self.assertEqual('http://en.wikipedia.org/wiki/Gustave_Courbet', r)
+
+        # A video with no explore-id
+        r = self.fetch('/api/v1/videos/NvGTCzAfvr0/explore_url')
+        self.assertEqual('null', r)
+
+        # An invalid video-id
+        r = self.fetch('/api/v1/videos/no_existe/explore_url')
+        self.assertEqual('null', r)
 
     @testsize.large()
     def test_exercises(self):
@@ -487,16 +615,27 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"short_display_name": "1step eq"', r)
         self.assertIn('"tags": []', r)
 
-
     @testsize.large()
     def test_topicversion__version_id__exercises__exercise_name(self):
-        r = self.fetch('/api/v1/topicversion/<version_id>/exercises/<exercise_name>')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/topicversion/2/exercises/exponent_rules')
+        self.assertIn('"display_name": "Exponent rules"', r)
+        self.assertIn('"exponent-rules-part-1"', r)
+
+        r = self.fetch('/api/v1/topicversion/11/exercises/exponent_rules')
+        self.assertIn('"display_name": "Exponent rules"', r)
+        self.assertIn('"exponent-rules-part-1"', r)
+
+        r = self.fetch('/api/v1/topicversion/2/exercises/no_existe')
+        self.assertEqual('null', r)
+
+        self.assert400Error('/api/v1/topicversion/1000/exercises'
+                            '/exponent-rules')
 
     @testsize.large()
     def test_exercises__exercise_name(self):
-        r = self.fetch('/api/v1/exercises/<exercise_name>')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/exercises/exponent_rules')
+        self.assertIn('"display_name": "Exponent rules"', r)
+        self.assertIn('"exponent-rules-part-1"', r)
 
     @testsize.large()
     def test_exercises__recent(self):
@@ -508,22 +647,50 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
     @testsize.large()
     def test_exercises__exercise_name__followup_exercises(self):
         r = self.fetch('/api/v1/exercises/<exercise_name>/followup_exercises')
-        self.assertIn('TODO(csilvers)', r)
+        self.assertIn('TODO(csilvers): add this to the db', r)
 
     @testsize.large()
     def test_exercises__exercise_name__videos(self):
-        r = self.fetch('/api/v1/exercises/<exercise_name>/videos')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/exercises/exponent_rules/videos')
+        self.assertIn('"relative_url": "/video/exponent-rules-part-1"', r)
+
+        r = self.fetch('/api/v1/exercises/no_existe/videos')
+        self.assertEqual('null', r)
 
     @testsize.large()
     def test_topicversion__version_id__videos__video_id(self):
-        r = self.fetch('/api/v1/topicversion/<version_id>/videos/<video_id>')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/topicversion/2/videos/SvFtmPhbNRw')
+        self.assertIn('"relative_url": "/video/absolute-value-1"', r)
+        self.assertIn('"date_added": "2012-03-28T20:37:56Z"', r)
+        self.assertIn('"png": "http://s3.amazonaws.com/KA-youtube-converted'
+                      '/NvGTCzAfvr0.mp4/NvGTCzAfvr0.pn', r)
+        self.assertNotIn('"mp4"', r)   # this video is png-only
+        self.assertIn('"views": 99221', r)
+
+        r = self.fetch('/api/v1/topicversion/11/videos/SvFtmPhbNRw')
+        self.assertIn('"relative_url": "/video/absolute-value-1"', r)
+        self.assertIn('"date_added": "2012-03-28T20:37:56Z"', r)
+        self.assertIn('"png": "http://s3.amazonaws.com/KA-youtube-converted'
+                      '/NvGTCzAfvr0.mp4/NvGTCzAfvr0.pn', r)
+        self.assertNotIn('"mp4"', r)   # this video is png-only
+        self.assertIn('"views": 99221', r)
+
+        r = self.fetch('/api/v1/topicversion/2/videos/no_existe')
+        self.assertEqual('null', r)
+        self.assert400Error('/api/v1/topicversion/1000/videos/SvFtmPhbNRw')
 
     @testsize.large()
     def test_videos__video_id(self):
-        r = self.fetch('/api/v1/videos/<video_id>')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/videos/SvFtmPhbNRw')
+        self.assertIn('"relative_url": "/video/absolute-value-1"', r)
+        self.assertIn('"date_added": "2012-03-28T20:37:56Z"', r)
+        self.assertIn('"png": "http://s3.amazonaws.com/KA-youtube-converted'
+                      '/NvGTCzAfvr0.mp4/NvGTCzAfvr0.pn', r)
+        self.assertNotIn('"mp4"', r)   # this video is png-only
+        self.assertIn('"views": 99221', r)
+
+        r = self.fetch('/api/v1/videos/no_existe')
+        self.assertEqual('null', r)
 
     @testsize.large()
     def test_videos__recent(self):
@@ -533,8 +700,15 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_videos__video_id__exercises(self):
-        r = self.fetch('/api/v1/videos/<video_id>/exercises')
-        self.assertIn('TODO(csilvers)', r)
+        r = self.fetch('/api/v1/videos/kITJ6qH7jS0/exercises')
+        self.assertIn('"relative_url": "/exercise/exponent_rules"', r)
+        self.assertIn('"name": "exponent_rules"', r)
+
+        r = self.fetch('/api/v1/videos/SvFtmPhbNRw/exercises')
+        self.assertEqual('[]', r)
+
+        r = self.fetch('/api/v1/videos/no_existe/exercises')
+        self.assertEqual('[]', r)
 
     @testsize.large()
     def test_videos__topic_id__video_id__play(self):
@@ -548,14 +722,18 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_videos__youtube_id__youtubeinfo(self):
-        r = self.fetch('/api/v1/videos/<youtube_id>/youtubeinfo')
-        self.assertIn('TODO(csilvers)', r)
+        self.assert401Error('/api/v1/videos/kITJ6qH7jS0/youtubeinfo')
+
+        self.set_user(developer=True)
+        r = self.fetch('/api/v1/videos/kITJ6qH7jS0/youtubeinfo')
+        self.assertIn('"relative_url": "/video/exponent-rules-part-1"', r)
+        self.assertIn('"views": 175660', r)
+        self.assertIn('"youtube_id": "kITJ6qH7jS', r)
 
     @testsize.large()
     def test_user(self):
-        '''Test that the result is json and has the appropriate fields.'''
-        r = self.fetch('/api/v1/user')    
-        self.assertIn('user_id', r)
+        r = self.fetch('/api/v1/user')
+        self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
     def test_user__username_available(self):
@@ -629,7 +807,8 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_user__exercises__exercise_name__followup_exercises(self):
-        r = self.fetch('/api/v1/user/exercises/<exercise_name>/followup_exercises')
+        r = self.fetch('/api/v1/user/exercises/<exercise_name>'
+                       '/followup_exercises')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
@@ -785,11 +964,20 @@ class V1EndToEndPostTest(V1EndToEndTestBase):
         super(V1EndToEndPostTest, self).setUp()
         self.method = 'POST'
 
+    # This is a GET request, but changes state so should be POST or PUT.
+
+    @testsize.large()
+    def test_topicversion__version_id__setdefault(self):
+        self.methd = 'GET'
+        r = self.fetch('/api/v1/topicversion/<version_id>/setdefault')
+        self.assertIn('TODO(csilvers)', r)
+
     # Note some of these also accept PUT, but we don't seem to distinguish.
 
     @testsize.large()
     def test_topicversion__version_id__exercises__exercise_name(self):
-        r = self.fetch('/api/v1/topicversion/version_id/exercises/exercise_name>')
+        r = self.fetch('/api/v1/topicversion/version_id'
+                       '/exercises/exercise_name')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
@@ -834,7 +1022,8 @@ class V1EndToEndPostTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_topicversion__version_id__topic__parent_id__addchild(self):
-        r = self.fetch('/api/v1/topicversion/version_id/topic/parent_id/addchild')
+        r = self.fetch('/api/v1/topicversion/version_id/topic/parent_id'
+                       '/addchild')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
@@ -844,7 +1033,8 @@ class V1EndToEndPostTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_topicversion__version_id__topic__parent_id__deletechild(self):
-        r = self.fetch('/api/v1/topicversion/version_id/topic/parent_id/deletechild')
+        r = self.fetch('/api/v1/topicversion/version_id/topic/parent_id'
+                       '/deletechild')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
@@ -854,7 +1044,8 @@ class V1EndToEndPostTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_topicversion__version_id__topic__old_parent_id__movechild(self):
-        r = self.fetch('/api/v1/topicversion/version_id/topic/old_parent_id/movechild')
+        r = self.fetch('/api/v1/topicversion/version_id/topic/old_parent_id'
+                       '/movechild')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
@@ -864,7 +1055,8 @@ class V1EndToEndPostTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_topicversion__version_id__topic__topic_id__ungroup(self):
-        r = self.fetch('/api/v1/topicversion/version_id/topic/topic_id/ungroup')
+        r = self.fetch('/api/v1/topicversion/version_id/topic/topic_id'
+                       '/ungroup')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
@@ -893,13 +1085,17 @@ class V1EndToEndPostTest(V1EndToEndTestBase):
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
-    def test_user__exercises__exercise_name__problems__problem_number__attempt(self):
-        r = self.fetch('/api/v1/user/exercises/exercise_name/problems/problem_number/attempt')
+    def test_user__exercises__exercise_name__problems__problem_number__attempt(
+        self):
+        r = self.fetch('/api/v1/user/exercises/exercise_name'
+                       '/problems/problem_number/attempt')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
-    def test_user__exercises__exercise_name__problems__problem_number__hint(self):
-        r = self.fetch('/api/v1/user/exercises/exercise_name/problems/problem_number/hint')
+    def test_user__exercises__exercise_name__problems__problem_number__hint(
+        self):
+        r = self.fetch('/api/v1/user/exercises/<exercise_name>'
+                       '/problems/<problem_number>/hint')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
@@ -952,7 +1148,8 @@ class V1EndToEndPutTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_dev__topicversion__version_id__topic__topic_id__topictree(self):
-        r = self.fetch('/api/v1/dev/topicversion/version_id/topic/topic_id/topictree')
+        r = self.fetch('/api/v1/dev/topicversion/<version_id>/topic/<topic_id>'
+                       '/topictree')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
