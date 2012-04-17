@@ -228,7 +228,6 @@ def login_required_and(func,
             return unauthorized_response()
 
         # They passed the gantlet!
-        # TODO(csilvers): can we layer-cache this fact somehow?
         return func(*args, **kwargs)
 
     # For purposes of IDing this decorator, just store the True arguments.

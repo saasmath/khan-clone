@@ -50,7 +50,7 @@ def open_access(method):
 
 
 @request_cache.cache()
-def is_curent_user_demo_user():
+def is_current_user_demo_user():
     user_data = models.UserData.current()
     return user_data and user_data.is_demo
 
