@@ -12,6 +12,7 @@ import exercise_models
 import util
 import logging
 
+
 class Goal(db.Model):
     # data
     title = db.StringProperty(indexed=False)
@@ -140,6 +141,7 @@ class Goal(db.Model):
             objectives=objectives
         )
 
+
 # todo: think about moving these static methods to UserData. Almost all have
 # user_data as the first argument.
 class GoalList(object):
@@ -232,6 +234,7 @@ class GoalList(object):
         goals = set(results[0].get_result()) or set(results[1].get_result())
         return list(goals)
 
+
 class GoalObjective(object):
     # Objective status
     progress = 0.0
@@ -303,6 +306,7 @@ class GoalObjective(object):
         self.description = json['description']
         self.progress = json['progress']
 
+
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     exercise_name = None
@@ -319,7 +323,8 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     def url(self):
         exercise = exercise_models.Exercise.get_by_name(self.exercise_name)
         if not exercise:
-            logging.warn("Exercise [%s] not found for goal" % self.exercise_name)
+            logging.warn("Exercise [%s] not found for goal" %
+                         self.exercise_name)
             return ""
         return exercise.relative_url
 
@@ -351,6 +356,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
             status = "started"
         return status
 
+
 class GoalObjectiveAnyExerciseProficiency(GoalObjective):
     # which exercise fulfilled this objective, set upon completion
     exercise_name = None
@@ -361,7 +367,8 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
 
     def url(self):
         if self.exercise_name:
-            return exercise_models.Exercise.get_relative_url(self.exercise_name)
+            return exercise_models.Exercise.get_relative_url(
+                self.exercise_name)
         else:
             return "/exercisedashboard"
 
@@ -374,6 +381,7 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
         self.description = exercise.display_name
         return True
 
+
 class GoalObjectiveWatchVideo(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     video_key = None
@@ -384,7 +392,8 @@ class GoalObjectiveWatchVideo(GoalObjective):
         self.video_readable_id = video.readable_id
         self.description = video.title
 
-        user_video = video_models.UserVideo.get_for_video_and_user_data(video, user_data)
+        user_video = video_models.UserVideo.get_for_video_and_user_data(
+            video, user_data)
         if user_video:
             self.progress = user_video.progress
         else:
@@ -393,7 +402,8 @@ class GoalObjectiveWatchVideo(GoalObjective):
     def init_from_json(self, json):
         super(GoalObjectiveWatchVideo, self).init_from_json(json)
         self.video_readable_id = json['internal_id']
-        self.video_key = video_models.Video.get_for_readable_id(self.video_readable_id).key()
+        self.video_key = video_models.Video.get_for_readable_id(
+            self.video_readable_id).key()
 
     def url(self):
         return video_models.Video.get_relative_url(self.video_readable_id)
@@ -403,11 +413,13 @@ class GoalObjectiveWatchVideo(GoalObjective):
 
     def record_progress(self, user_data, user_video):
         obj_key = self.video_key
-        video_key = video_models.UserVideo.video.get_value_for_datastore(user_video)
+        video_key = video_models.UserVideo.video.get_value_for_datastore(
+            user_video)
         if obj_key == video_key:
             self.progress = user_video.progress
             return True
         return False
+
 
 class GoalObjectiveAnyVideo(GoalObjective):
     # which video fulfilled this objective, set upon completion
@@ -418,7 +430,8 @@ class GoalObjectiveAnyVideo(GoalObjective):
         super(GoalObjectiveAnyVideo, self).init_from_json(json)
         self.video_readable_id = json['internal_id'] or None
         if self.video_readable_id:
-            self.video_key = video_models.Video.get_for_readable_id(self.video_readable_id).key()
+            self.video_key = video_models.Video.get_for_readable_id(
+                self.video_readable_id).key()
 
     def url(self):
         if self.video_readable_id:

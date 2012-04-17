@@ -116,7 +116,9 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     last_badge_review = db.DateTimeProperty(indexed=False)
     last_activity = db.DateTimeProperty(indexed=False)
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
-    count_feedback_notification = db.IntegerProperty(default= -1, indexed=False)
+    count_feedback_notification = db.IntegerProperty(default= -1,
+                                                     indexed=False)
+
     question_sort_order = db.IntegerProperty(default= -1, indexed=False)
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
@@ -142,7 +144,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     is_profile_public = db.BooleanProperty(default=False, indexed=False)
 
     _serialize_blacklist = [
-            "badges", "count_feedback_notification",
+            "badges", "count_feedback_notification", "last_discussion_view",
             "last_daily_summary", "need_to_reassess", "videos_completed",
             "moderator", "question_sort_order",
             "last_login", "user", "current_user", "map_coords",
@@ -202,9 +204,12 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @property
     def email(self):
-        """ Unlike key_email below, this email property
-        represents the user's current email address and
-        can be displayed to users.
+        """ Unlike key_email below, this email property represents the user's
+        current email address and can be displayed to users.
+
+        Note that for some users, this field can be a URI and not an actual
+        e-mail address.
+
         """
         return self.user_email
 
@@ -218,6 +223,19 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         property.
         """
         return self.user.email()
+    
+    def has_sendable_email(self):
+        """ Returns whether or not this user's email property corresponds to
+        an actual e-mail that we can send mail to.
+
+        """
+
+        if self.is_pre_phantom:
+            return False
+
+        value = self.email
+        return (not facebook_util.is_facebook_user_id(value) and
+                not phantom_users.phantom_util.is_phantom_id(value))
 
     @property
     def badge_counts(self):
@@ -294,23 +312,102 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
         return properties_list
 
+    # TODO(benkomalo): change create_if_none to default to False. 
+    #     We really should not be creating accounts in any call to this method,
+    #     and only create accounts through an explicit user flow to get a
+    #     chance to do things like existing-email clashing detection.
     @staticmethod
     @request_cache.cache()
-    def current():
-        user_id = util.get_current_user_id(bust_cache=True)
-        email = user_id
+    def current(create_if_none=True):
+        """Determine the current logged in user and return it.
+        
+        Arguments:
+            create_if_none: Whether or not to create a new user if valid
+                auth credentials are detected, but no existing user was found
+                for those credentials.
+
+        Returns:
+            The user_models.UserData object corresponding to the logged in
+            user, or phantom user. Returns None if no phantom or user
+            was detected.
+        """
+
+        user_id = util.get_current_user_id_unsafe(bust_cache=True)
+        if user_id is None:
+            return None
 
         google_user = users.get_current_user()
         if google_user:
             email = google_user.email()
-
-        if user_id:
-            # Once we have rekeyed legacy entities,
-            # we will be able to simplify this.
-            return  UserData.get_from_user_id(user_id) or \
-                    UserData.get_from_db_key_email(email) or \
-                    UserData.insert_for(user_id, email)
+        else:
+            email = user_id
+            
+        existing = UserData.get_from_request_info(user_id, email)
+        if existing:
+            return existing
+        elif create_if_none:
+            # Try to "upgrade" to a real email for FB users, if possible.
+            if facebook_util.is_facebook_user_id(email):
+                fb_email = facebook_util.get_fb_email_from_cookies()
+                email = fb_email or user_id
+            return UserData.insert_for(user_id, email)
         return None
+
+    @staticmethod
+    def get_from_request_info(user_id, email=None, oauth_map=None):
+        """Retrieve a user given the specified information for the request.
+
+        This should be used sparingly, typically by login code that can
+        resolve the request information from authentication credentials
+        or tokens in the request.
+
+        Arguments:
+            user_id:
+                The user_id computed from the request credentials.
+                This is typically the user_id of the returned user,
+                if one matches. However, if no existing user matches
+                this user_id, and an existing e-mail matches instead,
+                the result user will have a different user_id.
+
+            email:
+                The e-mail address from the request credentials (may be a URI
+                value for Facebook users).
+
+            oauth_map:
+                The OAuthMap corresponding to this request. If None is
+                provided, this method will look at the cookies for the
+                current request (if cookie auth is allowed).
+        
+        Returns:
+            The existing UserData object matching the parameters, if any.
+            None if no user was found.
+        """
+
+        if not user_id:
+            return None
+
+        # Always try to retrieve by user_id. Note that for _really_ old users,
+        # we didn't have user_id values, and we used a "db_key_email". That
+        # value never changes (it's an e-mail for most users, but is a URI
+        # for facebook users).
+        existing = (UserData.get_from_user_id(user_id) or
+                    UserData.get_from_db_key_email(email))
+        if existing:
+            return existing
+
+        # If no user exists by the user_id, it could be that the user logged
+        # in as a different third party auth provider than what she
+        # initially registered with (logging now with FB instead of Google).
+        # Look for a matching e-mail address (this time the email value
+        # tries to be a real email for FB users, not a URI).
+        if facebook_util.is_facebook_user_id(user_id):
+            if oauth_map:
+                fb_email = facebook_util.get_fb_email_from_oauth_map(oauth_map)
+            else:
+                fb_email = facebook_util.get_fb_email_from_cookies()
+            email = fb_email or user_id
+
+        return UserData.get_from_user_input_email(email)
 
     @staticmethod
     def pre_phantom():
@@ -408,17 +505,31 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
         return user_data
 
-    # Avoid an extra DB call in the (fairly often) case that the requested email
-    # is the email of the currently logged-in user
     @staticmethod
-    def get_possibly_current_user(email):
-        if not email:
+    def get_possibly_current_user(identifier):
+        """ Returns a UserData object corresponding to the identifier
+        using the request cache for the current-logged in user if
+        the identifier matches.
+
+        Arguments:
+            identifier: A string representing either the user_id,
+            or user email for the user (searched in that order).
+            Note that this is the user visible e-mail, not the email used in
+            the db User property, as most user-visible operations should
+            use that field as parameters and not the db key email.
+
+        """
+
+        if not identifier:
             return None
 
         user_data_current = UserData.current()
-        if user_data_current and user_data_current.user_email == email:
+        if (user_data_current and
+                (user_data_current.user_id == identifier or
+                 user_data_current.email == identifier)):
             return user_data_current
-        return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
+        return (UserData.get_from_user_id(identifier) or
+                UserData.get_from_user_input_email(identifier))
 
     @classmethod
     def key_for(cls, user_id):
@@ -851,9 +962,20 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         return self.videos_completed
 
     def feedback_notification_count(self):
+        """ Return the number of new discussion notifications since the
+        last time the user viewed her notifications
+        """
         if self.count_feedback_notification == -1:
-            self.count_feedback_notification = models_discussion.FeedbackNotification.gql("WHERE user = :1", self.user).count()
+            # Notifications are grouped by question when displayed to users,
+            # though there is a FeedbackNotification for each unread answer
+            notifications = models_discussion.FeedbackNotification.gql(
+                    "WHERE user = :1", self.user)
+
+            questions = set(n.feedback.question_key() for n in notifications)
+
+            self.count_feedback_notification = len(questions)
             self.put()
+
         return self.count_feedback_notification
 
     def save_goal(self, goal):

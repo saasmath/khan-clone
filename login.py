@@ -1,31 +1,33 @@
-from api import jsonify
-from google.appengine.api import mail
-
-from app import App
-from auth import age_util
-from counters import user_counter
-from google.appengine.api import users
-import user_models
-from user_models import UserData
-from notifications import UserNotifier
-from phantom_users.phantom_util import get_phantom_user_id_from_cookies
-
-import auth.cookies
-import auth.passwords
-from auth.tokens import AuthToken, TransferAuthToken
-import cookie_util
 import datetime
 import logging
 import os
 import re
+
+from google.appengine.api import mail, users
+
+import auth.cookies
+import auth.passwords
+import cookie_util
+import facebook_util
 import request_handler
 import shared_jinja
 import transaction_util
 import uid
+import user_models
 import user_util
 import util
-from api.auth.auth_models import OAuthMap
+
+from api import jsonify
 from api.auth import auth_util
+from api.auth.auth_models import OAuthMap
+from app import App
+from auth import age_util
+from auth.tokens import AuthToken, TransferAuthToken
+from counters import user_counter
+from models import UserData
+from notifications import UserNotifier
+from phantom_users.phantom_util import get_phantom_user_id_from_cookies
+
 
 class Login(request_handler.RequestHandler):
     @user_util.open_access
@@ -34,7 +36,7 @@ class Login(request_handler.RequestHandler):
             self.render_login_form()
         else:
             self.render_login_outer()
-            
+
     def request_continue_url(self, key="continue", default="/"):
         cont = super(Login, self).request_continue_url(key, default)
 
@@ -67,7 +69,7 @@ class Login(request_handler.RequestHandler):
                            }
 
         self.render_jinja2_template('login.html', template_values)
-        
+
 
     def render_login_form(self, identifier=None, errors=None):
         """ Renders the form with the username/password fields. This is
@@ -157,7 +159,7 @@ class MobileOAuthLogin(request_handler.RequestHandler):
     def post(self):
         """ POST submissions are for username/password based logins to
         acquire an OAuth access token.
-        
+
         """
 
         identifier = self.request_string('identifier')
@@ -171,7 +173,7 @@ class MobileOAuthLogin(request_handler.RequestHandler):
             # TODO(benkomalo): IP-based throttling of failed logins?
             self.render_login_page("Your login or password is incorrect.")
             return
-        
+
         # Successful login - convert to an OAuth access_token
         oauth_map_id = self.request_string("oauth_map_id", default="")
         oauth_map = OAuthMap.get_by_id_safe(oauth_map_id)
@@ -211,13 +213,12 @@ def _upgrade_phantom_into(phantom_data, target_data):
     return False
 
 class PostLogin(request_handler.RequestHandler):
-    def consume_auth_token(self):
-        """ Checks to see if a valid auth token is specified as a param
+    def _consume_auth_token(self):
+        """Checks to see if a valid auth token is specified as a param
         in the request, so it can be converted into a cookie
         and used as the identifier for the current and future requests.
-        
         """
-        
+
         auth_stamp = self.request_string("auth")
         if auth_stamp:
             # If an auth stamp is provided, it means they logged in using
@@ -238,76 +239,102 @@ class PostLogin(request_handler.RequestHandler):
                     return True
         return False
 
+    def _finish_and_redirect(self, cont):
+        # Always delete phantom user cookies on login
+        self.delete_cookie('ureg_id')
+        self.redirect(cont)
+
     @user_util.manual_access_checking
     def get(self):
         cont = self.request_continue_url()
 
-        self.consume_auth_token()
+        self._consume_auth_token()
 
-        user_data = UserData.current()
-        if user_data:
+        user_data = UserData.current(create_if_none=True)
+        if not user_data:
+            # Nobody is logged in - clear any expired Facebook cookies
+            # that may be hanging around.
+            facebook_util.delete_fb_cookies(self)
 
-            first_time = not user_data.last_login
+            logging.critical(("Missing UserData during PostLogin, " +
+                              "with id: %s, cookies: (%s), google user: %s") %
+                             (util.get_current_user_id_unsafe(),
+                              os.environ.get('HTTP_COOKIE', ''),
+                              users.get_current_user()))
+            self._finish_and_redirect(cont)
+            return
 
-            # Update email address if it has changed
-            current_google_user = users.get_current_user()
-            if current_google_user:
-                if current_google_user.email() != user_data.email:
-                    user_data.user_email = current_google_user.email()
+        first_time = not user_data.last_login
 
-            # If the user has a public profile, we stop "syncing" their username
-            # from Facebook, as they now have an opportunity to set it themself
-            if not user_data.username:
-                user_data.update_nickname()
+        if not user_data.has_sendable_email():
 
-            # Set developer and moderator to True if user is admin
-            if ((not user_data.developer or not user_data.moderator) and
-                    users.is_current_user_admin()):
-                user_data.developer = True
-                user_data.moderator = True
+            if not user_data.is_facebook_user:
+                raise AssertionError(
+                    "Non-FB users should have a valid email. User: [%s]" %
+                    user_data)
 
-            user_data.last_login = datetime.datetime.utcnow()
-            user_data.put()
-            
-            complete_signup = self.request_bool("completesignup", default=False)
-            if first_time:
-                if current_google_user:
-                    # Look for a matching UnverifiedUser with the same e-mail
-                    # to see if the user used Google login to verify.
-                    unverified_user = user_models.UnverifiedUser.get_for_value(
-                            current_google_user.email())
-                    if unverified_user:
-                        unverified_user.delete()
+            # Facebook can give us the user's e-mail if the user granted
+            # us permission to see it - try to update existing users with
+            # emails, if we don't already have one for them.
+            fb_email = facebook_util.get_fb_email_from_cookies()
+            if fb_email:
+                # We have to be careful - we haven't always asked for emails
+                # from facebook users, so getting an e-mail after the fact
+                # may result in a collision with an existing Google or Khan
+                # account. In those cases, we silently drop the e-mail.
+                existing_user = \
+                    user_models.UserData.get_from_user_input_email(fb_email)
 
-                # Note that we can only migrate phantom users right now if this
-                # login is not going to lead to a "/completesignup" page, which
-                # indicates the user has to finish more information in the
-                # signup phase.
-                if not complete_signup:
-                    # If user is brand new and has 0 points, migrate data.
-                    phantom_id = get_phantom_user_id_from_cookies()
-                    if phantom_id:
-                        phantom_data = UserData.get_from_db_key_email(phantom_id)
-                        if _upgrade_phantom_into(phantom_data, user_data):
-                            cont = "/newaccount?continue=%s" % cont
-            if complete_signup:
-                cont = "/completesignup"
+                if (existing_user and
+                        existing_user.user_id != user_data.user_id):
+                    logging.warning("FB user gave us e-mail and it "
+                                    "corresponds to an existing account. "
+                                    "Ignoring e-mail value.")
+                else:
+                    user_data.user_email = fb_email
 
-        else:
+        # If the user has a public profile, we stop "syncing" their username
+        # from Facebook, as they now have an opportunity to set it themself
+        if not user_data.username:
+            user_data.update_nickname()
 
-            # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
-            if App.facebook_app_id:
-                self.delete_cookie("fbsr_" + App.facebook_app_id)
-                self.delete_cookie("fbm_" + App.facebook_app_id)
+        # Set developer and moderator to True if user is admin
+        if ((not user_data.developer or not user_data.moderator) and
+                users.is_current_user_admin()):
+            user_data.developer = True
+            user_data.moderator = True
 
-            logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
-                    util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
-                )
-            )
+        user_data.last_login = datetime.datetime.utcnow()
+        user_data.put()
 
-        # Always delete phantom user cookies on login
-        self.delete_cookie('ureg_id')
-        self.redirect(cont)
+        complete_signup = self.request_bool("completesignup", default=False)
+        if first_time:
+            email_now_verified = None
+            if user_data.has_sendable_email():
+                email_now_verified = user_data.email
+
+                # Look for a matching UnverifiedUser with the same e-mail
+                # to see if the user used Google login to verify.
+                unverified_user = user_models.UnverifiedUser.get_for_value(
+                        email_now_verified)
+                if unverified_user:
+                    unverified_user.delete()
+
+            # Note that we can only migrate phantom users right now if this
+            # login is not going to lead to a "/completesignup" page, which
+            # indicates the user has to finish more information in the
+            # signup phase.
+            if not complete_signup:
+                # If user is brand new and has 0 points, migrate data.
+                phantom_id = get_phantom_user_id_from_cookies()
+                if phantom_id:
+                    phantom_data = UserData.get_from_db_key_email(phantom_id)
+                    if _upgrade_phantom_into(phantom_data, user_data):
+                        cont = "/newaccount?continue=%s" % cont
+        if complete_signup:
+            cont = "/completesignup"
+
+        self._finish_and_redirect(cont)
 
 class Logout(request_handler.RequestHandler):
     @staticmethod
@@ -319,9 +346,7 @@ class Logout(request_handler.RequestHandler):
         handler.delete_cookie('session')
 
         # Delete Facebook cookie, which sets ithandler both on "www.ka.org" and ".www.ka.org"
-        if App.facebook_app_id:
-            handler.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
-            handler.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+        facebook_util.delete_fb_cookies(handler)
 
     @user_util.open_access
     def get(self):
@@ -402,7 +427,7 @@ class Signup(request_handler.RequestHandler):
             # unfortunately. Set an under-13 cookie so they can't try again.
             Logout.delete_all_identifying_cookies(self)
             auth.cookies.set_under13_cookie(self)
-            
+
             # TODO(benkomalo): investigate how reliable setting cookies from
             # a jQuery POST is going to be
             self.render_json({"under13": True})
@@ -436,7 +461,7 @@ class Signup(request_handler.RequestHandler):
                     resend_detected = existing is not None
         else:
             errors['email'] = "Please enter your email."
-            
+
         if existing_google_user_detected:
             # TODO(benkomalo): just deny signing up with username/password for
             # existing users with a Google login. In the future, we can show
@@ -454,16 +479,15 @@ class Signup(request_handler.RequestHandler):
                 email,
                 birthdate)
         Signup.send_verification_email(unverified_user)
-        
+
         response_json = {
                 'success': True,
                 'email': email,
                 'resend_detected': resend_detected,
-                'existing_google_user_detected': existing_google_user_detected,
                 }
-        
+
         if App.is_dev_server:
-            # Send down the verification token so the client can easily 
+            # Send down the verification token so the client can easily
             # create a link to test with.
             response_json['token'] = unverified_user.randstring
 
@@ -536,7 +560,7 @@ class CompleteSignup(request_handler.RequestHandler):
             return self.render_form()
         else:
             return self.render_outer()
-        
+
     def render_outer(self):
         """ Renders the second part of the user signup step, after the user
         has verified ownership of their e-mail account.
@@ -544,12 +568,12 @@ class CompleteSignup(request_handler.RequestHandler):
         The request URI must include a valid token from an UnverifiedUser, and
         can be made via build_link(), or be made by a user without an existing
         password set.
-        
+
         Note that the contents are actually rendered in an iframe so it
         can be sent over https (generated in render_form).
 
         """
-        valid_token, unverified_user = self.resolve_token()
+        (valid_token, _) = self.resolve_token()
         user_data = UserData.current()
         if valid_token and user_data:
             if not user_data.is_phantom:
@@ -573,6 +597,15 @@ class CompleteSignup(request_handler.RequestHandler):
             if user_data.has_password():
                 # The user already has a KA login - redirect them to their profile
                 self.redirect(user_data.profile_root)
+                return
+            elif not user_data.has_sendable_email():
+                # This is a case where a Facebook user logged in and tried
+                # to signup for a KA password. Unfortunately, since we don't
+                # have their e-mail, we can't let them proceed, since, without
+                # a valid e-mail we can't reset passwords, etc.
+                logging.error("User tried to signup for password with "
+                              "no email associated with the account")
+                self.redirect("/")
                 return
             else:
                 # Here we have a valid user, and need to transfer their identity
@@ -604,10 +637,15 @@ class CompleteSignup(request_handler.RequestHandler):
             self.redirect("/")
             return
 
-        if not valid_token and user_data and user_data.has_password():
-            # The user already has a KA login - redirect them to their profile
-            self.redirect(user_data.profile_root)
-            return
+        if not valid_token and user_data:
+            if user_data.has_password():
+                # The user already has a KA login - redirect them to
+                # their profile
+                self.redirect(user_data.profile_root)
+                return
+            elif not user_data.has_sendable_email():
+                self.redirect("/")
+                return
 
         values = {}
         if valid_token:
@@ -621,15 +659,15 @@ class CompleteSignup(request_handler.RequestHandler):
             # TODO(benkomalo): handle storage for FB users. Right now their
             # "email" value is a URI like http://facebookid.ka.org/1234
             email = user_data.email
-            if not user_data.is_facebook_user:
-                values['email'] = email
-            
             nickname = user_data.nickname
-            if email.find('@') != -1 and email.split('@')[0] == nickname:
-                # The user's "nickname" property defaults to the user part of
-                # their e-mail. Encourage them to use a real name and leave
-                # the name field blank in that case.
-                nickname = ""
+            if user_data.has_sendable_email():
+                values['email'] = email
+
+                if email.split('@')[0] == nickname:
+                    # The user's "nickname" property defaults to the user part
+                    # of their e-mail. Encourage them to use a real name and
+                    # leave the name field blank in that case.
+                    nickname = ""
 
             values['nickname'] = nickname
             values['gender'] = user_data.gender
@@ -746,7 +784,7 @@ class CompleteSignup(request_handler.RequestHandler):
                     # an existing user due to an ID collision. Try again.
                     user_data = None
                 num_tries += 1
-                
+
             if not user_data:
                 logging.error("Tried several times to create a new user " +
                               "unsuccessfully")
@@ -767,7 +805,7 @@ class CompleteSignup(request_handler.RequestHandler):
 
 class PasswordChange(request_handler.RequestHandler):
     """ Handler for changing a user's password.
-    
+
     This must always be rendered in an https form. If a request is made to
     render the form in HTTP, this handler will automatically redirect to
     the HTTPS version with a transfer_token to identify the user in HTTPS.
@@ -780,7 +818,7 @@ class PasswordChange(request_handler.RequestHandler):
         if self.request.scheme != "https" and not App.is_dev_server:
             self.redirect(self.secure_url_with_token(self.request.uri))
             return
-        
+
         if self.request_bool("success", default=False):
             self.render_form(message="Password changed", success=True)
         else:
@@ -792,7 +830,7 @@ class PasswordChange(request_handler.RequestHandler):
                                     {'message': message or "",
                                      'success': success,
                                      'transfer_token': transfer_token_value})
-        
+
     def secure_url_with_token(self, url):
         user_data = UserData.current()
         if not user_data:
@@ -845,7 +883,7 @@ class PasswordChange(request_handler.RequestHandler):
 
 def _resolve_user_in_https_frame(handler):
     """ Determines the current logged in user for the HTTPS request.
-    
+
     This has logic in additional to UserData.current(), since it should also
     accept TransferAuthTokens, since HTTPS requests may not have normal HTTP
     cookies sent.

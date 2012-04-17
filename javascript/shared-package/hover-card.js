@@ -44,7 +44,7 @@ var HoverCard = {
                     userID: userID
                   },
                 dataType: "json",
-                success: _.bind(HoverCard.onHoverCardDataLoaded_, jel)
+                success: _.bind(HoverCard.onHoverCardDataLoaded_, this, jel)
             });
         }
 
@@ -72,9 +72,8 @@ var HoverCard = {
 
     },
 
-    onHoverCardDataLoaded_: function(data) {
-        var jel = this,
-            userID = jel.data("user-id"),
+    onHoverCardDataLoaded_: function(jel, data) {
+        var userID = jel.data("user-id"),
             model = new ProfileModel(data),
             view = new HoverCardView({model: model}),
             html = view.render().el.innerHTML;
@@ -84,6 +83,5 @@ var HoverCard = {
 
         // Replace tooltip content
         jel.qtip("option", "content.text", html);
-
     }
 }

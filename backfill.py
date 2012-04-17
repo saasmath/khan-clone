@@ -48,4 +48,3 @@ def update_user_exercise_progress(user_exercise):
     if user_exercise._progress is None:
         user_exercise._progress = user_exercise.get_progress_from_streak()
         yield op.db.Put(user_exercise)
-

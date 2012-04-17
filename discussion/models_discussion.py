@@ -189,9 +189,27 @@ class Feedback(db.Model):
             else:
                 return ''
 
+    @staticmethod
+    def get_all_questions_by_author(user_id):
+        """ Get all questions asked by specified user
+        """
+        query = Feedback.all()
+
+        # STOPSHIP(marcia): Backfill feedback with author user id
+        query.filter('author_user_id =', user_id)
+
+        return [q for q in query if q.is_type(FeedbackType.Question)]
+
 class FeedbackNotification(db.Model):
+    """ A FeedbackNotification entity is created for each answer to a
+    question, unless the question and answer authors are the same user
+    """
+    # The answer that provoked a notification
     feedback = db.ReferenceProperty(Feedback)
+
+    # The question author and recipient of the notification
     user = db.UserProperty()
+
 
 class FeedbackVote(db.Model):
     DOWN = -1

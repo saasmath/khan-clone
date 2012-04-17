@@ -457,12 +457,12 @@ class ChunkedResult():
         has an chunk_list, then it will delete_multi on all the items in that
         list otherwise it will just delete the key'''
         value = cache_class.get(key, namespace)
-        if isinstance(value, ChunkedResult) and value.chunk_list:
+        if isinstance(value, ChunkedResult) and hasattr(value, "chunk_list"):
             keys = value.chunk_list
             keys.append(key)
-            cache_class.delete_multi(keys, namespace)
+            cache_class.delete_multi(keys, namespace=namespace)
         elif value is not None:
-            cache_class.delete(key, namespace)
+            cache_class.delete(key, namespace=namespace)
 
     def get_result(self, cache_class=memcache, namespace=""):
         '''If the results are stored within this ChunkedResult object it will 

@@ -15,9 +15,11 @@ from gandalf import gandalf
 from gandalf.models import GandalfBridge, GandalfFilter
 from gandalf.filters import BridgeFilter
 
-# See gandalf/tests/run_tests.py for the full explanation/sequence of these tests
+# See gandalf/tests/run_tests.py for the full explanation/sequence of
+# these tests
 
 GANDALF_API_PREFIX = "http://localhost:8080/gandalf/api/v1/"
+
 
 class RunStep(RequestHandler):
 
@@ -26,7 +28,8 @@ class RunStep(RequestHandler):
         if not os.environ["SERVER_SOFTWARE"].startswith('Development'):
             return
 
-        # Delete all bridges and filters so that we have a fresh testing environment
+        # Delete all bridges and filters so that we have a fresh
+        # testing environment
         for bridge in GandalfBridge.all():
             bridge.delete()
     
@@ -61,7 +64,9 @@ class RunStep(RequestHandler):
             'bridge_name': bridge_name,
         }
 
-        req = urllib2.Request(os.path.join(GANDALF_API_PREFIX, "bridges/update"), urllib.urlencode(data))
+        req = urllib2.Request(
+            os.path.join(GANDALF_API_PREFIX, "bridges/update"),
+            urllib.urlencode(data))
 
         response = urllib2.urlopen(req)
         try:
@@ -79,14 +84,14 @@ class RunStep(RequestHandler):
 
         return gandalf(bridge_name)
 
-
     def can_cross_all_users_whitelist(self):
         bridge_name = "balrog"
         filter_type = "all-users"
 
         bridge = GandalfBridge.get_or_insert(bridge_name)
 
-        GandalfFilter(bridge=bridge, filter_type=filter_type, whitelist=True).put()
+        GandalfFilter(bridge=bridge, filter_type=filter_type,
+                      whitelist=True).put()
 
         return gandalf(bridge_name)
 
@@ -96,7 +101,8 @@ class RunStep(RequestHandler):
 
         bridge = GandalfBridge.get_or_insert(bridge_name)
 
-        GandalfFilter(bridge=bridge, filter_type=filter_type, whitelist=False).put()
+        GandalfFilter(bridge=bridge, filter_type=filter_type,
+                      whitelist=False).put()
 
         return gandalf(bridge_name)
 
@@ -106,8 +112,11 @@ class RunStep(RequestHandler):
 
         bridge = GandalfBridge.get_or_insert(bridge_name)
 
-        GandalfFilter(bridge=bridge, filter_type=filter_type, whitelist=True).put()
-        GandalfFilter(bridge=bridge, filter_type=filter_type, whitelist=False).put()
+        GandalfFilter(bridge=bridge, filter_type=filter_type,
+                      whitelist=True).put()
+
+        GandalfFilter(bridge=bridge, filter_type=filter_type,
+                      whitelist=False).put()
 
         return gandalf(bridge_name)
 
@@ -117,7 +126,8 @@ class RunStep(RequestHandler):
 
         bridge = GandalfBridge.get_or_insert(bridge_name)
 
-        filter = GandalfFilter(bridge=bridge, filter_type=filter_type, whitelist=True)
+        filter = GandalfFilter(bridge=bridge, filter_type=filter_type,
+                               whitelist=True)
         filter.put()
         
         identity_percentage = BridgeFilter._identity_percentage(filter.key())
@@ -133,7 +143,8 @@ class RunStep(RequestHandler):
 
         bridge = GandalfBridge.get_or_insert(bridge_name)
 
-        filter = GandalfFilter(bridge=bridge, filter_type=filter_type, whitelist=True)
+        filter = GandalfFilter(bridge=bridge, filter_type=filter_type,
+                               whitelist=True)
         filter.put()
 
         identity_percentage = BridgeFilter._identity_percentage(filter.key())

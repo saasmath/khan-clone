@@ -140,7 +140,7 @@ class LayerCacheDatastoreTest(LayerCacheTest):
         self.assertEqual(0, len(values))
 
         # assert that we will now recalculate target
-        self.assertEqualTruncateError("a", self.cache_func("a"))
+        self.assertEqualTruncateError("a", self.cache_func("a")) 
 
     def test_chunked_result_delete_removes_empty_items(self):
         self.cache_func([])
@@ -256,3 +256,11 @@ class LayerCacheCompressionTest(LayerCacheTest):
         memcache.set(self.key, 
                      layer_cache.ChunkedResult(data="decompress fail"))
         self.assertEqual("a", self.cache_func("a"))
+
+    def test_one_chunk_result_deletes_successfully(self):
+        self.cache_func(self.big_string)
+
+        layer_cache.ChunkedResult.delete(self.key)
+        
+        # make sure target func re-evaluates now that we deleted the key
+        self.assertEqual("a", self.cache_func("a"))   

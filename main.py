@@ -12,6 +12,7 @@ from google.appengine.api import memcache
 
 import webapp2
 from webapp2_extras.routes import DomainRoute
+from webapp2_extras.routes import RedirectRoute
 
 # It's important to have this prior to the imports below that require imports
 # to request_handler.py. The structure of the imports are such that this
@@ -328,17 +329,6 @@ class MobileSite(request_handler.RequestHandler):
         self.set_mobile_full_site_cookie(False)
         self.redirect("/")
 
-class ViewFAQ(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        self.redirect("/about/faq", True)
-        return
-
-class ViewGetInvolved(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        self.redirect("/contribute", True)
-
 class ViewContribute(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
@@ -627,16 +617,6 @@ class Search(request_handler.RequestHandler):
 
         self.render_jinja2_template("searchresults.html", template_values)
 
-class RedirectToJobvite(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        self.redirect("http://hire.jobvite.com/CompanyJobs/Careers.aspx?k=JobListing&c=qd69Vfw7")
-
-class RedirectToSchoolImplementationsBlog(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        self.redirect("http://ka-implementations.tumblr.com/")
-
 class PermanentRedirectToHome(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
@@ -692,7 +672,9 @@ application = webapp2.WSGIApplication([
     ('/', homepage.ViewHomePage),
     ('/about', util_about.ViewAbout),
     ('/about/blog', blog.ViewBlog),
-    ('/about/blog/schools', RedirectToSchoolImplementationsBlog),
+    RedirectRoute('/about/blog/schools',
+        redirect_to='http://ka-implementations.tumblr.com/',
+        defaults={'_permanent': False}),
     ('/about/blog/.*', blog.ViewBlogPost),
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
@@ -702,12 +684,12 @@ application = webapp2.WSGIApplication([
     ('/about/privacy-policy', ViewPrivacyPolicy),
     ('/about/dmca', ViewDMCA),
     ('/contribute', ViewContribute),
+    RedirectRoute('/getinvolved', redirect_to='/contribute'),
     ('/contribute/credits', ViewCredits),
     ('/frequently-asked-questions', util_about.ViewFAQ),
     ('/about/faq', util_about.ViewFAQ),
     ('/downloads', util_about.ViewDownloads),
     ('/about/downloads', util_about.ViewDownloads),
-    ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
     ('/exercisedashboard', knowledgemap.handlers.ViewKnowledgeMap),
 
@@ -835,15 +817,14 @@ application = webapp2.WSGIApplication([
     ('/admin/discussion/finishvoteentity', voting.FinishVoteEntity),
     ('/discussion/deleteentity', qa.DeleteEntity),
     ('/discussion/changeentitytype', qa.ChangeEntityType),
-    ('/discussion/videofeedbacknotificationlist', notification.VideoFeedbackNotificationList),
     ('/discussion/videofeedbacknotificationfeed', notification.VideoFeedbackNotificationFeed),
 
     ('/discussion/mod', moderation.ModPanel),
-    ('/discussion/moderatorlist', moderation.RedirectToModPanel),
-    ('/discussion/flaggedfeedback', moderation.RedirectToModPanel),
     ('/discussion/mod/flaggedfeedback', moderation.FlaggedFeedback),
     ('/discussion/mod/moderatorlist', moderation.ModeratorList),
     ('/discussion/mod/bannedlist', moderation.BannedList),
+    RedirectRoute('/discussion/moderatorlist', redirect_to='/discussion/mod'),
+    RedirectRoute('/discussion/flaggedfeedback', redirect_to='/discussion/mod'),
 
     ('/githubpost', github.NewPost),
     ('/githubcomment', github.NewComment),
@@ -857,9 +838,6 @@ application = webapp2.WSGIApplication([
 
     ('/notifierclose', util_notify.ToggleNotify),
     ('/newaccount', Clone),
-
-    ('/jobs', RedirectToJobvite),
-    ('/jobs/.*', RedirectToJobvite),
 
     ('/dashboard', dashboard.handlers.Dashboard),
     ('/contentdash', dashboard.handlers.ContentDashboard),
@@ -901,6 +879,18 @@ application = webapp2.WSGIApplication([
 
     ('/robots.txt', robots.RobotsTxt),
 
+    # Hard-coded redirects
+    RedirectRoute('/shop', 
+            redirect_to='http://khanacademy.myshopify.com',
+            defaults={'_permanent': False}),
+    RedirectRoute('/jobs<:/?.*>', 
+            redirect_to='http://hire.jobvite.com/CompanyJobs/Careers.aspx?k=JobListing&c=qd69Vfw7',
+            defaults={'_permanent': False}),
+    RedirectRoute('/jobs/<:.*>', 
+            redirect_to='http://hire.jobvite.com/CompanyJobs/Careers.aspx?k=JobListing&c=qd69Vfw7',
+            defaults={'_permanent': False}),
+
+    # Dynamic redirects are prefixed w/ "/r/" and managed by "/redirects"
     ('/r/.*', redirects.Redirect),
     ('/redirects', redirects.List),
     ('/redirects/add', redirects.Add),

@@ -25,11 +25,11 @@
 <div class="page_controls comments_page_controls">
     <span>
         {% if current_page_1_based != 1 %}
-        <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&comments_page={{ prev_page_1_based }}#comments" class="button comments_page" page="{{ prev_page_1_based }}"><img class="icon" src="{{ "/images/arrow-left.png"|static_url }}" /> Comments with higher votes</a>
+        <a href="javascript:void(0);" class="button comments_page" page="{{ prev_page_1_based }}"><img class="icon" src="{{ "/images/arrow-left.png"|static_url }}" /> Comments with higher votes</a>
         {% endif %}
 
         {% if current_page_1_based != pages_total %}
-        <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&comments_page={{ next_page_1_based }}#comments" class="button comments_page" page="{{ next_page_1_based }}">Comments with lower votes <img class="icon" src="{{ "/images/arrow-right.png"|static_url }}" /></a>
+        <a href="javascript:void(0);" class="button comments_page" page="{{ next_page_1_based }}">Comments with lower votes <img class="icon" src="{{ "/images/arrow-right.png"|static_url }}" /></a>
         {% endif %}
     </span>
 </div>

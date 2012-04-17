@@ -16,6 +16,7 @@ from badges import badges, util_badges, models_badges, profile_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
 from phantom_users.phantom_util import api_create_phantom, api_disallow_phantoms
+from discussion import notification
 import notifications
 import user_models
 import user_util
@@ -1232,6 +1233,16 @@ def update_user_profile():
         }
         add_action_results(result, {})
     return result
+
+@route("/api/v1/user/questions", methods=["GET"])
+@api.auth.decorators.login_required
+@jsonp
+@jsonify
+def get_user_questions():
+    """ Get data associated with a user's questions and unread answers
+    """
+    user_data = request.request_visible_student_user_data()
+    return notification.get_questions_data(user_data)
 
 @route("/api/v1/user/coaches", methods=["GET"])
 @api.auth.decorators.login_required
