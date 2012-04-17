@@ -98,10 +98,10 @@ class OAuthMap(db.Model):
 
             if not user_id:
                 return (None, None)
-            
+
             existing = user_models.UserData.get_from_request_info(
                     user_id, email, self)
-            
+
             if existing:
                 # Note that existing.user_id may be different than
                 # user_id computed above.
@@ -110,7 +110,8 @@ class OAuthMap(db.Model):
             # TODO(benkomalo): consolidate this with logic in PostLogin
             # since it will likely have to duplicate logic re: first time
             # logins for Google/FB users and doing the proper connections.
-            return user_models.UserData.insert_for(user_id, email)
+            user_data = user_models.UserData.insert_for(user_id, email)
+            return (user_data, user_data.user_id)
 
     def get_user_id(self):
         """ Returns the authenticated user_id for this OAuthMap
