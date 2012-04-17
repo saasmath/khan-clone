@@ -826,9 +826,11 @@ class PasswordChange(request_handler.RequestHandler):
     def render_form(self, message=None, success=False):
         transfer_token_value = self.request_string("transfer_token", default="")
         reset_token_value = self.request_string("reset_token", default="")
+        (user_data, _) = self.resolve_user_info()
         self.render_jinja2_template('password-change.html',
                                     {'message': message or "",
                                      'success': success,
+                                     'user_data': user_data,
                                      'transfer_token': transfer_token_value,
                                      'reset_token': reset_token_value})
 

@@ -182,7 +182,7 @@ a:visited {
 }
 
 .auth-form .simple-input:disabled {
-    color: #333;
+    color: #999;
 }
 
 /* TODO(benkomalo): possibly make this a standard for the site. */
@@ -360,23 +360,50 @@ a.signup-link {
 
 #pw-change-form {
     margin-top: 0;
+    position: relative;
+    width: 380px;
+}
+
+#pw-change-form img.tree {
+    float: left;
+}
+
+#pw-change-form h4 {
+    margin-top: 1.5em;
+    margin-left: 1em;
+    float: left;
+}
+
+#pw-change-form .pw-change-table {
+    width: 380px;
+    margin: 0 auto;
 }
 
 #pw-change-form .input-label-cell {
     padding: 0.5em 2em 0.5em 0;
+    text-align: right;
 }
 
-#pw-change-form .sidenote {
-    margin-left: 5px;
+#pw-change-form .simple-input {
+    width: 100%;
 }
 
-/* TODO(benkomalo): style nicer */
-#pw-change-form .message.success {
+#pw-change-form .submit-container {
+    text-align: right;
+}
+
+#pw-change-form .message-container {
+    /* Always reserve room for it, even if it's empty */
+    height: 1em;
+}
+
+#pw-change-form .success {
     color: green;
 }
 
-#pw-change-form .message.error {
+#pw-change-form .error {
     color: red;
+    text-align: right;
 }
 
 /* Dialog shown after step 1 of sign up */
@@ -442,23 +469,10 @@ a.signup-link {
 
 .pw-reset-container.card-case {
     margin: 6em auto;
-    padding: 3em 2em;
-    width: 480px;
+    padding: 1.5em;
+    width: 400px;
 }
 
-
-/* TODO(benkomalo): consolidate these with the profile page's sidenote styles */
-.sidenote {
-    background-repeat: no-repeat;
-    background-position: 0 30%;
-    padding-left: 13px;
-}
-.sidenote.success {
-    background-image:url(/images/video-indicator-complete.png);
-}
-.sidenote.error {
-    background-image:url(/images/cross.png);
-}
 
 /* A gray-background, rounded corner "card look" */
 .card-case {
