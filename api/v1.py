@@ -700,10 +700,13 @@ def topic_version_unused_content(version_id = None):
 @jsonp
 @jsonify
 def get_url(url_id, version_id=None):
-    version = topic_models.TopicVersion.get_by_id(version_id) if version_id else None
-    if version is None:
-        return api_invalid_param_response("Could not find version_id %s"
-                                          % version_id)
+    if version_id:
+        version = topic_models.TopicVersion.get_by_id(version_id)
+        if version is None:
+            return api_invalid_param_response("Could not find version_id %s"
+                                              % version_id)
+    else:
+        version = None
     return models.Url.get_by_id_for_version(url_id, version)
 
 @route("/api/v1/topicversion/<version_id>/url/", methods=["PUT"])
@@ -851,10 +854,13 @@ def get_exercises():
 @jsonp
 @jsonify
 def get_exercise(exercise_name, version_id = None):
-    version = topic_models.TopicVersion.get_by_id(version_id) if version_id else None
-    if version is None:
-        return api_invalid_param_response("Could not find version_id %s"
-                                          % version_id)
+    if version_id:
+        version = topic_models.TopicVersion.get_by_id(version_id)
+        if version is None:
+            return api_invalid_param_response("Could not find version_id %s"
+                                              % version_id)
+    else:
+        version = None
     exercise = models.Exercise.get_by_name(exercise_name, version)
     # TODO(james): rename related_videos to related_video_readable_ids
     # then save these on the exercise and video objects
