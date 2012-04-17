@@ -49,22 +49,3 @@ def update_user_exercise_progress(user_exercise):
     if user_exercise._progress is None:
         user_exercise._progress = user_exercise.get_progress_from_streak()
         yield op.db.Put(user_exercise)
-
-
-def update_feedback_author_user_id(feedback):
-    """ Backfill Feedback entities' author_user_id property."""
-    if feedback.author_user_id:
-        return
-
-    author_user = feedback.author
-
-    if not author_user:
-        return
-
-    author_user_data = user_models.UserData.get_from_user(author_user)
-
-    if not author_user_data:
-        return
-
-    feedback.author_user_id = author_user_data.user_id
-    yield op.db.Put(feedback)
