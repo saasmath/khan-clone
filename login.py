@@ -22,7 +22,7 @@ from api.auth import auth_util
 from api.auth.auth_models import OAuthMap
 from app import App
 from auth import age_util
-from auth.tokens import AuthToken, TransferAuthToken
+from auth.tokens import AuthToken, PasswordResetToken, TransferAuthToken
 from counters import user_counter
 from models import UserData
 from notifications import UserNotifier
@@ -804,12 +804,11 @@ class CompleteSignup(request_handler.RequestHandler):
         Login.return_login_json(self, user_data, cont=user_data.profile_root)
 
 class PasswordChange(request_handler.RequestHandler):
-    """ Handler for changing a user's password.
+    """Handler for changing a user's password.
 
     This must always be rendered in an https form. If a request is made to
     render the form in HTTP, this handler will automatically redirect to
     the HTTPS version with a transfer_token to identify the user in HTTPS.
-
     """
 
     @user_util.manual_access_checking
@@ -826,15 +825,18 @@ class PasswordChange(request_handler.RequestHandler):
 
     def render_form(self, message=None, success=False):
         transfer_token_value = self.request_string("transfer_token", default="")
+        reset_token_value = self.request_string("reset_token", default="")
         self.render_jinja2_template('password-change.html',
                                     {'message': message or "",
                                      'success': success,
-                                     'transfer_token': transfer_token_value})
+                                     'transfer_token': transfer_token_value,
+                                     'reset_token': reset_token_value})
 
     def secure_url_with_token(self, url):
         user_data = UserData.current()
         if not user_data:
-            logging.warn("No user detected for password change")
+            if not self.request_string("reset_token", default=""):
+                logging.warn("No user detected for password change")
             return util.secure_url(url)
 
         token = TransferAuthToken.for_user(user_data).value
@@ -846,15 +848,31 @@ class PasswordChange(request_handler.RequestHandler):
     @user_util.manual_access_checking
     def post(self):
         user_data = _resolve_user_in_https_frame(self)
+        reset_token_value = self.request_string("reset_token", default="")
+        is_password_reset = True
+        if not user_data:
+            # Try to resolve the user from a reset token, if nobody is
+            # logged in.
+            reset_token = PasswordResetToken.for_value(reset_token_value)
+            if reset_token:
+                user_data = user_models.UserData.get_from_user_id(
+                    reset_token.user_id)
+                
+                if reset_token.is_valid(user_data):
+                    is_password_reset = True
+                else:
+                    user_data = None
+
         if not user_data:
             self.response.write("Oops. Something went wrong. Please try again.")
             return
 
-        existing = self.request_string("existing")
-        if not user_data.validate_password(existing):
-            # TODO(benkomalo): throttle incorrect password attempts
-            self.render_form(message="Incorrect password")
-            return
+        if not is_password_reset:
+            existing = self.request_string("existing")
+            if not user_data.validate_password(existing):
+                # TODO(benkomalo): throttle incorrect password attempts
+                self.render_form(message="Incorrect password")
+                return
 
         password1 = self.request_string("password1")
         password2 = self.request_string("password2")
@@ -869,25 +887,113 @@ class PasswordChange(request_handler.RequestHandler):
         else:
             # We're good!
             user_data.set_password(password1)
-
-            # Need to create a new auth token as the existing cookie will expire
-            # Use /postlogin to set the cookie. This requires some redirects
-            # (/postlogin on http, then back to this pwchange form in https).
-            auth_token = AuthToken.for_user(user_data)
-            self.redirect("%s?%s" % (
+            if is_password_reset:
+                # Password resets are done when the user is not even logged in,
+                # so redirect the host page to the login page (done via
+                # client side JS)
+                self.render_form(success=True)
+            else:
+                # Need to create a new auth token as the existing cookie will
+                # expire. Use /postlogin to set the cookie. This requires
+                # some redirects (/postlogin on http, then back to this
+                # pwchange form in https).
+                auth_token = AuthToken.for_user(user_data)
+                self.redirect("%s?%s" % (
                     util.insecure_url("/postlogin"),
                     util.build_params({
                         'auth': auth_token.value,
-                        'continue': self.secure_url_with_token("/pwchange?success=1"),
+                        'continue': self.secure_url_with_token(
+                                        "/pwchange?success=1"),
                     })))
 
+class ForgotPassword(request_handler.RequestHandler):
+    """Handler for initiating the password reset flow."""
+
+    @user_util.open_access
+    def get(self):
+        user_data = user_models.UserData.current()
+        if user_data:
+            # User is already logged in! Shouldn't want to reset passwords.
+            self.redirect(user_data.profile_root)
+            return
+
+        self.render_jinja2_template('forgot-password.html', {})
+        
+    @user_util.open_access
+    def post(self):
+        email = self.request_string("email", default=None)
+        if not email:
+            self.render_jinja2_template('forgot-password.html', {})
+            return
+
+        user_data = user_models.UserData.get_from_user_input_email(email)
+        if not user_data:
+            # No user with that e-mail found. Drats!
+            # TODO(benkomalo): implement
+            return
+        
+        if not user_data.has_password():
+            # No user with a KA password.
+            # TODO(benkomalo): implement
+            return
+
+        reset_url = PasswordReset.build_link(user_data)
+        template_values = {
+            'name': user_data.nickname,
+            'url': reset_url,
+        }
+        body = shared_jinja.template_to_string(
+                'password-reset-email-text-only.html',
+                template_values)
+
+        if not App.is_dev_server:
+            mail.send_mail(
+                    sender="Khan Academy Accounts <no-reply@khanacademy.org>",
+                    to=email,
+                    subject="Khan Academy account recovery",
+                    body=body)
+
+        template_values =  {
+            'sent_email': email,
+        }
+        if App.is_dev_server:
+            template_values['debug_link'] = reset_url
+        self.render_jinja2_template('forgot-password.html', template_values)
+
+
+class PasswordReset(request_handler.RequestHandler):
+    """Handler for the password reset flow.
+    
+    This is after the user has received an e-mail with a recovery link
+    and handles the request for when they click on that link in the e-mail.
+    """
+
+    @user_util.manual_access_checking
+    def get(self):
+        reset_token = self.request_string("token", default="")
+        if not reset_token:
+            self.redirect("/")
+            return
+
+        self.render_jinja2_template(
+            'password-reset.html', {
+                'reset_token': reset_token,
+            })
+
+    @staticmethod
+    def build_link(user_data):
+        pw_reset_token = PasswordResetToken.for_user(user_data)
+        if not pw_reset_token:
+            raise Exception("Unable to build password reset link for user")
+        return util.absolute_url("/pwreset?token=%s" % pw_reset_token.value)
+
+
 def _resolve_user_in_https_frame(handler):
-    """ Determines the current logged in user for the HTTPS request.
+    """Determines the current logged in user for the HTTPS request.
 
     This has logic in additional to UserData.current(), since it should also
     accept TransferAuthTokens, since HTTPS requests may not have normal HTTP
     cookies sent.
-
     """
 
     user_data = UserData.current()

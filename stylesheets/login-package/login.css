@@ -223,7 +223,7 @@ a:visited {
 
     /* HACK(benkomalo): need to left-align with password field, so we apply a left
      * padding equal to the password-label's margin-box-width */
-    margin-right: 8.2em;
+    margin-right: 6.5em;
 }
 
 .pw-login-contents #submit-button {
@@ -415,6 +415,38 @@ a.signup-link {
     margin-top: 2em;
 }
 
+
+/* Forgot-password related styles */
+
+.forgot-pw-container.card-case {
+    margin: 6em auto;
+    padding: 3em 2em;
+    width: 330px;
+}
+
+.forgot-pw-container .auth-form {
+    text-align: right;
+}
+
+.forgot-pw-container img.tree {
+    float: left;
+}
+
+.forgot-pw-container h4 {
+    margin-bottom: 1em;
+}
+
+.forgot-pw-container #email {
+    width: 13em;
+}
+
+.pw-reset-container.card-case {
+    margin: 6em auto;
+    padding: 3em 2em;
+    width: 480px;
+}
+
+
 /* TODO(benkomalo): consolidate these with the profile page's sidenote styles */
 .sidenote {
     background-repeat: no-repeat;
@@ -438,3 +470,4 @@ a.signup-link {
     border-background-clip: padding-box;
     background: #eee;
 }
+
