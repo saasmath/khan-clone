@@ -765,6 +765,8 @@ application = webapp2.WSGIApplication([
     ('/admin/unisubs', unisubs.ReportHandler),
     ('/admin/unisubs/import', unisubs.ImportHandler),
 
+    ('/admin/backfillauthor', qa.StartAuthorBackfillMapReduce),
+
     ('/devadmin', devpanel.Panel),
     ('/devadmin/maplayout', kmap_editor.MapLayoutEditor),
     ('/devadmin/emailchange', devpanel.MergeUsers),
