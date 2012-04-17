@@ -437,7 +437,8 @@ def put_topic(topic_id, version_id = "edit"):
 @route("/api/v1/topic/<topic_id>/topic-page", methods=["GET"])
 @api.auth.decorators.open_access
 @cacheable(caching_age=(60 * 60 * 24 * 60))
-@etag(lambda topic_id, version_id: "%s_v%s_%s" % (topic_id, version_id, models.Setting.topic_tree_version()))
+@etag(lambda topic_id, version_id=None: "%s_v%s_%s" % (
+    topic_id, version_id, models.Setting.topic_tree_version()))
 @jsonp
 def get_topic_page_data(topic_id, version_id = "default"):
     """ Retrieve the listing of subtopics and videos for this topic.
