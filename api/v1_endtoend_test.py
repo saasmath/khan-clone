@@ -123,14 +123,14 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
     def test_topics__with_content(self):
         r = self.fetch('/api/v1/topics/with_content')
         # Topic-version 11 (the default) appends '[late]' to all titles.
-        self.assertIn('"standalone_title": "Mathematics [late]"', r)
+        self.assertIn('"title": "Art History [late]"', r)
 
     @testsize.large()
     def test_topicversion__version_id__topics__with_content(self):
         """2 is the non-default version in our test db."""
         r = self.fetch('/api/v1/topicversion/2/topics/with_content')
         # Topic-version 2 appends '[early]' to all titles.
-        self.assertIn('"standalone_title": "Mathematics [early]"', r)
+        self.assertIn('"title": "Art History [early]"', r)
 
     @testsize.large()
     def test_topics__library__compact(self):
@@ -181,7 +181,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertEqual('[]', r)   # has Topic children, but no Video
 
         # Test a topic-version and topic-id that don't exist at all.
-        self.assert400('/api/v1/topicversion/2/topic/no_existe/videos')
+        self.assert400Error('/api/v1/topicversion/2/topic/no_existe/videos')
         self.assert400Error('/api/v1/topicversion/1000/topic/art_of_math'
                             '/videos')
 
@@ -333,11 +333,6 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assert400Error('/api/v1/dev/topicversion/2/topic/does_not_exist'
                             '/topictree')
 
-        # Try another topic-id, that doesn't have any sub-topics.
-        r = self.fetch('/api/v1/dev/topicversion/2/topic/art/topictree')
-        self.assertIn('    "title": "Art History [early]"', r)
-        self.assertIn('    "children": []', r)
-
     @testsize.large()
     def test_dev__topicversion__version_id__topictree(self):
         self.assert401Error('/api/v1/dev/topicversion/2/topictree')
@@ -458,7 +453,8 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         # Test a topic-version and topic-id that don't exist at all.
         self.assert400Error('/api/v1/topicversion/1000/topic/art_of_math'
                             '/topic-page')
-        self.assert400Error('/api/v1/topicversion/2/topic/noexist/topic-page')
+        r = self.fetch('/api/v1/topicversion/2/topic/noexist/topic-page')
+        self.assertEqual('{}', r)
 
     @testsize.large()
     def test_topic__topic_id__topic_page(self):
@@ -560,11 +556,11 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.set_user(developer=True)
         r = self.fetch('/api/v1/topicversion/2')
         self.assertIn('"number": 2', r)
-        self.assertIn('"made_default_on": "2012-04-17T01:37:41Z"', r)
+        self.assertIn('"created_on": "2012-03-28T20:43:04Z"', r)
 
         r = self.fetch('/api/v1/topicversion/11')
         self.assertIn('"number": 11', r)
-        self.assertIn('"made_default_on": "2012-04-16T16:43:37Z"', r)
+        self.assertIn('"created_on": "2012-03-30T21:34:28Z"', r)
 
         r = self.fetch('/api/v1/topicversion/1000')
         self.assertEqual('null', r)    # TODO(csilvers): should this be {} ?
@@ -573,15 +569,13 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
     def test_topicversions__(self):
         r = self.fetch('/api/v1/topicversions/')
         self.assertIn('"copied_from_number": 11', r)
-        self.assertIn('"number": 12', r)
-        self.assertIn('"created_on": "2012-04-13T16:59:30Z"', r)
         self.assertIn('"number": 11', r)
-        self.assertIn('"updated_on": "2012-04-13T16:59:27', r)
+        self.assertIn('"created_on": "2012-03-30T21:34:28Z"', r)
         self.assertIn('"copied_from_number": null', r)
         self.assertIn('"number": 2', r)
         self.assertIn('"made_default_on": "2012-03-29T02:02:54Z"', r)
         self.assertIn('"last_edited_by": "http://nouserid.khanacademy.org/'
-                      '365d6b6ca0f261d1b3c1975d4343f826"', r)
+                      'b97a85b5257d5117070c181ea851e922"', r)
 
     @testsize.large()
     def test_topicversion__version_id__unused_content(self):
@@ -610,7 +604,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
     def test_videos__video_id__explore_url(self):
         # A video with an explore-id
         r = self.fetch('/api/v1/videos/SvFtmPhbNRw/explore_url')
-        self.assertEqual('http://en.wikipedia.org/wiki/Gustave_Courbet', r)
+        self.assertEqual('"http://en.wikipedia.org/wiki/Gustave_Courbet"', r)
 
         # A video with no explore-id
         r = self.fetch('/api/v1/videos/NvGTCzAfvr0/explore_url')
@@ -672,11 +666,11 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"relative_url": "/video/exponent-rules-part-1"', r)
 
         r = self.fetch('/api/v1/exercises/no_existe/videos')
-        self.assertEqual('null', r)
+        self.assertEqual('[]', r)
 
     @testsize.large()
     def test_topicversion__version_id__videos__video_id(self):
-        r = self.fetch('/api/v1/topicversion/2/videos/SvFtmPhbNRw')
+        r = self.fetch('/api/v1/topicversion/2/videos/NvGTCzAfvr0')
         self.assertIn('"relative_url": "/video/absolute-value-1"', r)
         self.assertIn('"date_added": "2012-03-28T20:37:56Z"', r)
         self.assertIn('"png": "http://s3.amazonaws.com/KA-youtube-converted'
@@ -684,7 +678,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertNotIn('"mp4"', r)   # this video is png-only
         self.assertIn('"views": 99221', r)
 
-        r = self.fetch('/api/v1/topicversion/11/videos/SvFtmPhbNRw')
+        r = self.fetch('/api/v1/topicversion/11/videos/NvGTCzAfvr0')
         self.assertIn('"relative_url": "/video/absolute-value-1"', r)
         self.assertIn('"date_added": "2012-03-28T20:37:56Z"', r)
         self.assertIn('"png": "http://s3.amazonaws.com/KA-youtube-converted'
@@ -694,11 +688,11 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
         r = self.fetch('/api/v1/topicversion/2/videos/no_existe')
         self.assertEqual('null', r)
-        self.assert400Error('/api/v1/topicversion/1000/videos/SvFtmPhbNRw')
+        self.assert400Error('/api/v1/topicversion/1000/videos/NvGTCzAfvr0')
 
     @testsize.large()
     def test_videos__video_id(self):
-        r = self.fetch('/api/v1/videos/SvFtmPhbNRw')
+        r = self.fetch('/api/v1/videos/NvGTCzAfvr0')
         self.assertIn('"relative_url": "/video/absolute-value-1"', r)
         self.assertIn('"date_added": "2012-03-28T20:37:56Z"', r)
         self.assertIn('"png": "http://s3.amazonaws.com/KA-youtube-converted'
