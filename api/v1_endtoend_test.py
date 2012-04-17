@@ -112,6 +112,17 @@ class V1EndToEndAuthTest(V1EndToEndTestBase):
         # oauth_test_client raises a RuntimeError in that case.
         self.assertRaises(RuntimeError, self.fetch, '/api/v1/user')
 
+    @testsize.large()
+    def test_user_cannot_access_developer_url(self):
+        """Moderator privileges are lower than developer."""
+        self.assert401Error('/api/v1/dev/topictree')
+
+    @testsize.large()
+    def test_moderator_cannot_access_developer_url(self):
+        """Moderator privileges are lower than developer."""
+        self.set_user(moderator=True)
+        self.assert401Error('/api/v1/dev/topictree')
+
 
 class V1EndToEndGetTest(V1EndToEndTestBase):
     """Test all the GET methods in v1.py, except obsolete /playlist urls."""
