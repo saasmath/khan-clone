@@ -14,54 +14,81 @@ import user_models
 import models_discussion
 import voting
 
-class VideoFeedbackNotificationList(request_handler.RequestHandler):
 
-    @user_util.open_access
-    def get(self):
+def get_questions_data(user_data):
+    """ Get data associated with a user's questions and unread answers
+    """
+    dict_meta_questions = {}
 
-        user_data = user_models.UserData.current()
+    # Get questions asked by user
+    questions = models_discussion.Feedback.get_all_questions_by_author(user_data.user_id)
+    for question in questions:
+        qa_expand_key = str(question.key())
+        meta_question = MetaQuestion.from_question(question, user_data)
 
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
+        dict_meta_questions[qa_expand_key] = meta_question
 
-        answers = feedback_answers_for_user_data(user_data)
+    # Get unread answers to the above questions
+    unread_answers = feedback_answers_for_user_data(user_data)
+    for answer in unread_answers:
+        question_key = str(answer.question_key())
+        if question_key in dict_meta_questions:
+            meta_question = dict_meta_questions[question_key]
+            meta_question.mark_has_unread()
 
-        # Whenever looking at this page, make sure the feedback count is recalculated
-        # in case the user was notified about deleted or flagged posts.
-        user_data.count_feedback_notification = -1
-        user_data.put()
+    return dict_meta_questions.values()
 
-        dict_videos = {}
-        dict_answers = {}
+class MetaQuestion(object):
+    """ Data associated with a user's question, including the target video
+    and notifications count.
+    """
+    @staticmethod
+    def from_question(question, viewer_user_data):
+        """ Construct a MetaQuestion from a Feedback entity """
+        meta = MetaQuestion()
 
-        for answer in answers:
+        video = question.video()
+        meta.video = video
 
-            video = answer.video()
+        # HACK(marcia): The reason we need to send the topic is to construct
+        # the video url so that it doesn't redirect to the canonical url,
+        # which strips url parameters
+        # Consider actually fixing that so the url parameters are passed
+        # along with the redirect.
+        meta.topic_slug = video.first_topic().get_extended_slug()
 
-            dict_votes = models_discussion.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
-            voting.add_vote_expando_properties(answer, dict_votes)
+        # qa_expand_key is later used as a url parameter on the video page
+        # to expand the question and its answers
+        meta.qa_expand_key = str(question.key())
+        meta.content = question.content
 
-            if video == None or type(video).__name__ != "Video":
-                continue
+        meta.set_answer_data(question, viewer_user_data)
 
-            video_key = video.key()
-            dict_videos[video_key] = video
-            
-            if dict_answers.has_key(video_key):
-                dict_answers[video_key].append(answer)
-            else:
-                dict_answers[video_key] = [answer]
-        
-        videos = sorted(dict_videos.values(), key=lambda video: video.first_topic().title + video.title)
+        return meta
 
-        context = {
-                    "email": user_data.email,
-                    "videos": videos,
-                    "dict_answers": dict_answers
-                  }
+    def mark_has_unread(self):
+        self.has_unread = True
 
-        self.render_jinja2_template('discussion/video_feedback_notification_list.html', context)
+    def set_answer_data(self, question, viewer_user_data):
+        """ Set answerer count and last date as seen by the specified viewer
+        """
+        query = util_discussion.feedback_query(question.key())
+        self.answerer_count = 0
+        self.last_date = question.date
+
+        # We assume all answers have been read until we see a notification
+        self.has_unread = False
+
+        if query.count():
+            viewable_answers = [answer for answer in query if
+                    not answer.appears_as_deleted_to(viewer_user_data)]
+
+            answerer_user_ids = set(answer.author_user_id for answer
+                    in viewable_answers)
+
+            self.answerer_count = len(answerer_user_ids)
+            self.last_date = max([answer.date for answer in viewable_answers])
+
 
 class VideoFeedbackNotificationFeed(request_handler.RequestHandler):
 
