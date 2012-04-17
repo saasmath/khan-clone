@@ -413,7 +413,7 @@ class ChunkedResult():
         class cache_class is set to (memcache or KeyValueCache)
         '''
 
-        result = pickle.dumps(value)
+        result = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
         if compress:
             result = zlib.compress(result)
         
@@ -426,12 +426,8 @@ class ChunkedResult():
         # if now that we have compressed the item it can fit within a single
         # 1MB object don't use the chunk_list, and it will save us from having
         # to do an extra round-trip on the gets
-        # disabling this code for now as when datastore pickles ChunkedResult
-        # its value can triple in size.
-        # TODO(james): Figure out a workaround, or remove
-        if False:
-            if size < MAX_SIZE_OF_CACHE_CHUNKS:
-                return cache_class.set(key, 
+        if size < MAX_SIZE_OF_CACHE_CHUNKS:
+            return cache_class.set(key, 
                                    ChunkedResult(data=result, 
                                                  compress=compress),
                                    time=time,
@@ -617,7 +613,7 @@ class KeyValueCache(db.Model):
             pickled = False
             if not isinstance(value, str):
                 pickled = True
-                value = pickle.dumps(value)
+                value = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
 
             key_values.append(KeyValueCache(
                     key_name = namespaced_key,

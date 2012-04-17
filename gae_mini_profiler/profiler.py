@@ -111,7 +111,7 @@ class RequestStats(object):
 
     def store(self):
         # Store compressed results so we stay under the memcache 1MB limit
-        pickled = pickle.dumps(self)
+        pickled = pickle.dumps(self, pickle.HIGHEST_PROTOCOL)
         compressed_pickled = zlib.compress(pickled)
 
         return memcache.set(RequestStats.memcache_key(self.request_id), compressed_pickled)

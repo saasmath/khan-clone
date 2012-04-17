@@ -44,7 +44,8 @@ class _GAEBingoExperiment(db.Model):
         return pickle.loads(self.short_circuit_pickled_content)
 
     def set_short_circuit_content(self, value):
-        self.short_circuit_pickled_content = pickle.dumps(value)
+        self.short_circuit_pickled_content = pickle.dumps(value, 
+                                                    pickle.HIGHEST_PROTOCOL)
 
     @property
     def pretty_name(self):

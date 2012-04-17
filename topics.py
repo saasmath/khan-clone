@@ -91,7 +91,8 @@ class EditContent(request_handler.RequestHandler):
 
             # importing the full topic tree can be too large so pickling and compressing
             deferred.defer(api.v1_utils.topictree_import_task, "edit", "root", True,
-                        zlib.compress(pickle.dumps(topictree)),
+                        zlib.compress(pickle.dumps(topictree), 
+                                      pickle.HIGHEST_PROTOCOL),
                         _queue="import-queue",
                         _url="/_ah/queue/deferred_import")
 

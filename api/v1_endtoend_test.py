@@ -123,7 +123,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_topicversion__version_id__topics__with_content(self):
-        '''2 is the non-default version in our test db.'''
+        """2 is the non-default version in our test db."""
         r = self.fetch('/api/v1/topicversion/2/topics/with_content')
         # Topic-version 2 appends '[early]' to all titles.
         self.assertIn('"standalone_title": "Mathematics [early]"', r)
