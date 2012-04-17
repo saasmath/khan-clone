@@ -874,7 +874,7 @@ class PasswordChange(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def post(self):
-        (user_data, is_password_reset) = self._resolve_user()
+        (user_data, is_password_reset) = self.resolve_user_info()
         if not user_data:
             self.response.write("Oops. Something went wrong. Please try again.")
             return
