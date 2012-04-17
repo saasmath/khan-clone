@@ -11,9 +11,12 @@ import testutil
 import user_models
 import uid
 
+
 # shorthand notations
 def _user_counts():
     return user_models.UserData.all().count()
+
+
 def _cur_user():
     return user_models.UserData.current(create_if_none=False)
 
@@ -181,4 +184,3 @@ class PostLoginTest(testutil.GAEModelTestCase):
         self.assertEquals(
             user2.key(), retrieved_by_email.key(),
             msg="The FB user should still own the new e-mail")
-
