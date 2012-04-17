@@ -14,37 +14,6 @@ from phantom_users.phantom_util import disallow_phantoms
 from rate_limiter import FlagRateLimiter
 from badges.discussion_badges import FirstFlagBadge
 
-def feedback_author_user_id_backfill_map(feedback):
-    """ Backfill Feedback entities' author_user_id property."""
-    if feedback.author_user_id:
-        return
-
-    author_user = feedback.author
-
-    if not author_user:
-        return
-
-    author_user_data = user_models.UserData.get_from_user(author_user)
-
-    if not author_user_data:
-        return
-
-    feedback.author_user_id = author_user_data.user_id
-    yield op.db.Put(feedback)
-
-class StartAuthorBackfillMapReduce(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        mapreduce_id = control.start_map(
-                name = "BackfillAuthorUserId",
-                handler_spec = "discussion.qa.feedback_author_user_id_backfill_map",
-                reader_spec = "mapreduce.input_readers.DatastoreInputReader",
-                reader_parameters = {"entity_kind": "discussion.models_discussion.Feedback"},
-                shard_count = 64,
-                queue_name = "backfill-mapreduce-queue",
-                )
-        self.response.out.write("OK: " + str(mapreduce_id))
-
 def feedback_flag_update_map(feedback):
     feedback.recalculate_flagged()
     yield op.db.Put(feedback)
