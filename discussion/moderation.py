@@ -8,11 +8,6 @@ import models_discussion
 from badges.discussion_badges import ModeratorBadge
 import user_util
 
-class RedirectToModPanel(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        self.redirect("/discussion/mod")
-
 class ModPanel(request_handler.RequestHandler):
 
     @user_util.moderator_only
