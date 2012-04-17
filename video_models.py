@@ -635,7 +635,7 @@ def _set_css_deferred(user_data_key, video_key, status, version):
         css['started'].discard(id)
         css['completed'].add(id)
 
-    uvc.pickled_dict = pickle.dumps(css)
+    uvc.pickled_dict = pickle.dumps(css, pickle.HIGHEST_PROTOCOL)
     uvc.load_pickled()
 
     # if set_css_deferred runs out of order then we bump the version number
@@ -747,7 +747,8 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def get_for_user_data(user_data):
-        p = pickle.dumps({'started': set([]), 'completed': set([])})
+        p = pickle.dumps({'started': set([]), 'completed': set([])}, 
+                         pickle.HIGHEST_PROTOCOL)
         return UserVideoCss.get_or_insert(UserVideoCss._key_for(user_data),
                                           user=user_data.user,
                                           video_css='',
