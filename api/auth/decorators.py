@@ -104,6 +104,7 @@ def admin_required(func):
     wrapper._access_control = 'admin-required'   # checked in api.route()
     return wrapper
 
+
 def developer_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -119,6 +120,7 @@ def developer_required(func):
     assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
     wrapper._access_control = 'developer-required'   # checked in api.route()
     return wrapper
+
 
 def moderator_required(func):
     @wraps(func)
@@ -136,6 +138,7 @@ def moderator_required(func):
     wrapper._access_control = 'moderator-required'   # checked in api.route()
     return wrapper
     
+
 def login_required(func):
     """ Decorator for validating an authenticated request.
 
@@ -159,6 +162,7 @@ def login_required(func):
     wrapper._access_control = 'oauth-required'   # checked in api.route()
     return wrapper
 
+
 def open_access(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -174,6 +178,7 @@ def open_access(func):
     assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
     wrapper._access_control = 'open-access'   # checked in api.route()
     return wrapper
+
 
 def manual_access_checking(func):
     @wraps(func)
