@@ -329,12 +329,6 @@ class MobileSite(request_handler.RequestHandler):
         self.set_mobile_full_site_cookie(False)
         self.redirect("/")
 
-class ViewFAQ(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        self.redirect("/about/faq", True)
-        return
-
 class ViewGetInvolved(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
