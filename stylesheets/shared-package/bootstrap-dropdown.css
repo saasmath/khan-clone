@@ -1,6 +1,7 @@
 .dropdown {
   position: relative;
 }
+
 .dropdown.open .dropdown-menu {
   display: block;
 }
@@ -23,7 +24,7 @@
 .dropdown-menu .active > a:hover {
   text-decoration: none;
   color: #263500;
-  background-color: #e7f5c4;
+  background-color: #c1d998;
 }
 .caret {
   display: inline-block;
