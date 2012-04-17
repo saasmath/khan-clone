@@ -10,6 +10,7 @@ To run an individual test from this file, run something like:
      api.v1_endtoend_test.V1EndToEndGetTest.test_user
 """
 
+import os
 import urllib2
 
 from testutil import handler_test_utils
@@ -31,7 +32,14 @@ def setUpModule():
 
 
 def tearDownModule():
-    handler_test_utils.stop_dev_appserver(delete_tmpdir=False)
+    # Let's emit the dev_appserver's logs in case those are helpful.
+    # TODO(csilvers): only emit if there are >0 failures?
+    print
+    print '---------------- START DEV_APPSERVER LOGS ---------------------'
+    print open(handler_test_utils.dev_appserver_logfile_name()).read()
+    print '----------------- END DEV_APPSERVER LOGS ----------------------'
+
+    handler_test_utils.stop_dev_appserver()
 
 
 class V1EndToEndTestBase(unittest.TestCase):
