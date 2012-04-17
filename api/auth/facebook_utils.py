@@ -25,7 +25,7 @@ def facebook_request_token_handler(oauth_map):
                 "redirect_uri": get_facebook_token_callback_url(oauth_map),
                 # Request offline_access so client apps don't have to
                 # deal w/ expiration
-                "scope": "offline_access",
+                "scope": "offline_access,email",
             }
 
     if oauth_map.is_mobile_view():
