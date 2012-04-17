@@ -845,11 +845,19 @@ class PasswordChange(request_handler.RequestHandler):
         else:
             return "%s&transfer_token=%s" % (util.secure_url(url), token)
 
-    @user_util.manual_access_checking
-    def post(self):
+    def resolve_user_info(self):
+        """Returns the information for the user and current request.
+
+        Returns:
+            A tuple of (UserData, bool) including the UserData of the actor
+            and a bool indicating whether or not this is for a password
+            reset or a normal change of password. Returns (None, False)
+            if no valid user is resolved.
+        """
+
         user_data = _resolve_user_in_https_frame(self)
         reset_token_value = self.request_string("reset_token", default="")
-        is_password_reset = True
+        is_password_reset = False
         if not user_data:
             # Try to resolve the user from a reset token, if nobody is
             # logged in.
@@ -862,7 +870,11 @@ class PasswordChange(request_handler.RequestHandler):
                     is_password_reset = True
                 else:
                     user_data = None
+        return (user_data, is_password_reset)
 
+    @user_util.manual_access_checking
+    def post(self):
+        (user_data, is_password_reset) = self._resolve_user()
         if not user_data:
             self.response.write("Oops. Something went wrong. Please try again.")
             return
