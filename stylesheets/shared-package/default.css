@@ -924,7 +924,7 @@ footer {
         margin-top: 13px;
     }
     #top-header #user-info .dropdown.open {
-        background-color: #c1d998;
+        background-color: #bdd98d;
         padding-bottom: 10px;
     }
     #top-header #user-info .dropdown.open .dropdown-toggle span.user-name{
@@ -951,7 +951,7 @@ footer {
     }
     #top-header #user-info .dropdown-menu li > a:hover {
         color: #263500;
-        background-color: #c1d998;
+        background-color: #cee5a5;
     }
     #top-header #top-header-links .user-notification {
         position: relative;
@@ -959,7 +959,7 @@ footer {
         display: inline-block;
     }
     #top-header #top-header-links .user-notification:hover {
-        background-color: #c1d998;
+        background-color: #c4d9a3;
     }
     #top-header #top-header-links .notification-bubble {
         position: absolute;
@@ -3002,7 +3002,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     cursor: pointer;
 }
 #sitewide-navigation .nav-subheader .topic-browser-dropdown.open a.dropdown-toggle {
-    background-color: #c1d998;
+    background-color: #bdd98d;
 }
 #sitewide-navigation .nav-subheader .dropdown-menu:before {
     display: none;
@@ -3053,7 +3053,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 #sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li > a:hover,
 #sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active li.hover-active > a {
     text-decoration: underline;
-    background-color: #c1d998;
+    background-color: #cee5a5;
 }
 #sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li.has-subtopics > a:hover,
 #sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active li.has-subtopics.hover-active > a {
