@@ -84,7 +84,7 @@ class V1EndToEndTestBase(unittest.TestCase):
             self.fail("Fetching %s did not raise an expected HTTP code %d"
                       % (fetch_url, error_code))
         except urllib2.HTTPError, why:
-            self.assertIn("HTTP Error %d" % error_code, str(why))
+            self.assertEqual(error_code, why.code)
 
     def assert400Error(self, fetch_url):
         """Assert that fetching the given url raises HTTP 400/BAD REQUEST."""
