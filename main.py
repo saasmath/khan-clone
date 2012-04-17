@@ -12,6 +12,7 @@ from google.appengine.api import memcache
 
 import webapp2
 from webapp2_extras.routes import DomainRoute
+from webapp2_extras.routes import RedirectRoute
 
 # It's important to have this prior to the imports below that require imports
 # to request_handler.py. The structure of the imports are such that this
@@ -900,6 +901,10 @@ application = webapp2.WSGIApplication([
 
     ('/robots.txt', robots.RobotsTxt),
 
+    # Hard-coded redirects
+    RedirectRoute('/shop', redirect_to='http://khanacademy.myshopify.com'),
+
+    # Dynamic redirects are prefixed w/ "/r/" and managed by "/redirects"
     ('/r/.*', redirects.Redirect),
     ('/redirects', redirects.List),
     ('/redirects/add', redirects.Add),
