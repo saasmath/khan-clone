@@ -76,7 +76,7 @@ def fancy_stats_deferred(exid, start_dt, end_dt, cursor, uid, i):
         logging.info("processing %d logs for %s" % (len(problem_logs), exid))
 
         stats = fancy_stats_from_logs(problem_logs)
-        pickled = pickle.dumps(stats, 2)
+        pickled = pickle.dumps(stats, pickle.HIGHEST_PROTOCOL)
 
         shard = ExerciseStatisticShard(
             key_name = key_name,
@@ -99,7 +99,7 @@ def fancy_stats_deferred(exid, start_dt, end_dt, cursor, uid, i):
             exid = exid,
             start_dt = start_dt,
             end_dt = end_dt,
-            blob_val = pickle.dumps(all_stats, 2),
+            blob_val = pickle.dumps(all_stats, pickle.HIGHEST_PROTOCOL),
             log_count = all_stats['log_count'])
         model.put()
 

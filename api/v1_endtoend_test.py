@@ -52,4 +52,3 @@ class V1EndToEndTest(unittest.TestCase):
         r = self.fetch('/api/v1/topicversion/2/topics/with_content')
         # Topic-version 2 appends '[early]' to all titles.
         self.assertIn("[early]", r)
-

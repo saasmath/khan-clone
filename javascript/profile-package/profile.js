@@ -56,7 +56,7 @@ var Profile = {
 
         Profile.render();
 
-        Profile.router = new Profile.TabRouter({routes: this.getRoutes_()});
+        Profile.router = new Profile.TabRouter({routes: this.buildRoutes_()});
         Profile.router.bind("all", Analytics.handleRouterNavigation);
 
         Backbone.history.start({
@@ -141,8 +141,19 @@ var Profile = {
     /**
      * Generate routes hash to be used by Profile.router
      */
-    getRoutes_: function() {
-        return this.subRoutes;
+    buildRoutes_: function() {
+        var routes = this.subRoutes;
+        var n = this.profileRoot.length;
+
+        // Yet another hack: we want to allow /profile/bob to navigate
+        // to the profile root, even though the root is /profile/bob/.
+        // To do this, we create a pathName without leading/trailing
+        // slash to show the default page.
+        if (this.profileRoot.lastIndexOf("/") === n - 1) {
+            var profileRootNoSlash = this.profileRoot.substr(1, n - 2);
+            routes[profileRootNoSlash] = "showDefault";
+        }
+        return routes;
     },
 
     /**

@@ -96,12 +96,21 @@ class OAuthMap(db.Model):
                 user_id = get_facebook_user_id_from_oauth_map(self)
                 email = user_id
 
-            if user_id:
-                user_data = (
-                    user_models.UserData.get_from_user_id(user_id) or
-                    user_models.UserData.get_from_db_key_email(email) or
-                    user_models.UserData.insert_for(user_id, email))
-            return (user_data, user_id)
+            if not user_id:
+                return (None, None)
+            
+            existing = user_models.UserData.get_from_request_info(
+                    user_id, email, self)
+            
+            if existing:
+                # Note that existing.user_id may be different than
+                # user_id computed above.
+                return (existing, existing.user_id)
+
+            # TODO(benkomalo): consolidate this with logic in PostLogin
+            # since it will likely have to duplicate logic re: first time
+            # logins for Google/FB users and doing the proper connections.
+            return user_models.UserData.insert_for(user_id, email)
 
     def get_user_id(self):
         """ Returns the authenticated user_id for this OAuthMap
