@@ -40,14 +40,14 @@ def get_questions_data(user_data):
 
 class MetaQuestion(object):
     """ Data associated with a user's question, including the target video
-    and notifications count.
+    and notifications count, or None if the associated video no longer exists
     """
     @staticmethod
     def from_question(question, viewer_user_data):
         """ Construct a MetaQuestion from a Feedback entity """
         video = question.video()
         if not video:
-            return
+            return None
 
         meta = MetaQuestion()
         meta.video = video
