@@ -33,9 +33,29 @@ def call(cmd):
     os.chdir(cd)
     return npm_results
 
+def colorize(string, color, bold=False):
+    colors = {
+        'gray'  : 30,
+        'red'   : 31,
+        'green' : 32,
+        'yellow': 33,
+        'blue'  : 34,
+        'magenta': 35,
+        'cyan':  36,
+        'white': 37,
+        'crimson':38
+    }
+
+    if not colors.has_key(color) or not sys.stdout.isatty():
+        return string
+    else:
+        color = str(colors[color])
+        colorcode = [color] if not bold else [color, '1']
+        return '\x1b[%sm%s\x1b[0m' % (';'.join(colorcode), string)
+
 def check_dependencies():
     if not installed():
-        print '\033[31m' +  "-- DANGA-ZONE!"+ '\033[0m'
+        print colorize("-- DANGA-ZONE!", 'red')
         print "npm isn't installed, try \n"
         print "  curl http://npmjs.org/install.sh | sh"
         print "\nor follow the instructions here:"
@@ -43,13 +63,15 @@ def check_dependencies():
         return False
 
     if local_modules_setup():
-        print '\033[32m' + "==> A-OK!"+ '\033[0m' +" npm is updating local module dependencies"
+        print colorize("==> A-OK!", 'green') \
+            +" npm is updating local module dependencies"
         npm_results = call("update")
 
     else:
-        print '\033[31m' + "==> Danga-Zone!"+ '\033[0m (well not really)'
+        print colorize("==> Danga-Zone!", 'red')+' (well not really)'
         print "    Installing node dependencies locally via package.json"
-        print '  - this should only happen once, all files are in \033[32mdeploy/node_modules\033[0m\n'
+        print '  - this should only happen once, all files are in ' \
+            + colorize('deploy/node_modules', 'yellow') + '\n'
         npm_results = call("install")
 
     print npm_results
