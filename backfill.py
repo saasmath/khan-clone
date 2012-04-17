@@ -2,7 +2,6 @@ import logging
 from mapreduce import operation as op
 import facebook_util
 import topic_models
-import user_models
 
 
 def check_user_properties(user_data):
