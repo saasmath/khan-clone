@@ -108,8 +108,15 @@ class Pep8(object):
            1 (indicating one error) if we print the error line, 0 else.
         """
         bad_linenum = int(output_line.split(':', 2)[1])   # first line is '1'
+        bad_line = contents_lines[bad_linenum - 1]        # convert to 0-index
 
-        if '@Nolint' in contents_lines[bad_linenum - 1]:
+        if '@Nolint' in bad_line:
+            return 0
+
+        # We allow lines to be arbitrarily long if they are urls,
+        # since splitting urls at 80 columns can be annoying.
+        if ('E501 line too long' in output_line and
+            ('http://' in bad_line or 'https://' in bad_line)):
             return 0
 
         # OK, looks like it's a legitimate error.
@@ -176,13 +183,14 @@ class Pyflakes(object):
 
         # -- The next set of warnings need to look at the error line.
         bad_linenum = int(output_line.split(':', 2)[1])   # first line is '1'
+        bad_line = contents_lines[bad_linenum - 1]        # convert to 0-index
 
         # If the line has a nolint directive, ignore it.
-        if '@Nolint' in contents_lines[bad_linenum - 1]:
+        if '@Nolint' in bad_line:
             return 0
 
         # An old nolint directive that's specific to imports
-        if ('@UnusedImport' in contents_lines[bad_linenum - 1] and
+        if ('@UnusedImport' in bad_line and
             'imported but unused' in output_line):
             return 0
 
