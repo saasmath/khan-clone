@@ -54,6 +54,11 @@ class Feedback(db.Model):
     sum_votes = db.IntegerProperty(default=0)
     inner_score = db.FloatProperty(default=0.0)
 
+    def __init__(self, *args, **kwargs):
+        db.Model.__init__(self, *args, **kwargs)
+        # For caching each question's answers during render
+        self.children_cache = []
+
     @staticmethod
     def cache_key_for_video(video):
         return "videofeedbackcache:%s" % video.key()
@@ -67,8 +72,6 @@ class Feedback(db.Model):
             video: the video below which this question was asked.
             user_data: the user_data who asked the question.
         """
-        # TODO(marcia): Ask Kamens why the Feedback entities were created
-        # in this way, and how it differs from the get_or_insert's elsewhere
         question = Feedback(parent=user_data)
         question.types = [FeedbackType.Question]
 
@@ -90,18 +93,10 @@ class Feedback(db.Model):
                 that this answer is responding to.
             user_data: the user_data who provided this answer.
         """
-        # TODO(marcia): Ask Kamens why the Feedback entities were created
-        # in this way, and how it differs from the get_or_insert's elsewhere
         answer = Feedback(parent=user_data)
         answer.types = [FeedbackType.Answer]
 
         answer.set_author(user_data)
-        # We don't limit answer content length, which means we're vulnerable
-        # to RequestTooLargeErrors being thrown if somebody submits a POST
-        # over the GAE limit of 1MB per entity. This is *highly* unlikely
-        # for a legitimate piece of feedback, and we're choosing to crash
-        # in this case until someone legitimately runs into this.
-        # See Issue 841.
         answer.content = text
         answer.targets = [question.video_key(), question.key()]
 
@@ -109,9 +104,12 @@ class Feedback(db.Model):
 
         return answer
 
-    def __init__(self, *args, **kwargs):
-        db.Model.__init__(self, *args, **kwargs)
-        self.children_cache = [] # For caching each question's answers during render
+    @staticmethod
+    def get_all_questions_by_author(user_id):
+        """ Get all questions asked by specified user """
+        query = Feedback.all()
+        query.filter('author_user_id =', user_id)
+        return [q for q in query if q.is_type(FeedbackType.Question)]
 
     def clear_cache_for_video(self):
         layer_cache.ChunkedResult.delete(
@@ -138,22 +136,29 @@ class Feedback(db.Model):
         return (not self.deleted and not self.is_hidden_by_flags)
 
     def is_visible_to(self, user_data):
-        """ Returns true if this post should be visible to user_data.
-        If user_data is empty, true only if the post should be visible to the general public.
-        If someone's post has been deleted or flagged, it's only visible to the original author and developers.
+        """ Return true if this post should be visible to user_data.
+        
+        If the post has been deleted or flagged, it's only visible to the
+        original author and developers.
         """
-        return self.is_visible_to_public() or self.authored_by(user_data) or (user_data and user_data.developer)
+        return (self.is_visible_to_public() or
+                self.authored_by(user_data) or
+                (user_data and user_data.developer))
 
     def appears_as_deleted_to(self, user_data):
-        """ Returns true if the post should appear as deleted to user_data.
-        This should only be true for posts that are deleted and being viewed by developers.
+        """ Return true if the post should appear as deleted to user_data.
+        
+        This should only be true for posts that are deleted and being viewed
+        by developers.
         """
-        return user_data and (user_data.developer or user_data.moderator) and not self.is_visible_to_public()
+        return (user_data and
+                (user_data.developer or user_data.moderator) and
+                not self.is_visible_to_public())
 
     @property
     def sum_votes_incremented(self):
-        # Always add an extra vote when displaying vote counts to convey the author's implicit "vote"
-        # and make the site a little more positive.
+        # Always add an extra vote when displaying vote counts to convey the
+        # author's implicit "vote" and make the site a little more positive.
         return self.sum_votes + 1
 
     def is_type(self, type):
@@ -161,7 +166,7 @@ class Feedback(db.Model):
 
     def question_key(self):
         if self.targets:
-            return self.targets[-1] # last target is always the question
+            return self.targets[-1]  # last target is always the question
         return None
 
     def question(self):
@@ -240,12 +245,6 @@ class Feedback(db.Model):
             else:
                 return ''
 
-    @staticmethod
-    def get_all_questions_by_author(user_id):
-        """ Get all questions asked by specified user """
-        query = Feedback.all()
-        query.filter('author_user_id =', user_id)
-        return [q for q in query if q.is_type(FeedbackType.Question)]
 
 class FeedbackNotification(db.Model):
     """ A FeedbackNotification entity is created for each answer to a
