@@ -61,7 +61,9 @@ handlebars_helpers = {
 
 def handlebars_dynamic_load(package, name):
     """ Dynamically compile a Handlebars template.
-        Do not do this in production mode! """
+
+    NOTE: This will do nothing in production mode!
+    """
 
     if not App.is_dev_server:
         return None
@@ -90,6 +92,12 @@ def handlebars_dynamic_load(package, name):
     return function
 
 def handlebars_sanitize_params(obj):
+    """ Convert all non-basic types into lists or dicts.
+
+    This may do a deep copy into the structure, which may have performance
+    implications for some objects.
+    """
+
     if isinstance(obj, dict):
         for k in obj.keys():
             obj[k] = handlebars_sanitize_params(obj[k])
@@ -121,21 +129,23 @@ def handlebars_template(package, name, params):
 
     function = None
 
-    if not module_name in sys.modules:
-        # Dynamically load the module
-        try:
-            __import__(module_name)
-        except ImportError:
-            logging.info("Import error!")
-            pass
-
-    if module_name in sys.modules:
-        function = getattr(sys.modules[module_name], function_name)
-
-    # Fallback is to compile the template dynamically.
-    # In production mode, this does nothing.
-    if not function:
+    if App.is_dev_server:
+        # In dev mode, load all templates dynamically
         function = handlebars_dynamic_load(package, name)
+
+    else:
+        # In production mode, dynamically load the compiled template module and
+        # find the function
+
+        if not module_name in sys.modules:
+            try:
+                __import__(module_name)
+            except ImportError:
+                logging.info("Import error!")
+                pass
+
+        if module_name in sys.modules:
+            function = getattr(sys.modules[module_name], function_name)
 
     try:
         ret = function(params, helpers=handlebars_helpers, partials=handlebars_partials)
@@ -145,6 +155,10 @@ def handlebars_template(package, name, params):
         return u""
 
 def render_from_jinja(package, name, params):
+    """ Wrapper for rendering a Handlebars template from Jinja.
+
+    This is provided in case we want to handle this case specially.
+    """
     ret = handlebars_template(package, name, params)
     return ret
 
