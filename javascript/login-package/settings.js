@@ -15,6 +15,14 @@ var Settings = {
                     }
                 });
 
+        // Focus on the first empty field (existing password on normal pw
+        // changes, the first password on pw resets)
+        if ($("#existing").get(0)) {
+            $("#existing").focus();
+        } else {
+            $("#password1").focus();
+        }
+
         $("#submit-settings").click(_.bind(Settings.onClickSubmit_, Settings));
     },
 
@@ -52,11 +60,13 @@ var Settings = {
         // Check basic length.
         if (password1.length < Settings.MIN_PASSWORD_LENGTH) {
             $(".message-container").addClass("error").text("The new password is too short");
+            $("#password1").focus();
             return false;
 
         // Check matching.
         } else if ((password2 || password1) && password2 !== password1) {
             $(".message-container").addClass("error").text("The passwords don't match");
+            $("#password1").focus();
             return false;
         }
 
