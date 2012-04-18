@@ -10,7 +10,6 @@ To run an individual test from this file, run something like:
      api.v1_endtoend_test.V1EndToEndGetTest.test_user
 """
 
-import os
 import urllib2
 
 from testutil import handler_test_utils
