@@ -26,6 +26,13 @@ except ImportError:
 SKIP_TODO = True
 
 
+def todo():
+    """Decorator: Skip a test iff SKIP_TODO is set."""
+    if SKIP_TODO:
+        return unittest.skip("still marked TODO")
+    return lambda func: func
+
+
 @testsize.large()
 def setUpModule():
     handler_test_utils.start_dev_appserver(db='testutil/test_db.sqlite')
@@ -157,6 +164,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"title": "One Step Equations"', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__changelist(self):
         # Test that this requires developer access
         self.assert401Error('/api/v1/topicversion/2/changelist')
@@ -164,8 +172,6 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assert401Error('/api/v1/topicversion/10000/changelist')
 
         self.set_user(developer=True)
-
-        if SKIP_TODO: return
 
         # early version
         r = self.fetch('/api/v1/topicversion/2/changelist')
@@ -257,8 +263,8 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"tags": []', r)
 
     @testsize.large()
+    @todo()
     def test_topic__topic_id__progress(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topic/basic-equations/progress')
         self.assertIn('TODO(csilvers)', r)
 
@@ -297,7 +303,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         r = self.fetch('/api/v1/topictree')
         # Here we keep track of leading spaces to make sure of indentation.
         self.assertIn('                            '
-                      '"display_name": "Exponent rules"',  r)
+                      '"display_name": "Exponent rules"', r)
         self.assertIn('                            '
                       '"display_name": "One step equations"', r)
         self.assertIn('                            '
@@ -314,12 +320,12 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertNotIn('Mathematics of Art', r)  # no hidden topics
 
     @testsize.large()
+    @todo()
     def test_dev__topictree__problems(self):
         # TODO(james): uncomment once this becomes developer_only in v1.py
         #self.assert401Error('/api/v1/dev/topictree/problems')
         self.set_user(developer=True)
 
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/topictree/problems')
         self.assertIn('TODO(csilvers)', r)
 
@@ -530,11 +536,11 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertEqual('11', r)
 
     @testsize.large()
+    @todo()
     def test_dev__task_message(self):
         self.assert401Error('/api/v1/dev/task_message')
         self.set_user(developer=True)
 
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/task_message')
         self.assertIn('TODO(csilvers)', r)
 
@@ -608,14 +614,14 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assert400Error('/api/v1/topicversion/1000/unused_content')
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__url__url_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/<version_id>/url/<url_id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_url__url_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/url/<url_id>')
         self.assertIn('TODO(csilvers)', r)
 
@@ -666,16 +672,16 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"exponent-rules-part-1"', r)
 
     @testsize.large()
+    @todo()
     def test_exercises__recent(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/exercises/recent')
         # TODO(csilvers): mock out the clock for this, so one of the
         # exercises is recent but the other isn't.
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_exercises__exercise_name__followup_exercises(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/exercises/<exercise_name>/followup_exercises')
         self.assertIn('TODO(csilvers): add this to the db', r)
 
@@ -723,8 +729,8 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertEqual('null', r)
 
     @testsize.large()
+    @todo()
     def test_videos__recent(self):
-        if SKIP_TODO: return
         # TODO(csilvers): mock out time so we can test this
         r = self.fetch('/api/v1/videos/recent')
         self.assertIn('TODO(csilvers)', r)
@@ -742,14 +748,14 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertEqual('[]', r)
 
     @testsize.large()
+    @todo()
     def test_videos__topic_id__video_id__play(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/videos/<topic_id>/<video_id>/play')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_commoncore(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/commoncore')
         self.assertIn('TODO(csilvers)', r)
 
@@ -764,129 +770,129 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"youtube_id": "kITJ6qH7jS', r)
 
     @testsize.large()
+    @todo()
     def test_user(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__username_available(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/username_available')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__promo__promo_name(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/promo/<promo_name>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__profile(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/profile')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__coaches(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/coaches')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__students(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/students')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__studentlists(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/studentlists')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__videos(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/videos')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__videos__youtube_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/videos/<youtube_id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__videos__youtube_id__log_compatability(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/videos/<youtube_id>/log_compatability')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__topic__topic_id__exercises__next(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/topic/<topic_id>/exercises/next')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__exercises(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/exercises')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__topic__topic_id__exercises(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/topic/<topic_id>/exercises')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__students__progress__summary(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/students/progress/summary')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__exercises__exercise_name(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/exercises/<exercise_name>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__exercises__exercise_name__followup_exercises(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/exercises/<exercise_name>'
                        '/followup_exercises')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__topics(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/topics')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__topic__topic_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/topic/<topic_id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__exercises__reviews__count(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/exercises/reviews/count')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__exercises__exercise_name__log(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/exercises/<exercise_name>/log')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__videos__youtube_id__log(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/videos/<youtube_id>/log')
         self.assertIn('TODO(csilvers)', r)
 
@@ -908,106 +914,105 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
         self.assertIn('"icon_src": "/images/badges/sun-small.png"', r)
         self.assertIn('"category": 3', r)
 
-
     @testsize.large()
+    @todo()
     def test_user__badges(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/badges')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__activity(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/activity')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_autocomplete(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/autocomplete')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_dev__backupmodels(self):
         self.assert401Error('/api/v1/dev/backupmodels')
         self.set_user(developer=True)
 
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/backupmodels')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_dev__protobufquery(self):
         self.assert401Error('/api/v1/dev/protobufquery')
         self.set_user(developer=True)
 
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/protobufquery')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_dev__protobuf__entity(self):
         self.assert401Error('/api/v1/dev/protobuf/<entity>')
         self.set_user(developer=True)
 
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/protobuf/<entity>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_dev__problems(self):
         self.assert401Error('/api/v1/dev/problems')
         self.set_user(developer=True)
 
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/problems')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_dev__videos(self):
         self.assert401Error('/api/v1/dev/videos')
         self.set_user(developer=True)
 
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/videos')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_dev__users(self):
         self.assert401Error('/api/v1/dev/users')
         self.set_user(developer=True)
 
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/users')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__students__progressreport(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/students/progressreport')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__goals(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/goals')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__goals__current(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/goals/current')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__students__goals(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/students/goals')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__goals__id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/goals/<id>')
         self.assertIn('TODO(csilvers)', r)
 
@@ -1030,20 +1035,20 @@ class V1EndToEndDeleteTest(V1EndToEndTestBase):
         self.method = 'DELETE'
 
     @testsize.large()
+    @todo()
     def test_user__studentlists__list_key(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/studentlists/list_key>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__goals__id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/goals/id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__goals(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/goals')
         self.assertIn('TODO(csilvers)', r)
 
@@ -1058,8 +1063,8 @@ class V1EndToEndPostTest(V1EndToEndTestBase):
     # This is a GET request, but changes state so should be POST or PUT.
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__setdefault(self):
-        if SKIP_TODO: return
         self.methd = 'GET'
         r = self.fetch('/api/v1/topicversion/<version_id>/setdefault')
         self.assertIn('TODO(csilvers)', r)
@@ -1067,197 +1072,197 @@ class V1EndToEndPostTest(V1EndToEndTestBase):
     # Note some of these also accept PUT, but we don't seem to distinguish.
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__exercises__exercise_name(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id'
                        '/exercises/exercise_name')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__videos__(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/videos/')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__videos__video_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/videos/video_id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__profile(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/profile')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__badges__public(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/badges/public')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_parentsignup(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/parentsignup')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_videos__(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/videos/')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_videos__video_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/videos/video_id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__deletechange(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/deletechange')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__topic__parent_id__addchild(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/topic/parent_id'
                        '/addchild')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topic__parent_id__addchild(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topic/parent_id/addchild')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__topic__parent_id__deletechild(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/topic/parent_id'
                        '/deletechild')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topic__parent_id__deletechild(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topic/parent_id/deletechild')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__topic__old_parent_id__movechild(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/topic/old_parent_id'
                        '/movechild')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topic__old_parent_id__movechild(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topic/old_parent_id/movechild')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__topic__topic_id__ungroup(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/topic/topic_id'
                        '/ungroup')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topic__topic_id__ungroup(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topic/topic_id/ungroup')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_videos__video_id__download_available(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/videos/video_id/download_available')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__promo__promo_name(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/promo/promo_name>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__studentlists(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/studentlists')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__videos__youtube_id__log(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/videos/youtube_id/log')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__exercises__exercise_name__problems__problem_number__attempt(
         self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/exercises/exercise_name'
                        '/problems/problem_number/attempt')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__exercises__exercise_name__problems__problem_number__hint(
         self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/exercises/<exercise_name>'
                        '/problems/<problem_number>/hint')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__exercises__exercise_name__reset_streak(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/exercises/exercise_name/reset_streak')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__exercises__exercise_name__wrong_attempt(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/exercises/exercise_name/wrong_attempt')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_developers__add(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/developers/add')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_developers__remove(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/developers/remove')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_coworkers__add(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/coworkers/add')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_coworkers__remove(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/coworkers/remove')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__goals(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/goals')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_exercises__exercise_name(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/exercises/exercise_name>')
         self.assertIn('TODO(csilvers)', r)
 
@@ -1270,98 +1275,98 @@ class V1EndToEndPutTest(V1EndToEndTestBase):
         self.method = 'PUT'
 
     @testsize.large()
+    @todo()
     def test_dev__topicversion__version_id__topic__topic_id__topictree(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/topicversion/<version_id>/topic/<topic_id>'
                        '/topictree')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_dev__topicversion__version_id__topictree(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/topicversion/version_id/topictree')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_dev__topictree__init__publish(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/topictree/init/publish>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_dev__topictree(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/dev/topictree')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__topic__topic_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/topic/topic_id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topic__topic_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topic/topic_id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__maplayout(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/maplayout')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_maplayout(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/maplayout')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__url__(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/url/')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_topicversion__version_id__url__url_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/topicversion/version_id/url/url_id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_url__(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/url/')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_url__url_id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/url/url_id>')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_videos__video_id__explore_url(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/videos/video_id/explore_url')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__coaches(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/coaches')
         self.assertIn('TODO(csilvers)', r)
 
     @testsize.large()
+    @todo()
     def test_user__goals__id(self):
-        if SKIP_TODO: return
         r = self.fetch('/api/v1/user/goals/id>')
         self.assertIn('TODO(csilvers)', r)
