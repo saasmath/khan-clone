@@ -140,6 +140,9 @@ def get_user_data_coach_from_request():
 @jsonify
 def content_topics(version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     return topic_models.Topic.get_content_topics(version)
 
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
@@ -148,11 +151,9 @@ def content_topics(version_id = None):
 @cacheable(caching_age=(60 * 60 * 24 * 60))
 @etag(lambda: models.Setting.topic_tree_version())
 @jsonp
-@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @layer_cache.cache_with_key_fxn(
     lambda: "api_topics_library_compact_%s" % models.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
-@compress
 @jsonify
 def topics_library_compact():
     topics = topic_models.Topic.get_filled_content_topics(types = ["Video", "Url"])
@@ -187,6 +188,9 @@ def topics_library_compact():
 @jsonify
 def topic_version_change_list(version_id):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     changes = topic_models.VersionContentChange.all().filter("version =", version).fetch(10000)
 
     # add the related_videos of ExerciseVideos of the change.content
@@ -204,6 +208,9 @@ def topic_version_change_list(version_id):
 @jsonify
 def topic_version_delete_change(version_id):
     version = models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
 
     kind = request.request_string("kind")
     id = request.request_string("id")
@@ -236,6 +243,9 @@ def topic_version_delete_change(version_id):
 @jsonify
 def topic_videos(topic_id, version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     topic = topic_models.Topic.get_by_id(topic_id, version)
     if topic is None:
         topic = topic_models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
@@ -261,6 +271,9 @@ def topic_videos(topic_id, version_id = None):
 @jsonify
 def topic_exercises(topic_id, version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     topic = topic_models.Topic.get_by_id(topic_id, version)
     if topic is None:
         topic = topic_models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
@@ -290,16 +303,17 @@ def topic_progress(topic_id):
 @api.auth.decorators.open_access
 @etag(lambda version_id = None: version_id)
 @jsonp
-@decompress
 @layer_cache.cache_with_key_fxn(
     (lambda version_id = None: "api_topictree_%s_%s" % (version_id,
         models.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
-@compress
 @jsonify
 def topictree(version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     return topic_models.Topic.get_by_id("root", version).make_tree()
 
 @route("/api/v1/dev/topictree/problems", methods=["GET"])
@@ -316,17 +330,23 @@ def topic_tree_problems(version_id = "edit"):
 @route("/api/v1/dev/topictree", methods=["GET"])
 @api.auth.decorators.developer_required
 @jsonp
-@decompress
 @layer_cache.cache_with_key_fxn(
     (lambda version_id = None, topic_id = "root": "api_topictree_export_%s_%s" % (version_id,
         models.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
-@compress
 @jsonify
 def topictree_export(version_id = None, topic_id = "root"):
     version = topic_models.TopicVersion.get_by_id(version_id)
-    return topic_models.Topic.get_by_id(topic_id, version).make_tree(include_hidden=True)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
+    topic = topic_models.Topic.get_by_id(topic_id, version)
+    if topic is None:
+        return api_invalid_param_response("Could not find topic-id %s "
+                                          "for version_id %s"
+                                          % (topic_id, version_id))
+    return topic.make_tree(include_hidden=True)
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["PUT"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["PUT"])
@@ -353,6 +373,9 @@ def topictree_import(version_id = "edit", topic_id="root", publish=False):
 @jsonify
 def topictreesearch(version_id, query):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     return topic_models.Topic.get_by_id("root", version).search_tree(query)
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["GET"])
@@ -369,6 +392,9 @@ def topictreesearch(version_id, query):
 @jsonify
 def topic(topic_id, version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     topic = topic_models.Topic.get_by_id(topic_id, version)
 
     if not topic:
@@ -383,6 +409,9 @@ def topic(topic_id, version_id = None):
 @jsonify
 def put_topic(topic_id, version_id = "edit"):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
 
     user_data = user_models.UserData.current()
     if not user_data:
@@ -405,16 +434,28 @@ def put_topic(topic_id, version_id = "edit"):
         "id": topic.id
     }
 
+# Note on @etag: we don't want to set the etag if the topic-version is
+# the current edit-version, since that can change without warning.
+# Unfortunately, it's slow to check if version_id is the current
+# edit-version or not.  Instead we do the fast check of whether
+# version_id is None (None == active version which is never the
+# edit-version).  We disable etag caching in all other cases by having
+# the etag functor return None.
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/topic-page", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/topic-page", methods=["GET"])
 @api.auth.decorators.open_access
 @cacheable(caching_age=(60 * 60 * 24 * 60))
-@etag(lambda(topic_id): "%s_v%s" % (topic_id, models.Setting.topic_tree_version()))
+@etag(lambda topic_id, version_id=None:
+      "%s_v%s" % (topic_id, models.Setting.topic_tree_version())
+      if version_id is None else None)
 @jsonp
 def get_topic_page_data(topic_id, version_id = "default"):
     """ Retrieve the listing of subtopics and videos for this topic.
         Used on the topic page. """
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
 
     topic = topic_models.Topic.get_by_id(topic_id, version)
 
@@ -430,6 +471,9 @@ def get_topic_page_data(topic_id, version_id = "default"):
 @jsonify
 def get_maplayout(version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     return MapLayout.get_for_version(version).layout
 
 @route("/api/v1/topicversion/<version_id>/maplayout", methods=["PUT"])
@@ -439,6 +483,9 @@ def get_maplayout(version_id = None):
 @jsonify
 def put_maplayout(version_id = "edit"):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
 
     map_layout = MapLayout.get_for_version(version)
     map_layout.layout = request.json
@@ -463,6 +510,9 @@ def get_topic_admin_task_message():
 
 def topic_find_child(parent_id, version_id, kind, id):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
 
     parent_topic = topic_models.Topic.get_by_id(parent_id, version)
     if not parent_topic:
@@ -558,6 +608,9 @@ def topic_move_child(old_parent_id, version_id = "edit"):
 @jsonify
 def topic_ungroup(topic_id, version_id = "edit"):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
 
     topic = topic_models.Topic.get_by_id(topic_id, version)
     if not topic:
@@ -579,6 +632,9 @@ def topic_ungroup(topic_id, version_id = "edit"):
 @jsonify
 def topic_children(topic_id, version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
 
     topic = topic_models.Topic.get_by_id(topic_id, version)
     if not topic:
@@ -592,6 +648,9 @@ def topic_children(topic_id, version_id = None):
 @jsonify
 def topic_children(version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     version.set_default_version()
     topic_models.TopicVersion.get_edit_version() # creates a new edit version if one does not already exists
     return version
@@ -610,6 +669,9 @@ def topic_version(version_id = None):
 @jsonify
 def topic_version(version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
 
     version_json = request.json
 
@@ -638,6 +700,9 @@ def topic_versions():
 @jsonify
 def topic_version_unused_content(version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     return version.get_unused_content()
 
 @route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["GET"])
@@ -646,7 +711,13 @@ def topic_version_unused_content(version_id = None):
 @jsonp
 @jsonify
 def get_url(url_id, version_id=None):
-    version = topic_models.TopicVersion.get_by_id(version_id) if version_id else None
+    if version_id:
+        version = topic_models.TopicVersion.get_by_id(version_id)
+        if version is None:
+            return api_invalid_param_response("Could not find version_id %s"
+                                              % version_id)
+    else:
+        version = None
     return models.Url.get_by_id_for_version(url_id, version)
 
 @route("/api/v1/topicversion/<version_id>/url/", methods=["PUT"])
@@ -658,6 +729,9 @@ def get_url(url_id, version_id=None):
 @jsonify
 def save_url(url_id = None, version_id=None):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     changeable_props = ["tags", "title", "url"]
 
     if url_id is None:
@@ -706,12 +780,10 @@ def set_explore_url(video_id):
 @api.auth.decorators.open_access
 @etag(lambda: models.Setting.topic_tree_version())
 @jsonp
-@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
     lambda: "api_library_%s" % models.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
-@compress
 @jsonify
 def playlists_library():
     tree = topic_models.Topic.get_by_id("root").make_tree()
@@ -758,14 +830,12 @@ def playlists_library():
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @api.auth.decorators.open_access
 @jsonp
-@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
     lambda fresh=False: (
         None if fresh else
         "api_library_list_%s" % models.Setting.topic_tree_version()),
     layer=layer_cache.Layers.Memcache)
-@compress
 @jsonify
 def playlists_library_list(fresh=False):
     topics = topic_models.Topic.get_filled_content_topics(types = ["Video", "Url"])
@@ -795,7 +865,13 @@ def get_exercises():
 @jsonp
 @jsonify
 def get_exercise(exercise_name, version_id = None):
-    version = topic_models.TopicVersion.get_by_id(version_id) if version_id else None
+    if version_id:
+        version = topic_models.TopicVersion.get_by_id(version_id)
+        if version is None:
+            return api_invalid_param_response("Could not find version_id %s"
+                                              % version_id)
+    else:
+        version = None
     exercise = models.Exercise.get_by_name(exercise_name, version)
     # TODO(james): rename related_videos to related_video_readable_ids
     # then save these on the exercise and video objects
@@ -838,6 +914,9 @@ def exercise_videos(exercise_name):
 def exercise_save(exercise_name = None, version_id = "edit"):
     request.json["name"] = exercise_name
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     query = models.Exercise.all()
     query.filter('name =', exercise_name)
     exercise = query.get()
@@ -849,9 +928,15 @@ def exercise_save(exercise_name = None, version_id = "edit"):
 @jsonp
 @jsonify
 def video(video_id, version_id = None):
-    version = topic_models.TopicVersion.get_by_id(version_id) if version_id else None
-    video = models.Video.get_for_readable_id(video_id, version)
+    if version_id:
+        version = topic_models.TopicVersion.get_by_id(version_id)
+        if version is None:
+            return api_invalid_param_response("Could not find version_id %s"
+                                              % version_id)
+    else:
+        version = None
 
+    video = models.Video.get_for_readable_id(video_id, version)
     if video is None:
         video = models.Video.all().filter("youtube_id =", video_id).get()
 
@@ -960,6 +1045,9 @@ def get_youtube_info(youtube_id):
 @jsonify
 def save_video(video_id="", version_id = "edit"):
     version = topic_models.TopicVersion.get_by_id(version_id)
+    if version is None:
+        return api_invalid_param_response("Could not find version_id %s"
+                                          % version_id)
     video = models.Video.get_for_readable_id(video_id, version)
 
     def check_duplicate(new_data, video=None):

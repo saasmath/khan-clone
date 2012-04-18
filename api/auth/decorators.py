@@ -1,3 +1,46 @@
+"""Decorators for verifying authentication and authorization of users.
+
+These decorators are applied to flask handlers, and automatically
+return a 401 if certain conditions aren't met.
+
+@login_required: the user making the request has to be logged in.  For
+   oauth, that means that the oauth token they use has to exist in our
+   oauth map.  For cookies-based authentication, it means that there is
+   a valid cookie (that could only have been created by a logged-in user).
+
+@developer_required: like login_required, but the logged in user must have
+   user_data.developer == True.
+
+@moderator_required: like login_required, but the logged in user must have
+   user_data.moderator == True.
+
+@admin_required: like login_required, but the logged in user must be an
+   admin.  (We use google's auth for this; users.current_user_is_admin()
+   must be true.)
+
+@login_required_and: the above are all special cases of this more generic
+   decorator, which can be used when more complex authorization is
+   required.
+
+@open_access: anyone can access this url, they don't need to be logged in.
+   (They still must have a valid oauth credential or cookie, though.)
+   This is used for urls that are not protected (developer-only, say)
+   and do not have any user-specific information in them.
+
+@manual_access_checking: anyone can access this url, they don't even
+   need a valid oauth credential or cookie.  The expectation is the
+   handler will do its own authentication.  This is primarily used
+   for handlers that are part of the oauth handshake itself.
+
+@anointed_oauth_consumer_only: unlike the above, which concern the
+   user (the access-token, in oauth-speak), this concerns the platform
+   the user is using to make its request (the consumer-token, in
+   oauth-speak).  This says only certain consumers, such as our iPad
+   app, can make such a request.  This obviously requires oauth; users
+   trying to access this handler using cookies will automatically
+   fail.
+"""
+
 from functools import wraps
 
 from google.appengine.api import users
@@ -11,7 +54,7 @@ from api.auth.auth_models import OAuthMap
 from oauth_provider.decorators import is_valid_request, validate_token
 from oauth_provider.oauth import OAuthError
 
-import user_util
+import user_models
 import util
 import os
 import logging
@@ -88,66 +131,67 @@ def verify_and_cache_oauth_or_cookie(request):
         raise OAuthError("Invalid parameters to Oauth request")
 
 
-def admin_required(func):
+def open_access(func):
+    """ Decorator that allows anyone to access a url. """
     @wraps(func)
     def wrapper(*args, **kwargs):
+        # We try to read the oauth info, so we have access to login
+        # data if the user *does* happen to be logged in, but if
+        # they're not we don't worry about it.
         try:
             verify_and_cache_oauth_or_cookie(request)
         except OAuthError, e:
-            return oauth_error_response(e)
-
-        if not user_util.is_current_user_admin():
-            return unauthorized_response()
+            pass
         return func(*args, **kwargs)
 
     assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'admin-required'   # checked in api.route()
+    wrapper._access_control = 'open-access'   # checked in api.route()
     return wrapper
 
 
-def developer_required(func):
+def manual_access_checking(func):
+    """ Decorator that documents the site itself is doing authentication.
+
+    This is intended for use by urls that are involved in the oauth
+    handshake itself, and thus shouldn't be calling
+    verify_and_cache_oauth_or_cookie(), since the oauth data may be in
+    an unfinished or inconsistent state.
+    """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        try:
-            verify_and_cache_oauth_or_cookie(request)
-        except OAuthError, e:
-            return oauth_error_response(e)
-
-        if not user_util.is_current_user_developer():
-            return unauthorized_response()
+        # For manual_access_checking we don't even try to read the
+        # oauth data -- that's up for the handler to do itself.  This
+        # makes manual_access_checking appropriate for handlers that
+        # are part of the oauth-authentication process itself.
         return func(*args, **kwargs)
 
     assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'developer-required'   # checked in api.route()
+    wrapper._access_control = 'manual-access'   # checked in api.route()
     return wrapper
 
 
-def moderator_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            verify_and_cache_oauth_or_cookie(request)
-        except OAuthError, e:
-            return oauth_error_response(e)
-
-        if not user_util.is_current_user_moderator():
-            return unauthorized_response()
-        return func(*args, **kwargs)
-
-    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'moderator-required'   # checked in api.route()
-    return wrapper
-    
-
-def login_required(func):
+def login_required_and(func,
+                       admin_required=False,
+                       developer_required=False,
+                       moderator_required=False,
+                       demo_user_allowed=False,
+                       phantom_user_allowed=True):
     """ Decorator for validating an authenticated request.
 
     Checking oauth/cookie is the way to tell whether an API client is
     'logged in', since they can only have gotten an oauth token (or
     cookie token) via the login process.
 
-    Note that phantom users with exercise data is considered
-    a valid user.
+    In addition to checking whether the user is logged in, this
+    function also checks access based on the *type* of the user:
+    if demo_allowed==False, for instance, and the logged-in user
+    is a demo user, then access will be denied.
+
+    (Exception: if the user is an admin user, then access is *always*
+    allowed, and the only check we make is if they're logged in.)
+
+    The default values specify the default permissions: for instance,
+    phantom users are considered a valid user by this routine.
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -155,12 +199,73 @@ def login_required(func):
             verify_and_cache_oauth_or_cookie(request)
         except OAuthError, e:
             return oauth_error_response(e)
-        # Request validated, proceed with the method.
+
+        user_data = user_models.UserData.current()
+        # If verify_and_cache_oauth_or_cookie succeeded, it's probably
+        # not possible to be None here, but no harm in checking.
+        if not user_data:
+            return unauthorized_response()
+
+        # Admins always have access to everything.
+        if users.is_current_user_admin():
+            return func(*args, **kwargs)
+
+        if admin_required and not users.is_current_user_admin():
+            return unauthorized_response()
+
+        if developer_required and not user_data.developer:
+            return unauthorized_response()
+
+        # Developers are automatically moderators.
+        is_moderator = user_data.moderator or user_data.developer
+        if moderator_required and not is_moderator:
+            return unauthorized_response()
+
+        if (not demo_user_allowed) and user_data.is_demo:
+            return unauthorized_response()
+
+        if (not phantom_user_allowed) and user_data.is_phantom:
+            return unauthorized_response()
+
+        # They passed the gantlet!
         return func(*args, **kwargs)
 
-    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'oauth-required'   # checked in api.route()
+    # For purposes of IDing this decorator, just store the True arguments.
+    all_local_vars = locals()
+    arg_names = [var for var in all_local_vars if
+                 all_local_vars[var] and
+                 var not in ('func', 'wrapper', 'all_arg_names')]
+    auth_decorator = 'login-required(%s)' % ','.join(arg_names)
+    assert "_access_control" not in wrapper.func_dict, \
+           ("Mutiple auth decorators: %s and %s"
+            % (wrapper._access_control, auth_decorator))
+    wrapper._access_control = auth_decorator   # checked in api.route()
     return wrapper
+
+
+def admin_required(func):
+    return login_required_and(func, admin_required=True)
+
+
+def developer_required(func):
+    return login_required_and(func, developer_required=True)
+
+
+def moderator_required(func):
+    return login_required_and(func, moderator_required=True)
+
+
+def login_required(func):
+    """Decorator for validating an authenticated request.
+
+    Checking oauth/cookie is the way to tell whether an API client is
+    'logged in', since they can only have gotten an oauth token (or
+    cookie token) via the login process.
+
+    Note that phantom users with exercise data is considered
+    a valid user -- see the default values for login_required_and().
+    """
+    return login_required_and(func)
 
 
 def open_access(func):
