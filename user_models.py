@@ -961,23 +961,22 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             self.put()
         return self.videos_completed
 
+    def recalculate_feedback_notification_count(self):
+        """Recalculate the number of questions with unread answers."""
+        # Notifications are grouped by question when displayed to users,
+        # though there is a FeedbackNotification for each unread answer
+        notifications = discussion_models.FeedbackNotification.gql(
+                "WHERE user = :1", self.user)
+
+        questions = set(n.feedback.question_key() for n in notifications
+                        if n.feedback.question().is_type(
+                            discussion_models.FeedbackType.Question))
+
+        self.count_feedback_notification = len(questions)
+        self.put()
+
     def feedback_notification_count(self):
-        """Return the number of new discussion notifications since the
-        last time the user viewed her notifications.
-        """
-        if self.count_feedback_notification == -1:
-            # Notifications are grouped by question when displayed to users,
-            # though there is a FeedbackNotification for each unread answer
-            notifications = discussion_models.FeedbackNotification.gql(
-                    "WHERE user = :1", self.user)
-
-            questions = set(n.feedback.question_key() for n in notifications
-                            if n.feedback.question().is_type(
-                                discussion_models.FeedbackType.Question))
-
-            self.count_feedback_notification = len(questions)
-            self.put()
-
+        """Return the number of questions with unread answers."""
         return self.count_feedback_notification
 
     def save_goal(self, goal):

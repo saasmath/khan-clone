@@ -179,8 +179,7 @@ class Feedback(db.Model):
             if author_user_data:
                 # Recalculate author's notification count since
                 # comments don't have answers
-                author_user_data.count_feedback_notification = -1
-                author_user_data.put()
+                author_user_data.recalculate_feedback_notification_count()
 
     def question_key(self):
         if self.targets:

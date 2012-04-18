@@ -149,7 +149,7 @@ def new_answer_for_video_question(video, question, answer):
     if not user_data:
         return
 
-    user_data.count_feedback_notification = -1
+    user_data.recalculate_feedback_notification_count()
 
     db.put([notification, user_data])
 
