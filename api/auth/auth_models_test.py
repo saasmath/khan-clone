@@ -134,7 +134,7 @@ class OAuthMapTests(BaseTest):
         self.assertFalse(oauth_map.uses_google())
         self.assertTrue(oauth_map.uses_facebook())
         self.assertFalse(oauth_map.uses_password())
-        
+
         self.assertEquals(facebook_util.FACEBOOK_ID_PREFIX + "456",
                           oauth_map.get_user_id())
         # TODO(benkomalo): this assert fails since FB users who create their
@@ -142,12 +142,13 @@ class OAuthMapTests(BaseTest):
         # they log into the website at least once (and it /postlogin).
         # (See the TODO in OAuthMap._get_authenticated_user_info regarding
         # having to consolidate with /postlogin logic.)
-        #self.assertEquals("fb_user@gmail.com", oauth_map.get_user_data().email)
+        #self.assertEquals("fb_user@gmail.com",
+        #                  oauth_map.get_user_data().email)
 
     def test_existing_google_login(self):
         existing = self.make_google_user(123, "google_user@gmail.com")
         self.assertEquals(1, _user_counts())
-        
+
         oauth_map = self.make_oauth_map()
         self.fake_google_auth(oauth_map, 123, "google_user@gmail.com")
         self.assertEquals(1, _user_counts())
@@ -156,7 +157,7 @@ class OAuthMapTests(BaseTest):
     def test_existing_fb_login(self):
         existing = self.make_fb_user(456, "fb_user@gmail.com")
         self.assertEquals(1, _user_counts())
-        
+
         oauth_map = self.make_oauth_map()
         self.fake_facebook_auth(oauth_map, 456, "fb_user@gmail.com")
         self.assertEquals(1, _user_counts())
