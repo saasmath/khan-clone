@@ -73,88 +73,165 @@ def _files_to_process(rootdir, blacklist):
     return retval
 
 
-def run_pep8(files, pep8_args):
-    """Run pep8 on all given files, using pep8_args list as the flag-list."""
-    pep8.process_options(pep8_args + list(files))
-    for f in files:
-        # TODO(csilvers): intercept stdout and remove @Nolint lines
-        pep8.input_file(f)   # the weirdly-named function that does the work
-    # Return the number of files that have pep8 issues.
-    return pep8.get_count()
+def _capture_stdout_of(fn, *args, **kwargs):
+    """Call fn(*args, **kwargs) and return (fn_retval, fn_stdout_output_fp)."""
+    try:
+        orig_stdout = sys.stdout
+        sys.stdout = cStringIO.StringIO()
+        retval = fn(*args, **kwargs)
+        sys.stdout.reset()    # so new read()/readlines() calls will return
+        return (retval, sys.stdout)
+    finally:
+        sys.stdout = orig_stdout
+    
 
+class Pep8(object):
+    """process() processes one file."""
+    def __init__(self, all_files, pep8_args):
+        pep8.process_options(pep8_args + list(all_files))
+        self._num_errors = 0
 
-def run_pyflakes(files, unused_pyflakes_args):
-    """Run pyflakes on all given files, using pyflakes_args as the flaglist."""
-    # pyflakes prints all errors to stdout.  But we want to ignore
-    # some 'errors' that are ok for us: code like
-    #   try:
-    #      import unittest2 as unittest
-    #   except ImportError:
-    #      import unittest
-    # To do this, we intercept stdin and remove these lines.
-    old_stdout = sys.stdout
-    new_stdout = cStringIO.StringIO()
-    sys.stdout = new_stdout
+    def _process_one_line(self, output_line, contents_lines):
+        """If line is a 'error', print it and return 1.  Else return 0.
 
-    num_errors = 0
-    for f in files:
+        pep8 prints all errors to stdout.  But we want to ignore some
+        'errors' that are ok for us but cannot be suppressed via pep8
+        flags, such as lines marked with @Nolint.  To do this, we
+        intercept stdin and remove these lines.
+
+        Arguments:
+           output_line: one line of the pep8 error-output
+           contents_lines: the contents of the file being linted,
+              as a list of lines.
+
+        Returns:
+           1 (indicating one error) if we print the error line, 0 else.
+        """
+        bad_linenum = int(output_line.split(':', 2)[1])   # first line is '1'
+
+        if '@Nolint' in contents_lines[bad_linenum - 1]:
+            return 0
+
+        # OK, looks like it's a legitimate error.
+        print output_line,    # output_line already has the trailing newline
+        return 1
+
+    def process(self, f):
         try:
-            contents = open(f, 'U').read() + '\n'  # must end in a newline!
-            contents_lines = None                  # we'll split lazily
+            contents_lines = open(f, 'U').readlines()
         except (IOError, OSError), why:
             print "%s: %s" % (f, why.args[1])
-            num_errors += 1
-        else:
-            try:
-                sys.stdout = new_stdout
-                pyflakes.check(contents, f)
-            finally:
-                sys.stdout = old_stdout
+            self._num_errors += 1
+            return
+
+        (num_candidate_errors, pep8_stdout) = _capture_stdout_of(
+            pep8.Checker(f, lines=contents_lines).check_all)
+
+        # Go through the output and remove the 'actually ok' lines.
+        if num_candidate_errors == 0:
+            return
+
+        for output_line in pep8_stdout.readlines():
+            self._num_errors += self._process_one_line(output_line,
+                                                      contents_lines)
+
+    def num_errors(self):
+        """A count of all the errors we've seen (and emitted) so far."""
+        return self._num_errors
+
+
+class Pyflakes(object):
+    """process() processes one file."""
+    def __init__(self):
+        self._num_errors = 0
+
+    def _process_one_line(self, output_line, contents_lines):
+        """If line is a 'error', print it and return 1.  Else return 0.
+
+        pyflakes prints all errors to stdout.  But we want to ignore
+        some 'errors' that are ok for us: code like
+          try:
+             import unittest2 as unittest
+          except ImportError:
+             import unittest
+        To do this, we intercept stdin and remove these lines.
+
+        Arguments:
+           output_line: one line of the pyflakes error-output
+           contents_lines: the contents of the file being linted,
+              as a list of lines.
+
+        Returns:
+           1 (indicating one error) if we print the error line, 0 else.
+        """
+        # The 'try/except ImportError' example described above.
+        if 'redefinition of unused' in output_line:
+            return 0
+
+        # We follow python convention of allowing an unused variable
+        # if it's named '_' or starts with 'unused_'.
+        if ('assigned to but never used' in output_line and
+            ("local variable '_'" in output_line or
+             "local variable 'unused_" in output_line)):
+            return 0
+
+        # Get rid of some warnings too.
+        if 'unable to detect undefined names' in output_line:
+            return 0
+
+        # -- The next set of warnings need to look at the error line.
+        bad_linenum = int(output_line.split(':', 2)[1])   # first line is '1'
+
+        # If the line has a nolint directive, ignore it.
+        if '@Nolint' in contents_lines[bad_linenum - 1]:
+            return 0
+
+        # An old nolint directive that's specific to imports
+        if ('@UnusedImport' in contents_lines[bad_linenum - 1] and
+            'imported but unused' in output_line):
+            return 0
+
+        # OK, looks like it's a legitimate error.
+        print output_line,    # output_line already includes the trailing \n
+        return 1
+
+    def process(self, f):
+        try:
+            contents = open(f, 'U').read() + '\n'   # must end in a newline!
+        except (IOError, OSError), why:
+            print "%s: %s" % (f, why.args[1])
+            self._num_errors += 1
+            return
+
+        (num_candidate_errors, pyflakes_stdout) = _capture_stdout_of(
+            pyflakes.check, contents, f)
 
         # Now go through the output and remove the 'actually ok' lines.
-        for output_line in new_stdout.read().splitlines():
-            # The 'try/except ImportError' example described above.
-            if 'redefinition of unused' in output_line:
-                continue
+        if num_candidate_errors == 0:
+            return
 
-            # We follow python convention of allowing an unused variable
-            # if it's named '_' or starts with 'unused_'.
-            if ('assigned to but never used' in output_line and
-                ("local variable '_'" in output_line or
-                 "local variable 'unused_" in output_line)):
-                continue
+        contents_lines = contents.splitlines()  # need these for filtering
+        for output_line in pyflakes_stdout.readlines():
+            self._num_errors += self._process_one_line(output_line,
+                                                      contents_lines)
 
-            # Get rid of some warnings too.
-            if 'unable to detect undefined names' in output_line:
-                continue
-
-            # -- The next set of warnings need to look at the error line.
-            if contents_lines is None:
-                contents_lines = contents.splitlines()
-            bad_linenum = int(output_line.split(':', 2)[1])
-
-            # If the line has a nolint directive, ignore it.
-            if '@Nolint' in contents_lines[bad_linenum - 1]:
-                continue
-
-            # An old nolint directive that's specific to imports
-            if ('@UnusedImport' in contents_lines[bad_linenum - 1] and
-                'imported but unused' in output_line):
-                continue
-
-            # OK, looks like it's a legitimate error.
-            num_errors += 1
-            print output_line
-
-    return num_errors
+    def num_errors(self):
+        """A count of all the errors we've seen (and emitted) so far."""
+        return self._num_errors
 
 
 def main(rootdir, pep8_args, pyflakes_args):
     blacklist = _parse_blacklist(_BLACKLIST_FILE)
     files = _files_to_process(rootdir, blacklist)
-    # TODO(csilvers): run pep8 and pyflakes over one file at a time.
-    return (run_pep8(files, pep8_args) +
-            run_pyflakes(files, pyflakes_args))
+
+    processors = (Pep8(files, pep8_args),
+                  Pyflakes()
+                  )
+    for f in files:
+        for processor in processors:
+            processor.process(f)
+
+    return sum(p.num_errors() for p in processors)
 
 
 if __name__ == '__main__':
