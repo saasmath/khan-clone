@@ -813,10 +813,12 @@ class PasswordChange(request_handler.RequestHandler):
         else:
             self.render_form()
 
-    def render_form(self, message=None, success=False):
+    def render_form(self, message=None, success=False, user_data=None):
         transfer_token_value = self.request_string("transfer_token", default="")
         reset_token_value = self.request_string("reset_token", default="")
-        (user_data, _) = self.resolve_user_info()
+        if not user_data:
+            (user_data, _) = self.resolve_user_info()
+
         self.render_jinja2_template('password-change.html',
                                     {'message': message or "",
                                      'success': success,
@@ -857,7 +859,7 @@ class PasswordChange(request_handler.RequestHandler):
             if reset_token:
                 user_data = user_models.UserData.get_from_user_id(
                     reset_token.user_id)
-                
+
                 if reset_token.is_valid(user_data):
                     is_password_reset = True
                 else:
@@ -875,7 +877,8 @@ class PasswordChange(request_handler.RequestHandler):
             existing = self.request_string("existing")
             if not user_data.validate_password(existing):
                 # TODO(benkomalo): throttle incorrect password attempts
-                self.render_form(message="Incorrect password")
+                self.render_form(message="Incorrect password",
+                                 user_data=user_data)
                 return
 
         password1 = self.request_string("password1")
@@ -883,11 +886,13 @@ class PasswordChange(request_handler.RequestHandler):
         if (not password1 or
                 not password2 or
                 password1 != password2):
-            self.render_form(message="Passwords don't match")
+            self.render_form(message="Passwords don't match",
+                             user_data=user_data)
         elif not auth.passwords.is_sufficient_password(password1,
                                                        user_data.nickname,
                                                        user_data.username):
-            self.render_form(message="Password too weak")
+            self.render_form(message="Password too weak",
+                             user_data=user_data)
         else:
             # We're good!
             user_data.set_password(password1)
@@ -895,7 +900,9 @@ class PasswordChange(request_handler.RequestHandler):
                 # Password resets are done when the user is not even logged in,
                 # so redirect the host page to the login page (done via
                 # client side JS)
-                self.render_form(success=True)
+                self.render_form(message="Password reset. Redirecting...",
+                                 success=True,
+                                 user_data=user_data)
             else:
                 # Need to create a new auth token as the existing cookie will
                 # expire. Use /postlogin to set the cookie. This requires

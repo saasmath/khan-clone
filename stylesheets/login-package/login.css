@@ -396,6 +396,7 @@ a.signup-link {
 #pw-change-form .message-container {
     /* Always reserve room for it, even if it's empty */
     height: 1em;
+    text-align: right;
 }
 
 #pw-change-form .success {
@@ -404,7 +405,6 @@ a.signup-link {
 
 #pw-change-form .error {
     color: red;
-    text-align: right;
 }
 
 /* Dialog shown after step 1 of sign up */
