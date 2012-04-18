@@ -94,3 +94,34 @@ class FeedbackNotificationTest(BaseTest):
                          question,
                          asker)
         self.assertEqual(0, asker.feedback_notification_count())
+
+    def test_no_notification_for_question_changed_to_comment(self):
+        video = self.make_video()
+        asker = self.make_user_data('weasley@gmail.com')
+        answerer = self.make_user_data('hermione@gmail.com')
+
+        question = self.make_question("Where did Harry go?",
+                                      video,
+                                      asker)
+        self.make_answer("He went to the loo.",
+                         question,
+                         answerer)
+
+        question.change_type(discussion_models.FeedbackType.Comment)
+        self.assertEqual(0, asker.feedback_notification_count())
+
+    def test_regain_notification_for_question_changed_to_comment_and_back(self):
+        video = self.make_video()
+        asker = self.make_user_data('weasley@gmail.com')
+        answerer = self.make_user_data('hermione@gmail.com')
+
+        question = self.make_question("Where did Harry go?",
+                                      video,
+                                      asker)
+        self.make_answer("He went to the loo.",
+                         question,
+                         answerer)
+
+        question.change_type(discussion_models.FeedbackType.Comment)
+        question.change_type(discussion_models.FeedbackType.Question)
+        self.assertEqual(1, asker.feedback_notification_count())

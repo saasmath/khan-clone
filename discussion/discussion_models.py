@@ -1,7 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import logging
-
 from google.appengine.ext import db
 
 import user_models
@@ -164,8 +162,11 @@ class Feedback(db.Model):
     def is_type(self, type):
         return type in self.types
 
-    def change_type(self, target_type, clear_flags):
-        """Change the FeedbackType and optionally clear flags."""
+    def change_type(self, target_type, clear_flags=False):
+        """Change the FeedbackType and optionally clear flags.
+        
+        Currently used by mods to change between comments and questions.
+        """
         if FeedbackType.is_valid(target_type):
             self.types = [target_type]
 
@@ -173,6 +174,13 @@ class Feedback(db.Model):
                 self.clear_flags()
 
             self.put()
+
+            author_user_data = user_models.UserData.get_from_user(self.author)
+            if author_user_data:
+                # Recalculate author's notification count since
+                # comments don't have answers
+                author_user_data.count_feedback_notification = -1
+                author_user_data.put()
 
     def question_key(self):
         if self.targets:
