@@ -7,7 +7,7 @@ from third_party.agar.test import BaseTest
 
 # TODO(marcia): Not sure why user_models has to come first
 import user_models
-import models_discussion
+import discussion_models
 import notification
 import video_models
 
@@ -19,14 +19,14 @@ class FeedbackNotificationTest(BaseTest):
         return video
 
     def make_question(self, content, video, user_data):
-        return models_discussion.Feedback.insert_question_for(content,
+        return discussion_models.Feedback.insert_question_for(content,
                                                               video,
                                                               user_data)
     def make_user_data(self, email):
         return user_models.UserData.insert_for(email, email)
 
     def make_answer(self, content, question, user_data):
-        answer = models_discussion.Feedback.insert_answer_for(content,
+        answer = discussion_models.Feedback.insert_answer_for(content,
                                                               question,
                                                               user_data)
         notification.new_answer_for_video_question(question.video(),

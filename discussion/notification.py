@@ -10,7 +10,7 @@ import util
 import util_discussion
 import request_handler
 import user_models
-import models_discussion
+import discussion_models
 import voting
 
 
@@ -20,7 +20,7 @@ def get_questions_data(user_data):
     dict_meta_questions = {}
 
     # Get questions asked by user
-    questions = models_discussion.Feedback.get_all_questions_by_author(user_data.user_id)
+    questions = discussion_models.Feedback.get_all_questions_by_author(user_data.user_id)
     for question in questions:
         qa_expand_key = str(question.key())
         meta_question = MetaQuestion.from_question(question, user_data)
@@ -116,7 +116,7 @@ def feedback_answers_for_user_data(user_data):
     if not user_data:
         return feedbacks
 
-    notifications = models_discussion.FeedbackNotification.gql("WHERE user = :1", user_data.user)
+    notifications = discussion_models.FeedbackNotification.gql("WHERE user = :1", user_data.user)
 
     for notification in notifications:
 
@@ -127,7 +127,7 @@ def feedback_answers_for_user_data(user_data):
         except db.ReferencePropertyResolveError:
             pass
 
-        if not feedback or not feedback.video() or not feedback.is_visible_to_public() or not feedback.is_type(models_discussion.FeedbackType.Answer):
+        if not feedback or not feedback.video() or not feedback.is_visible_to_public() or not feedback.is_type(discussion_models.FeedbackType.Answer):
             # If we ever run into notification for a deleted or non-FeedbackType.Answer piece of feedback,
             # go ahead and clear the notification so we keep the DB clean.
             db.delete(notification)
@@ -148,7 +148,7 @@ def new_answer_for_video_question(video, question, answer):
     if question.author == answer.author:
         return
 
-    notification = models_discussion.FeedbackNotification()
+    notification = discussion_models.FeedbackNotification()
     notification.user = question.author
     notification.feedback = answer
 
@@ -169,7 +169,7 @@ def clear_notification_for_question(question_key, user_data=None):
         if not user_data:
             return
 
-    question = models_discussion.Feedback.get(question_key)
+    question = discussion_models.Feedback.get(question_key)
 
     if not question:
         return
@@ -178,7 +178,7 @@ def clear_notification_for_question(question_key, user_data=None):
 
     answer_keys = question.children_keys()
     for answer_key in answer_keys:
-        notification = models_discussion.FeedbackNotification.gql(
+        notification = discussion_models.FeedbackNotification.gql(
             "WHERE user = :1 AND feedback = :2", user_data.user, answer_key)
 
         if notification.count():

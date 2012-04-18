@@ -1,5 +1,5 @@
 from badges import Badge, BadgeCategory, BadgeContextType
-from discussion.models_discussion import FeedbackType
+from discussion.discussion_models import FeedbackType
 
 # All badges that may be awarded once-per-Feedback inherit from FeedbackBadge
 class FeedbackBadge(Badge):

@@ -3,7 +3,7 @@ from mapreduce import control
 from mapreduce import operation as op
 
 import user_models
-import models_discussion
+import discussion_models
 import notification
 import util_discussion
 import user_util
@@ -25,7 +25,7 @@ class StartNewFlagUpdateMapReduce(request_handler.RequestHandler):
                 name = "FeedbackFlagUpdate",
                 handler_spec = "discussion.qa.feedback_flag_update_map",
                 reader_spec = "mapreduce.input_readers.DatastoreInputReader",
-                reader_parameters = {"entity_kind": "discussion.models_discussion.Feedback"},
+                reader_parameters = {"entity_kind": "discussion.discussion_models.Feedback"},
                 shard_count = 64,
                 queue_name = "backfill-mapreduce-queue",
                 )
@@ -93,7 +93,7 @@ class AddAnswer(request_handler.RequestHandler):
         question = db.get(question_key)
 
         if answer_text and video and question:
-            answer = models_discussion.Feedback.insert_answer_for(answer_text,
+            answer = discussion_models.Feedback.insert_answer_for(answer_text,
                                                                   question,
                                                                   user_data)
 
@@ -116,9 +116,9 @@ class Answers(request_handler.RequestHandler):
 
         if question:
             video = question.video()
-            dict_votes = models_discussion.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
+            dict_votes = discussion_models.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
 
-            answers = models_discussion.Feedback.gql("WHERE types = :1 AND targets = :2", models_discussion.FeedbackType.Answer, question.key()).fetch(1000)
+            answers = discussion_models.Feedback.gql("WHERE types = :1 AND targets = :2", discussion_models.FeedbackType.Answer, question.key()).fetch(1000)
             answers = filter(lambda answer: answer.is_visible_to(user_data), answers)
             answers = voting.VotingSortOrder.sort(answers)
 
@@ -160,7 +160,7 @@ class AddQuestion(request_handler.RequestHandler):
             if len(text) > 500:
                 text = text[0:500] # max question length, also limited by client
 
-            question = models_discussion.Feedback.insert_question_for(text,
+            question = discussion_models.Feedback.insert_question_for(text,
                                                                       video,
                                                                       user_data)
 
@@ -195,14 +195,14 @@ class EditEntity(request_handler.RequestHandler):
 
                     # Redirect to appropriate list of entities depending on type of 
                     # feedback entity being edited.
-                    if feedback.is_type(models_discussion.FeedbackType.Question):
+                    if feedback.is_type(discussion_models.FeedbackType.Question):
 
                         page = self.request.get("page")
                         video = feedback.video()
                         self.redirect("/discussion/pagequestions?video_key=%s&page=%s&qa_expand_key=%s" % 
                                         (video.key(), page, feedback.key()))
 
-                    elif feedback.is_type(models_discussion.FeedbackType.Answer):
+                    elif feedback.is_type(discussion_models.FeedbackType.Answer):
 
                         question = feedback.question()
                         self.redirect("/discussion/answers?question_key=%s" % question.key())
@@ -223,7 +223,7 @@ class FlagEntity(request_handler.RequestHandler):
 
         key = self.request_string("entity_key", default="")
         flag = self.request_string("flag", default="")
-        if key and models_discussion.FeedbackFlag.is_valid(flag):
+        if key and discussion_models.FeedbackFlag.is_valid(flag):
             entity = db.get(key)
             if entity and entity.add_flag_by(flag, user_data):
                 entity.put()
@@ -253,7 +253,7 @@ class ChangeEntityType(request_handler.RequestHandler):
 
         key = self.request.get("entity_key")
         target_type = self.request.get("target_type")
-        if key and models_discussion.FeedbackType.is_valid(target_type):
+        if key and discussion_models.FeedbackType.is_valid(target_type):
             entity = db.get(key)
             if entity:
                 entity.types = [target_type]
@@ -301,13 +301,13 @@ def video_qa_context(user_data, video, page=0, qa_expand_key=None, sort_override
     if sort_override >= 0:
         sort_order = sort_override
 
-    questions = util_discussion.get_feedback_by_type_for_video(video, models_discussion.FeedbackType.Question, user_data)
+    questions = util_discussion.get_feedback_by_type_for_video(video, discussion_models.FeedbackType.Question, user_data)
     questions = voting.VotingSortOrder.sort(questions, sort_order=sort_order)
 
     if qa_expand_key:
         # If we're showing an initially expanded question,
         # make sure we're on the correct page
-        question = models_discussion.Feedback.get(qa_expand_key)
+        question = discussion_models.Feedback.get(qa_expand_key)
         if question:
             count_preceding = 0
             for question_test in questions:
@@ -316,11 +316,11 @@ def video_qa_context(user_data, video, page=0, qa_expand_key=None, sort_override
                 count_preceding += 1
             page = 1 + (count_preceding / limit_per_page)
 
-    answers = util_discussion.get_feedback_by_type_for_video(video, models_discussion.FeedbackType.Answer, user_data)
+    answers = util_discussion.get_feedback_by_type_for_video(video, discussion_models.FeedbackType.Answer, user_data)
     answers.reverse() # Answers are initially in date descending -- we want ascending before the points sort
     answers = voting.VotingSortOrder.sort(answers)
 
-    dict_votes = models_discussion.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
+    dict_votes = discussion_models.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
 
     count_total = len(questions)
     questions = questions[((page - 1) * limit_per_page):(page * limit_per_page)]
