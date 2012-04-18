@@ -37,12 +37,8 @@ class FeedbackNotificationTest(BaseTest):
         asker = self.make_user_data('weasley@gmail.com')
         answerer = self.make_user_data('hermione@gmail.com')
 
-        question = self.make_question("Where did Harry go?",
-                                      video,
-                                      asker)
-        self.make_answer("He went to the loo.",
-                         question,
-                         answerer)
+        question = self.make_question("Where did Harry go?", video, asker)
+        self.make_answer("He went to the loo.", question, answerer)
 
         self.assertEqual(1, asker.feedback_notification_count())
 
@@ -51,13 +47,8 @@ class FeedbackNotificationTest(BaseTest):
         asker = self.make_user_data('weasley@gmail.com')
         answerer = self.make_user_data('hermione@gmail.com')
 
-        question = self.make_question("Where did Harry go?",
-                                      video,
-                                      asker)
-
-        self.make_answer("He went to the loo.",
-                         question,
-                         answerer)
+        question = self.make_question("Where did Harry go?", video, asker)
+        self.make_answer("He went to the loo.", question, answerer)
 
         notification.clear_notification_for_question(question.key(), asker)
 
@@ -69,27 +60,18 @@ class FeedbackNotificationTest(BaseTest):
         answerer = self.make_user_data('hermione@gmail.com')
         other_answerer = self.make_user_data('harry@gmail.com')
 
-        question = self.make_question("Where did Harry go?",
-                                      video,
-                                      asker)
-        self.make_answer("He went to the loo.",
-                         question,
-                         answerer)
-        self.make_answer("No, I'm right here!",
-                         question,
-                         other_answerer)
+        question = self.make_question("Where did Harry go?", video, asker)
+        self.make_answer("He went to the loo.", question, answerer)
+        self.make_answer("No, I'm right here!", question, other_answerer)
 
         self.assertEqual(1, asker.feedback_notification_count())
 
     def test_no_notification_for_answering_own_question(self):
         video = self.make_video()
         asker = self.make_user_data('weasley@gmail.com')
-        question = self.make_question("Where did Harry go?",
-                                      video,
-                                      asker)
-        self.make_answer("Oh, I know where he went.",
-                         question,
-                         asker)
+        question = self.make_question("Where did Harry go?", video, asker)
+        self.make_answer("Oh, I know where he went.", question, asker)
+
         self.assertEqual(0, asker.feedback_notification_count())
 
     def test_no_notification_for_question_changed_to_comment(self):
@@ -97,12 +79,8 @@ class FeedbackNotificationTest(BaseTest):
         asker = self.make_user_data('weasley@gmail.com')
         answerer = self.make_user_data('hermione@gmail.com')
 
-        question = self.make_question("Where did Harry go?",
-                                      video,
-                                      asker)
-        self.make_answer("He went to the loo.",
-                         question,
-                         answerer)
+        question = self.make_question("Where did Harry go?", video, asker)
+        self.make_answer("He went to the loo.", question, answerer)
 
         question.change_type(discussion_models.FeedbackType.Comment)
         self.assertEqual(0, asker.feedback_notification_count())
@@ -112,12 +90,8 @@ class FeedbackNotificationTest(BaseTest):
         asker = self.make_user_data('weasley@gmail.com')
         answerer = self.make_user_data('hermione@gmail.com')
 
-        question = self.make_question("Where did Harry go?",
-                                      video,
-                                      asker)
-        self.make_answer("He went to the loo.",
-                         question,
-                         answerer)
+        question = self.make_question("Where did Harry go?", video, asker)
+        self.make_answer("He went to the loo.", question, answerer)
 
         question.change_type(discussion_models.FeedbackType.Comment)
         question.change_type(discussion_models.FeedbackType.Question)
