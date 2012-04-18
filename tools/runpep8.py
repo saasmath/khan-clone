@@ -107,7 +107,7 @@ def run_pyflakes(files, unused_pyflakes_args):
         else:
             try:
                 sys.stdout = new_stdout
-                num_errors += pyflakes.check(contents, f)
+                pyflakes.check(contents, f)
             finally:
                 sys.stdout = old_stdout
 
@@ -143,6 +143,7 @@ def run_pyflakes(files, unused_pyflakes_args):
                 continue
 
             # OK, looks like it's a legitimate error.
+            num_errors += 1
             print output_line
 
     return num_errors
