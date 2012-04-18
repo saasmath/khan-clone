@@ -448,7 +448,7 @@ a.signup-link {
 .forgot-pw-container.card-case {
     margin: 6em auto;
     padding: 3em 2em;
-    width: 330px;
+    width: 340px;
 }
 
 .forgot-pw-container .auth-form {
@@ -460,8 +460,18 @@ a.signup-link {
 }
 
 .forgot-pw-container h4 {
-    margin-bottom: 1em;
+    margin-bottom: 0.5em;
 }
+
+.forgot-pw-container h5.email {
+    text-align: center;
+}
+
+.forgot-pw-container .instructions {
+    margin-top: 1em;
+    margin-left: 100px; /* enough to clear the left-floated tree */
+}
+
 
 .forgot-pw-container #email {
     width: 13em;
