@@ -45,7 +45,7 @@ class Login(request_handler.RequestHandler):
         return util.create_post_login_url(cont)
 
     def render_login_outer(self):
-        """ Renders the login page.
+        """Render the login page.
 
         Note that part of the contents of this page is hosted on an iframe
         and rendered by this same RequestHandler (render_login_form)
@@ -72,7 +72,7 @@ class Login(request_handler.RequestHandler):
 
 
     def render_login_form(self, identifier=None, errors=None):
-        """ Renders the form with the username/password fields. This is
+        """Render the form with the username/password fields. This is
         hosted an in iframe in the main login page.
 
         errors - a dictionary of possible errors from a previous login that
@@ -93,11 +93,10 @@ class Login(request_handler.RequestHandler):
 
     @user_util.open_access
     def post(self):
-        """ Handles a POST from the login form.
+        """Handle a POST from the login form.
 
         This happens when the user attempts to login with an identifier (email
         or username) and password.
-
         """
 
         cont = self.request_continue_url()
@@ -125,7 +124,7 @@ class Login(request_handler.RequestHandler):
 
     @staticmethod
     def return_login_json(handler, user_data, cont="/"):
-        """ Handles a successful login for a user by redirecting them
+        """Handle a successful login for a user by redirecting them
         to the PostLogin URL with the auth token, which will ultimately set
         the auth cookie for them.
 
@@ -133,7 +132,6 @@ class Login(request_handler.RequestHandler):
         must accept requests with password strings over https, but the rest
         of the site is not (yet) using https, and therefore must use a
         non-https cookie.
-
         """
 
         auth_token = AuthToken.for_user(user_data)
@@ -157,9 +155,8 @@ class MobileOAuthLogin(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def post(self):
-        """ POST submissions are for username/password based logins to
+        """POST submissions are for username/password based logins to
         acquire an OAuth access token.
-
         """
 
         identifier = self.request_string('identifier')
@@ -196,7 +193,7 @@ class MobileOAuthLogin(request_handler.RequestHandler):
         return auth_util.authorize_token_redirect(oauth_map, force_http=True)
 
 def _upgrade_phantom_into(phantom_data, target_data):
-    """ Attempts to merge a phantom user into a target user.
+    """Attempt to merge a phantom user into a target user.
     Will bail if any signs that the target user has previous activity.
     """
 
@@ -214,7 +211,7 @@ def _upgrade_phantom_into(phantom_data, target_data):
 
 class PostLogin(request_handler.RequestHandler):
     def _consume_auth_token(self):
-        """Checks to see if a valid auth token is specified as a param
+        """Check to see if a valid auth token is specified as a param
         in the request, so it can be converted into a cookie
         and used as the identifier for the current and future requests.
         """
@@ -371,7 +368,7 @@ _email_re = re.compile(
 class Signup(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
-        """ Renders the register for new user page.  """
+        """Render the register for new user page."""
 
         if (self.request_bool('under13', default=False)
                 or cookie_util.get_cookie_value(auth.cookies.U13_COOKIE_NAME)):
@@ -394,12 +391,11 @@ class Signup(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def post(self):
-        """ Handles registration request on our site.
+        """Handle registration request on our site.
 
         Note that new users can still be created via PostLogin if the user
         signs in via Google/FB for the first time - this is for the
         explicit registration via our own services.
-
         """
 
         values = {
@@ -519,17 +515,15 @@ class Signup(request_handler.RequestHandler):
                     body=body)
 
 class CompleteSignup(request_handler.RequestHandler):
-    """ A handler for a page that allows users to create a password to login
+    """A handler for a page that allows users to create a password to login
     with a Khan Academy account. This is also being doubly used for existing
     Google/FB users to add a password to their account.
-
     """
 
     @staticmethod
     def build_link(unverified_user):
-        """ Builds a link for an unverified user by using their unique
+        """Build a link for an unverified user by using their unique
         randstring as a token embedded into the URL
-
         """
 
         return util.absolute_url(
@@ -537,10 +531,9 @@ class CompleteSignup(request_handler.RequestHandler):
                 unverified_user.randstring)
 
     def resolve_token(self):
-        """ Validates the token specified in the request parameters and returns
+        """Validate the token specified in the request parameters and returns
         a tuple of (token, UnverifiedUser) if it is a valid token.
         Returns (None, None) if no valid token was detected.
-
         """
 
         token = self.request_string("token", default=None)
@@ -562,7 +555,7 @@ class CompleteSignup(request_handler.RequestHandler):
             return self.render_outer()
 
     def render_outer(self):
-        """ Renders the second part of the user signup step, after the user
+        """Render the second part of the user signup step, after the user
         has verified ownership of their e-mail account.
 
         The request URI must include a valid token from an UnverifiedUser, and
@@ -571,7 +564,6 @@ class CompleteSignup(request_handler.RequestHandler):
 
         Note that the contents are actually rendered in an iframe so it
         can be sent over https (generated in render_form).
-
         """
         (valid_token, _) = self.resolve_token()
         user_data = UserData.current()
@@ -625,7 +617,7 @@ class CompleteSignup(request_handler.RequestHandler):
         self.render_jinja2_template('completesignup.html', template_values)
 
     def render_form(self):
-        """ Renders the contents of the form for completing a signup. """
+        """Render the contents of the form for completing a signup."""
 
         valid_token, unverified_user = self.resolve_token()
         user_data = _resolve_user_in_https_frame(self)
@@ -848,7 +840,7 @@ class PasswordChange(request_handler.RequestHandler):
             return "%s&transfer_token=%s" % (util.secure_url(url), token)
 
     def resolve_user_info(self):
-        """Returns the information for the user and current request.
+        """Return the information for the user and current request.
 
         Returns:
             A tuple of (UserData, bool) including the UserData of the actor
@@ -932,7 +924,7 @@ class ForgotPassword(request_handler.RequestHandler):
             return
 
         self.render_jinja2_template('forgot-password.html', {})
-        
+
     @user_util.open_access
     def post(self):
         email = self.request_string("email", default=None)
@@ -945,7 +937,7 @@ class ForgotPassword(request_handler.RequestHandler):
             # No user with that e-mail found. Drats!
             # TODO(benkomalo): implement
             return
-        
+
         if not user_data.has_password():
             # No user with a KA password.
             # TODO(benkomalo): implement
@@ -977,7 +969,7 @@ class ForgotPassword(request_handler.RequestHandler):
 
 class PasswordReset(request_handler.RequestHandler):
     """Handler for the password reset flow.
-    
+
     This is after the user has received an e-mail with a recovery link
     and handles the request for when they click on that link in the e-mail.
     """
@@ -1003,7 +995,7 @@ class PasswordReset(request_handler.RequestHandler):
 
 
 def _resolve_user_in_https_frame(handler):
-    """Determines the current logged in user for the HTTPS request.
+    """Determine the current logged in user for the HTTPS request.
 
     This has logic in additional to UserData.current(), since it should also
     accept TransferAuthTokens, since HTTPS requests may not have normal HTTP
