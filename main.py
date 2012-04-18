@@ -797,6 +797,8 @@ application = webapp2.WSGIApplication([
     ('/signup', login.Signup),
     ('/completesignup', login.CompleteSignup),
     ('/pwchange', login.PasswordChange),
+    ('/forgotpw', login.ForgotPassword),  # Start of pw-recovery flow
+    ('/pwreset', login.PasswordReset),  # For after user clicks on email link
 
     ('/api-apps/register', oauth_apps.Register),
 

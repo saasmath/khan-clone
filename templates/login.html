@@ -1,5 +1,6 @@
 {% extends "page_template.html" %}
 {% block meta_page_title %}Sign In | {% endblock meta_page_title %}
+{% import 'macros/login_buttons.html' as login_macros %}
 
 {% block pagecss %}
     {{ js_css_packages.css_package("login") }}
@@ -11,23 +12,11 @@
 
     <div class="providers">
         <h3>Login to Khan Academy with</h3>
-        <div id="login-google" class="action-gradient provider">
-            <div class="img-container">
-                <a href="{{google_url}}">
-                    <img width="180" height="61" alt="Google" src="/images/google-logo-large.png">
-                </a>
-            </div>
-        </div>
+        {{ login_macros.google_button(google_url) }}
 
         <br>
 
-        {% if App.facebook_app_secret %}
-        <div id="login-facebook" class="action-gradient provider">
-            <div class="img-container">
-            <img width="180" height="61" alt="Facebook" src="/images/facebook-logo-large.png">
-            </div>
-        </div>
-        {% endif %}
+        {{ login_macros.facebook_button(App.facebook_app_secret) }}
     </div>
 
     <div class="vertical-separator">
