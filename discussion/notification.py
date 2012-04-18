@@ -51,13 +51,6 @@ class MetaQuestion(object):
         meta = MetaQuestion()
         meta.video = video
 
-        # HACK(marcia): The reason we need to send the topic is to construct
-        # the video url so that it doesn't redirect to the canonical url,
-        # which strips url parameters
-        # Consider actually fixing that so the url parameters are passed
-        # along with the redirect.
-        meta.topic_slug = video.first_topic().get_extended_slug()
-
         # qa_expand_key is later used as a url parameter on the video page
         # to expand the question and its answers
         meta.qa_expand_key = str(question.key())
