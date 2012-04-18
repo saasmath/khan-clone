@@ -1,8 +1,3 @@
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
 from third_party.agar.test import BaseTest
 
 # TODO(marcia): Not sure why user_models has to come first
@@ -10,6 +5,7 @@ import user_models
 import discussion_models
 import notification
 import video_models
+
 
 class FeedbackNotificationTest(BaseTest):
     def make_video(self):
@@ -22,6 +18,7 @@ class FeedbackNotificationTest(BaseTest):
         return discussion_models.Feedback.insert_question_for(content,
                                                               video,
                                                               user_data)
+
     def make_user_data(self, email):
         return user_models.UserData.insert_for(email, email)
 
@@ -110,7 +107,7 @@ class FeedbackNotificationTest(BaseTest):
         question.change_type(discussion_models.FeedbackType.Comment)
         self.assertEqual(0, asker.feedback_notification_count())
 
-    def test_regain_notification_for_question_changed_to_comment_and_back(self):
+    def test_get_notification_for_question_changed_to_comment_and_back(self):
         video = self.make_video()
         asker = self.make_user_data('weasley@gmail.com')
         answerer = self.make_user_data('hermione@gmail.com')
