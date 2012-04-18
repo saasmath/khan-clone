@@ -933,14 +933,14 @@ class ForgotPassword(request_handler.RequestHandler):
             return
 
         user_data = user_models.UserData.get_from_user_input_email(email)
-        if not user_data:
-            # No user with that e-mail found. Drats!
-            # TODO(benkomalo): implement
-            return
-
-        if not user_data.has_password():
-            # No user with a KA password.
-            # TODO(benkomalo): implement
+        if not user_data or not user_data.has_password():
+            # TODO(benkomalo): separate out the case where we detected a user
+            # but he/she doesn't have a password set?
+            self.render_jinja2_template(
+                'forgot-password-error.html', {
+                    'email': email,
+                    'google_url': users.create_login_url('/completesignup'),
+                })
             return
 
         reset_url = PasswordReset.build_link(user_data)

@@ -478,6 +478,39 @@ a.signup-link {
     width: 13em;
 }
 
+.forgot-pw-error-container.card-case,
+.forgot-pw-signup-container.card-case {
+    margin: 6em auto;
+    padding: 2em;
+    width: 640px;
+}
+
+.forgot-pw-error-container.card-case {
+    font-family: "MuseoSans300", sans-serif;
+    font-size: 14px;
+    margin-bottom: 2em;
+    background-color: #f6e8e2;
+    border-color: #f8bca3;
+}
+
+.forgot-pw-signup-container.card-case {
+    margin-top: 0;
+}
+
+.forgot-pw-signup-container .providers {
+    height: auto;
+}
+
+.forgot-pw-signup-container .providers-info {
+    display: inline-block;
+    position: relative;
+    top: -1em;
+    font-family: "MuseoSans500", sans-serif;
+    font-size: 14px;
+    margin-left: 1em;
+    width: 14em;
+}
+
 .pw-reset-container.card-case {
     margin: 6em auto;
     padding: 1.5em;
