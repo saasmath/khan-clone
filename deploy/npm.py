@@ -33,7 +33,7 @@ def call(cmd):
     os.chdir(cd)
     return npm_results
 
-def colorize(string, color, bold=False):
+def colorize(string, color, bold=False, highlight=False):
     colors = {
         'gray'  : 30,
         'red'   : 31,
@@ -46,10 +46,10 @@ def colorize(string, color, bold=False):
         'crimson':38
     }
 
-    if not colors.has_key(color) or not sys.stdout.isatty():
+    if not color in colors or not sys.stdout.isatty():
         return string
     else:
-        color = str(colors[color])
+        color = str(colors[color]) if not highlight else str(colors[color]+10)
         colorcode = [color] if not bold else [color, '1']
         return '\x1b[%sm%s\x1b[0m' % (';'.join(colorcode), string)
 
