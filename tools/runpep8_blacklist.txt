@@ -70,7 +70,7 @@
 ./deploy/hipchat/user.py
 ./deploy/npm.py
 ./discussion/comments.py
-./discussion/models_discussion.py
+./discussion/discussion_models.py
 ./discussion/moderation.py
 ./discussion/notification.py
 ./discussion/qa.py

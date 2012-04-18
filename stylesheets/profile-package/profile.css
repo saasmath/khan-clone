@@ -1133,6 +1133,7 @@ li.profile-tab {
 .coach-row .controls {
     float: right;
 }
+/* "Edit Profile" dropdown */
 .user-profile-controls {
     margin-top: 10px;
 }
@@ -1146,7 +1147,7 @@ li.profile-tab {
 .user-profile-controls .dropdown-toggle:active,
 .user-profile-controls .dropdown-toggle.toggled {
     color: #263500;
-    background-color: #e7f5c4;
+    background-color: #bdd98d;
 }
 #tab-content-discussion .graph-picker {
     margin-bottom: 0;

@@ -10,7 +10,7 @@ import util
 import util_discussion
 import request_handler
 import user_models
-import models_discussion
+import discussion_models
 import voting
 
 
@@ -20,7 +20,7 @@ def get_questions_data(user_data):
     dict_meta_questions = {}
 
     # Get questions asked by user
-    questions = models_discussion.Feedback.get_all_questions_by_author(user_data.user_id)
+    questions = discussion_models.Feedback.get_all_questions_by_author(user_data.user_id)
     for question in questions:
         qa_expand_key = str(question.key())
         meta_question = MetaQuestion.from_question(question, user_data)
@@ -50,13 +50,6 @@ class MetaQuestion(object):
 
         meta = MetaQuestion()
         meta.video = video
-
-        # HACK(marcia): The reason we need to send the topic is to construct
-        # the video url so that it doesn't redirect to the canonical url,
-        # which strips url parameters
-        # Consider actually fixing that so the url parameters are passed
-        # along with the redirect.
-        meta.topic_slug = video.first_topic().get_extended_slug()
 
         # qa_expand_key is later used as a url parameter on the video page
         # to expand the question and its answers
@@ -116,7 +109,7 @@ def feedback_answers_for_user_data(user_data):
     if not user_data:
         return feedbacks
 
-    notifications = models_discussion.FeedbackNotification.gql("WHERE user = :1", user_data.user)
+    notifications = discussion_models.FeedbackNotification.gql("WHERE user = :1", user_data.user)
 
     for notification in notifications:
 
@@ -127,7 +120,7 @@ def feedback_answers_for_user_data(user_data):
         except db.ReferencePropertyResolveError:
             pass
 
-        if not feedback or not feedback.video() or not feedback.is_visible_to_public() or not feedback.is_type(models_discussion.FeedbackType.Answer):
+        if not feedback or not feedback.video() or not feedback.is_visible_to_public() or not feedback.is_type(discussion_models.FeedbackType.Answer):
             # If we ever run into notification for a deleted or non-FeedbackType.Answer piece of feedback,
             # go ahead and clear the notification so we keep the DB clean.
             db.delete(notification)
@@ -148,7 +141,7 @@ def new_answer_for_video_question(video, question, answer):
     if question.author == answer.author:
         return
 
-    notification = models_discussion.FeedbackNotification()
+    notification = discussion_models.FeedbackNotification()
     notification.user = question.author
     notification.feedback = answer
 
@@ -160,30 +153,33 @@ def new_answer_for_video_question(video, question, answer):
 
     db.put([notification, user_data])
 
-def clear_question_answers_for_current_user(question_key):
-
-    user_data = user_models.UserData.current()
-
-    if not user_data:
-        return
-
+def clear_notification_for_question(question_key, user_data=None):
     if not question_key:
         return
 
-    question = models_discussion.Feedback.get(question_key)
+    if not user_data:
+        user_data = user_models.UserData.current()
+        if not user_data:
+            return
+
+    question = discussion_models.Feedback.get(question_key)
+
     if not question:
         return
 
     deleted_notification = False
 
-    feedback_keys = question.children_keys()
-    for key in feedback_keys:
-        notifications = models_discussion.FeedbackNotification.gql("WHERE user = :1 AND feedback = :2", user_data.user, key)
-        if notifications.count():
+    answer_keys = question.children_keys()
+    for answer_key in answer_keys:
+        notification = discussion_models.FeedbackNotification.gql(
+            "WHERE user = :1 AND feedback = :2", user_data.user, answer_key)
+
+        if notification.count():
             deleted_notification = True
-            db.delete(notifications)
+            db.delete(notification)
 
     if deleted_notification:
         count = user_data.count_feedback_notification
-        user_data.count_feedback_notification = count - 1
-        user_data.put()
+        if count > 0:
+            user_data.count_feedback_notification = count - 1
+            user_data.put()

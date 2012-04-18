@@ -4,7 +4,7 @@ from google.appengine.api import users
 import api.auth.xsrf
 import request_handler
 import user_models
-import models_discussion
+import discussion_models
 from badges.discussion_badges import ModeratorBadge
 import user_util
 
@@ -48,7 +48,7 @@ class FlaggedFeedback(request_handler.RequestHandler):
     def get(self):
 
         # Show all non-deleted feedback flagged for moderator attention
-        feedback_query = models_discussion.Feedback.all().filter("is_flagged = ", True).filter("deleted = ", False)
+        feedback_query = discussion_models.Feedback.all().filter("is_flagged = ", True).filter("deleted = ", False)
 
         feedback_count = feedback_query.count()
 
@@ -62,8 +62,8 @@ class FlaggedFeedback(request_handler.RequestHandler):
                 "feedbacks": feedbacks, 
                 "feedback_count": feedback_count,
                 "has_more": len(feedbacks) < feedback_count,
-                "feedback_type_question": models_discussion.FeedbackType.Question,
-                "feedback_type_comment": models_discussion.FeedbackType.Comment,
+                "feedback_type_question": discussion_models.FeedbackType.Question,
+                "feedback_type_comment": discussion_models.FeedbackType.Comment,
                 "selected_id": "flaggedfeedback",
                 }
 
@@ -89,7 +89,7 @@ class BannedList(request_handler.RequestHandler):
 
             if user_data.discussion_banned:
                 # Delete all old posts by hellbanned user
-                query = models_discussion.Feedback.all()
+                query = discussion_models.Feedback.all()
                 query.ancestor(user_data)
                 for feedback in query:
                     if not feedback.deleted:

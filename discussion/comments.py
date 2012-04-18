@@ -7,7 +7,7 @@ except ImportError:
     import simplejson as json
 
 import user_models
-import models_discussion
+import discussion_models
 import util_discussion
 import user_util
 import util
@@ -59,11 +59,11 @@ class AddComment(request_handler.RequestHandler):
             if len(comment_text) > 300:
                 comment_text = comment_text[0:300] # max comment length, also limited by client
 
-            comment = models_discussion.Feedback(parent=user_data)
+            comment = discussion_models.Feedback(parent=user_data)
             comment.set_author(user_data)
             comment.content = comment_text
             comment.targets = [video.key()]
-            comment.types = [models_discussion.FeedbackType.Comment]
+            comment.types = [discussion_models.FeedbackType.Comment]
 
             if user_data.discussion_banned:
                 # Hellbanned users' posts are automatically hidden
@@ -86,13 +86,13 @@ def video_comments_context(video, page=0, comments_hidden=True, sort_order=votin
     limit_per_page = 10
     limit_initially_visible = 2 if comments_hidden else limit_per_page
 
-    comments = util_discussion.get_feedback_by_type_for_video(video, models_discussion.FeedbackType.Comment, user_data)
+    comments = util_discussion.get_feedback_by_type_for_video(video, discussion_models.FeedbackType.Comment, user_data)
     comments = voting.VotingSortOrder.sort(comments, sort_order=sort_order)
 
     count_total = len(comments)
     comments = comments[((page - 1) * limit_per_page):(page * limit_per_page)]
 
-    dict_votes = models_discussion.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
+    dict_votes = discussion_models.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
     for comment in comments:
         voting.add_vote_expando_properties(comment, dict_votes)
 
