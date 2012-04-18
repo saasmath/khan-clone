@@ -253,15 +253,12 @@ class ChangeEntityType(request_handler.RequestHandler):
 
         key = self.request.get("entity_key")
         target_type = self.request.get("target_type")
-        if key and discussion_models.FeedbackType.is_valid(target_type):
+
+        if key:
             entity = db.get(key)
             if entity:
-                entity.types = [target_type]
-
-                if self.request_bool("clear_flags", default=False):
-                    entity.clear_flags()
-
-                entity.put()
+                clear_flags = self.request_bool("clear_flags", default=False)
+                entity.change_type(target_type, clear_flags)
 
         self.redirect("/discussion/flaggedfeedback")
 

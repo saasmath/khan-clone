@@ -164,6 +164,16 @@ class Feedback(db.Model):
     def is_type(self, type):
         return type in self.types
 
+    def change_type(self, target_type, clear_flags):
+        """Change the FeedbackType and optionally clear flags."""
+        if FeedbackType.is_valid(target_type):
+            self.types = [target_type]
+
+            if clear_flags:
+                self.clear_flags()
+
+            self.put()
+
     def question_key(self):
         if self.targets:
             return self.targets[-1]  # last target is always the question
