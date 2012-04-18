@@ -3,12 +3,14 @@
 import urllib
 import logging
 import re
+import json
 
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 from google.appengine.api import users
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 from google.appengine.api import memcache
+from google.appengine.api import urlfetch
 
 import webapp2
 from webapp2_extras.routes import DomainRoute
@@ -157,61 +159,6 @@ class TopicPage(request_handler.RequestHandler):
         self.error(404)
         raise PageNotFoundException("Page not found")
     
-
-class GetSearchIndex(request_handler.RequestHandler):
-
-    @user_util.open_access
-    def get(self):
-        import xml.dom.minidom
-
-        # Fields to index
-        fields = ["title", "description", "keywords"]
-
-        # Other attributes we might want to filter or sort by
-        attrs = ["readable_id"]
-
-        impl = xml.dom.minidom.getDOMImplementation()
-        doc = impl.createDocument(None, "sphinx__docset", None)
-        root = doc.documentElement
-
-        schema_el = doc.createElement("sphinx__schema")
-        for field in fields:
-            field_el = doc.createElement("sphinx__field")
-            field_el.setAttribute("name", field)
-            schema_el.appendChild(field_el)
-
-        for attr in attrs:
-            attr_el = doc.createElement("sphinx__attr")
-            attr_el.setAttribute("name", attr)
-            attr_el.setAttribute("type", "string")
-            schema_el.appendChild(attr_el)
-
-        root.appendChild(schema_el)
-
-        idx = 1
-
-        videos = Video.all()
-        for video in videos:
-            video_el = doc.createElement("sphinx__document")
-            video_el.setAttribute("id", "%d" % idx)
-            idx += 1
-
-            for field in fields:
-                field_el = doc.createElement(field)
-                field_el.appendChild(doc.createTextNode(unicode(getattr(video, field))))
-                video_el.appendChild(field_el)
-
-            for attr in attrs:
-                attr_el = doc.createElement(attr)
-                attr_el.appendChild(doc.createTextNode(unicode(getattr(video, attr))))
-                video_el.appendChild(attr_el)
-
-            root.appendChild(video_el)
-
-        xml = doc.toprettyxml(encoding="utf-8").replace("sphinx__", "sphinx:")
-
-        self.response.headers['Content-Type'] = 'application/xml'
-        self.response.out.write(xml)
 
 # New video view handler.
 # The URI format is a topic path followed by /v/ and then the video identifier, i.e.:
@@ -514,6 +461,65 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
         setattr(entity, prop, users.User(new_email))
         return True
 
+class SearchNew(request_handler.RequestHandler):
+    @user_util.open_access
+    def get(self):
+        query = self.request.get('page_search_query')
+        template_values = {'page_search_query': query}
+        query = query.strip()
+        if len(query) < search.SEARCH_PHRASE_MIN_LENGTH:
+            if len(query) > 0:
+                template_values.update({
+                    'query_too_short': search.SEARCH_PHRASE_MIN_LENGTH
+                })
+            self.render_jinja2_template("searchresults_new.html", template_values)
+            return
+        searched_phrases = []
+
+        url = "http://localhost:9080/solr/select/?q=version%%3A1+%%2B%s&start=0&rows=9999&indent=on&wt=json" % query
+        try:
+            response = urlfetch.fetch(url = url, deadline=25)
+            response_object = json.loads(response.content)
+        except Exception, e:
+            raise Exception("Failed to talk to Solr instance at %s: %s" % (url, e))
+
+        logging.info("Received response: %d" % response_object["response"]["numFound"])
+
+        topic_keys = list(set([v["parent_topic"] for v in response_object["response"]["docs"]]))
+        videos = [v for v in response_object["response"]["docs"] if v["kind"] == "Video"]
+        matching_topics = [t for t in response_object["response"]["docs"] if t["kind"] == "Topic"]
+        logging.info("Matching topics: %s" % repr(matching_topics))
+
+        topics = db.get(topic_keys)
+
+        # Count number of videos in each topic and sort descending
+        topic_count = 0
+        matching_topic_count = 0
+        if topics:
+            if len(videos) > 0:
+                for topic in topics:
+                    topic.match_count = [(str(topic.key()) == video["parent_topic"]) for video in videos].count(True)
+                    if topic.match_count > 0:
+                        topic_count += 1
+
+                topics = sorted(topics, key=lambda topic:-topic.match_count)
+            else:
+                for topic in topics:
+                    topic.match_count = 0
+
+        template_values.update({
+                           'topics': topics,
+                           'matching_topics': matching_topics,
+                           'videos': videos,
+                           'video_exercises': None,
+                           'search_string': query,
+                           'video_count': 0,
+                           'topic_count': topic_count,
+                           'matching_topic_count': matching_topic_count
+                           })
+
+        self.render_jinja2_template("searchresults_new.html", template_values)
+
 class Search(request_handler.RequestHandler):
 
     @user_util.admin_required
@@ -784,6 +790,7 @@ application = webapp2.WSGIApplication([
     ('/(.*)/v/([^/]*)', ViewVideo),
     ('/reportissue', ReportIssue),
     ('/search', Search),
+    ('/search_new', SearchNew),
     ('/savemapcoords', knowledgemap.handlers.SaveMapCoords),
     ('/crash', Crash),
 
@@ -960,8 +967,6 @@ application = webapp2.WSGIApplication([
     ('/redirects/remove', redirects.Remove),
 
     ('/importer', ImportHandler),
-
-    ('/get_search_index_content', GetSearchIndex),
 
     # Redirect any links to old JSP version
     ('/.*\.jsp', PermanentRedirectToHome),
