@@ -113,16 +113,11 @@ class Pep8(object):
             return 0
 
         # OK, looks like it's a legitimate error.
-        print output_line,    # output_line already has the trailing newline
+        print output_line,    # output_line already includes the trailing \n
         return 1
 
-    def process(self, f):
-        try:
-            contents_lines = open(f, 'U').readlines()
-        except (IOError, OSError), why:
-            print "%s: %s" % (f, why.args[1])
-            self._num_errors += 1
-            return
+    def process(self, f, contents_of_f):
+        contents_lines = contents_of_f.splitlines(True)
 
         (num_candidate_errors, pep8_stdout) = _capture_stdout_of(
             pep8.Checker(f, lines=contents_lines).check_all)
@@ -133,7 +128,7 @@ class Pep8(object):
 
         for output_line in pep8_stdout.readlines():
             self._num_errors += self._process_one_line(output_line,
-                                                      contents_lines)
+                                                       contents_lines)
 
     def num_errors(self):
         """A count of all the errors we've seen (and emitted) so far."""
@@ -195,25 +190,22 @@ class Pyflakes(object):
         print output_line,    # output_line already includes the trailing \n
         return 1
 
-    def process(self, f):
-        try:
-            contents = open(f, 'U').read() + '\n'   # must end in a newline!
-        except (IOError, OSError), why:
-            print "%s: %s" % (f, why.args[1])
-            self._num_errors += 1
-            return
-
+    def process(self, f, contents_of_f):
+        # pyflakes's ast-parser fails if the file doesn't end in a newline,
+        # so make sure it does.
+        if not contents_of_f.endswith('\n'):
+            contents_of_f += '\n'
         (num_candidate_errors, pyflakes_stdout) = _capture_stdout_of(
-            pyflakes.check, contents, f)
+            pyflakes.check, contents_of_f, f)
 
         # Now go through the output and remove the 'actually ok' lines.
         if num_candidate_errors == 0:
             return
 
-        contents_lines = contents.splitlines()  # need these for filtering
+        contents_lines = contents_of_f.splitlines()  # need these for filtering
         for output_line in pyflakes_stdout.readlines():
             self._num_errors += self._process_one_line(output_line,
-                                                      contents_lines)
+                                                       contents_lines)
 
     def num_errors(self):
         """A count of all the errors we've seen (and emitted) so far."""
@@ -224,14 +216,21 @@ def main(rootdir, pep8_args, pyflakes_args):
     blacklist = _parse_blacklist(_BLACKLIST_FILE)
     files = _files_to_process(rootdir, blacklist)
 
+    io_errors = 0
     processors = (Pep8(files, pep8_args),
                   Pyflakes()
                   )
     for f in files:
+        try:
+            contents = open(f, 'U').read()
+        except (IOError, OSError), why:
+            print "%s: %s" % (f, why.args[1])
+            io_errors += 1
+            continue
         for processor in processors:
-            processor.process(f)
+            processor.process(f, contents)
 
-    return sum(p.num_errors() for p in processors)
+    return io_errors + sum(p.num_errors() for p in processors)
 
 
 if __name__ == '__main__':
