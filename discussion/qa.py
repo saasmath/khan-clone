@@ -93,23 +93,14 @@ class AddAnswer(request_handler.RequestHandler):
         question = db.get(question_key)
 
         if answer_text and video and question:
-
-            answer = models_discussion.Feedback(parent=user_data)
-            answer.set_author(user_data)
-            answer.content = answer_text
-            answer.targets = [video.key(), question.key()]
-            answer.types = [models_discussion.FeedbackType.Answer]
+            answer = models_discussion.Feedback.insert_answer_for(answer_text,
+                                                                  question,
+                                                                  user_data)
 
             if user_data.discussion_banned:
                 # Hellbanned users' posts are automatically hidden
                 answer.deleted = True
-
-            # We don't limit answer.content length, which means we're vulnerable to
-            # RequestTooLargeErrors being thrown if somebody submits a POST over the GAE
-            # limit of 1MB per entity.  This is *highly* unlikely for a legitimate piece of feedback,
-            # and we're choosing to crash in this case until someone legitimately runs into this.
-            # See Issue 841.
-            answer.put()
+                answer.put()
 
             if not answer.deleted:
                 notification.new_answer_for_video_question(video, question, answer)
@@ -160,26 +151,24 @@ class AddQuestion(request_handler.RequestHandler):
             # have google accounts)!
             return
 
-        question_text = self.request.get("question_text")
+        text = self.request.get("question_text")
         video_key = self.request.get("video_key")
         video = db.get(video_key)
         question_key = ""
 
-        if question_text and video:
-            if len(question_text) > 500:
-                question_text = question_text[0:500] # max question length, also limited by client
+        if text and video:
+            if len(text) > 500:
+                text = text[0:500] # max question length, also limited by client
 
-            question = models_discussion.Feedback(parent=user_data)
-            question.set_author(user_data)
-            question.content = question_text
-            question.targets = [video.key()]
-            question.types = [models_discussion.FeedbackType.Question]
+            question = models_discussion.Feedback.insert_question_for(text,
+                                                                      video,
+                                                                      user_data)
 
             if user_data.discussion_banned:
                 # Hellbanned users' posts are automatically hidden
                 question.deleted = True
+                question.put()
 
-            question.put()
             question_key = question.key()
 
         self.redirect("/discussion/pagequestions?video_key=%s&qa_expand_key=%s" % 

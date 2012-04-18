@@ -58,6 +58,57 @@ class Feedback(db.Model):
     def cache_key_for_video(video):
         return "videofeedbackcache:%s" % video.key()
 
+    @staticmethod
+    def insert_question_for(text, video, user_data):
+        """ Create a Feedback entity of type FeedbackType.Question.
+        
+        Arguments:
+            text: the question text.
+            video: the video below which this question was asked.
+            user_data: the user_data who asked the question.
+        """
+        # TODO(marcia): Ask Kamens why the Feedback entities were created
+        # in this way, and how it differs from the get_or_insert's elsewhere
+        question = Feedback(parent=user_data)
+        question.types = [FeedbackType.Question]
+
+        question.set_author(user_data)
+        question.content = text
+        question.targets = [video.key()]
+
+        question.put()
+
+        return question
+
+    @staticmethod
+    def insert_answer_for(text, question, user_data):
+        """ Create a Feedback entity of type FeedbackType.Answer.
+        
+        Arguments:
+            text: the answer text.
+            question: the Feedback entity of type FeedbackType.Question
+                that this answer is responding to.
+            user_data: the user_data who provided this answer.
+        """
+        # TODO(marcia): Ask Kamens why the Feedback entities were created
+        # in this way, and how it differs from the get_or_insert's elsewhere
+        answer = Feedback(parent=user_data)
+        answer.types = [FeedbackType.Answer]
+
+        answer.set_author(user_data)
+        # We don't limit answer content length, which means we're vulnerable
+        # to RequestTooLargeErrors being thrown if somebody submits a POST
+        # over the GAE limit of 1MB per entity. This is *highly* unlikely
+        # for a legitimate piece of feedback, and we're choosing to crash
+        # in this case until someone legitimately runs into this.
+        # See Issue 841.
+        answer.content = text
+        answer.targets = [question.video_key(), question.key()]
+
+        answer.put()
+
+        return answer
+
     def __init__(self, *args, **kwargs):
         db.Model.__init__(self, *args, **kwargs)
         self.children_cache = [] # For caching each question's answers during render
@@ -191,13 +242,9 @@ class Feedback(db.Model):
 
     @staticmethod
     def get_all_questions_by_author(user_id):
-        """ Get all questions asked by specified user
-        """
+        """ Get all questions asked by specified user """
         query = Feedback.all()
-
-        # STOPSHIP(marcia): Backfill feedback with author user id
         query.filter('author_user_id =', user_id)
-
         return [q for q in query if q.is_type(FeedbackType.Question)]
 
 class FeedbackNotification(db.Model):
