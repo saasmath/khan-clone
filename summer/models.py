@@ -1,9 +1,6 @@
 from __future__ import absolute_import
-import os
-import datetime
 
 from google.appengine.ext import db
-from user_models import UserData
 
 
 class SummerPaypalTransaction(db.Model):

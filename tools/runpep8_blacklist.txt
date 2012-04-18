@@ -15,6 +15,7 @@
 ./khan-exercises
 
 # Our code, which should be made pep8-compliant but isn't yet
+./accuracy_model/__init__.py
 ./activity_summary.py
 ./api/auth/__init__.py
 ./api/auth/auth_util.py

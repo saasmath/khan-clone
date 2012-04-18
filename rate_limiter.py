@@ -1,7 +1,4 @@
-from google.appengine.api import users
-
 import datetime
-import logging
 import user_util
 
 from google.appengine.api import memcache

@@ -9,12 +9,19 @@ the current working directory.  It uses runpep8_blacklist.txt to
 exclude files from checking.
 """
 
+import cStringIO
 import os
 import sys
+
 try:
     import pep8
 except ImportError, why:
     sys.exit('FATAL ERROR: %s.  Install pep8 via "pip install pep8"' % why)
+try:
+    from pyflakes.scripts import pyflakes
+except ImportError, why:
+    sys.exit('FATAL ERROR: %s.  Install pyflakes via "pip install pyflakes"'
+             % why)
 
 
 _BLACKLIST_FILE = os.path.join(os.path.dirname(__file__),
@@ -66,18 +73,89 @@ def _files_to_process(rootdir, blacklist):
     return retval
 
 
-def main(rootdir, pep8_args):
-    """Run pep8 on all files in rootdir, using pep8_args as the flag-list."""
-    blacklist = _parse_blacklist(_BLACKLIST_FILE)
-    files = _files_to_process(rootdir, blacklist)
+def run_pep8(files, pep8_args):
+    """Run pep8 on all given files, using pep8_args list as the flag-list."""
     pep8.process_options(pep8_args + list(files))
     for f in files:
+        # TODO(csilvers): intercept stdout and remove @Nolint lines
         pep8.input_file(f)   # the weirdly-named function that does the work
-    # Exit with error status when there are pep8 issues
-    count = pep8.get_count()
-    if count:
-        sys.exit(1)
+    # Return the number of files that have pep8 issues.
+    return pep8.get_count()
+
+
+def run_pyflakes(files, unused_pyflakes_args):
+    """Run pyflakes on all given files, using pyflakes_args as the flaglist."""
+    # pyflakes prints all errors to stdout.  But we want to ignore
+    # some 'errors' that are ok for us: code like
+    #   try:
+    #      import unittest2 as unittest
+    #   except ImportError:
+    #      import unittest
+    # To do this, we intercept stdin and remove these lines.
+    old_stdout = sys.stdout
+    new_stdout = cStringIO.StringIO()
+    sys.stdout = new_stdout
+
+    num_errors = 0
+    for f in files:
+        try:
+            contents = open(f, 'U').read() + '\n'  # must end in a newline!
+            contents_lines = None                  # we'll split lazily
+        except (IOError, OSError), why:
+            print "%s: %s" % (f, why.args[1])
+            num_errors += 1
+        else:
+            try:
+                sys.stdout = new_stdout
+                num_errors += pyflakes.check(contents, f)
+            finally:
+                sys.stdout = old_stdout
+
+        # Now go through the output and remove the 'actually ok' lines.
+        for output_line in new_stdout.read().splitlines():
+            # The 'try/except ImportError' example described above.
+            if 'redefinition of unused' in output_line:
+                continue
+
+            # We follow python convention of allowing an unused variable
+            # if it's named '_' or starts with 'unused_'.
+            if ('assigned to but never used' in output_line and
+                ("local variable '_'" in output_line or
+                 "local variable 'unused_" in output_line)):
+                continue
+
+            # Get rid of some warnings too.
+            if 'unable to detect undefined names' in output_line:
+                continue
+
+            # -- The next set of warnings need to look at the error line.
+            if contents_lines is None:
+                contents_lines = contents.splitlines()
+            bad_linenum = int(output_line.split(':', 2)[1])
+
+            # If the line has a nolint directive, ignore it.
+            if '@Nolint' in contents_lines[bad_linenum - 1]:
+                continue
+
+            # An old nolint directive that's specific to imports
+            if ('@UnusedImport' in contents_lines[bad_linenum - 1] and
+                'imported but unused' in output_line):
+                continue
+
+            # OK, looks like it's a legitimate error.
+            print output_line
+
+    return num_errors
+
+
+def main(rootdir, pep8_args, pyflakes_args):
+    blacklist = _parse_blacklist(_BLACKLIST_FILE)
+    files = _files_to_process(rootdir, blacklist)
+    # TODO(csilvers): run pep8 and pyflakes over one file at a time.
+    return (run_pep8(files, pep8_args) +
+            run_pyflakes(files, pyflakes_args))
 
 
 if __name__ == '__main__':
-    main('.', [sys.argv[0]] + _DEFAULT_PEP8_ARGS)
+    num_errors = main('.', [sys.argv[0]] + _DEFAULT_PEP8_ARGS, [])
+    sys.exit(num_errors)

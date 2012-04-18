@@ -1,5 +1,4 @@
 from google.appengine.api import memcache
-from google.appengine.ext import db
 
 import layer_cache
 import request_cache as cachepy

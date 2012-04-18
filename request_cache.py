@@ -1,4 +1,3 @@
-import logging
 import inspect
 
 # request_cache is similar to layer_cache, except it only memoizes results

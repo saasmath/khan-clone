@@ -25,7 +25,7 @@ def update_from_live(edit_version):
         f = opener.open(request)
         map_layout_live = json.load(f)
 
-    except urllib2.URLError, e:
+    except urllib2.URLError:
         logging.exception("Failed to fetch knowledgemap layout from "
                           "khanacademy.org")
 
