@@ -981,14 +981,17 @@ class PasswordReset(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def get(self):
-        reset_token = self.request_string("token", default="")
-        if not reset_token:
+        reset_token_value = self.request_string("token", default="")
+        
+        user_data = PasswordResetToken.get_user_for_value(
+            reset_token_value, UserData.get_from_user_id)
+        if not user_data:
             self.redirect("/")
             return
 
         self.render_jinja2_template(
             'password-reset.html', {
-                'reset_token': reset_token,
+                'reset_token': reset_token_value,
             })
 
     @staticmethod
@@ -1017,13 +1020,5 @@ def _resolve_user_in_https_frame(handler):
     # On https, users aren't recognized through the normal means of cookie auth
     # since their cookies were set on HTTP domains.
     token_value = handler.request_string("transfer_token", default=None)
-    if not token_value:
-        return None
-
-    transfer_token = TransferAuthToken.for_value(token_value)
-    if not transfer_token:
-        return None
-
-    user_data = UserData.get_from_user_id(transfer_token.user_id)
-    if user_data and transfer_token.is_valid(user_data):
-        return user_data
+    return TransferAuthToken.get_user_for_value(
+        token_value, UserData.get_from_user_id)

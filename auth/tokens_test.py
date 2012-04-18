@@ -95,6 +95,15 @@ class TokenTests(BaseTest):
         time_to_expiry = datetime.timedelta(30)
         self.assertTrue(parsed.is_valid(u, time_to_expiry, clock))
 
+    def test_user_retrieval_from_token(self):
+        clock = testutil.MockDatetime()
+        u = self.make_user("userid1", "credential version 0")
+        token = tokens.AuthToken.for_user(u, clock)
+
+        retrieved = tokens.AuthToken.get_user_for_value(
+            token.value, user_models.UserData.get_from_user_id, clock)
+        self.assertEquals(retrieved.key(), u.key())
+
     @testsize.medium()
     def test_pw_reset_token_should_be_single_use(self):
         clock = testutil.MockDatetime()
