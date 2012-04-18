@@ -34,7 +34,7 @@ class StartNewFlagUpdateMapReduce(request_handler.RequestHandler):
 class ExpandQuestion(request_handler.RequestHandler):
     @user_util.open_access
     def post(self):
-        notification.clear_question_answers_for_current_user(self.request.get("qa_expand_key"))
+        notification.clear_notification_for_question(self.request.get("qa_expand_key"))
 
 class PageQuestions(request_handler.RequestHandler):
     @user_util.open_access
@@ -53,7 +53,7 @@ class PageQuestions(request_handler.RequestHandler):
         user_data = user_models.UserData.current()
         if qa_expand_key:
             # Clear unread answer notification for expanded question
-            notification.clear_question_answers_for_current_user(qa_expand_key)
+            notification.clear_notification_for_question(qa_expand_key)
 
         count = user_data.feedback_notification_count() if user_data else 0
 
