@@ -64,7 +64,7 @@ var Settings = {
             return false;
 
         // Check matching.
-        } else if ((password2 || password1) && password2 !== password1) {
+        } else if (password2 !== password1) {
             $(".message-container").addClass("error").text("The passwords don't match");
             $("#password1").focus();
             return false;
