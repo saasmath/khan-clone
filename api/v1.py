@@ -434,12 +434,20 @@ def put_topic(topic_id, version_id = "edit"):
         "id": topic.id
     }
 
+# Note on @etag: we don't want to set the etag if the topic-version is
+# the current edit-version, since that can change without warning.
+# Unfortunately, it's slow to check if version_id is the current
+# edit-version or not.  Instead we do the fast check of whether
+# version_id is None (None == active version which is never the
+# edit-version).  We disable etag caching in all other cases by having
+# the etag functor return None.
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/topic-page", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/topic-page", methods=["GET"])
 @api.auth.decorators.open_access
 @cacheable(caching_age=(60 * 60 * 24 * 60))
-@etag(lambda topic_id, version_id=None: "%s_v%s_%s" % (
-    topic_id, version_id, models.Setting.topic_tree_version()))
+@etag(lambda topic_id, version_id=None:
+      "%s_v%s" % (topic_id, models.Setting.topic_tree_version())
+      if version_id is None else None)
 @jsonp
 def get_topic_page_data(topic_id, version_id = "default"):
     """ Retrieve the listing of subtopics and videos for this topic.
