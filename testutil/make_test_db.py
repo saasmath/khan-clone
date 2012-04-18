@@ -577,17 +577,17 @@ def main(db_filename):
         print >>sys.stderr, 'Making exercises'
         exercises = Exercises()
         print >>sys.stderr, 'Making exercises-and-videos'
-        exercises_and_videos = ExercisesAndVideos(exercises, videos)
+        unused_exercises_and_videos = ExercisesAndVideos(exercises, videos)
 
         print >>sys.stderr, 'Making topic versions'
         topic_versions = TopicVersions(users)
         print >>sys.stderr, 'Making topic trees'
-        topics = Topics(users, topic_versions, exercises, videos)
+        unused_topics = Topics(users, topic_versions, exercises, videos)
         print >>sys.stderr, 'Making map layout'
-        map_layout = MapLayout(topic_versions)
+        unused_map_layout = MapLayout(topic_versions)
 
         print >>sys.stderr, 'Making common core map'
-        common_core_map = CommonCoreMap()
+        unused_common_core_map = CommonCoreMap()
         
         # OK, that was enough to create the db.  Let's put it in its
         # official home.
