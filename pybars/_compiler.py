@@ -188,10 +188,9 @@ def resolve(context, *segments):
         if type(context) in (list, tuple):
             offset = int(segment)
             context = context[offset]
-        else:
+        elif context.__class__ == Scope or type(context) == dict:
             context = context.get(segment)
     return context
-
 
 def _each(this, options, context):
     result = strlist()

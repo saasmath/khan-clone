@@ -3,8 +3,11 @@ import re
 import urllib
 import logging
 import copy
-from app import App
+import traceback
 
+from google.appengine.ext import db
+
+from app import App
 from pybars import Compiler
 
 # Helpers (from javascript/shared-package/handlebars-extras.js)
@@ -39,13 +42,21 @@ def handlebars_skillbar(context, end=0, start=0, exerciseStates={}):
     subcontext.update({"start": start, "end": end})
     return handlebars_template("shared", "skill-bar", subcontext)
 
+def handlebars_ellipsis(context, data, length):
+    text_stripped = re.sub("<[^>]*>", "", data)
+    if len(text_stripped) < length:
+        return text_stripped
+    else:
+        return text_stripped[:(length-3)] + "..."
+
 handlebars_helpers = {
     "repeat": handlebars_repeat,
     "toLoginRedirectHref": handlebars_to_login_redirect_href,
     "commafy": handlebars_commafy,
     "arrayLength": handlebars_arraylength,
     "multiply": handlebars_multiply,
-    "skill-bar": handlebars_skillbar
+    "skill-bar": handlebars_skillbar,
+    "ellipsis": handlebars_ellipsis,
 }
 
 def handlebars_dynamic_load(package, name):
@@ -78,8 +89,30 @@ def handlebars_dynamic_load(package, name):
 
     return function
 
+def handlebars_sanitize_params(obj):
+    if isinstance(obj, dict):
+        for k in obj.keys():
+            obj[k] = handlebars_sanitize_params(obj[k])
+        return obj
+    elif isinstance(obj, db.Text):
+        return unicode(obj)
+    elif isinstance(obj, db.Model):
+        return db.to_dict(obj)
+    elif hasattr(obj, "__iter__"):
+        return [handlebars_sanitize_params(v) for v in obj]
+    elif hasattr(obj, "__dict__"):
+        data = dict([(key, handlebars_sanitize_params(value)) 
+            for key, value in obj.__dict__.iteritems() 
+            if not callable(value) and not key.startswith('_')])
+        return data
+    else:
+        return obj
+
+
 def handlebars_template(package, name, params):
     """ Invoke a template and return the output string """
+
+    params = handlebars_sanitize_params(params)
 
     package_name = package.replace("-", "_")
     function_name = name.replace("-", "_")
@@ -104,8 +137,12 @@ def handlebars_template(package, name, params):
     if not function:
         function = handlebars_dynamic_load(package, name)
 
-    ret = function(params, helpers=handlebars_helpers, partials=handlebars_partials)
-    return u"".join(ret)
+    try:
+        ret = function(params, helpers=handlebars_helpers, partials=handlebars_partials)
+        return u"".join(ret)
+    except:
+        logging.info("Exception running Handlebars template: %s" % traceback.format_exc())
+        return u""
 
 def render_from_jinja(package, name, params):
     ret = handlebars_template(package, name, params)

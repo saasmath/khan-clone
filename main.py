@@ -103,6 +103,7 @@ class TopicPage(request_handler.RequestHandler):
 
     @staticmethod
     def show_topic(handler, topic):
+        selected_topic = topic
         parent_topic = db.get(topic.parent_keys[0])
 
         # If the parent is a supertopic, use that instead
@@ -114,7 +115,8 @@ class TopicPage(request_handler.RequestHandler):
             return
 
         template_values = {
-            "main_topic": topic
+            "main_topic": topic,
+            "selected_topic": selected_topic,
         }
         handler.render_jinja2_template('viewtopic.html', template_values)
 

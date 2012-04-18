@@ -33,6 +33,7 @@ import decorators
 import exercise_video_model
 import exercises.exercise_util
 import exercise_models
+import handlebars
 from knowledgemap import layout
 import layer_cache
 import library
@@ -357,9 +358,10 @@ class Topic(search.Searchable, db.Model):
         return ret
 
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_topic_page_json_%s_v1" % self.key(),
+        "topic_get_topic_page_data_%s_v1" % self.key(),
+        persist_across_app_versions=True,
         layer=layer_cache.Layers.InAppMemory | layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
-    def get_topic_page_json(self):
+    def get_topic_page_data(self):
         from homepage import thumbnail_link_dict
 
         (marquee_video, subtopic) = self.get_first_video_and_topic()
@@ -405,7 +407,88 @@ class Topic(search.Searchable, db.Model):
             "extended_slug": self.get_extended_slug(),
         }
 
-        return jsonify.jsonify(topic_info, camel_cased=True)
+        return topic_info
+
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_topic_page_json_%s_v2" % self.key(),
+        persist_across_app_versions=True,
+        layer=layer_cache.Layers.InAppMemory | layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
+    def get_topic_page_json(self):
+        topic_info = self.get_topic_page_data()
+        return jsonify.jsonify(topic_info, camel_cased=False)
+
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_topic_page_html_%s_v1" % self.key(),
+        persist_across_app_versions=True,
+        layer=layer_cache.Layers.InAppMemory | layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
+    def get_topic_page_html(self):
+        main_topic = self
+        parent_topic = db.get(self.parent_keys[0])
+
+        # If the parent is a supertopic, use that instead
+        if parent_topic.id in Topic._super_topic_ids:
+            main_topic = parent_topic
+
+        topic_info = main_topic.get_topic_page_data()
+
+        if self == main_topic:
+            if topic_info["child_videos"]:
+                list_length = int((len(topic_info["child_videos"]["children"])+1)/2)
+                children_col1 = topic_info["child_videos"]["children"][0:list_length]
+                children_col2 = topic_info["child_videos"]["children"][list_length:]
+
+                html = handlebars.handlebars_template("topic", "content-topic-videos", {
+                    "topic": topic_info["child_videos"],
+                    "childrenCol1": children_col1,
+                    "childrenCol2": children_col2,
+                })
+            else:
+                list_length = int((len(topic_info["subtopics"])+1)/2)
+                children_col1 = topic_info["subtopics"][0:list_length]
+                children_col2 = topic_info["subtopics"][list_length:]
+
+                for subtopic in topic_info["subtopics"]:
+                    subtopic["description_truncate_length"] = 38 if len(subtopic["title"]) > 28 else 68
+
+                html = handlebars.handlebars_template("topic", "root-topic-view", {
+                    "topic_info": topic_info,
+                    "subtopicsA": children_col1,
+                    "subtopicsB": children_col2,
+                })
+        else:
+            subtopic = [t for t in topic_info["subtopics"] if t["id"] == self.id][0]
+
+            list_length = int((len(subtopic["children"])+1)/2)
+            children_col1 = subtopic["children"][0:list_length]
+            children_col2 = subtopic["children"][list_length:]
+
+            html = handlebars.handlebars_template("topic", "content-topic-videos", {
+                "topic": subtopic,
+                "childrenCol1": children_col1,
+                "childrenCol2": children_col2,
+            })
+
+        return html
+
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_topic_page_nav_html_%s_v1" % self.key(),
+        persist_across_app_versions=True,
+        layer=layer_cache.Layers.InAppMemory | layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
+    def get_topic_page_nav_html(self):
+        main_topic = self
+        parent_topic = db.get(self.parent_keys[0])
+
+        # If the parent is a supertopic, use that instead
+        if parent_topic.id in Topic._super_topic_ids:
+            main_topic = parent_topic
+
+        topic_info = main_topic.get_topic_page_data()
+
+        html = handlebars.handlebars_template("topic", "subtopic-nav", {
+            "topic_info": topic_info,
+        })
+
+        return html
 
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
@@ -1579,6 +1662,8 @@ def _preload_default_version_data(version_number, run_code):
     # Preload topic pages
     for topic in Topic.get_all_topics(version=version):
         topic.get_topic_page_json()
+        topic.get_topic_page_html()
+        topic.get_topic_page_nav_html()
     logging.info("preloaded topic pages")
 
     # Preload topic browser
