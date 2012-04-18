@@ -424,8 +424,6 @@ class Signup(request_handler.RequestHandler):
             Logout.delete_all_identifying_cookies(self)
             auth.cookies.set_under13_cookie(self)
 
-            # TODO(benkomalo): investigate how reliable setting cookies from
-            # a jQuery POST is going to be
             self.render_json({"under13": True})
             return
 
