@@ -31,18 +31,13 @@
   <div class="container">
     <div class="nav-pane">
 
-      <ul>
-        <li data-id="">
-          <a class="subtopic-link" href="javascript:" data-id="">
-            <h2 class='topic-heading'>{{ main_topic.title }}</h2>
-            <div class="right-arrow"></div>
-          </a>
-        </li>
-      </ul>
+      {{ selected_topic.get_topic_page_nav_html() }}
       <div style="clear: both"></div>
     </div>
     <div class="content-pane indent">
-      <div class="topic-loading">Loading... <img src="/images/throbber.gif"></div>
+      <div class="prerendered" data-id="{{ selected_topic.id }}">
+        {{ selected_topic.get_topic_page_html() }}
+      </div>
     </div>
   </div>
 </div>
