@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 import re
+import urllib
 
 from google.appengine.api import mail, users
 
@@ -838,9 +839,11 @@ class PasswordChange(request_handler.RequestHandler):
 
         token = TransferAuthToken.for_user(user_data).value
         if url.find('?') == -1:
-            return "%s?transfer_token=%s" % (util.secure_url(url), token)
+            return "%s?transfer_token=%s" % (util.secure_url(url),
+                                             urllib.quote_plus(token))
         else:
-            return "%s&transfer_token=%s" % (util.secure_url(url), token)
+            return "%s&transfer_token=%s" % (util.secure_url(url),
+                                             urllib.quote_plus(token))
 
     def resolve_user_info(self):
         """Return the information for the user and current request.
@@ -1002,7 +1005,8 @@ class PasswordReset(request_handler.RequestHandler):
         pw_reset_token = PasswordResetToken.for_user(user_data)
         if not pw_reset_token:
             raise Exception("Unable to build password reset link for user")
-        return util.absolute_url("/pwreset?token=%s" % pw_reset_token.value)
+        return util.absolute_url("/pwreset?token=%s" %
+                                 urllib.quote_plus(pw_reset_token.value))
 
 
 def _resolve_user_in_https_frame(handler):
