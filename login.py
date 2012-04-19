@@ -22,7 +22,7 @@ from api.auth import auth_util
 from api.auth.auth_models import OAuthMap
 from app import App
 from auth import age_util
-from auth.tokens import AuthToken, TransferAuthToken
+from auth.tokens import AuthToken, PasswordResetToken, TransferAuthToken
 from counters import user_counter
 from models import UserData
 from notifications import UserNotifier
@@ -45,7 +45,7 @@ class Login(request_handler.RequestHandler):
         return util.create_post_login_url(cont)
 
     def render_login_outer(self):
-        """ Renders the login page.
+        """Render the login page.
 
         Note that part of the contents of this page is hosted on an iframe
         and rendered by this same RequestHandler (render_login_form)
@@ -72,7 +72,7 @@ class Login(request_handler.RequestHandler):
 
 
     def render_login_form(self, identifier=None, errors=None):
-        """ Renders the form with the username/password fields. This is
+        """Render the form with the username/password fields. This is
         hosted an in iframe in the main login page.
 
         errors - a dictionary of possible errors from a previous login that
@@ -93,11 +93,10 @@ class Login(request_handler.RequestHandler):
 
     @user_util.open_access
     def post(self):
-        """ Handles a POST from the login form.
+        """Handle a POST from the login form.
 
         This happens when the user attempts to login with an identifier (email
         or username) and password.
-
         """
 
         cont = self.request_continue_url()
@@ -125,7 +124,7 @@ class Login(request_handler.RequestHandler):
 
     @staticmethod
     def return_login_json(handler, user_data, cont="/"):
-        """ Handles a successful login for a user by redirecting them
+        """Handle a successful login for a user by redirecting them
         to the PostLogin URL with the auth token, which will ultimately set
         the auth cookie for them.
 
@@ -133,7 +132,6 @@ class Login(request_handler.RequestHandler):
         must accept requests with password strings over https, but the rest
         of the site is not (yet) using https, and therefore must use a
         non-https cookie.
-
         """
 
         auth_token = AuthToken.for_user(user_data)
@@ -157,9 +155,8 @@ class MobileOAuthLogin(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def post(self):
-        """ POST submissions are for username/password based logins to
+        """POST submissions are for username/password based logins to
         acquire an OAuth access token.
-
         """
 
         identifier = self.request_string('identifier')
@@ -196,7 +193,7 @@ class MobileOAuthLogin(request_handler.RequestHandler):
         return auth_util.authorize_token_redirect(oauth_map, force_http=True)
 
 def _upgrade_phantom_into(phantom_data, target_data):
-    """ Attempts to merge a phantom user into a target user.
+    """Attempt to merge a phantom user into a target user.
     Will bail if any signs that the target user has previous activity.
     """
 
@@ -214,7 +211,7 @@ def _upgrade_phantom_into(phantom_data, target_data):
 
 class PostLogin(request_handler.RequestHandler):
     def _consume_auth_token(self):
-        """Checks to see if a valid auth token is specified as a param
+        """Check to see if a valid auth token is specified as a param
         in the request, so it can be converted into a cookie
         and used as the identifier for the current and future requests.
         """
@@ -371,7 +368,7 @@ _email_re = re.compile(
 class Signup(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
-        """ Renders the register for new user page.  """
+        """Render the register for new user page."""
 
         if (self.request_bool('under13', default=False)
                 or cookie_util.get_cookie_value(auth.cookies.U13_COOKIE_NAME)):
@@ -394,12 +391,11 @@ class Signup(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def post(self):
-        """ Handles registration request on our site.
+        """Handle registration request on our site.
 
         Note that new users can still be created via PostLogin if the user
         signs in via Google/FB for the first time - this is for the
         explicit registration via our own services.
-
         """
 
         values = {
@@ -428,8 +424,6 @@ class Signup(request_handler.RequestHandler):
             Logout.delete_all_identifying_cookies(self)
             auth.cookies.set_under13_cookie(self)
 
-            # TODO(benkomalo): investigate how reliable setting cookies from
-            # a jQuery POST is going to be
             self.render_json({"under13": True})
             return
 
@@ -519,17 +513,15 @@ class Signup(request_handler.RequestHandler):
                     body=body)
 
 class CompleteSignup(request_handler.RequestHandler):
-    """ A handler for a page that allows users to create a password to login
+    """A handler for a page that allows users to create a password to login
     with a Khan Academy account. This is also being doubly used for existing
     Google/FB users to add a password to their account.
-
     """
 
     @staticmethod
     def build_link(unverified_user):
-        """ Builds a link for an unverified user by using their unique
+        """Build a link for an unverified user by using their unique
         randstring as a token embedded into the URL
-
         """
 
         return util.absolute_url(
@@ -537,10 +529,9 @@ class CompleteSignup(request_handler.RequestHandler):
                 unverified_user.randstring)
 
     def resolve_token(self):
-        """ Validates the token specified in the request parameters and returns
+        """Validate the token specified in the request parameters and returns
         a tuple of (token, UnverifiedUser) if it is a valid token.
         Returns (None, None) if no valid token was detected.
-
         """
 
         token = self.request_string("token", default=None)
@@ -562,7 +553,7 @@ class CompleteSignup(request_handler.RequestHandler):
             return self.render_outer()
 
     def render_outer(self):
-        """ Renders the second part of the user signup step, after the user
+        """Render the second part of the user signup step, after the user
         has verified ownership of their e-mail account.
 
         The request URI must include a valid token from an UnverifiedUser, and
@@ -571,7 +562,6 @@ class CompleteSignup(request_handler.RequestHandler):
 
         Note that the contents are actually rendered in an iframe so it
         can be sent over https (generated in render_form).
-
         """
         (valid_token, _) = self.resolve_token()
         user_data = UserData.current()
@@ -625,7 +615,7 @@ class CompleteSignup(request_handler.RequestHandler):
         self.render_jinja2_template('completesignup.html', template_values)
 
     def render_form(self):
-        """ Renders the contents of the form for completing a signup. """
+        """Render the contents of the form for completing a signup."""
 
         valid_token, unverified_user = self.resolve_token()
         user_data = _resolve_user_in_https_frame(self)
@@ -804,12 +794,11 @@ class CompleteSignup(request_handler.RequestHandler):
         Login.return_login_json(self, user_data, cont=user_data.profile_root)
 
 class PasswordChange(request_handler.RequestHandler):
-    """ Handler for changing a user's password.
+    """Handler for changing a user's password.
 
     This must always be rendered in an https form. If a request is made to
     render the form in HTTP, this handler will automatically redirect to
     the HTTPS version with a transfer_token to identify the user in HTTPS.
-
     """
 
     @user_util.manual_access_checking
@@ -824,17 +813,25 @@ class PasswordChange(request_handler.RequestHandler):
         else:
             self.render_form()
 
-    def render_form(self, message=None, success=False):
+    def render_form(self, message=None, success=False, user_data=None):
         transfer_token_value = self.request_string("transfer_token", default="")
+        reset_token_value = self.request_string("reset_token", default="")
+        if not user_data:
+            (user_data, _) = self.resolve_user_info()
+
         self.render_jinja2_template('password-change.html',
                                     {'message': message or "",
                                      'success': success,
-                                     'transfer_token': transfer_token_value})
+                                     'user_data': user_data,
+                                     'transfer_token': transfer_token_value,
+                                     'reset_token': reset_token_value})
 
-    def secure_url_with_token(self, url):
-        user_data = UserData.current()
+    def secure_url_with_token(self, url, user_data=None):
+        if user_data is None:
+            (user_data, _) = self.resolve_user_info()
         if not user_data:
-            logging.warn("No user detected for password change")
+            if not self.request_string("reset_token", default=""):
+                logging.warn("No user detected for password change")
             return util.secure_url(url)
 
         token = TransferAuthToken.for_user(user_data).value
@@ -843,51 +840,175 @@ class PasswordChange(request_handler.RequestHandler):
         else:
             return "%s&transfer_token=%s" % (util.secure_url(url), token)
 
+    def resolve_user_info(self):
+        """Return the information for the user and current request.
+
+        Returns:
+            A tuple of (UserData, bool) including the UserData of the actor
+            and a bool indicating whether or not this is for a password
+            reset or a normal change of password. Returns (None, False)
+            if no valid user is resolved.
+        """
+
+        user_data = _resolve_user_in_https_frame(self)
+        reset_token_value = self.request_string("reset_token", default="")
+        is_password_reset = False
+        if not user_data:
+            # Try to resolve the user from a reset token, if nobody is
+            # logged in.
+            reset_token = PasswordResetToken.for_value(reset_token_value)
+            if reset_token:
+                user_data = user_models.UserData.get_from_user_id(
+                    reset_token.user_id)
+
+                if reset_token.is_valid(user_data):
+                    is_password_reset = True
+                else:
+                    user_data = None
+        return (user_data, is_password_reset)
+
     @user_util.manual_access_checking
     def post(self):
-        user_data = _resolve_user_in_https_frame(self)
+        (user_data, is_password_reset) = self.resolve_user_info()
         if not user_data:
             self.response.write("Oops. Something went wrong. Please try again.")
             return
 
-        existing = self.request_string("existing")
-        if not user_data.validate_password(existing):
-            # TODO(benkomalo): throttle incorrect password attempts
-            self.render_form(message="Incorrect password")
-            return
+        if not is_password_reset:
+            existing = self.request_string("existing")
+            if not user_data.validate_password(existing):
+                # TODO(benkomalo): throttle incorrect password attempts
+                self.render_form(message="Incorrect password",
+                                 user_data=user_data)
+                return
 
         password1 = self.request_string("password1")
         password2 = self.request_string("password2")
         if (not password1 or
                 not password2 or
                 password1 != password2):
-            self.render_form(message="Passwords don't match")
+            self.render_form(message="Passwords don't match",
+                             user_data=user_data)
         elif not auth.passwords.is_sufficient_password(password1,
                                                        user_data.nickname,
                                                        user_data.username):
-            self.render_form(message="Password too weak")
+            self.render_form(message="Password too weak",
+                             user_data=user_data)
         else:
             # We're good!
             user_data.set_password(password1)
-
-            # Need to create a new auth token as the existing cookie will expire
-            # Use /postlogin to set the cookie. This requires some redirects
-            # (/postlogin on http, then back to this pwchange form in https).
-            auth_token = AuthToken.for_user(user_data)
-            self.redirect("%s?%s" % (
+            if is_password_reset:
+                # Password resets are done when the user is not even logged in,
+                # so redirect the host page to the login page (done via
+                # client side JS)
+                self.render_form(message="Password reset. Redirecting...",
+                                 success=True,
+                                 user_data=user_data)
+            else:
+                # Need to create a new auth token as the existing cookie will
+                # expire. Use /postlogin to set the cookie. This requires
+                # some redirects (/postlogin on http, then back to this
+                # pwchange form in https).
+                auth_token = AuthToken.for_user(user_data)
+                self.redirect("%s?%s" % (
                     util.insecure_url("/postlogin"),
                     util.build_params({
                         'auth': auth_token.value,
-                        'continue': self.secure_url_with_token("/pwchange?success=1"),
+                        'continue': self.secure_url_with_token(
+                            "/pwchange?success=1", user_data),
                     })))
 
+class ForgotPassword(request_handler.RequestHandler):
+    """Handler for initiating the password reset flow."""
+
+    @user_util.open_access
+    def get(self):
+        user_data = user_models.UserData.current()
+        if user_data:
+            # User is already logged in! Shouldn't want to reset passwords.
+            self.redirect(user_data.profile_root)
+            return
+
+        self.render_jinja2_template('forgot-password.html', {})
+
+    @user_util.open_access
+    def post(self):
+        email = self.request_string("email", default=None)
+        if not email:
+            self.render_jinja2_template('forgot-password.html', {})
+            return
+
+        user_data = user_models.UserData.get_from_user_input_email(email)
+        if not user_data or not user_data.has_password():
+            # TODO(benkomalo): separate out the case where we detected a user
+            # but he/she doesn't have a password set?
+            self.render_jinja2_template(
+                'forgot-password-error.html', {
+                    'email': email,
+                    'google_url': users.create_login_url('/completesignup'),
+                })
+            return
+
+        reset_url = PasswordReset.build_link(user_data)
+        template_values = {
+            'name': user_data.nickname,
+            'url': reset_url,
+        }
+        body = shared_jinja.template_to_string(
+                'password-reset-email-text-only.html',
+                template_values)
+
+        if not App.is_dev_server:
+            mail.send_mail(
+                    sender="Khan Academy Accounts <no-reply@khanacademy.org>",
+                    to=email,
+                    subject="Khan Academy account recovery",
+                    body=body)
+
+        template_values =  {
+            'sent_email': email,
+        }
+        if App.is_dev_server:
+            template_values['debug_link'] = reset_url
+        self.render_jinja2_template('forgot-password.html', template_values)
+
+
+class PasswordReset(request_handler.RequestHandler):
+    """Handler for the password reset flow.
+
+    This is after the user has received an e-mail with a recovery link
+    and handles the request for when they click on that link in the e-mail.
+    """
+
+    @user_util.manual_access_checking
+    def get(self):
+        reset_token_value = self.request_string("token", default="")
+        
+        user_data = PasswordResetToken.get_user_for_value(
+            reset_token_value, UserData.get_from_user_id)
+        if not user_data:
+            self.redirect("/")
+            return
+
+        self.render_jinja2_template(
+            'password-reset.html', {
+                'reset_token': reset_token_value,
+            })
+
+    @staticmethod
+    def build_link(user_data):
+        pw_reset_token = PasswordResetToken.for_user(user_data)
+        if not pw_reset_token:
+            raise Exception("Unable to build password reset link for user")
+        return util.absolute_url("/pwreset?token=%s" % pw_reset_token.value)
+
+
 def _resolve_user_in_https_frame(handler):
-    """ Determines the current logged in user for the HTTPS request.
+    """Determine the current logged in user for the HTTPS request.
 
     This has logic in additional to UserData.current(), since it should also
     accept TransferAuthTokens, since HTTPS requests may not have normal HTTP
     cookies sent.
-
     """
 
     user_data = UserData.current()
@@ -900,13 +1021,5 @@ def _resolve_user_in_https_frame(handler):
     # On https, users aren't recognized through the normal means of cookie auth
     # since their cookies were set on HTTP domains.
     token_value = handler.request_string("transfer_token", default=None)
-    if not token_value:
-        return None
-
-    transfer_token = TransferAuthToken.for_value(token_value)
-    if not transfer_token:
-        return None
-
-    user_data = UserData.get_from_user_id(transfer_token.user_id)
-    if user_data and transfer_token.is_valid(user_data):
-        return user_data
+    return TransferAuthToken.get_user_for_value(
+        token_value, UserData.get_from_user_id)

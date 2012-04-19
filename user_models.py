@@ -726,16 +726,16 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         this returns True, they're guaranteed to be over 13.
         """
 
-        # Normal Gmail accounts and FB accounts require users be at least 13yo.
         if self.birthdate:
             return age_util.get_age(self.birthdate) >= 13
             
+        # Normal Gmail accounts and FB accounts require users be at least 13yo.
         email = self.email
-        return (email.endswith("@gmail.com")
-                or email.endswith("@googlemail.com")  # Gmail in Germany
-                or email.endswith("@khanacademy.org")  # We're special
-                or self.developer  # Really little kids don't write software
-                or facebook_util.is_facebook_user_id(email))
+        return (email.endswith("@gmail.com") or
+                email.endswith("@googlemail.com") or # Gmail in Germany
+                email.endswith("@khanacademy.org") or # We're special
+                self.developer or # Really little kids don't write software
+                self.is_facebook_user)
 
     def get_or_insert_exercise(self, exercise, allow_insert=True):
         # TODO(csilvers): get rid of the circular import here
