@@ -171,7 +171,7 @@ def default_callback():
 # TODO(csilvers): have oauth-authentication only just for this file.
 @route("/api/auth/token_to_session", methods=["GET"])
 @decorators.manual_access_checking
-@decorators.anointed_oauth_consumer_only
+@decorators.oauth_consumers_must_be_anointed
 def token_to_session():
     set_current_oauth_map_in_session()
     return redirect(request.request_continue_url())

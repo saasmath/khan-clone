@@ -55,6 +55,7 @@ from oauth_provider.decorators import is_valid_request, validate_token
 from oauth_provider.oauth import OAuthError
 
 import user_models
+import user_util
 import util
 import os
 import logging
@@ -183,9 +184,9 @@ def login_required_and(func,
     cookie token) via the login process.
 
     In addition to checking whether the user is logged in, this
-    function also checks access based on the *type* of the user:
-    if demo_allowed==False, for instance, and the logged-in user
-    is a demo user, then access will be denied.
+    function also checks access based on the *type* of the user: if
+    demo_user_allowed==False, for instance, and the logged-in user is
+    a demo user, then access will be denied.
 
     (Exception: if the user is an admin user, then access is *always*
     allowed, and the only check we make is if they're logged in.)
@@ -200,34 +201,13 @@ def login_required_and(func,
         except OAuthError, e:
             return oauth_error_response(e)
 
-        user_data = user_models.UserData.current()
-        # If verify_and_cache_oauth_or_cookie succeeded, it's probably
-        # not possible to be None here, but no harm in checking.
-        if not user_data:
+        try:
+            user_util.verify_login(admin_required, developer_required,
+                                   moderator_required, demo_user_allowed,
+                                   phantom_user_allowed)
+        except user_util.LoginFailedError:
             return unauthorized_response()
 
-        # Admins always have access to everything.
-        if users.is_current_user_admin():
-            return func(*args, **kwargs)
-
-        if admin_required and not users.is_current_user_admin():
-            return unauthorized_response()
-
-        if developer_required and not user_data.developer:
-            return unauthorized_response()
-
-        # Developers are automatically moderators.
-        is_moderator = user_data.moderator or user_data.developer
-        if moderator_required and not is_moderator:
-            return unauthorized_response()
-
-        if (not demo_user_allowed) and user_data.is_demo:
-            return unauthorized_response()
-
-        if (not phantom_user_allowed) and user_data.is_phantom:
-            return unauthorized_response()
-
-        # They passed the gantlet!
         return func(*args, **kwargs)
 
     # For purposes of IDing this decorator, just store the True arguments.
@@ -299,7 +279,7 @@ def manual_access_checking(func):
     return wrapper
 
 
-def anointed_oauth_consumer_only(func):
+def oauth_consumers_must_be_anointed(func):
     """ Check that if a client is an oauth client, it's an 'anointed' one.
 
     This is a bit different from user authentication -- it only cares

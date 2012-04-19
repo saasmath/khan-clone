@@ -952,7 +952,7 @@ def video_recent_list():
 
 @route("/api/v1/videos/<video_id>/download_available", methods=["POST"])
 @api.auth.decorators.developer_required
-@api.auth.decorators.anointed_oauth_consumer_only
+@api.auth.decorators.oauth_consumers_must_be_anointed
 @jsonp
 @jsonify
 def video_download_available(video_id):
@@ -1418,7 +1418,7 @@ def user_videos_specific(youtube_id):
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["POST"])
 @route("/api/v1/user/videos/<youtube_id>/log_compatability", methods=["GET"])
 @api.auth.decorators.open_access
-@api.auth.decorators.anointed_oauth_consumer_only
+@api.auth.decorators.oauth_consumers_must_be_anointed
 @api_create_phantom
 @jsonp
 @jsonify
