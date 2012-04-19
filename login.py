@@ -826,8 +826,9 @@ class PasswordChange(request_handler.RequestHandler):
                                      'transfer_token': transfer_token_value,
                                      'reset_token': reset_token_value})
 
-    def secure_url_with_token(self, url):
-        user_data = UserData.current()
+    def secure_url_with_token(self, url, user_data=None):
+        if user_data is None:
+            user_data = self.resolve_user_info()
         if not user_data:
             if not self.request_string("reset_token", default=""):
                 logging.warn("No user detected for password change")
@@ -914,7 +915,7 @@ class PasswordChange(request_handler.RequestHandler):
                     util.build_params({
                         'auth': auth_token.value,
                         'continue': self.secure_url_with_token(
-                                        "/pwchange?success=1"),
+                            "/pwchange?success=1", user_data),
                     })))
 
 class ForgotPassword(request_handler.RequestHandler):
