@@ -52,6 +52,7 @@ import urllib
 
 from google.appengine.api import users
 
+from api.auth import xsrf
 import app
 import request_cache
 
@@ -171,6 +172,12 @@ def login_required_and(func,
                          phantom_user_allowed)
         except LoginFailedError, why:
             return _go_to_login(self, str(why))
+
+        # The request we're verifying login for may spawn some API
+        # requests.  To make sure those can succeed, we set an xsrf
+        # cookie -- the API routines have different authorization code
+        # than non-API routines, and need this cookie.
+        xsrf.create_xsrf_cookie_if_needed()
 
         return func(*args, **kwargs)
 
