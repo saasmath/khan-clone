@@ -228,6 +228,7 @@ class AuthToken(BaseSecureToken):
                                             timestamp,
                                             user_data.credential_version)
 
+
 class TransferAuthToken(BaseSecureToken):
     """A short-lived authentication token that can be minted for signed
     in users to transfer identities across domains.

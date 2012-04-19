@@ -130,7 +130,7 @@ class TokenTests(BaseTest):
         self.assertTrue(token2.is_valid(u, datetime.timedelta(1), clock))
 
     @testsize.medium()
-    def test_pw_reset_token_is_harmless_until_used(self):
+    def test_pw_reset_token_does_not_reset_pw_until_used(self):
         clock = testutil.MockDatetime()
         u = self.make_user("userid1")
         u.set_password("seekrit one")
