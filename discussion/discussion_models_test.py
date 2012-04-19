@@ -96,3 +96,20 @@ class FeedbackNotificationTest(BaseTest):
         question.change_type(discussion_models.FeedbackType.Comment)
         question.change_type(discussion_models.FeedbackType.Question)
         self.assertEqual(1, asker.feedback_notification_count())
+
+    def test_ignore_notification_if_answer_is_missing(self):
+        # It is unclear why or how feedback entities may be missing,
+        # since they don't appear to be deleted anywhere, but there have
+        # been ReferencePropertyResolveErrors
+        video = self.make_video()
+        asker = self.make_user_data('weasley@gmail.com')
+        answerer = self.make_user_data('hermione@gmail.com')
+
+        question = self.make_question("Where did Harry go?", video, asker)
+        answer = self.make_answer("He went to the loo.", question, answerer)
+
+        self.assertEqual(1, asker.feedback_notification_count())
+        answer.delete()
+
+        asker.mark_feedback_notification_count_as_stale()
+        self.assertEqual(0, asker.feedback_notification_count())

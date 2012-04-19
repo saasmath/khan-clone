@@ -974,13 +974,14 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         """
         if self.count_feedback_notification == -1:
             # Recalculate feedback notification count
-            notifications = discussion_models.FeedbackNotification.gql(
-                    "WHERE user = :1", self.user)
 
-            # Notifications are grouped by question when displayed to users,
-            # though there is a FeedbackNotification for each unread answer
-            questions = set(n.feedback.question_key() for n in notifications
-                            if n.feedback.question().is_type(
+            # Get all unread answers
+            answers = discussion_models.FeedbackNotification.get_feedback_for(
+                    self.user)
+
+            # Group the unread answers by question
+            questions = set(answer.question_key() for answer in answers
+                            if answer.question().is_type(
                                 discussion_models.FeedbackType.Question))
 
             self.count_feedback_notification = len(questions)

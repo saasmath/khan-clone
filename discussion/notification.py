@@ -28,7 +28,8 @@ def get_questions_data(user_data):
             dict_meta_questions[qa_expand_key] = meta_question
 
     # Get unread answers to the above questions
-    unread_answers = feedback_answers_for_user_data(user_data)
+    unread_answers = discussion_models.FeedbackNotification.get_feedback_for(
+            user_data.user)
     for answer in unread_answers:
         question_key = str(answer.question_key())
         if question_key in dict_meta_questions:
@@ -92,7 +93,8 @@ class VideoFeedbackNotificationFeed(request_handler.RequestHandler):
         user_data = self.request_user_data("email")
 
         max_entries = 100
-        answers = feedback_answers_for_user_data(user_data)
+        answers = discussion_models.FeedbackNotification.get_feedback_for(
+                user_data.user)
         answers = sorted(answers, key=lambda answer: answer.date)
 
         context = {
@@ -102,33 +104,6 @@ class VideoFeedbackNotificationFeed(request_handler.RequestHandler):
 
         self.response.headers['Content-Type'] = 'text/xml'
         self.render_jinja2_template('discussion/video_feedback_notification_feed.xml', context)
-
-def feedback_answers_for_user_data(user_data):
-    feedbacks = []
-
-    if not user_data:
-        return feedbacks
-
-    notifications = discussion_models.FeedbackNotification.gql("WHERE user = :1", user_data.user)
-
-    for notification in notifications:
-
-        feedback = None
-
-        try:
-            feedback = notification.feedback
-        except db.ReferencePropertyResolveError:
-            pass
-
-        if not feedback or not feedback.video() or not feedback.is_visible_to_public() or not feedback.is_type(discussion_models.FeedbackType.Answer):
-            # If we ever run into notification for a deleted or non-FeedbackType.Answer piece of feedback,
-            # go ahead and clear the notification so we keep the DB clean.
-            db.delete(notification)
-            continue
-
-        feedbacks.append(feedback)
-
-    return feedbacks
 
 # Send a notification to the author of this question, letting
 # them know that a new answer is available.

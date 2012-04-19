@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import logging
+
 from google.appengine.ext import db
 
 import user_models
@@ -274,6 +276,31 @@ class FeedbackNotification(db.Model):
     # The question author and recipient of the notification
     user = db.UserProperty()
 
+    @staticmethod
+    def get_feedback_for(user):
+        """Get feedback corresponding to notifications for the user."""
+        all_feedback = []
+
+        notifications = FeedbackNotification.gql("WHERE user = :1", user)
+        for notification in notifications:
+            feedback = None
+            try:
+                feedback = notification.feedback
+                all_feedback.append(feedback)
+            except db.ReferencePropertyResolveError:
+                # TODO(marcia): Figure out why we error here since
+                # we never delete feedback entities (though they may appear
+                # deleted to normal users)
+                notification_id = notification.key().id()
+                message  = ("Reference error w FeedbackNotification: %s" %
+                            notification_id)
+                logging.error(message)
+
+                # TODO(marcia): Could delete these notifications to keep
+                # the DB clean but I'll leave them around to help debug
+                # notification.delete()
+
+        return all_feedback
 
 class FeedbackVote(db.Model):
     DOWN = -1
