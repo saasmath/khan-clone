@@ -141,17 +141,17 @@ def new_answer_for_video_question(video, question, answer):
     if question.author == answer.author:
         return
 
-    notification = discussion_models.FeedbackNotification()
-    notification.user = question.author
-    notification.feedback = answer
-
-    user_data = user_models.UserData.get_from_db_key_email(notification.user.email())
+    user_data = user_models.UserData.get_from_user(question.author)
     if not user_data:
         return
 
+    notification = discussion_models.FeedbackNotification()
+    notification.user = question.author
+    notification.feedback = answer
+    notification.put()
+
     user_data.recalculate_feedback_notification_count()
 
-    db.put([notification, user_data])
 
 def clear_notification_for_question(question_key, user_data=None):
     if not question_key:
@@ -167,19 +167,15 @@ def clear_notification_for_question(question_key, user_data=None):
     if not question:
         return
 
-    deleted_notification = False
-
     answer_keys = question.children_keys()
+    should_recalculate_count = False
     for answer_key in answer_keys:
         notification = discussion_models.FeedbackNotification.gql(
             "WHERE user = :1 AND feedback = :2", user_data.user, answer_key)
 
         if notification.count():
-            deleted_notification = True
+            should_recalculate_count = True
             db.delete(notification)
 
-    if deleted_notification:
-        count = user_data.count_feedback_notification
-        if count > 0:
-            user_data.count_feedback_notification = count - 1
-            user_data.put()
+    if should_recalculate_count:
+        user_data.recalculate_feedback_notification_count()

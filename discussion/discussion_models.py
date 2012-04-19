@@ -7,6 +7,7 @@ from app import App
 import request_cache
 import layer_cache
 
+
 class FeedbackType:
     Question="question"
     Answer="answer"
