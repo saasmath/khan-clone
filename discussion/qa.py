@@ -51,11 +51,11 @@ class PageQuestions(request_handler.RequestHandler):
         video = db.get(video_key)
 
         user_data = user_models.UserData.current()
+        count = user_data.feedback_notification_count() if user_data else 0
+
         if qa_expand_key:
             # Clear unread answer notification for expanded question
-            notification.clear_notification_for_question(qa_expand_key)
-
-        count = user_data.feedback_notification_count() if user_data else 0
+            count = notification.clear_notification_for_question(qa_expand_key)
 
         if video:
             template_values = video_qa_context(user_data, video, page, qa_expand_key, sort)

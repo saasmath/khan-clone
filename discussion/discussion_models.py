@@ -180,7 +180,7 @@ class Feedback(db.Model):
             if author_user_data:
                 # Recalculate author's notification count since
                 # comments don't have answers
-                author_user_data.recalculate_feedback_notification_count()
+                author_user_data.mark_feedback_notification_count_as_stale()
 
     def question_key(self):
         if self.targets:

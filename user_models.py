@@ -961,13 +961,17 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             self.put()
         return self.videos_completed
 
-    def recalculate_feedback_notification_count(self):
+    def mark_feedback_notification_count_as_stale(self):
         """Mark that the feedback notification count must be recalculated."""
         self.count_feedback_notification = -1
         self.put()
 
     def feedback_notification_count(self):
-        """Return the number of questions with unread answers."""
+        """Return the number of questions with unread answers.
+        
+        May calculate (and cache) a stale count if called shortly after any
+        change to the FeedbackNotification index.
+        """
         if self.count_feedback_notification == -1:
             # Recalculate feedback notification count
             notifications = discussion_models.FeedbackNotification.gql(
