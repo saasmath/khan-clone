@@ -20,7 +20,6 @@ def badge_notifications_html(user_badges):
                          user_badges)
 
     if len(user_badges) > 1:
-        user_badges = sorted(user_badges, reverse=True, key=lambda user_badge: user_badge.badge.points)[:badges.UserNotifier.NOTIFICATION_LIMIT]
         user_badges = sorted(user_badges, reverse=True,
                              key=lambda user_badge: user_badge.badge.points)
         user_badges = user_badges[:badges.UserNotifier.NOTIFICATION_LIMIT]

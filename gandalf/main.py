@@ -12,6 +12,7 @@ application = webapp.WSGIApplication([
 ])
 application = middleware.GandalfWSGIMiddleware(application)
 
+
 def main():
     run_wsgi_app(application)
 
