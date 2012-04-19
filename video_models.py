@@ -360,6 +360,18 @@ class Video(search.Searchable, db.Model):
             video.index()
             video.indexed_title_changed()
 
+    def get_search_data(self):
+        return {
+            "kind": "Video",
+            "id": self.readable_id,
+            "key_id": self.key().id(),
+            "title": self.title,
+            "description": self.description,
+            "keywords": self.keywords,
+            "ka_url": self.ka_url,
+            "parent_topic": self.topic_string_keys[0],
+        }
+
 class VideoSubtitles(db.Model):
     """Subtitles for a YouTube video
 

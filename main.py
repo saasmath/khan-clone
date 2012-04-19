@@ -3,7 +3,11 @@
 import urllib
 import logging
 import re
-import json
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 from google.appengine.api import users
@@ -476,8 +480,13 @@ class SearchNew(request_handler.RequestHandler):
             return
         searched_phrases = []
 
-        url = "http://localhost:9080/solr/select/?q=version%%3A1+%%2B%s&start=0&rows=9999&indent=on&wt=json" % query
+        # Do an async query for all ExerciseVideos, since this may be slow
+        exvids_query = ExerciseVideo.all()
+        exvids_future = util.async_queries([exvids_query])
+
+        url = "http://search-rpc.khanacademy.org/solr/select/?q=version%%3A1+%%2B%s&start=0&rows=9999&indent=on&wt=json" % query
         try:
+            logging.info("Fetching: %s" % url)
             response = urlfetch.fetch(url = url, deadline=25)
             response_object = json.loads(response.content)
         except Exception, e:
@@ -488,13 +497,41 @@ class SearchNew(request_handler.RequestHandler):
         topic_keys = list(set([v["parent_topic"] for v in response_object["response"]["docs"]]))
         videos = [v for v in response_object["response"]["docs"] if v["kind"] == "Video"]
         matching_topics = [t for t in response_object["response"]["docs"] if t["kind"] == "Topic"]
-        logging.info("Matching topics: %s" % repr(matching_topics))
+        if matching_topics:
+            matching_topic_count = 1
+            matching_topic = matching_topics[0] if matching_topics else None
+            matching_topic["children"] = json.loads(matching_topic["child_topics"]) if "child_topics" in matching_topic else None
+        else:
+            matching_topic_count = 0
+            matching_topic = None
 
         topics = db.get(topic_keys)
 
+        # Get the related exercises
+        all_exercise_videos = exvids_future[0].get_result()
+        exercise_keys = []
+        video_lookup_table = {}
+        video_keys = [v["key_id"] for v in videos]
+        for exvid in all_exercise_videos:
+            video_key = ExerciseVideo.video.get_value_for_datastore(exvid)
+            if video_key.id() in video_keys:
+                exercise_key = ExerciseVideo.exercise.get_value_for_datastore(exvid)
+                exercise_keys.append(exercise_key)
+                if not video_key.id() in video_lookup_table:
+                    video_lookup_table[video_key.id()] = []
+                video_lookup_table[video_key.id()].append(exercise_key)
+
+        exercises = db.get(exercise_keys)
+
+        # Sort exercises with videos
+        for video in videos:
+            if video["key_id"] in video_lookup_table:
+                video["exercises"] = []
+                for exercise_key in video_lookup_table[video["key_id"]]:
+                    video["exercises"].append([ex for ex in exercises if ex.key() == exercise_key][0])
+
         # Count number of videos in each topic and sort descending
         topic_count = 0
-        matching_topic_count = 0
         if topics:
             if len(videos) > 0:
                 for topic in topics:
@@ -509,11 +546,10 @@ class SearchNew(request_handler.RequestHandler):
 
         template_values.update({
                            'topics': topics,
-                           'matching_topics': matching_topics,
+                           'matching_topic': matching_topic,
                            'videos': videos,
-                           'video_exercises': None,
                            'search_string': query,
-                           'video_count': 0,
+                           'video_count': len(videos),
                            'topic_count': topic_count,
                            'matching_topic_count': matching_topic_count
                            })

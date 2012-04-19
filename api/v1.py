@@ -761,14 +761,10 @@ def save_url(url_id = None, version_id=None):
 
 
 @route("/api/v1/searchindex", methods=["GET"])
-@open_access
-@oauth_optional()
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_topictree_search_index():
-    # Fields to index (Each sublist is a list of fields that will be searched, the first field is the name they get indexed under)
-    fields = [["title"], ["description"], ["keywords"], ["ka_url","relative_url"], ["readable_id","id"]]
-
     # Get current version
     version = models.TopicVersion.get_by_id(None)
 
@@ -779,37 +775,15 @@ def get_topictree_search_index():
     for video in videos:
         if video.topic_string_keys:
     
-            video_data = {
-                "version": version.number,
-                "kind": "Video",
-                "key_id": video.key().id(),
-            }
-
-            for field_list in fields:
-                field_name = field_list[0]
-                for field in field_list:
-                    if hasattr(video, field):
-                        video_data[field_name] = unicode(getattr(video, field))
-
-            video_data["parent_topic"] = video.topic_string_keys[0]
+            video_data = video.get_search_data()
+            video_data["version"] = version.number
 
             search_data.append(video_data)
 
     topics = models.Topic.all()
     for topic in topics:
-        topic_data = {
-            "version": version.number,
-            "kind": "Topic",
-        }
-
-        for field_list in fields:
-            field_name = field_list[0]
-            for field in field_list:
-                if hasattr(topic, field):
-                    topic_data[field_name] = unicode(getattr(topic, field))
-
-        if topic.parent_keys:
-            topic_data["parent_topic"] = unicode(topic.parent_keys[0])
+        topic_data = topic.get_search_data()
+        topic_data["version"] = version.number
 
         search_data.append(topic_data)
 

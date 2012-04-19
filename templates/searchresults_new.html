@@ -61,28 +61,26 @@
     </form>
     {% if topics and matching_topic_count %}
     <section class="topics search-topics">
-        {% for topic in topics %}
-        {% if topic.matches %}
-        <div class="matching-topic">
-          <h2><a href="{{ topic.relative_url|bingo_redirect_url(["search_topic_clicked_link"]) }}" data-tag="Search Topic Results">{{ topic.standalone_title|escape }}</a></h2>
+        {% if matching_topic %}
+        <div class="topic-condensed">
+          <h2><a href="{{ matching_topic["ka_url"] }}" data-tag="Search Topic Results">{{ matching_topic["title"]|escape }}</a></h2>
 
-          {% if topic.description %}
-          <div class="searchresulthighlight topic-description">{{ topic.description|escape }}</div>
+          {% if matching_topic["description"] %}
+          <div class="searchresulthighlight topic-description">{{ matching_topic["description"]|escape }}</div>
           {% endif %}
 
-          {% if topic.child_topics %}
+          {% if matching_topic["children"] %}
             <ul>
-            {% for child_topic in topic.child_topics %}
+            {% for child_topic in matching_topic["children"] %}
               <li>
-                <a href="{{ child_topic.relative_url|bingo_redirect_url(["search_topic_clicked_link"]) }}" data-tag="Search Topic Results" class="topic-result"><span class="searchresulthighlight">{{ child_topic.title|escape }}</span></a>
+                <a href="{{ child_topic["url"] }}" data-tag="Search Topic Results" class="topic-result"><span class="searchresulthighlight">{{ child_topic["title"]|escape }}</span></a>
               </li>
             {% endfor %}
             </ul>
             <div style="clear: both"></div>
           {% endif %}
         </div>
-      {% endif %}
-      {% endfor %}
+        {% endif %}
     </section>
     {% endif %}
 
@@ -96,15 +94,6 @@
     {% if topics %}
     <section class="topics search-topics">
         <dl>
-        {% for topic in matching_topics %}
-            <dt><h2 class="topic"><a href="{{topic["ka_url"]}}" data-tag="Search Body Topic" class="topic-result">{{ topic["title"]|escape }}</a>
-            </h2></dt>
-
-            {% if topic["description"] %}
-            <dd>{{ topic["description"]|escape }}</dd>
-            {% endif %}
-
-        {% endfor %}
 
         {% for topic in topics %}
         {% if topic.match_count > 0 %}
@@ -134,6 +123,16 @@
                           <li><a href="{{video["ka_url"]}}" data-tag="Search Body" class="vl"><span class="vid-progress v{{ video["key_id"] }}">Watch the video lesson</a></li>
                         </ul>
                       </div>
+                      {% if video["exercises"] %}
+                      <div class="column">
+                        <p class="column-heading">Practice Exercises</p>
+                          <ul>
+                            {% for exercise in video["exercises"] %}
+                              <li><a href="{{ exercise.relative_url }}" data-tag="Search Body" class="exercise-link">{{ exercise.display_name|escape }}</a></li>
+                            {% endfor %}
+                          </ul>
+                      </div>
+                      {% endif %}
                       <br>
                     </li>
                 {% endif %}

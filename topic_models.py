@@ -1546,6 +1546,19 @@ class Topic(search.Searchable, db.Model):
         else:
             return progress_tree
 
+    def get_search_data(self):
+        child_topics = db.get([k for k in self.child_keys if k.kind() == "Topic"])
+        child_list = [{ "title": t.title, "url": t.relative_url } for t in child_topics]
+        return {
+            "kind": "Topic",
+            "id": self.id,
+            "title": self.standalone_title,
+            "description": self.description,
+            "ka_url": self.relative_url,
+            "parent_topic": unicode(self.parent_keys[0]) if self.parent_keys else None,
+            "child_topics": jsonify.jsonify(child_list)
+        }
+
 class UserTopic(db.Model):
     user = db.UserProperty()
     seconds_watched = db.IntegerProperty(default=0)
