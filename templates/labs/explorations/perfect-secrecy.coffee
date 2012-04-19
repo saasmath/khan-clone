@@ -139,7 +139,7 @@ $(->
                 randomShiftChar = randomShifts[i]
 
             html += """
-                    <div class="char">
+                    <div class="column">
                         #{plaintextChar}
                         <br>
                         #{randomShiftChar}
@@ -157,15 +157,15 @@ $(->
         max = Math.max.apply(Math, ciphertextLetterCount.concat(plaintextLetterCount, shiftCount))
 
         # Update chart 1.
-        chart1.yAxis[0].setExtremes(0, max)
+        chart1.yAxis[0].setExtremes(0, max, no)
         chart1.series[0].setData(plaintextLetterCount)
 
         # Update chart 2.
-        chart2.yAxis[0].setExtremes(0, max)
+        chart2.yAxis[0].setExtremes(0, max, no)
         chart2.series[0].setData(shiftCount)
 
         # Update chart 3.
-        chart3.yAxis[0].setExtremes(0, max)
+        chart3.yAxis[0].setExtremes(0, max, no)
         chart3.series[0].setData(ciphertextLetterCount)
 
     timeout = null

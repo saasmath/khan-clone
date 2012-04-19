@@ -174,18 +174,18 @@
           plaintextChar = char;
           randomShiftChar = randomShifts[i];
         }
-        html += "<div class=\"char\">\n    " + plaintextChar + "\n    <br>\n    " + randomShiftChar + "\n    <br>\n    " + ciphertextChar + "\n</div>";
+        html += "<div class=\"column\">\n    " + plaintextChar + "\n    <br>\n    " + randomShiftChar + "\n    <br>\n    " + ciphertextChar + "\n</div>";
       }
       html += '</div>';
       $('#chars').replaceWith(html);
       chars = $('#chars');
       chars.scrollLeft(chars[0].scrollWidth);
       max = Math.max.apply(Math, ciphertextLetterCount.concat(plaintextLetterCount, shiftCount));
-      chart1.yAxis[0].setExtremes(0, max);
+      chart1.yAxis[0].setExtremes(0, max, false);
       chart1.series[0].setData(plaintextLetterCount);
-      chart2.yAxis[0].setExtremes(0, max);
+      chart2.yAxis[0].setExtremes(0, max, false);
       chart2.series[0].setData(shiftCount);
-      chart3.yAxis[0].setExtremes(0, max);
+      chart3.yAxis[0].setExtremes(0, max, false);
       return chart3.series[0].setData(ciphertextLetterCount);
     };
     timeout = null;
