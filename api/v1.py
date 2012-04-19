@@ -2196,9 +2196,11 @@ def autocomplete():
         topic_results = sorted(
                 topic_results,
                 key=lambda t: t["title"].lower().index(query))[:max_results_per_type]
+    else:
+        video_results = {}
+        topic_results = {}
+        exercise_results = {}
 
-    # TODO(csilvers): what to return if query is None?  Most of these
-    # aren't defined.
     return {
             "query": query,
             "videos": video_results,
