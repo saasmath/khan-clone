@@ -16,7 +16,7 @@ def handlebars_repeat(context, options, count):
     fn = options["fn"]
     ret = ""
 
-    for i in range(0, count):
+    for i in xrange(0, count):
         ret = ret + u''.join(fn(context))
 
     return ret
@@ -142,7 +142,6 @@ def handlebars_template(package, name, params):
                 __import__(module_name)
             except ImportError:
                 logging.info("Import error!")
-                pass
 
         if module_name in sys.modules:
             function = getattr(sys.modules[module_name], function_name)

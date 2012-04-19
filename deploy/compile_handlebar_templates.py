@@ -6,6 +6,7 @@ import shutil
 import npm
 import inspect
 import types
+import re
 
 from pybars import Compiler
 
@@ -88,7 +89,7 @@ def compile_template_to_python(root_path, rel_path, file_name):
 
     in_file = open(input_path, 'r')
     source = unicode(in_file.read())
-    source = source.replace("{{else}}", "{{^}}") # Pybars doesn't handle {{else}} for some reason
+    source = re.sub(r'{{\s*else\s*}}', "{{^}}", source) # Pybars doesn't handle {{else}} for some reason
     template = compiler.compile(source)
 
     output_string = []
