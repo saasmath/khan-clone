@@ -11,13 +11,15 @@ from google.appengine.ext import db
 from datetime import datetime
 
 SIMPLE_TYPES = (int, long, float, bool, basestring)
+
+
 def dumps(obj):
     if isinstance(obj, SIMPLE_TYPES):
         return obj
     elif obj == None:
         return None
     elif isinstance(obj, list):
-        items = [];
+        items = []
         for item in obj:
             items.append(dumps(item))
         return items
@@ -29,7 +31,7 @@ def dumps(obj):
             properties[key] = dumps(obj[key])
         return properties
 
-    properties = dict();
+    properties = dict()
     if isinstance(obj, db.Model):
         properties['kind'] = obj.kind()
         properties['key'] = obj.key()
@@ -53,8 +55,10 @@ def dumps(obj):
     else:
         return properties
 
+
 def is_visible_property(property):
     return property[0] != '_'
+
 
 def is_visible_class_name(class_name):
     return not(
@@ -64,10 +68,12 @@ def is_visible_class_name(class_name):
                 ('db.Query' in class_name)
             )
 
+
 class JSONModelEncoder(json.JSONEncoder):
     def default(self, o):
         """jsonify default encoder"""
         return dumps(o)
+
 
 def jsonify(data, **kwargs):
     """jsonify data in a standard (human friendly) way. If a db.Model

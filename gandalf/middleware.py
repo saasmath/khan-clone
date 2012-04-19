@@ -1,5 +1,6 @@
 from gandalf.cache import flush_request_cache
 
+
 class GandalfWSGIMiddleware(object):
 
     def __init__(self, app):

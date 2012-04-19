@@ -33,9 +33,7 @@
 ./auth/pbkdf2.py
 ./avatars/util_avatars.py
 ./backfill.py
-./badges/badges.py
 ./badges/custom_badges.py
-./badges/exercise_badges.py
 ./badges/exercise_completion_badges.py
 ./badges/exercise_completion_count_badges.py
 ./badges/feedback_badges.py
@@ -43,10 +41,7 @@
 ./badges/models_badges.py
 ./badges/power_time_badges.py
 ./badges/profile_badges.py
-./badges/recovery_problem_badges.py
-./badges/templatetags.py
 ./badges/timed_problem_badges.py
-./badges/topic_time_badges.py
 ./badges/unfinished_exercise_badges.py
 ./badges/util_badges.py
 ./bulk_update/handler.py
@@ -91,13 +86,7 @@
 ./facebook.py
 ./facebook_util.py
 ./gandalf/api.py
-./gandalf/dashboard.py
-./gandalf/jsonify.py
-./gandalf/main.py
-./gandalf/middleware.py
 ./gandalf/object_property.py
-./gandalf/tests/__init__.py
-./gandalf/tests/main.py
 ./gandalf/tests/run_tests.py
 ./github.py
 ./homepage.py
@@ -153,7 +142,6 @@
 ./user_models.py
 ./user_models_test.py
 ./user_util.py
-./util.py
 ./util_test.py
 ./video_models.py
 ./youtube_sync.py
