@@ -246,6 +246,17 @@ def is_current_user_moderator():
                           user_data.moderator or user_data.developer)
 
 
+@request_cache.cache()
+def is_current_user_admin():
+    # Make sure current UserData exists as well as is_current_user_admin
+    # because UserData properly verifies xsrf token.
+    # TODO(csilvers): have this actually do xsrf checking for non-/api/ calls?
+    #                 c.f. api/auth/auth_util.py:allow_cookie_based_auth()
+    #                 If so, change the decorators to call ensure_xsrf_cookie.
+    user_data = user_models.UserData.current()
+    return user_data and users.is_current_user_admin()
+
+
 # Put down here to avoid circular-import problems.
 # See http://effbot.org/zone/import-confusion.htm
 import user_models
