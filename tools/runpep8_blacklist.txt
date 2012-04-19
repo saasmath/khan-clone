@@ -15,6 +15,7 @@
 ./khan-exercises
 
 # Our code, which should be made pep8-compliant but isn't yet
+./accuracy_model/__init__.py
 ./activity_summary.py
 ./api/auth/__init__.py
 ./api/auth/auth_util.py
@@ -100,14 +101,12 @@
 ./gandalf/tests/run_tests.py
 ./github.py
 ./homepage.py
-./image_cache.py
 ./importer/handlers.py
 ./js_css_packages/packages.py
 ./js_css_packages/packages_compressed.py
 ./js_css_packages/packages_hash.py
 ./js_css_packages/templatetags.py
 ./layer_cache.py
-./library.py
 ./login.py
 ./mailing_lists/util_mailing_lists.py
 ./main.py
@@ -119,7 +118,6 @@
 ./offline/Khan Academy/code/download.py
 ./offline/Khan Academy/code/youtube-dl.py
 ./offline/setup.py
-./offline/setup_DVD.py
 ./offline/unzip.py
 ./offline/upload_individual_videos.py
 ./paypal/__init__.py

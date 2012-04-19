@@ -1,6 +1,5 @@
 import itertools
 import random
-import sys
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
 try:

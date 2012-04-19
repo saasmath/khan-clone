@@ -1,5 +1,4 @@
 import shared_jinja
-from badges import badges, util_badges
 from notifications import UserNotifier
 
 

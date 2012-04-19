@@ -1,5 +1,3 @@
-import sys
-
 from urllib import urlencode
 from urllib2 import urlopen, Request
 

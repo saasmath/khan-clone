@@ -1,21 +1,12 @@
-import os
 import logging
 
 from google.appengine.ext import db, deferred
-from google.appengine.api import users
 import user_util
-import util
-from app import App
 from user_models import UserData
 from common_core.models import CommonCoreMap
 import request_handler
-import itertools
 from api.auth.xsrf import ensure_xsrf_cookie
 
-import gdata.youtube
-import gdata.youtube.data
-import gdata.youtube.service
-import urllib
 import csv
 import StringIO
 
@@ -64,8 +55,6 @@ class MergeUsers(request_handler.RequestHandler):
 
         source = self.request_user_data("source_email")
         target = self.request_user_data("target_email")
-
-        merged = False
 
         if source and target:
 
@@ -132,7 +121,7 @@ class ManageCoworkers(request_handler.RequestHandler):
 def update_common_core_map(cc_file):
     logging.info("Deferred job <update_common_core_map> started")
     reader = csv.reader(cc_file, delimiter='\t')
-    headerline = reader.next()
+    _ = reader.next()
     cc_list = []
     cc_standards = {}
     for line in reader:
@@ -140,7 +129,7 @@ def update_common_core_map(cc_file):
         cc_cluster = line[1]
         try:
             cc_description = line[2].encode('utf-8')
-        except Exception, e:
+        except Exception:
             cc_description = cc_cluster
         exercise_name = line[3]
         video_youtube_id = line[4]
