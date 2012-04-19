@@ -19,7 +19,7 @@ return a 401 if certain conditions aren't met.
    must be true.)
 
 @login_required_and: the above are all special cases of this more generic
-   decorator, which can be used when more complex authorization is
+   decorator, which can be used when more complex access control is
    required.
 
 @open_access: anyone can access this url, they don't need to be logged in.

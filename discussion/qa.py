@@ -244,7 +244,7 @@ class FlagEntity(request_handler.RequestHandler):
                     user_data.put()
 
 class ClearFlags(request_handler.RequestHandler):
-    @user_util.moderator_only
+    @user_util.moderator_required
     def post(self):
         key = self.request.get("entity_key")
         if key:
@@ -256,7 +256,7 @@ class ClearFlags(request_handler.RequestHandler):
         self.redirect("/discussion/flaggedfeedback")
 
 class ChangeEntityType(request_handler.RequestHandler):
-    @user_util.moderator_only
+    @user_util.moderator_required
     def post(self):
         # Must be a moderator to change types of anything
         if not user_util.is_current_user_moderator():

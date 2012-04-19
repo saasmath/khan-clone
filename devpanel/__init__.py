@@ -22,7 +22,7 @@ import StringIO
 
 class Panel(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         self.render_jinja2_template('devpanel/panel.html',
                                     {"selected_id": "panel"})
@@ -30,7 +30,7 @@ class Panel(request_handler.RequestHandler):
 
 class MergeUsers(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
 
         source = self.request_user_data("source_email")
@@ -55,7 +55,7 @@ class MergeUsers(request_handler.RequestHandler):
         self.render_jinja2_template("devpanel/mergeusers.html",
                                     template_values)
 
-    @user_util.developer_only
+    @user_util.developer_required
     def post(self):
 
         if not self.request_bool("confirm", default=False):
@@ -95,7 +95,7 @@ class MergeUsers(request_handler.RequestHandler):
 
 class Manage(request_handler.RequestHandler):
 
-    @user_util.admin_only  # only admins may add devs, devs cannot add devs
+    @user_util.admin_required  # only admins may add devs, devs cannot add devs
     @ensure_xsrf_cookie
     def get(self):
         developers = UserData.all()
@@ -110,7 +110,7 @@ class Manage(request_handler.RequestHandler):
 
 class ManageCoworkers(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     @ensure_xsrf_cookie
     def get(self):
 
@@ -178,7 +178,7 @@ def update_common_core_map(cc_file):
 
 class ManageCommonCore(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     @ensure_xsrf_cookie
     def get(self):
         template_values = {
@@ -188,7 +188,7 @@ class ManageCommonCore(request_handler.RequestHandler):
         self.render_jinja2_template("devpanel/uploadcommoncorefile.html",
                                     template_values)
 
-    @user_util.developer_only
+    @user_util.developer_required
     @ensure_xsrf_cookie
     def post(self):
 

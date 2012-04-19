@@ -62,7 +62,7 @@ class CreateRandomGoalData(request_handler.RequestHandler):
         "Lee", "Gagnon", "Wilson", "Clark", "Johnson", "White", "Williams",
         "Taylor", "Campbell", "Anderson", "Cooper", "Jones", "Lambert"]
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         from exercises import attempt_problem
 

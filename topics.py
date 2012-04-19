@@ -40,7 +40,7 @@ import video_models
 class EditContent(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
 
         version_name = self.request.get('version', 'edit')

@@ -92,7 +92,7 @@ from gae_bingo.gae_bingo import bingo, ab_test
 
 class VideoDataTest(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         self.response.out.write('<html>')
         videos = Video.all()
@@ -411,7 +411,7 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
             prop = "user"
         return (old_email, new_email, prop)
 
-    @user_util.admin_only
+    @user_util.admin_required
     @ensure_xsrf_cookie
     def get(self):
         (old_email, new_email, prop) = self.get_email_params()
@@ -452,7 +452,7 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
 
 class Search(request_handler.RequestHandler):
 
-    @user_util.admin_only
+    @user_util.admin_required
     def update(self):
         if App.is_dev_server:
             new_version = topic_models.TopicVersion.get_default_version()
@@ -653,7 +653,7 @@ class ServeUserVideoCss(request_handler.RequestHandler):
         self.response.out.write(user_video_css.video_css)
 
 class MemcacheViewer(request_handler.RequestHandler):
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         key = self.request_string("key", "__layer_cache_models._get_settings_dict__")
         namespace = self.request_string("namespace", App.version)

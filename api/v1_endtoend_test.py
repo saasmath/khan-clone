@@ -315,7 +315,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
     @testsize.large()
     def test_dev__topictree__problems(self):
-        # TODO(james): uncomment once this becomes developer_only in v1.py
+        # TODO(james): uncomment once this becomes developer_required in v1.py
         #self.assert401Error('/api/v1/dev/topictree/problems')
         self.set_user(developer=True)
 

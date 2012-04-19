@@ -41,7 +41,7 @@ class CustomBadge(Badge):
         return super(CustomBadge, self).icon_src
 
 class CreateCustomBadge(request_handler.RequestHandler):
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         template_values = {
                 "badge_categories": [(badge_id, BadgeCategory.get_type_label(badge_id)) for badge_id in BadgeCategory.empty_count_dict()],
@@ -50,7 +50,7 @@ class CreateCustomBadge(request_handler.RequestHandler):
 
         self.render_jinja2_template("badges/create_custom_badge.html", template_values)
 
-    @user_util.developer_only
+    @user_util.developer_required
     def post(self):
         name = self.request_string("name")
         description = self.request_string("description")
@@ -71,7 +71,7 @@ class CreateCustomBadge(request_handler.RequestHandler):
         self.redirect("/badges/custom/create?failed=1")
 
 class AwardCustomBadge(request_handler.RequestHandler):
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         template_values = {
                 "custom_badges": CustomBadge.all(),
@@ -79,7 +79,7 @@ class AwardCustomBadge(request_handler.RequestHandler):
 
         self.render_jinja2_template("badges/award_custom_badge.html", template_values)
 
-    @user_util.developer_only
+    @user_util.developer_required
     def post(self):
         custom_badge_name = self.request_string("name", default="")
         custom_badges = CustomBadge.all()

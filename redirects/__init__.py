@@ -23,7 +23,7 @@ class Redirect(request_handler.RequestHandler):
 
 class List(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
 
         context = {
@@ -35,7 +35,7 @@ class List(request_handler.RequestHandler):
 
 class Add(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def post(self):
 
         redirect_from = self.request_string("redirect_from")
@@ -57,7 +57,7 @@ class Add(request_handler.RequestHandler):
 
 class Remove(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def post(self):
 
         redirect_from = self.request_string("redirect_from")

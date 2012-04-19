@@ -10,14 +10,14 @@ import user_util
 
 class ModPanel(request_handler.RequestHandler):
 
-    @user_util.moderator_only
+    @user_util.moderator_required
     def get(self):
         self.render_jinja2_template('discussion/mod/mod.html', { "selected_id": "panel" })
 
 class ModeratorList(request_handler.RequestHandler):
 
     # Must be an admin to change moderators
-    @user_util.admin_only
+    @user_util.admin_required
     @api.auth.xsrf.ensure_xsrf_cookie
     def get(self):
         mods = user_models.UserData.gql("WHERE moderator = :1", True)
@@ -26,7 +26,7 @@ class ModeratorList(request_handler.RequestHandler):
             "selected_id": "moderatorlist",
         })
 
-    @user_util.admin_only
+    @user_util.admin_required
     @api.auth.xsrf.ensure_xsrf_cookie
     def post(self):
         user_data = self.request_user_data("user")
@@ -44,7 +44,7 @@ class ModeratorList(request_handler.RequestHandler):
 
 class FlaggedFeedback(request_handler.RequestHandler):
 
-    @user_util.moderator_only
+    @user_util.moderator_required
     def get(self):
 
         # Show all non-deleted feedback flagged for moderator attention
@@ -71,7 +71,7 @@ class FlaggedFeedback(request_handler.RequestHandler):
 
 class BannedList(request_handler.RequestHandler):
 
-    @user_util.moderator_only
+    @user_util.moderator_required
     def get(self):
         banned_user_data_list = user_models.UserData.gql("WHERE discussion_banned = :1", True)
         self.render_jinja2_template('discussion/mod/bannedlist.html', {
@@ -79,7 +79,7 @@ class BannedList(request_handler.RequestHandler):
             "selected_id": "bannedlist",
         })
 
-    @user_util.moderator_only
+    @user_util.moderator_required
     def post(self):
         user_data = self.request_user_data("user")
 

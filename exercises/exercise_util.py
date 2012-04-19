@@ -271,7 +271,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
 class ExerciseAdmin(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         user_data = user_models.UserData.current()
         user_exercise_graph = exercise_models.UserExerciseGraph.current()
@@ -293,7 +293,7 @@ class ExerciseAdmin(request_handler.RequestHandler):
 
 class EditExercise(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         exercise_name = self.request.get('name')
         if exercise_name:
@@ -423,11 +423,11 @@ class UpdateExercise(request_handler.RequestHandler):
 
         db.put(exercise_videos)
 
-    @user_util.developer_only
+    @user_util.developer_required
     def post(self):
         self.get()
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         dict = {}
         dict["name"] = self.request.get('name')

@@ -7,14 +7,43 @@ must decorate their get() and post() methods with one of these
 decorators.
 
 Here are the decorators that you can use:
-   @open_access
-   @moderator_only
-   @developer_only
-   @admin_only
-   @manual_access_checking
 
-@manual_access_checking means that the get()/post() routine you are
-writing manually checks that the access is allowed.  Use sparingly!
+@login_required: the user making the request has to be logged in.  For
+   oauth, that means that the oauth token they use has to exist in our
+   oauth map.  For cookies-based authentication, it means that there is
+   a valid cookie (that could only have been created by a logged-in user).
+
+@developer_required: like login_required, but the logged in user must have
+   user_data.developer == True.
+
+@moderator_required: like login_required, but the logged in user must have
+   user_data.moderator == True.
+
+@admin_required: like login_required, but the logged in user must be an
+   admin.  (We use google's auth for this; users.current_user_is_admin()
+   must be true.)
+
+@login_required_and: the above are all special cases of this more generic
+   decorator, which can be used when more complex access control is
+   required.
+
+@open_access: anyone can access this url, they don't need to be logged in.
+   This is used for urls that are not protected (developer-only, say)
+   and do not have any user-specific information in them.
+
+@manual_access_checking: anyone can access this url, they don't even
+   need a valid oauth credential or cookie.  The expectation is the
+   handler will do its own authentication.  Use sparingly!
+
+@dev_server_only: unlike the above, which concern the user,
+   this concerns the platform the appengine instance is running on.
+   This decorator says a handler is not available in production;
+   it can only be used when running a dev_appserver instance.
+   It's used for things like importing test data.
+
+The non-decorator routines tell you something about the current user:
+   is_current_user_moderator()
+   is_current_user_developer()
 """
 
 from functools import wraps
@@ -28,6 +57,17 @@ import request_cache
 
 
 class LoginFailedError(Exception): pass
+
+
+def _go_to_login(handler, why):
+    """Redirect the user to the login page and log the access attempt."""
+    user_data = user_models.UserData.current()
+    if user_data:
+        logging.warning("Attempt by %s to access %s page"
+                        % (user_data.user_id, why))
+    # can't import util here because of circular dependencies
+    url = "/login?continue=%s" % urllib.quote(handler.request.uri)
+    return handler.redirect(url)
 
 
 def verify_login(admin_required,
@@ -80,17 +120,6 @@ def verify_login(admin_required,
 
     if (not phantom_user_allowed) and user_data.is_phantom:
         return LoginFailedError("no-phanthom-user")
-
-
-def _go_to_login(handler, why):
-    """Redirect the user to the login page and log the access attempt."""
-    user_data = user_models.UserData.current()
-    if user_data:
-        logging.warning("Attempt by %s to access %s page"
-                        % (user_data.user_id, why))
-    # can't import util here because of circular dependencies
-    url = "/login?continue=%s" % urllib.quote(handler.request.uri)
-    return handler.redirect(url)
 
 
 def open_access(func):
@@ -158,90 +187,23 @@ def login_required_and(func,
     return wrapper
 
 
-@request_cache.cache()
-def is_current_user_demo_user():
-    user_data = models.UserData.current()
-    return user_data and user_data.is_demo
+def admin_required(func):
+    return login_required_and(func, admin_required=True)
 
 
-# TODO(csilvers): add login_required, with
-# is_current_user_logged_in: users.is_current_user_admin() or user_data is not None and also 'not user_data.is_demo'.  If user_data.is_demo, do:
-#    self.redirect(util.create_logout_url(self.request.uri))
-
-# TODO(csilvers): add login_required_something(demo_user_allowed=False)
-# Also maybe something with phantom users?
-
-@request_cache.cache()
-def is_current_user_developer():
-    user_data = user_models.UserData.current()
-    return user_data and (users.is_current_user_admin() or
-                          user_data.developer)
-
-def developer_only(method):
-    """Decorator checking that users of a request are register as a developer."""
-
-    @wraps(method)
-    def wrapper(self, *args, **kwargs):
-        if is_current_user_developer():
-            return method(self, *args, **kwargs)
-        else:
-            return _go_to_login(self, "admin-only")
-
-    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'developer-only'   # checked in RequestHandler
-    return wrapper
-
-@request_cache.cache()
-def is_current_user_moderator():
-    user_data = user_models.UserData.current()
-    return user_data and (users.is_current_user_admin() or
-                          user_data.moderator or user_data.developer)
-
-def moderator_only(method):
-    """Decorator checking that users of a request is registered as a moderator."""
-
-    @wraps(method)
-    def wrapper(self, *args, **kwargs):
-        if is_current_user_moderator():
-            return method(self, *args, **kwargs)
-        else:
-            return _go_to_login(self, "moderator-only")
-
-    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'moderator-only'   # checked in RequestHandler
-    return wrapper
-
-@request_cache.cache()
-def is_current_user_admin():
-    # Make sure current UserData exists as well as is_current_user_admin
-    # because UserData properly verifies xsrf token.
-    # TODO(csilvers): have this actually do xsrf checking for non-/api/ calls?
-    #                 c.f. api/auth/auth_util.py:allow_cookie_based_auth()
-    #                 If so, change the decorators to call ensure_xsrf_cookie.
-    user_data = user_models.UserData.current()
-    return user_data and users.is_current_user_admin()
-
-def admin_only(method):
-    """Decorator checking that users of a request have an admin account."""
-
-    @wraps(method)
-    def wrapper(self, *args, **kwargs):
-        if is_current_user_admin():
-            return method(self, *args, **kwargs)
-        else:
-            return _go_to_login(self, "admin-only")
-
-    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'admin-only'   # checked in RequestHandler
-    return wrapper
-
-def is_current_user(user_data):
-    current_user_data = user_models.UserData.current()
-    return (current_user_data and
-            current_user_data.user_id == user_data.user_id)
+def developer_required(func):
+    return login_required_and(func, developer_required=True)
 
 
-# This isn't an access-control method, but is still useful.
+def moderator_required(func):
+    return login_required_and(func, moderator_required=True)
+
+
+def login_required(func):
+    """Verify a user is logged in.  Phantom users are considered logged in."""
+    return login_required_and(func)
+
+
 def dev_server_only(method):
     """Decorator that prevents a handler from working in production"""
 
@@ -261,6 +223,20 @@ def dev_server_only(method):
             return
 
     return wrapper
+
+
+@request_cache.cache()
+def is_current_user_developer():
+    user_data = user_models.UserData.current()
+    return user_data and (users.is_current_user_admin() or
+                          user_data.developer)
+
+@request_cache.cache()
+def is_current_user_moderator():
+    user_data = user_models.UserData.current()
+    return user_data and (users.is_current_user_admin() or
+                          user_data.moderator or user_data.developer)
+
 
 # Put down here to avoid circular-import problems.
 # See http://effbot.org/zone/import-confusion.htm

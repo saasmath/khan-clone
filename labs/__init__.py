@@ -21,7 +21,7 @@ class LabsCSRequestHandler(request_handler.RequestHandler):
 
 class LabsCSEditorRequestHandler(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     @ensure_xsrf_cookie
     def get(self):
         self.render_jinja2_template('canvas-editor/editor.html', {})
@@ -37,7 +37,7 @@ class LabsCSExerciseRequestHandler(request_handler.RequestHandler):
 
 class LabsCSRecordRequestHandler(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     @ensure_xsrf_cookie
     def get(self):
         self.render_jinja2_template('canvas-editor/record.html', {})

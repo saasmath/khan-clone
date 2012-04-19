@@ -1262,7 +1262,8 @@ def get_coaches_and_requesters():
         coaches and coach requesters
     """
     user_data = request.request_visible_student_user_data()
-    if not user_util.is_current_user(user_data):
+    current_user_data = user_models.UserData.current()
+    if not current_user_data or current_user_data.user_id != user_data.user_id:
         return api_unauthorized_response("You can only see your own coaches.")
 
     return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
