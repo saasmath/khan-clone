@@ -828,7 +828,7 @@ class PasswordChange(request_handler.RequestHandler):
 
     def secure_url_with_token(self, url, user_data=None):
         if user_data is None:
-            user_data = self.resolve_user_info()
+            (user_data, _) = self.resolve_user_info()
         if not user_data:
             if not self.request_string("reset_token", default=""):
                 logging.warn("No user detected for password change")
