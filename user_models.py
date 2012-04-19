@@ -735,7 +735,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
                 email.endswith("@googlemail.com") or # Gmail in Germany
                 email.endswith("@khanacademy.org") or # We're special
                 self.developer or # Really little kids don't write software
-                self.is_facebook_user())
+                self.is_facebook_user)
 
     def get_or_insert_exercise(self, exercise, allow_insert=True):
         # TODO(csilvers): get rid of the circular import here
