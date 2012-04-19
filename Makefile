@@ -48,6 +48,11 @@ check:
 quickcheck:
 	$(MAKE) MAX_TEST_SIZE=small check
 
+# Run *all* the unittests
+allcheck:
+	$(MAKE) MAX_TEST_SIZE=large check
+
+
 # Run lint checks
 lint:
 	tools/runpep8.py
