@@ -3,6 +3,7 @@
 from google.appengine.ext import db
 import cPickle as pickle
 
+
 # Use this property to store objects.
 class ObjectProperty(db.BlobProperty):
     def validate(self, value):
@@ -23,6 +24,7 @@ class ObjectProperty(db.BlobProperty):
         except:
             pass
         return super(ObjectProperty, self).make_value_from_datastore(value)
+
 
 class UnvalidatedObjectProperty(ObjectProperty):
     def validate(self, value):

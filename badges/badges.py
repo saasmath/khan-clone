@@ -4,14 +4,15 @@ import phantom_users.util_notify
 from notifications import UserNotifier
 from badge_context import BadgeContextType
 
+
 class BadgeCategory(object):
     # Sorted by astronomical size...
-    BRONZE = 0 # Meteorite, "Common"
-    SILVER = 1 # Moon, "Uncommon"
-    GOLD = 2 # Earth, "Rare"
-    PLATINUM = 3 # Sun, "Epic"
-    DIAMOND = 4 # Black Hole, "Legendary"
-    MASTER = 5 # Topic/Academic Achievement
+    BRONZE = 0  # Meteorite, "Common"
+    SILVER = 1  # Moon, "Uncommon"
+    GOLD = 2  # Earth, "Rare"
+    PLATINUM = 3  # Sun, "Epic"
+    DIAMOND = 4  # Black Hole, "Legendary"
+    MASTER = 5  # Topic/Academic Achievement
 
     _serialize_blacklist = [
             "BRONZE", "SILVER", "GOLD",
@@ -51,17 +52,23 @@ class BadgeCategory(object):
     @staticmethod
     def get_description(category):
         if category == BadgeCategory.BRONZE:
-            return "Meteorite badges are common and easy to earn when just getting started."
+            return ("Meteorite badges are common and easy to earn when just "
+                    "getting started.")
         elif category == BadgeCategory.SILVER:
-            return "Moon badges are uncommon and represent an investment in learning."
+            return ("Moon badges are uncommon and represent an investment in "
+                    "learning.")
         elif category == BadgeCategory.GOLD:
-            return "Earth badges are rare. They require a significant amount of learning."
+            return ("Earth badges are rare. They require a significant amount "
+                    "of learning.")
         elif category == BadgeCategory.PLATINUM:
-            return "Sun badges are epic. Earning them is a true challenge, and they require impressive dedication."
+            return ("Sun badges are epic. Earning them is a true challenge, "
+                    "and they require impressive dedication.")
         elif category == BadgeCategory.DIAMOND:
-            return "Black Hole badges are legendary and unknown. They are the most unique Khan Academy awards."
+            return ("Black Hole badges are legendary and unknown. They are "
+                    "the most unique Khan Academy awards.")
         elif category == BadgeCategory.MASTER:
-            return "Challenge Patches are special awards for completing topic challenges."
+            return ("Challenge Patches are special awards for completing "
+                    "topic challenges.")
         return ""
 
     @staticmethod
@@ -145,16 +152,25 @@ class BadgeCategory(object):
             return "Challenge Patches"
         return "Common"
 
-# Badge is the base class used by various badge subclasses (ExerciseBadge, PlaylistBadge, TimedProblemBadge, etc).
+
+# Badge is the base class used by various badge subclasses
+# (ExerciseBadge, PlaylistBadge, TimedProblemBadge, etc).
 # 
-# Each baseclass overrides sets up a couple key pieces of data (description, badge_category, points)
-# and implements a couple key functions (is_satisfied_by, is_already_owned_by, award_to, extended_description).
+# Each baseclass overrides sets up a couple key pieces of data
+# (description, badge_category, points) and implements a couple key
+# functions (is_satisfied_by, is_already_owned_by, award_to,
+# extended_description).
 #
-# The most important rule to follow with badges is to *never talk to the datastore when checking is_satisfied_by or is_already_owned_by*.
-# Many badge calculations need to run every time a user answers a question or watches part of a video, and a couple slow badges can slow down
-# the whole system.
-# These functions are highly optimized and should only ever use data that is already stored in UserData or is passed as optional keyword arguments
-# that have already been calculated / retrieved.
+# The most important rule to follow with badges is to *never talk to
+# the datastore when checking is_satisfied_by or is_already_owned_by*.
+#
+# Many badge calculations need to run every time a user answers a
+# question or watches part of a video, and a couple slow badges can
+# slow down the whole system.
+#
+# These functions are highly optimized and should only ever use data
+# that is already stored in UserData or is passed as optional keyword
+# arguments that have already been calculated / retrieved.
 class Badge(object):
 
     _serialize_whitelist = [
@@ -170,8 +186,9 @@ class Badge(object):
         #   self.badge_category,
         #   self.points
 
-        # Keep .name constant even if description changes.
-        # This way we only remove existing badges from people if the class name changes.
+        # Keep .name constant even if description changes. This way we
+        # only remove existing badges from people if the class name
+        # changes.
         self.name = self.__class__.__name__.lower()
         self.badge_context_type = BadgeContextType.NONE
 
@@ -184,8 +201,9 @@ class Badge(object):
         # A badge may have an associated goal
         self.is_goal = False
 
-        # Retired badges are disabled for all users except those who've already earned them.
-        # To retire a badge, see RetiredBadge use below.
+        # Retired badges are disabled for all users except those
+        # who've already earned them.  To retire a badge, see
+        # RetiredBadge use below.
         self.is_retired = isinstance(self, RetiredBadge)
 
         # Hide the badge from all badge lists if it hasn't been achieved yet
@@ -236,7 +254,8 @@ class Badge(object):
         if target_context_name is None:
             return self.name
         else:
-            return Badge.add_target_context_name(self.name, target_context_name)
+            return Badge.add_target_context_name(self.name,
+                                                 target_context_name)
 
     def is_hidden(self):
         return self.is_hidden_if_unknown and not self.is_owned
@@ -259,17 +278,19 @@ class Badge(object):
     def extended_description(self):
         return ""
 
-    # Overridden by individual badge implementations which each grab various parameters from args and kwargs.
-    # *args and **kwargs should contain all the data necessary for is_satisfied_by's logic, and implementations
-    # should never talk to the datastore or memcache, unless
-    # is_manually_awarded returns True
+    # Overridden by individual badge implementations which each grab
+    # various parameters from args and kwargs. *args and **kwargs
+    # should contain all the data necessary for is_satisfied_by's
+    # logic, and implementations should never talk to the datastore or
+    # memcache, unless is_manually_awarded returns True
     def is_satisfied_by(self, *args, **kwargs):
         return False
 
-    # Overridden by individual badge implementations which each grab various parameters from args and kwargs
-    # *args and **kwargs should contain all the data necessary for is_already_owned_by's logic, and implementations
-    # should never talk to the datastore or memcache, unless
-    # is_manually_awarded returns True
+    # Overridden by individual badge implementations which each grab
+    # various parameters from args and kwargs *args and **kwargs
+    # should contain all the data necessary for is_already_owned_by's
+    # logic, and implementations should never talk to the datastore or
+    # memcache, unless is_manually_awarded returns True
     def is_already_owned_by(self, user_data, *args, **kwargs):
         return self.name in user_data.badges
 
@@ -281,15 +302,19 @@ class Badge(object):
     def is_manually_awarded(self):
         return False
 
-    # Calculates target_context and target_context_name from data passed in and calls complete_award_to appropriately.
+    # Calculates target_context and target_context_name from data
+    # passed in and calls complete_award_to appropriately.
     #
-    # Overridden by individual badge implementations which each grab various parameters from args and kwargs
-    # It's ok for award_to to talk to the datastore, because it is run relatively infrequently.
+    # Overridden by individual badge implementations which each grab
+    # various parameters from args and kwargs It's ok for award_to to
+    # talk to the datastore, because it is run relatively
+    # infrequently.
     def award_to(self, user_data, *args, **kwargs):
         self.complete_award_to(user_data)
 
     # Awards badge to user within given context
-    def complete_award_to(self, user_data, target_context=None, target_context_name=None):
+    def complete_award_to(self, user_data, target_context=None,
+                          target_context_name=None):
         name_with_context = self.name_with_target_context(target_context_name)
         key_name = user_data.key_email + ":" + name_with_context
 
@@ -304,25 +329,28 @@ class Badge(object):
             user_data.add_points(self.points)
 
             user_badge = models_badges.UserBadge(
-                    key_name = key_name,
-                    user = user_data.user,
-                    badge_name = self.name,
-                    target_context = target_context,
-                    target_context_name = target_context_name,
-                    points_earned = self.points)
+                    key_name=key_name,
+                    user=user_data.user,
+                    badge_name=self.name,
+                    target_context=target_context,
+                    target_context_name=target_context_name,
+                    points_earned=self.points)
 
             user_badge.put()
 
         # call notifications
-        phantom_users.util_notify.update(user_data,None,threshold = False, isProf = False, gotBadge = True)
+        phantom_users.util_notify.update(user_data, None, threshold=False,
+                                         isProf=False, gotBadge=True)
         UserNotifier.push_badge_for_user_data(user_data, user_badge)
 
     def frequency(self):
         return models_badges.BadgeStat.count_by_badge_name(self.name)
 
+
 class RetiredBadge(Badge):
-    """ Retired badges are no longer awarded or visible as normal badges. They only appear
-    for users who earned them before they were retired.
+    """ Retired badges are no longer awarded or visible as normal
+    badges. They only appear for users who earned them before they
+    were retired.
 
     To retire a badge, inherit from RetiredBadge like so:
         class MonkeyBadge(RetiredBadge)
@@ -331,11 +359,13 @@ class RetiredBadge(Badge):
     then be sure to inherit from RetiredBadge first:
         class MonkeyBadge(RetiredBadge, AnimalBadge)
 
-    This will set the right method resolution order so is_satisfied_by always
-    returns False but your retired badge can still override methods like extended_description.
+    This will set the right method resolution order so is_satisfied_by
+    always returns False but your retired badge can still override
+    methods like extended_description.
     """
     def is_satisfied_by(self, *args, **kwargs):
         return False
+
 
 class GroupedUserBadge(object):
     """ Represents a set of user badges for any particular type. For example,
@@ -366,7 +396,8 @@ class GroupedUserBadge(object):
                                   badge=badge,
                                   last_earned_date=user_badge.date)
 
-        target_context_name = None if badge.hide_context else user_badge.target_context_name
+        target_context_name = (None if badge.hide_context
+                               else user_badge.target_context_name)
 
         result.target_context_names.append(target_context_name)
         return result

@@ -5,6 +5,7 @@ from google.appengine.ext.webapp import RequestHandler
 
 from gandalf.config import can_control_gandalf
 
+
 class Dashboard(RequestHandler):
 
     def get(self):
