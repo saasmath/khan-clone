@@ -266,7 +266,9 @@ class PostLogin(request_handler.RequestHandler):
         if not user_data.has_sendable_email():
 
             if not user_data.is_facebook_user:
-                raise AssertionError(
+                # TODO(benkomalo): seems like there are some phantoms hitting
+                # this code path at least - are there any others?
+                logging.error(
                     "Non-FB users should have a valid email. User: [%s]" %
                     user_data)
 
