@@ -117,10 +117,10 @@ def verify_login(admin_required,
         raise LoginFailedError("moderator-only")
 
     if (not demo_user_allowed) and user_data.is_demo:
-        return LoginFailedError("no-demo-user")
+        raise LoginFailedError("no-demo-user")
 
     if (not phantom_user_allowed) and user_data.is_phantom:
-        return LoginFailedError("no-phanthom-user")
+        raise LoginFailedError("no-phantom-user")
 
 
 def open_access(func):
@@ -145,8 +145,7 @@ def manual_access_checking(func):
     return wrapper
 
 
-def login_required_and(func,
-                       admin_required=False,
+def login_required_and(admin_required=False,
                        developer_required=False,
                        moderator_required=False,
                        demo_user_allowed=False,
@@ -164,56 +163,58 @@ def login_required_and(func,
     The default values specify the default permissions: for instance,
     phantom users are considered a valid user by this routine.
     """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            verify_login(admin_required, developer_required,
-                         moderator_required, demo_user_allowed,
-                         phantom_user_allowed)
-        except LoginFailedError, why:
-            return _go_to_login(self, str(why))
+    def decorator(method):
+        @wraps(method)
+        def wrapper(self, *args, **kwargs):
+            try:
+                verify_login(admin_required, developer_required,
+                             moderator_required, demo_user_allowed,
+                             phantom_user_allowed)
+            except LoginFailedError, why:
+                return _go_to_login(self, str(why))
 
-        # The request we're verifying login for may spawn some API
-        # requests.  To make sure those can succeed, we set an xsrf
-        # cookie -- the API routines have different authorization code
-        # than non-API routines, and need this cookie.
-        xsrf.create_xsrf_cookie_if_needed()
+            # The request we're verifying login for may spawn some API
+            # requests.  To make sure those can succeed, we set an xsrf
+            # cookie -- the API routines have different authorization code
+            # than non-API routines, and need this cookie.
+            xsrf.create_xsrf_cookie_if_needed(self)
 
-        return func(*args, **kwargs)
+            return method(self, *args, **kwargs)
 
-    # For purposes of IDing this decorator, just store the True arguments.
-    all_local_vars = locals()
-    arg_names = [var for var in all_local_vars if
-                 all_local_vars[var] and
-                 var not in ('func', 'wrapper', 'all_arg_names')]
-    auth_decorator = 'login-required(%s)' % ','.join(arg_names)
-    assert "_access_control" not in wrapper.func_dict, \
-           ("Mutiple auth decorators: %s and %s"
-            % (wrapper._access_control, auth_decorator))
-    wrapper._access_control = auth_decorator   # checked in RequestHandler
-    return wrapper
+        # For purposes of IDing this decorator, just store the True arguments.
+        all_local_vars = locals()
+        arg_names = [var for var in all_local_vars if
+                     all_local_vars[var] and
+                     var not in ('method', 'wrapper', 'all_arg_names')]
+        auth_wrapper = 'login-required(%s)' % ','.join(arg_names)
+        assert "_access_control" not in wrapper.func_dict, \
+               ("Mutiple auth decorators: %s and %s"
+                % (wrapper._access_control, auth_wrapper))
+        wrapper._access_control = auth_wrapper   # checked in RequestHandler
+        return wrapper
 
-
-def admin_required(func):
-    return login_required_and(func, admin_required=True)
-
-
-def developer_required(func):
-    return login_required_and(func, developer_required=True)
+    return decorator
 
 
-def moderator_required(func):
-    return login_required_and(func, moderator_required=True)
+def admin_required(method):
+    return login_required_and(admin_required=True)(method)
 
 
-def login_required(func):
+def developer_required(method):
+    return login_required_and(developer_required=True)(method)
+
+
+def moderator_required(method):
+    return login_required_and(moderator_required=True)(method)
+
+
+def login_required(method):
     """Verify a user is logged in.  Phantom users are considered logged in."""
-    return login_required_and(func)
+    return login_required_and()(method)
 
 
 def dev_server_only(method):
     """Decorator that prevents a handler from working in production"""
-
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         if app.App.is_dev_server:

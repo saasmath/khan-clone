@@ -171,8 +171,7 @@ def manual_access_checking(func):
     return wrapper
 
 
-def login_required_and(func,
-                       admin_required=False,
+def login_required_and(admin_required=False,
                        developer_required=False,
                        moderator_required=False,
                        demo_user_allowed=False,
@@ -194,45 +193,48 @@ def login_required_and(func,
     The default values specify the default permissions: for instance,
     phantom users are considered a valid user by this routine.
     """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            verify_and_cache_oauth_or_cookie(request)
-        except OAuthError, e:
-            return oauth_error_response(e)
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                verify_and_cache_oauth_or_cookie(request)
+            except OAuthError, e:
+                return oauth_error_response(e)
 
-        try:
-            user_util.verify_login(admin_required, developer_required,
-                                   moderator_required, demo_user_allowed,
-                                   phantom_user_allowed)
-        except user_util.LoginFailedError:
-            return unauthorized_response()
+            try:
+                user_util.verify_login(admin_required, developer_required,
+                                       moderator_required, demo_user_allowed,
+                                       phantom_user_allowed)
+            except user_util.LoginFailedError:
+                return unauthorized_response()
 
-        return func(*args, **kwargs)
+            return func(*args, **kwargs)
 
-    # For purposes of IDing this decorator, just store the True arguments.
-    all_local_vars = locals()
-    arg_names = [var for var in all_local_vars if
-                 all_local_vars[var] and
-                 var not in ('func', 'wrapper', 'all_arg_names')]
-    auth_decorator = 'login-required(%s)' % ','.join(arg_names)
-    assert "_access_control" not in wrapper.func_dict, \
-           ("Mutiple auth decorators: %s and %s"
-            % (wrapper._access_control, auth_decorator))
-    wrapper._access_control = auth_decorator   # checked in api.route()
-    return wrapper
+        # For purposes of IDing this decorator, just store the True arguments.
+        all_local_vars = locals()
+        arg_names = [var for var in all_local_vars if
+                     all_local_vars[var] and
+                     var not in ('func', 'wrapper', 'all_arg_names')]
+        auth_decorator = 'login-required(%s)' % ','.join(arg_names)
+        assert "_access_control" not in wrapper.func_dict, \
+               ("Mutiple auth decorators: %s and %s"
+                % (wrapper._access_control, auth_decorator))
+        wrapper._access_control = auth_decorator   # checked in api.route()
+        return wrapper
+
+    return decorator
 
 
 def admin_required(func):
-    return login_required_and(func, admin_required=True)
+    return login_required_and(admin_required=True)(func)
 
 
 def developer_required(func):
-    return login_required_and(func, developer_required=True)
+    return login_required_and(developer_required=True)(func)
 
 
 def moderator_required(func):
-    return login_required_and(func, moderator_required=True)
+    return login_required_and(moderator_required=True)(func)
 
 
 def login_required(func):
@@ -245,7 +247,7 @@ def login_required(func):
     Note that phantom users with exercise data is considered
     a valid user -- see the default values for login_required_and().
     """
-    return login_required_and(func)
+    return login_required_and()(func)
 
 
 def open_access(func):
