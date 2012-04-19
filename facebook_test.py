@@ -26,13 +26,14 @@ class FacebookTest(unittest.TestCase):
         self.assertEquals({},
                           facebook.parse_signed_request("invalid", "secret"))
         self.assertSafeFail("not", "encoded properly!")
-        self.assertSafeFail("not", "not json")
+        self.assertSafeFail("notjson", "blah")
+        self.assertSafeFail("notdict", "null")
         self.assertSafeFail("notdict", "[]")
         self.assertSafeFail("notHMAC256", "{}")
         self.assertSafeFail("stillnotHMAC256", '{"algorithm": "invalid"}')
         self.assertSafeFail("sigmismatch", '{"algorithm": "HMAC-SHA256"}')
 
-        self.assertEquals(7, log_error.call_count)
+        self.assertEquals(8, log_error.call_count)
 
     def test_parsing_valid_request(self):
         payload = '{"algorithm": "HMAC-SHA256", "user_id": "1234"}'

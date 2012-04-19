@@ -291,6 +291,9 @@ def parse_signed_request(signed_request, secret):
     Parse signed_request given by Facebook (usually via POST),
     decrypt with app secret.
 
+    See https://developers.facebook.com/docs/authentication/signed_request/
+    for details.
+
     Arguments:
     signed_request -- Facebook's signed request given through POST
     secret -- Application's app_secret required to decrpyt signed_request
@@ -327,4 +330,4 @@ def parse_signed_request(signed_request, secret):
         return  {}
 
     return {}
-    
+
