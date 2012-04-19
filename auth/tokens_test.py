@@ -128,3 +128,16 @@ class TokenTests(BaseTest):
         token2 = tokens.PasswordResetToken.for_user(u, clock)
         self.assertFalse(token1.is_valid(u, datetime.timedelta(1), clock))
         self.assertTrue(token2.is_valid(u, datetime.timedelta(1), clock))
+
+    @testsize.medium()
+    def test_pw_reset_token_is_harmless_until_used(self):
+        clock = testutil.MockDatetime()
+        u = self.make_user("userid1")
+        u.set_password("seekrit one")
+        pw_token = tokens.PasswordResetToken.for_user(u, clock)
+
+        self.assertTrue(pw_token.is_valid(
+                u, datetime.timedelta(1), clock))
+
+        # Didn't use the token-just issued it, so the existing pw should work
+        self.assertTrue(u.validate_password("seekrit one"))
