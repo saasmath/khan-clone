@@ -44,10 +44,29 @@
 </script>
 
 <div id="feedback">
+    <p>Showing author histogram for up to 250 flagged feedback entities.</p>
+    <table>
+    {% for author_count_tuple in author_count_tuples %}
+    <tr>
+        <td>
+            <a href="{{UserData.get_from_user(author_count_tuple[0]).profile_root}}">
+                {{author_count_tuple[0]}}
+            </a>
+        </td>
+        <td>
+            {{author_count_tuple[1]}}
+        </td>
+    </tr>
+    {% endfor %}
+    </table>
 <p>
     Showing top <strong>{{feedbacks|length}}</strong> of <strong>{{ feedback_count|escape }}</strong> posts in need of moderator attention.
 </p>
-
+{% if has_more %}
+<p>
+    <a href="/discussion/mod/flaggedfeedback">Reload this page</a> to see the next set of posts waiting for moderator attention.
+</p>
+{% endif %}
 {% if feedbacks %}
     <table style="width:100%">
         <tr>
@@ -78,8 +97,8 @@
             </td>
             <td style="text-align:left;width:1%;" class="mod_action_col">
                 <nobr>
-                {{feedback.types.0|capitalize|escape}}
-                {% if feedback.types.0 == feedback_type_comment %}
+                {{feedback.types[0]|capitalize|escape}}
+                {% if feedback.types[0] == feedback_type_comment %}
                     <form method="POST" action="/discussion/changeentitytype?clear_flags=1&entity_key={{feedback.key()|escape}}&target_type={{feedback_type_question}}" data-desc="Changed to question">
                         <input type="submit" class="simple-button action-gradient" value="Change to Question"/>
                     </form>
@@ -92,19 +111,21 @@
             </td>
             <td><div class="content-container">{{ feedback.content|escape|linebreaksbr }}</div></td>
             <td>{{ feedback.sum_votes_incremented }}</td>
-            <td>{{ feedback.author }}</td>
+            <td><a href="{{ UserData.get_from_user(feedback.author).profile_root }}">{{ feedback.author }}</a></td>
             <td>{% for flag in feedback.flags %}{{ flag|escape }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
-            <td>{% for email in feedback.flagged_by %}{{ email|escape }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
-            <td class="center"><a href="/video/{{feedback.video().readable_id|escape}}">{{ feedback.video().title|escape }}</a></td>
+            <td>{% for email in feedback.flagged_by %}<a href="{{ UserData.get_from_db_key_email(email).profile_root }}">{{ email|escape }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td>
+            {% if feedback.types[0] == feedback_type_comment %}
+                {% set url_parameter = "" %}
+            {% elif feedback.types[0] == feedback_type_question %}
+                {% set url_parameter = "?qa_expand_key=%s" % feedback.key() %}
+            {% else %}
+                {% set url_parameter = "?qa_expand_key=%s" % feedback.question_key()  %}
+            {% endif %}
+            <td class="center"><a href="/v/{{ feedback.video().readable_id|escape}}{{url_parameter }}">{{ feedback.video().title|escape }}</a></td>
         </tr>
     {% endfor %}
     </table>
 {% endif %}
-
-{% if has_more %}
-    <br/><a href="/discussion/mod/flaggedfeedback">Reload this page</a> to see the next set of posts waiting for moderator attention.
-{% endif %}
-
 </div>
 
 {% endblock panelcontent %}

@@ -973,7 +973,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
             # Get all unread answers
             answers = discussion_models.FeedbackNotification.get_feedback_for(
-                    self.user)
+                    self)
 
             # Group the unread answers by question
             questions = set(answer.question_key() for answer in answers
