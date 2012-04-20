@@ -879,7 +879,7 @@ li.profile-tab {
 .user-deets {
     float:left;
     margin-left: 10px;
-    max-width: 240px;
+    max-width: 230px;
 }
 .user-deets .nickname {
     font-size: 150%;
