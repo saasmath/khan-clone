@@ -1,3 +1,4 @@
+from operator import itemgetter
 from google.appengine.ext import db
 
 import api.auth.xsrf
@@ -63,6 +64,15 @@ class FlaggedFeedback(request_handler.RequestHandler):
         # but avoiding the index for now since it's only marginally helpful.
         feedbacks = feedback_query.fetch(250)
         feedbacks = sorted(feedbacks, key=lambda feedback: feedback.sum_votes)
+
+        author_histogram = {}
+        for feedback in feedbacks:
+            count = author_histogram.setdefault(feedback.author, 0) + 1
+            author_histogram[feedback.author] = count
+        author_count_tuples = sorted(author_histogram.items(),
+                                     key=itemgetter(1),
+                                     reverse=True)
+
         feedbacks = feedbacks[:50]
 
         feedback_type_question = discussion_models.FeedbackType.Question
@@ -74,6 +84,7 @@ class FlaggedFeedback(request_handler.RequestHandler):
                 'feedback_type_question': feedback_type_question,
                 'feedback_type_comment': feedback_type_comment,
                 'selected_id': 'flaggedfeedback',
+                'author_count_tuples': author_count_tuples,
                 }
 
         self.render_jinja2_template('discussion/mod/flaggedfeedback.html',
