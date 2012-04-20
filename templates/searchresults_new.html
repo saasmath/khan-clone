@@ -52,6 +52,11 @@
         Search terms must contain at least {{query_too_short}} letters.
     </div>
     {% endif %}
+    {% if server_timout %}
+    <div class="error">
+        A problem occurred fetching your search results. Please refresh the page to try again.
+    </div>
+    {% endif %}
 {% endblock pagemessage %}
 {% block pagecontent %}
 <article class="search_results" id="search_results">
@@ -96,20 +101,19 @@
         <dl>
 
         {% for topic in topics %}
-        {% if topic.match_count > 0 %}
-            <dt><h2 class="topic">{{ topic.standalone_title|escape }}
+        {% if topic["match_count"] > 0 %}
+            <dt><h2 class="topic"><a href="{{ topic["url"] }}">{{ topic["title"]|escape }}</a>
             <span class="match_count">
-                ({{ topic.match_count }} matching video{{ topic.match_count|pluralize }})
+                ({{ topic["match_count"] }} matching video{{ topic["match_count"]|pluralize }})
             </span>
             </h2></dt>
 
-            {% if topic.description %}
-            <dd>{{ topic.description|escape }}</dd>
+            {% if topic["description"] %}
+            <dd>{{ topic["description"] }}</dd>
             {% endif %}
 
             <ol>
-            {% for video in videos %}
-                {% if topic.key().__str__() == video["parent_topic"] %}
+            {% for video in topic["videos"] %}
                     <li class="videos">
                       <div class="column">
                         <a href="{{video["ka_url"]}}" data-tag="Search Body" class="video-result"><span class="searchresulthighlight">{{ video["title"]|escape }}</span></a>
@@ -123,22 +127,21 @@
                           <li><a href="{{video["ka_url"]}}" data-tag="Search Body" class="vl"><span class="vid-progress v{{ video["key_id"] }}">Watch the video lesson</a></li>
                         </ul>
                       </div>
-                      {% if video["exercises"] %}
+                      {% if video["related_exercises"] %}
                       <div class="column">
                         <p class="column-heading">Practice Exercises</p>
                           <ul>
-                            {% for exercise in video["exercises"] %}
-                              <li><a href="{{ exercise.relative_url }}" data-tag="Search Body" class="exercise-link">{{ exercise.display_name|escape }}</a></li>
+                            {% for exercise in video["related_exercises"] %}
+                              <li><a href="{{ exercise["url"] }}" data-tag="Search Body" class="exercise-link">{{ exercise["name"]|escape }}</a></li>
                             {% endfor %}
                           </ul>
                       </div>
                       {% endif %}
                       <br>
                     </li>
-                {% endif %}
             {% endfor %}
             <li>
-                <a href="{{ topic.relative_url }}" data-tag="Search Body">See all videos from topic {{ topic.standalone_title|escape }}</a>
+                <a href="{{ topic["url"] }}" data-tag="Search Body">See more videos from this topic</a>
             </li>
             </ol>
         {% endif %}

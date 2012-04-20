@@ -28,6 +28,7 @@ from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 
+from api import jsonify
 import app
 import backup_model
 import classtime
@@ -360,7 +361,34 @@ class Video(search.Searchable, db.Model):
             video.index()
             video.indexed_title_changed()
 
-    def get_search_data(self):
+    def get_search_data(self, exercise_videos):
+        # TODO(csilvers): get rid of circular dependency here
+        import exercise_video_model
+        import topic_models
+        exercises = []
+        parent_supertopic_key = self.topic_string_keys[0]
+        for parent in self.topic_string_keys:
+            if parent in topic_models.Topic._super_topic_ids:
+                parent_supertopic_key = parent
+
+        parent_supertopic = db.get(parent_supertopic_key)
+        parent_supertopic_data = {
+            "id": parent_supertopic.id,
+            "url": parent_supertopic.relative_url,
+            "title": parent_supertopic.standalone_title,
+            "description": parent_supertopic.description,
+        }
+
+        for exvid in exercise_videos:
+            video_key = exercise_video_model.ExerciseVideo.video.get_value_for_datastore(exvid)
+            if video_key == self.key():
+                exercise = exvid.exercise
+                exercise_data = {
+                    "name": exercise.display_name,
+                    "url": exercise.relative_url,
+                }
+                exercises.append(exercise_data)
+
         return {
             "kind": "Video",
             "id": self.readable_id,
@@ -369,21 +397,27 @@ class Video(search.Searchable, db.Model):
             "description": self.description,
             "keywords": self.keywords,
             "ka_url": self.ka_url,
-            "parent_topic": self.topic_string_keys[0],
+            "parent_topic": jsonify.jsonify(parent_supertopic_data),
+            "related_exercises": jsonify.jsonify(exercises),
         }
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda version_number:
-        "Video.get_all_search_data.%s" %
+        "Video.get_all_search_data.%s.v1" %
         setting_model.Setting.cached_content_add_date())
     def get_all_search_data(version_number):
+        # TODO(csilvers): get rid of circular dependency here
+        import exercise_video_model
         video_search_data = []
 
-        videos = Video.all()
+        videos = [v for v in Video.all()]
+        exvids = [ev for ev in exercise_video_model.ExerciseVideo.all()]
+        logging.info("Found %d exvids" % len(exvids))
+
         for video in videos:
             if video.topic_string_keys:
         
-                video_data = video.get_search_data()
+                video_data = video.get_search_data(exvids)
                 video_data["version"] = version_number
 
                 video_search_data.append(video_data)

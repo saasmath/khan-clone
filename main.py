@@ -480,22 +480,21 @@ class Search(request_handler.RequestHandler):
             return
         searched_phrases = []
 
-        # Do an async query for all ExerciseVideos, since this may be slow
-        exvids_query = ExerciseVideo.all()
-        exvids_future = util.async_queries([exvids_query])
-
-        url = "http://search-rpc.khanacademy.org/solr/select/?q=version%%3A1+%%2B%s&start=0&rows=9999&indent=on&wt=json&fl=*%%20score" % query
+        url = "http://search-rpc.khanacademy.org/solr/select/?q=version%%3A1+%%2B%s&start=0&rows=9999&indent=on&wt=json&fl=*%%20score" % urllib.quote(query)
         try:
             logging.info("Fetching: %s" % url)
             response = urlfetch.fetch(url = url, deadline=25)
             response_object = json.loads(response.content)
         except Exception, e:
-            raise Exception("Failed to talk to Solr instance at %s: %s" % (url, e))
+            logging.error("Failed to fetch search results from search-rpc!")
+            template_values.update({
+                'server_timout': True
+            })
+            self.render_jinja2_template("searchresults_new.html", template_values)
+            return
 
         logging.info("Received response: %d" % response_object["response"]["numFound"])
 
-        topic_keys = list(set([v["parent_topic"] for v in response_object["response"]["docs"]]))
-        videos = [v for v in response_object["response"]["docs"] if v["kind"] == "Video"]
         matching_topics = [t for t in response_object["response"]["docs"] if t["kind"] == "Topic"]
         if matching_topics:
             matching_topic_count = 1
@@ -505,52 +504,31 @@ class Search(request_handler.RequestHandler):
             matching_topic_count = 0
             matching_topic = None
 
-        topics = db.get(topic_keys)
+        videos = [v for v in response_object["response"]["docs"] if v["kind"] == "Video"]
+        topics = {}
 
-        # Get the related exercises
-        all_exercise_videos = exvids_future[0].get_result()
-        exercise_keys = []
-        video_lookup_table = {}
-        video_keys = [v["key_id"] for v in videos]
-        for exvid in all_exercise_videos:
-            video_key = ExerciseVideo.video.get_value_for_datastore(exvid)
-            if video_key.id() in video_keys:
-                exercise_key = ExerciseVideo.exercise.get_value_for_datastore(exvid)
-                exercise_keys.append(exercise_key)
-                if not video_key.id() in video_lookup_table:
-                    video_lookup_table[video_key.id()] = []
-                video_lookup_table[video_key.id()].append(exercise_key)
-
-        exercises = db.get(exercise_keys)
-
-        # Sort exercises with videos
         for video in videos:
-            if video["key_id"] in video_lookup_table:
-                video["exercises"] = []
-                for exercise_key in video_lookup_table[video["key_id"]]:
-                    video["exercises"].append([ex for ex in exercises if ex.key() == exercise_key][0])
+            video["related_exercises"] = json.loads(video["related_exercises"])
 
-        # Count number of videos in each topic and sort descending
-        topic_count = 0
-        if topics:
-            if len(videos) > 0:
-                for topic in topics:
-                    topic.match_count = [(str(topic.key()) == video["parent_topic"]) for video in videos].count(True)
-                    if topic.match_count > 0:
-                        topic_count += 1
+            parent_topic = json.loads(video["parent_topic"])
+            topic_id = parent_topic["id"]
+            if topic_id not in topics:
+                topics[topic_id] = parent_topic
+                topics[topic_id]["videos"] = []
+                topics[topic_id]["match_count"] = 0
 
-                topics = sorted(topics, key=lambda topic:-topic.match_count)
-            else:
-                for topic in topics:
-                    topic.match_count = 0
+            topics[topic_id]["videos"].append(video)
+            topics[topic_id]["match_count"] += 1
+
+        topics_list = sorted(topics.values(), key=lambda topic: -topic["match_count"])
 
         template_values.update({
-                           'topics': topics,
+                           'topics': topics_list,
                            'matching_topic': matching_topic,
                            'videos': videos,
                            'search_string': query,
                            'video_count': len(videos),
-                           'topic_count': topic_count,
+                           'topic_count': len(topics_list),
                            'matching_topic_count': matching_topic_count
                            })
 
