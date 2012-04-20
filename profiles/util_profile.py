@@ -346,7 +346,8 @@ class UserProfile(object):
 
         if full_projection:
             profile.email = user.email
-            profile.is_data_collectible = user.is_certain_to_be_thirteen()
+            profile.is_data_collectible = (not user.is_child_account() and
+                                           not user.is_maybe_edu_account())
 
         return profile
 
