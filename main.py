@@ -54,6 +54,7 @@ import exercises.handlers
 import exercisestats.report
 import exercisestats.report_json
 import exercisestats.exercisestats_util
+import gandalf
 import github
 import paypal
 import smarthistory
@@ -466,8 +467,13 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
         return True
 
 class Search(request_handler.RequestHandler):
+
     @user_util.open_access
     def get(self):
+        if not gandalf.gandalf("new_faster_search"):
+            self.get_old()
+            return
+
         query = self.request.get('page_search_query')
         template_values = {'page_search_query': query}
         query = query.strip()
@@ -534,8 +540,6 @@ class Search(request_handler.RequestHandler):
 
         self.render_jinja2_template("searchresults_new.html", template_values)
 
-class SearchOld(request_handler.RequestHandler):
-
     @user_util.admin_required
     def update(self):
         if App.is_dev_server:
@@ -558,8 +562,11 @@ class SearchOld(request_handler.RequestHandler):
             layer_cache.KeyValueCache.set("last_dev_topic_vesion_indexed", 
                                           new_version.number)
 
-    @user_util.open_access
-    def get(self):
+    def get_old(self):
+        """ Deprecated old version of search, so we can Gandalf in the new one.
+
+        Will eventually disappear.
+        """
 
         show_update = False
         if App.is_dev_server and user_util.is_current_user_admin():
@@ -803,7 +810,6 @@ application = webapp2.WSGIApplication([
     ('/video', ViewVideoDeprecated), # Backwards URL compatibility
     ('/(.*)/v/([^/]*)', ViewVideo),
     ('/reportissue', ReportIssue),
-    ('/search_old', SearchOld),
     ('/search', Search),
     ('/savemapcoords', knowledgemap.handlers.SaveMapCoords),
     ('/crash', Crash),
