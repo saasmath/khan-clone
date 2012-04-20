@@ -11,32 +11,33 @@ import layer_cache
 
 
 class FeedbackType:
-    Question="question"
-    Answer="answer"
-    Comment="comment"
+    Question = "question"
+    Answer = "answer"
+    Comment = "comment"
 
     @staticmethod
     def is_valid(type):
-        return (type == FeedbackType.Question or 
-                type == FeedbackType.Answer or 
+        return (type == FeedbackType.Question or
+                type == FeedbackType.Answer or
                 type == FeedbackType.Comment)
 
-class FeedbackFlag:
 
+class FeedbackFlag:
     # 2 or more flags immediately hides feedback
     HIDE_LIMIT = 2
 
-    Inappropriate="inappropriate"
-    LowQuality="lowquality"
-    DoesNotBelong="doesnotbelong"
-    Spam="spam"
+    Inappropriate = "inappropriate"
+    LowQuality = "lowquality"
+    DoesNotBelong = "doesnotbelong"
+    Spam = "spam"
 
     @staticmethod
     def is_valid(flag):
-        return (flag == FeedbackFlag.Inappropriate or 
-                flag == FeedbackFlag.LowQuality or 
-                flag == FeedbackFlag.DoesNotBelong or 
+        return (flag == FeedbackFlag.Inappropriate or
+                flag == FeedbackFlag.LowQuality or
+                flag == FeedbackFlag.DoesNotBelong or
                 flag == FeedbackFlag.Spam)
+
 
 class Feedback(db.Model):
     author = db.UserProperty()
@@ -45,8 +46,10 @@ class Feedback(db.Model):
     content = db.TextProperty()
     date = db.DateTimeProperty(auto_now_add=True)
     deleted = db.BooleanProperty(default=False)
-    targets = db.ListProperty(db.Key) # first element is video key.
-                                      # optional second element is question key.
+
+    # Always includes the corresponding video's key
+    # If a FeedbackType.Answer, there is a second key for the question
+    targets = db.ListProperty(db.Key)
     types = db.StringListProperty()
     is_flagged = db.BooleanProperty(default=False)
     is_hidden_by_flags = db.BooleanProperty(default=False)
@@ -263,8 +266,9 @@ class Feedback(db.Model):
         self.recalculate_flagged()
 
     def recalculate_flagged(self):
-        self.is_flagged = len(self.flags or []) > 0
-        self.is_hidden_by_flags = len(self.flags or []) >= FeedbackFlag.HIDE_LIMIT
+        num_times_flagged = len(self.flags or [])
+        self.is_flagged = num_times_flagged > 0
+        self.is_hidden_by_flags = num_times_flagged >= FeedbackFlag.HIDE_LIMIT
 
     def get_author_user_id(self):
         if self.author_user_id is not None:
@@ -318,13 +322,14 @@ class FeedbackNotification(db.Model):
                 # Fixed 19 Apr 2012 and will be cleaned up organically or we
                 # could run a MR job.
                 notification_id = notification.key().id()
-                message  = ("Reference error w FeedbackNotification: %s" %
+                message = ("Reference error w FeedbackNotification: %s" %
                             notification_id)
                 logging.warning(message)
 
                 notification.delete()
 
         return all_feedback
+
 
 class FeedbackVote(db.Model):
     DOWN = -1
@@ -342,11 +347,11 @@ class FeedbackVote(db.Model):
             return
 
         vote = FeedbackVote.get_or_insert(
-                key_name = "vote_by_%s" % user_data.key_email,
-                parent = feedback,
-                video = feedback.video_key(),
-                user = user_data.user,
-                vote_type = vote_type)
+                key_name="vote_by_%s" % user_data.key_email,
+                parent=feedback,
+                video=feedback.video_key(),
+                user=user_data.user,
+                vote_type=vote_type)
 
         if vote and vote.vote_type != vote_type:
             # If vote already existed and user has changed vote, update
@@ -354,7 +359,8 @@ class FeedbackVote(db.Model):
             vote.put()
 
     @staticmethod
-    @request_cache.cache_with_key_fxn(lambda user_data, video: "voting_dict_for_%s" % video.key())
+    @request_cache.cache_with_key_fxn(
+            lambda user_data, video: "voting_dict_for_%s" % video.key())
     def get_dict_for_user_data_and_video(user_data, video):
 
         if not user_data:
