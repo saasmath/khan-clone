@@ -66,7 +66,7 @@
 
         <div class="questions_container"><em>Loading...</em> <img class="icon" src="{{ "/images/throbber.gif"|static_url }}"/></div>
 
-        {% if not user_data.is_child_account() %}
+        {% if not user_data or not user_data.is_child_account() %}
         <div class="sticky_note" style="display:none;">
             <div class="sticky_note_content">
                 <h2>Asking helpful questions about {{ video.title|lower|escape }}</h2>
