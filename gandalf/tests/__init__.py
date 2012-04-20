@@ -78,9 +78,8 @@ class RunStep(RequestHandler):
 
     def can_cross_empty_bridge(self):
         bridge_name = "balrog"
-        filter_type = "all-users"
 
-        bridge = GandalfBridge.get_or_insert(bridge_name)
+        GandalfBridge.get_or_insert(bridge_name)
 
         return gandalf(bridge_name)
 

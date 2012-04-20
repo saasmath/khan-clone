@@ -129,6 +129,27 @@ class BaseSecureToken(object):
         user_id, timestamp, signature = parts
         return cls(user_id, timestamp, signature)
 
+    @classmethod
+    def get_user_for_value(cls, token_value, id_to_model, clock=None):
+        """Retrieve a user_data object given a token_value, if it is valid.
+        Returns None if the token value is invalid.
+
+        This attempts to be somewhat model-agnostic and requires clients
+        to specify the getter to retrieve the model given a user_id
+        """
+
+        if not token_value:
+            return None
+
+        token = cls.for_value(token_value)
+        if not token:
+            return None
+
+        user_data = id_to_model(token.user_id)
+        if user_data and token.is_valid(user_data, clock=clock):
+            return user_data
+        return None
+
     DEFAULT_EXPIRY = datetime.timedelta(days=14)
     DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 24 * 60 * 60
 
@@ -206,26 +227,6 @@ class AuthToken(BaseSecureToken):
         return BaseSecureToken.sign_payload(user_data,
                                             timestamp,
                                             user_data.credential_version)
-
-    @staticmethod
-    def get_user_for_value(token_value, id_to_model):
-        """Retrieve a user_data object given a token_value, if it is valid.
-        Returns None if the token value is invalid.
-
-        This attempts to be somewhat model-agnostic and requires clients
-        to specify the getter to retrieve the model given a user_id
-        """
-
-        if not token_value:
-            return None
-
-        token = AuthToken.for_value(token_value)
-        if not token:
-            return None
-        user_data = id_to_model(token.user_id)
-        if user_data and token.is_valid(user_data):
-            return user_data
-        return None
 
 
 class TransferAuthToken(BaseSecureToken):

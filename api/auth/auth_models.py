@@ -59,10 +59,10 @@ class OAuthMap(db.Model):
 
     def callback_url_with_request_token_params(self, include_verifier=False):
         params_callback = {
-            "oauth_token": self.request_token, 
+            "oauth_token": self.request_token,
             "oauth_token_secret": self.request_token_secret
         }
-        
+
         if include_verifier and self.verifier:
             params_callback["oauth_verifier"] = self.verifier
 
@@ -71,7 +71,7 @@ class OAuthMap(db.Model):
     def _get_authenticated_user_info(self):
         """ Gets the UserData and user_id for this OAuthMap, if it's still
         valid. Returns (None, None) if no valid user is found.
-        
+
         """
         if self.uses_password():
             user_data = auth.tokens.AuthToken.get_user_for_value(

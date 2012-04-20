@@ -18,13 +18,15 @@ from badges.badge_context import BadgeContextType
 from badges.util_badges import badges_with_context_type
 from badges.discussion_badges import FirstUpVoteBadge, FirstDownVoteBadge
 
+
 class VotingSortOrder:
     HighestPointsFirst = 1
     NewestFirst = 2
 
     @staticmethod
     def sort(entities, sort_order=-1):
-        if not sort_order in (VotingSortOrder.HighestPointsFirst, VotingSortOrder.NewestFirst):
+        if not sort_order in (VotingSortOrder.HighestPointsFirst,
+                              VotingSortOrder.NewestFirst):
             sort_order = VotingSortOrder.HighestPointsFirst
 
         key_fxn = None
@@ -35,13 +37,17 @@ class VotingSortOrder:
             key_fxn = lambda entity: entity.inner_score
 
         # Sort by desired sort order, then put hidden entities at end
-        return sorted(sorted(entities, key=key_fxn, reverse=True), key=lambda entity: entity.is_visible_to_public(), reverse=True)
+        return sorted(sorted(entities, key=key_fxn, reverse=True),
+                      key=lambda entity: entity.is_visible_to_public(),
+                      reverse=True)
+
 
 class UpdateQASort(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
         user_data = UserData.current()
-        sort = self.request_int("sort", default=VotingSortOrder.HighestPointsFirst)
+        sort = self.request_int("sort",
+                                default=VotingSortOrder.HighestPointsFirst)
 
         if user_data:
             user_data.question_sort_order = sort
@@ -51,9 +57,11 @@ class UpdateQASort(request_handler.RequestHandler):
         topic_title = self.request_string("topic_title", default="")
 
         if readable_id and topic_title:
-            self.redirect("/video/%s?topic=%s&sort=%s" % (urllib.quote(readable_id), urllib.quote(topic_title), sort))
+            self.redirect("/video/%s?topic=%s&sort=%s" % (
+                urllib.quote(readable_id), urllib.quote(topic_title), sort))
         else:
             self.redirect("/")
+
 
 class VoteEntity(request_handler.RequestHandler):
     @user_util.open_access
@@ -96,6 +104,7 @@ class VoteEntity(request_handler.RequestHandler):
                     "entity_key": entity_key
                 }
         )
+
 
 class FinishVoteEntity(request_handler.RequestHandler):
     @user_util.open_access
@@ -149,6 +158,7 @@ class FinishVoteEntity(request_handler.RequestHandler):
         if awarded:
             user_data_author.put()
 
+
 class StartNewVoteMapReduce(request_handler.RequestHandler):
 
     @user_util.open_access
@@ -159,17 +169,19 @@ class StartNewVoteMapReduce(request_handler.RequestHandler):
 
         # Start a new Mapper task for calling badge_update_map
         mapreduce_id = control.start_map(
-                name = "UpdateFeedbackVotes",
-                handler_spec = "discussion.voting.vote_update_map",
-                reader_spec = "mapreduce.input_readers.DatastoreInputReader",
-                reader_parameters = {"entity_kind": "discussion.discussion_models.Feedback"},
-                queue_name = "backfill-mapreduce-queue",
+                name="UpdateFeedbackVotes",
+                handler_spec="discussion.voting.vote_update_map",
+                reader_spec="mapreduce.input_readers.DatastoreInputReader",
+                reader_parameters={"entity_kind": "discussion.discussion_models.Feedback"},
+                queue_name="backfill-mapreduce-queue",
                 )
 
         self.response.out.write("OK: " + str(mapreduce_id))
 
+
 def vote_update_map(feedback):
     feedback.update_votes_and_score()
+
 
 def add_vote_expando_properties(feedback, dict_votes):
     feedback.up_voted = False
