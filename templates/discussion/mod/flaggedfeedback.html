@@ -49,12 +49,12 @@
     {% for author_count_tuple in author_count_tuples %}
     <tr>
         <td>
-            <a href="{{UserData.get_from_user(author_count_tuple.0).profile_root}}">
-                {{author_count_tuple.0}}
+            <a href="{{UserData.get_from_user(author_count_tuple[0]).profile_root}}">
+                {{author_count_tuple[0]}}
             </a>
         </td>
         <td>
-            {{author_count_tuple.1}}
+            {{author_count_tuple[1]}}
         </td>
     </tr>
     {% endfor %}
@@ -97,8 +97,8 @@
             </td>
             <td style="text-align:left;width:1%;" class="mod_action_col">
                 <nobr>
-                {{feedback.types.0|capitalize|escape}}
-                {% if feedback.types.0 == feedback_type_comment %}
+                {{feedback.types[0]|capitalize|escape}}
+                {% if feedback.types[0] == feedback_type_comment %}
                     <form method="POST" action="/discussion/changeentitytype?clear_flags=1&entity_key={{feedback.key()|escape}}&target_type={{feedback_type_question}}" data-desc="Changed to question">
                         <input type="submit" class="simple-button action-gradient" value="Change to Question"/>
                     </form>
@@ -114,9 +114,9 @@
             <td><a href="{{ UserData.get_from_user(feedback.author).profile_root }}">{{ feedback.author }}</a></td>
             <td>{% for flag in feedback.flags %}{{ flag|escape }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
             <td>{% for email in feedback.flagged_by %}<a href="{{ UserData.get_from_db_key_email(email).profile_root }}">{{ email|escape }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td>
-            {% if feedback.types.0 == feedback_type_comment %}
+            {% if feedback.types[0] == feedback_type_comment %}
                 {% set url_parameter = "" %}
-            {% elif feedback.types.0 == feedback_type_question %}
+            {% elif feedback.types[0] == feedback_type_question %}
                 {% set url_parameter = "?qa_expand_key=%s" % feedback.key() %}
             {% else %}
                 {% set url_parameter = "?qa_expand_key=%s" % feedback.question_key()  %}
