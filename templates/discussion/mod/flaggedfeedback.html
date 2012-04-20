@@ -119,7 +119,7 @@
             {% elif feedback.types.0 == feedback_type_question %}
                 {% set url_parameter = "?qa_expand_key=%s" % feedback.key() %}
             {% else %}
-                {% set urL_parameter = "?qa_expand_key=%s" % feedback.question_key()  %}
+                {% set url_parameter = "?qa_expand_key=%s" % feedback.question_key()  %}
             {% endif %}
             <td class="center"><a href="/v/{{ feedback.video().readable_id|escape}}{{url_parameter }}">{{ feedback.video().title|escape }}</a></td>
         </tr>
