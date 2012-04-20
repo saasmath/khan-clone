@@ -252,7 +252,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @staticmethod
     def get_from_url_segment(segment):
-        """ Retrieves a user by a URL segment, as expected to be built from
+        """Retrieve a user by a URL segment, as expected to be built from
         the user's UserData.profile_root value.
         
         Arguments:
@@ -759,6 +759,16 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
                                     "hotmail.com",
                                     "aol.com",
                                     "yahoo.com",
+                                    "comcast.net",
+                                    "live.com",
+                                    "sbcglobal.net",
+                                    "msn.com",
+                                    "ymail.com",
+                                    "hotmail.co.uk",
+                                    "verizon.net",
+                                    "att.net",
+                                    "me.com",
+                                    "rocketmail.com",
                                    ])
 
         return email_domain not in white_listed_domains
