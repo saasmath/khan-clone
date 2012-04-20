@@ -284,7 +284,7 @@ def topic_exercises(topic_id, version_id = None):
     return exercises
 
 @route("/api/v1/topic/<topic_id>/progress", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.open_access   # TODO(csilvers): do login+@phantom instead
 @jsonp
 @jsonify
 def topic_progress(topic_id):
@@ -1176,7 +1176,7 @@ def mark_promo_as_seen(promo_name):
     return models.PromoRecord.record_promo(promo_name, user_data.user_id)
 
 @route("/api/v1/user/profile", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.open_access   # TODO(csilvers): do login+@phantom instead
 @jsonp
 @jsonify
 def get_user_profile():
@@ -1322,13 +1322,11 @@ def get_user_studentlists():
     return None
 
 @route("/api/v1/user/studentlists", methods=["POST"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def create_user_studentlist():
     coach_data = user_models.UserData.current()
-    if not coach_data:
-        return unauthorized_response()
 
     list_name = request.request_string('list_name').strip()
     if not list_name:
@@ -1345,13 +1343,11 @@ def create_user_studentlist():
     return student_list_json
 
 @route("/api/v1/user/studentlists/<list_key>", methods=["DELETE"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def delete_user_studentlist(list_key):
     coach_data = user_models.UserData.current()
-    if not coach_data:
-        return unauthorized_response()
 
     student_list = util_profile.get_student_list(coach_data, list_key)
     student_list.delete()
@@ -1396,19 +1392,16 @@ def user_videos_all():
     return None
 
 @route("/api/v1/user/videos/<youtube_id>", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def user_videos_specific(youtube_id):
-    user_data = user_models.UserData.current()
+    user_data_student = get_visible_user_data_from_request()
+    video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
-    if user_data and youtube_id:
-        user_data_student = get_visible_user_data_from_request()
-        video = models.Video.all().filter("youtube_id =", youtube_id).get()
-
-        if user_data_student and video:
-            user_videos = models.UserVideo.all().filter("user =", user_data_student.user).filter("video =", video)
-            return user_videos.get()
+    if user_data_student and video:
+        user_videos = models.UserVideo.all().filter("user =", user_data_student.user).filter("video =", video)
+        return user_videos.get()
 
     return None
 
@@ -1418,7 +1411,7 @@ def user_videos_specific(youtube_id):
 # and http://stackoverflow.com/questions/328281/why-content-length-0-in-post-requests
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["POST"])
 @route("/api/v1/user/videos/<youtube_id>/log_compatability", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @api.auth.decorators.oauth_consumers_must_be_anointed
 @api_create_phantom
 @jsonp
@@ -1468,7 +1461,7 @@ def log_user_video(youtube_id):
     return video_log
 
 @route("/api/v1/user/topic/<topic_id>/exercises/next", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.open_access   # TODO(csilvers): do login+@phantom instead
 @jsonp
 @jsonify
 def topic_next_exercises(topic_id):
@@ -1488,7 +1481,7 @@ def topic_next_exercises(topic_id):
 
 @route("/api/v1/user/exercises", methods=["GET"])
 @route("/api/v1/user/topic/<topic_id>/exercises", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def user_exercises_list(topic_id = None):
@@ -1502,9 +1495,7 @@ def user_exercises_list(topic_id = None):
     skeletal and contains little information.
 
     """
-    user_data = user_models.UserData.current()
-
-    student = get_visible_user_data_from_request(user_data=user_data)
+    student = get_visible_user_data_from_request()
 
     if not student:
         student = user_models.UserData.pre_phantom()
@@ -1626,28 +1617,25 @@ def get_students_progress_summary():
             'num_students': len(list_students)}
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def user_exercises_specific(exercise_name):
-    user_data = user_models.UserData.current()
+    user_data_student = get_visible_user_data_from_request()
+    exercise = models.Exercise.get_by_name(exercise_name)
 
-    if user_data and exercise_name:
-        user_data_student = get_visible_user_data_from_request()
-        exercise = models.Exercise.get_by_name(exercise_name)
+    if user_data_student and exercise:
+        user_exercise = models.UserExercise.all().filter("user =", user_data_student.user).filter("exercise =", exercise_name).get()
 
-        if user_data_student and exercise:
-            user_exercise = models.UserExercise.all().filter("user =", user_data_student.user).filter("exercise =", exercise_name).get()
+        if not user_exercise:
+            user_exercise = models.UserExercise()
+            user_exercise.exercise_model = exercise
+            user_exercise.exercise = exercise_name
+            user_exercise.user = user_data_student.user
 
-            if not user_exercise:
-                user_exercise = models.UserExercise()
-                user_exercise.exercise_model = exercise
-                user_exercise.exercise = exercise_name
-                user_exercise.user = user_data_student.user
-
-            # Cheat and send back related videos when grabbing a single UserExercise for ease of exercise integration
-            user_exercise.exercise_model.related_videos = map(lambda exercise_video: exercise_video.video, user_exercise.exercise_model.related_videos_fetch())
-            return user_exercise
+        # Cheat and send back related videos when grabbing a single UserExercise for ease of exercise integration
+        user_exercise.exercise_model.related_videos = map(lambda exercise_video: exercise_video.video, user_exercise.exercise_model.related_videos_fetch())
+        return user_exercise
 
     return None
 
@@ -1685,7 +1673,7 @@ def user_followup_exercises(exercise_name):
     return None
 
 @route("/api/v1/user/exercises/<exercise_name>/followup_exercises", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def api_user_followups(exercise_name):
@@ -1728,17 +1716,13 @@ def user_playlists_specific(topic_id):
     return None
 
 @route("/api/v1/user/exercises/reviews/count", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def reviews_count():
     user_data = user_models.UserData.current()
-
-    if user_data:
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
-        return len(user_exercise_graph.review_exercise_names())
-
-    return 0
+    user_exercise_graph = models.UserExerciseGraph.get(user_data)
+    return len(user_exercise_graph.review_exercise_names())
 
 @route("/api/v1/user/exercises/<exercise_name>/log", methods=["GET"])
 @api.auth.decorators.login_required
@@ -1771,75 +1755,71 @@ def user_problem_logs(exercise_name):
 # TODO(david): Factor out duplicated code between attempt_problem_number and
 #     hint_problem_number.
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/attempt", methods=["POST"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @api_create_phantom
 @jsonp
 @jsonify
 def attempt_problem_number(exercise_name, problem_number):
     user_data = user_models.UserData.current()
 
-    if user_data:
-        exercise = models.Exercise.get_by_name(exercise_name)
-        user_exercise = user_data.get_or_insert_exercise(exercise)
+    exercise = models.Exercise.get_by_name(exercise_name)
+    user_exercise = user_data.get_or_insert_exercise(exercise)
 
-        if user_exercise and problem_number:
+    if user_exercise and problem_number:
 
-            review_mode = request.request_bool("review_mode", default=False)
+        review_mode = request.request_bool("review_mode", default=False)
 
-            user_exercise, user_exercise_graph, goals_updated = exercises.exercise_util.attempt_problem(
-                    user_data,
-                    user_exercise,
-                    problem_number,
-                    request.request_int("attempt_number"),
-                    request.request_string("attempt_content"),
-                    request.request_string("sha1"),
-                    request.request_string("seed"),
-                    request.request_bool("complete"),
-                    request.request_int("count_hints", default=0),
-                    int(request.request_float("time_taken")),
-                    review_mode,
-                    request.request_bool("topic_mode", default=False),
-                    request.request_string("problem_type"),
-                    request.remote_addr,
-                    )
+        user_exercise, user_exercise_graph, goals_updated = exercises.exercise_util.attempt_problem(
+                user_data,
+                user_exercise,
+                problem_number,
+                request.request_int("attempt_number"),
+                request.request_string("attempt_content"),
+                request.request_string("sha1"),
+                request.request_string("seed"),
+                request.request_bool("complete"),
+                request.request_int("count_hints", default=0),
+                int(request.request_float("time_taken")),
+                review_mode,
+                request.request_bool("topic_mode", default=False),
+                request.request_string("problem_type"),
+                request.remote_addr,
+                )
 
-            # this always returns a delta of points earned each attempt
-            points_earned = user_data.points - user_data.original_points()
-            if(user_exercise.streak == 0):
-                # never award points for a zero streak
-                points_earned = 0
-            if(user_exercise.streak == 1):
-                # award points for the first correct exercise done, even if no prior history exists
-                # and the above pts-original points gives a wrong answer
-                points_earned = user_data.points if (user_data.points == points_earned) else points_earned
+        # this always returns a delta of points earned each attempt
+        points_earned = user_data.points - user_data.original_points()
+        if(user_exercise.streak == 0):
+            # never award points for a zero streak
+            points_earned = 0
+        if(user_exercise.streak == 1):
+            # award points for the first correct exercise done, even if no prior history exists
+            # and the above pts-original points gives a wrong answer
+            points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
-            user_states = user_exercise_graph.states(exercise.name)
-            correct = request.request_bool("complete")
+        user_states = user_exercise_graph.states(exercise.name)
+        correct = request.request_bool("complete")
 
-            # Avoid an extra user exercise graph lookup during serialization
-            user_exercise._user_exercise_graph = user_exercise_graph
+        # Avoid an extra user exercise graph lookup during serialization
+        user_exercise._user_exercise_graph = user_exercise_graph
 
-            action_results = {
-                "exercise_state": {
-                    "state": [state for state in user_states if user_states[state]],
-                    "template" : templatetags.exercise_message(exercise,
-                        user_exercise_graph, review_mode=review_mode),
-                },
-                "points_earned": {"points": points_earned},
-                "attempt_correct": correct,
-            }
+        action_results = {
+            "exercise_state": {
+                "state": [state for state in user_states if user_states[state]],
+                "template" : templatetags.exercise_message(exercise,
+                    user_exercise_graph, review_mode=review_mode),
+            },
+            "points_earned": {"points": points_earned},
+            "attempt_correct": correct,
+        }
 
-            if goals_updated:
-                action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
+        if goals_updated:
+            action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
 
-            add_action_results(user_exercise, action_results)
-            return user_exercise
-
-    logging.warning("Problem %d attempted with no user_data present", problem_number)
-    return unauthorized_response()
+        add_action_results(user_exercise, action_results)
+        return user_exercise
 
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/hint", methods=["POST"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @api_create_phantom
 @jsonp
 @jsonify
@@ -1847,70 +1827,66 @@ def hint_problem_number(exercise_name, problem_number):
 
     user_data = user_models.UserData.current()
 
-    if user_data:
-        exercise = models.Exercise.get_by_name(exercise_name)
-        user_exercise = user_data.get_or_insert_exercise(exercise)
+    exercise = models.Exercise.get_by_name(exercise_name)
+    user_exercise = user_data.get_or_insert_exercise(exercise)
 
-        if user_exercise and problem_number:
+    if user_exercise and problem_number:
 
-            prev_user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        prev_user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
-            attempt_number = request.request_int("attempt_number")
-            count_hints = request.request_int("count_hints")
-            review_mode = request.request_bool("review_mode", default=False)
+        attempt_number = request.request_int("attempt_number")
+        count_hints = request.request_int("count_hints")
+        review_mode = request.request_bool("review_mode", default=False)
 
-            user_exercise, user_exercise_graph, goals_updated = exercises.exercise_util.attempt_problem(
-                    user_data,
-                    user_exercise,
-                    problem_number,
-                    attempt_number,
-                    request.request_string("attempt_content"),
-                    request.request_string("sha1"),
-                    request.request_string("seed"),
-                    request.request_bool("complete"),
-                    count_hints,
-                    int(request.request_float("time_taken")),
-                    review_mode,
-                    request.request_bool("topic_mode", default=False),
-                    request.request_string("problem_type"),
-                    request.remote_addr,
-                    )
+        user_exercise, user_exercise_graph, goals_updated = exercises.exercise_util.attempt_problem(
+                user_data,
+                user_exercise,
+                problem_number,
+                attempt_number,
+                request.request_string("attempt_content"),
+                request.request_string("sha1"),
+                request.request_string("seed"),
+                request.request_bool("complete"),
+                count_hints,
+                int(request.request_float("time_taken")),
+                review_mode,
+                request.request_bool("topic_mode", default=False),
+                request.request_string("problem_type"),
+                request.remote_addr,
+                )
 
-            # TODO: this exercise_message_html functionality is currently hidden
-            # from power-mode. Restore it.
-            # https://trello.com/card/restore-you-re-ready-to-move-on-and-struggling-in-action-messages/4f3f43cd45533a1b3a065a1d/34
-            user_states = user_exercise_graph.states(exercise.name)
-            exercise_message_html = templatetags.exercise_message(exercise,
-                    user_exercise_graph, review_mode=review_mode)
+        # TODO: this exercise_message_html functionality is currently hidden
+        # from power-mode. Restore it.
+        # https://trello.com/card/restore-you-re-ready-to-move-on-and-struggling-in-action-messages/4f3f43cd45533a1b3a065a1d/34
+        user_states = user_exercise_graph.states(exercise.name)
+        exercise_message_html = templatetags.exercise_message(exercise,
+                user_exercise_graph, review_mode=review_mode)
 
-            add_action_results(user_exercise, {
-                "exercise_message_html": exercise_message_html,
-                "exercise_state": {
-                    "state": [state for state in user_states if user_states[state]],
-                    "template" : exercise_message_html,
-                }
-            })
+        add_action_results(user_exercise, {
+            "exercise_message_html": exercise_message_html,
+            "exercise_state": {
+                "state": [state for state in user_states if user_states[state]],
+                "template" : exercise_message_html,
+            }
+        })
 
-            # A hint will count against the user iff they haven't attempted the question yet and it's their first hint
-            if attempt_number == 0 and count_hints == 1:
-                bingo("hints_costly_hint")
-                bingo("hints_costly_hint_binary")
+        # A hint will count against the user iff they haven't attempted the question yet and it's their first hint
+        if attempt_number == 0 and count_hints == 1:
+            bingo("hints_costly_hint")
+            bingo("hints_costly_hint_binary")
 
-            return user_exercise
-
-    logging.warning("Problem %d attempted with no user_data present", problem_number)
-    return unauthorized_response()
+        return user_exercise
 
 # TODO: Remove this route in v2
 @route("/api/v1/user/exercises/<exercise_name>/reset_streak", methods=["POST"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def reset_problem_streak(exercise_name):
     return _attempt_problem_wrong(exercise_name)
 
 @route("/api/v1/user/exercises/<exercise_name>/wrong_attempt", methods=["POST"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def attempt_problem_wrong(exercise_name):
@@ -1932,24 +1908,23 @@ def _attempt_problem_wrong(exercise_name):
 def user_video_logs(youtube_id):
     user_data = user_models.UserData.current()
 
-    if user_data and youtube_id:
-        user_data_student = get_visible_user_data_from_request()
-        video = models.Video.all().filter("youtube_id =", youtube_id).get()
+    user_data_student = get_visible_user_data_from_request()
+    video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
-        if user_data_student and video:
+    if user_data_student and video:
 
-            video_log_query = models.VideoLog.all()
-            video_log_query.filter("user =", user_data_student.user)
-            video_log_query.filter("video =", video)
+        video_log_query = models.VideoLog.all()
+        video_log_query.filter("user =", user_data_student.user)
+        video_log_query.filter("video =", video)
 
-            try:
-                filter_query_by_request_dates(video_log_query, "time_watched")
-            except ValueError, e:
-                return api_error_response(e)
+        try:
+            filter_query_by_request_dates(video_log_query, "time_watched")
+        except ValueError, e:
+            return api_error_response(e)
 
-            video_log_query.order("time_watched")
+        video_log_query.order("time_watched")
 
-            return video_log_query.fetch(500)
+        return video_log_query.fetch(500)
 
     return None
 
@@ -2037,7 +2012,7 @@ def update_public_user_badges():
     return result
 
 @route("/api/v1/user/badges", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.open_access   # TODO(csilvers): do login+@phantom instead
 @jsonp
 @jsonify
 def get_user_badges():
@@ -2297,9 +2272,8 @@ def user_data():
     user_data_query.order("joined")
     return user_data_query.fetch(request.request_int("max", default=500))
 
-# TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/progressreport", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required_and(demo_user_allowed=True)
 @jsonp
 @jsonify
 def get_student_progress_report():
@@ -2317,7 +2291,7 @@ def get_student_progress_report():
         user_data_coach, students)
 
 @route("/api/v1/user/goals", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def get_user_goals():
@@ -2327,7 +2301,7 @@ def get_user_goals():
     return [g.get_visible_data() for g in goals]
 
 @route("/api/v1/user/goals/current", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def get_user_current_goals():
@@ -2336,9 +2310,8 @@ def get_user_current_goals():
     goals = GoalList.get_current_goals(student)
     return [g.get_visible_data() for g in goals]
 
-# TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/goals", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required_and(demo_user_allowed=True)
 @jsonp
 @jsonify
 def get_student_goals():
@@ -2371,14 +2344,12 @@ def get_student_goals():
     return return_data
 
 @route("/api/v1/user/goals", methods=["POST"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @api_create_phantom
 @jsonp
 @jsonify
 def create_user_goal():
     user_data = user_models.UserData.current()
-    if not user_data:
-        return api_invalid_param_response("User is not logged in.")
 
     user_override = request.request_user_data("email")
     if user_data.developer and user_override and user_override.key_email != user_data.key_email:
@@ -2442,14 +2413,11 @@ def create_user_goal():
 
 
 @route("/api/v1/user/goals/<int:id>", methods=["GET"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def get_user_goal(id):
     user_data = user_models.UserData.current()
-    if not user_data:
-        return api_invalid_param_response("User not logged in")
-
     goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
@@ -2459,14 +2427,11 @@ def get_user_goal(id):
 
 
 @route("/api/v1/user/goals/<int:id>", methods=["PUT"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def put_user_goal(id):
     user_data = user_models.UserData.current()
-    if not user_data:
-        return api_invalid_param_response("User not logged in")
-
     goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
@@ -2488,14 +2453,11 @@ def put_user_goal(id):
 
 
 @route("/api/v1/user/goals/<int:id>", methods=["DELETE"])
-@api.auth.decorators.open_access
+@api.auth.decorators.login_required
 @jsonp
 @jsonify
 def delete_user_goal(id):
     user_data = user_models.UserData.current()
-    if not user_data:
-        return api_invalid_param_response("User not logged in")
-
     goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
@@ -2506,14 +2468,11 @@ def delete_user_goal(id):
     return {}
 
 @route("/api/v1/user/goals", methods=["DELETE"])
-@api.auth.decorators.open_access
+@api.auth.decorators.developer_required
 @jsonp
 @jsonify
 def delete_user_goals():
     user_data = user_models.UserData.current()
-    if not user_data.developer:
-        return api_unauthorized_response("UNAUTHORIZED")
-
     user_override = request.request_user_data("email")
     if user_override and user_override.key_email != user_data.key_email:
         user_data = user_override

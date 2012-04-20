@@ -8,10 +8,12 @@ from google.appengine.api import memcache
 
 
 class MemcacheStatus(request_handler.RequestHandler):
-    """
-    Handles request to show information about the current state of memcache.
+    """Handle requests to show information about the current state of memcache.
 
     Gives raw data, suitable for plotting.
+
+    This is open-access so it's easy to write a script to download this
+    data and store it.  Nothing here is sensitive.
     TODO(csilvers): save the data and show a pretty graphy.
     """
 

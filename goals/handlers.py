@@ -17,7 +17,6 @@ import request_handler
 import user_util
 from knowledgemap.knowledgemap_util import deserializeMapCoords
 from library import library_content_html
-from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import create_phantom
 from user_models import UserData
 from exercise_models import UserExercise, Exercise
@@ -27,9 +26,8 @@ from .models import Goal, GoalList, GoalObjective
 
 class CreateNewGoal(request_handler.RequestHandler):
 
-    @ensure_xsrf_cookie
+    @user_util.login_required
     @create_phantom
-    @user_util.open_access
     def get(self):
         user_data = UserData.current()
 

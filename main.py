@@ -211,8 +211,6 @@ class ViewVideo(request_handler.RequestHandler):
     @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, path, video_id):
-        user_data = UserData.current()
-
         if path:
             path_list = path.split('/')
 
@@ -229,9 +227,6 @@ class ViewVideoDeprecated(request_handler.RequestHandler):
     @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, readable_id=""):
-
-        user_data = UserData.current()
-
         # This method displays a video in the context of a particular topic.
         # To do that we first need to find the appropriate topic.  If we aren't
         # given the topic title in a query param, we need to find a topic that
@@ -301,6 +296,7 @@ class Crash(request_handler.RequestHandler):
             # Even Watson isn't perfect
             raise Exception("What is Toronto?")
 
+# TODO(csilvers): unused: remove
 class ReadOnlyDowntime(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
@@ -412,7 +408,6 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
         return (old_email, new_email, prop)
 
     @user_util.admin_required
-    @ensure_xsrf_cookie
     def get(self):
         (old_email, new_email, prop) = self.get_email_params()
         if new_email == old_email:
@@ -637,12 +632,9 @@ class PermanentRedirectToHome(request_handler.RequestHandler):
         self.redirect(redirect_target, True)
 
 class ServeUserVideoCss(request_handler.RequestHandler):
-    @user_util.open_access
+    @user_util.login_required
     def get(self):
         user_data = UserData.current()
-        if user_data == None:
-            return
-
         user_video_css = video_models.UserVideoCss.get_for_user_data(user_data)
         self.response.headers['Content-Type'] = 'text/css'
 
@@ -664,6 +656,7 @@ class MemcacheViewer(request_handler.RequestHandler):
                 self.response.out.write("<p><b>%s</b>%s</p>" % (k, dict((key, getattr(value, key)) for key in dir(value))))
         if self.request_bool("clear", False):
             memcache.delete(key, namespace=namespace)
+
 
 application = webapp2.WSGIApplication([
     DomainRoute('smarthistory.khanacademy.org', [

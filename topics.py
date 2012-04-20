@@ -20,7 +20,6 @@ except ImportError:
 import zlib
 import cPickle as pickle
 
-from api.auth.xsrf import ensure_xsrf_cookie
 from google.appengine.ext import deferred
 
 
@@ -39,7 +38,6 @@ import video_models
 
 class EditContent(request_handler.RequestHandler):
 
-    @ensure_xsrf_cookie
     @user_util.developer_required
     def get(self):
 
@@ -184,7 +182,7 @@ def getSmartHistoryContent():
 
 class ImportSmartHistory(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def get(self):
         """update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)"""
         default = topic_models.TopicVersion.get_default_version()

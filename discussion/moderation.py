@@ -18,7 +18,6 @@ class ModeratorList(request_handler.RequestHandler):
 
     # Must be an admin to change moderators
     @user_util.admin_required
-    @api.auth.xsrf.ensure_xsrf_cookie
     def get(self):
         mods = user_models.UserData.gql("WHERE moderator = :1", True)
         self.render_jinja2_template('discussion/mod/moderatorlist.html', {
@@ -27,7 +26,6 @@ class ModeratorList(request_handler.RequestHandler):
         })
 
     @user_util.admin_required
-    @api.auth.xsrf.ensure_xsrf_cookie
     def post(self):
         user_data = self.request_user_data("user")
 

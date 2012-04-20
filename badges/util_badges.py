@@ -288,7 +288,7 @@ def get_public_user_badges(user_data=None):
 
 class ViewBadges(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.open_access   # TODO(csilvers): do login+@phantom instead
     def get(self):
         user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
         grouped_badges = get_grouped_user_badges(user_data)
@@ -297,14 +297,14 @@ class ViewBadges(request_handler.RequestHandler):
 # /admin/badgestatistics is called periodically by a cron job
 class BadgeStatistics(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def get(self):
         # Admin-only restriction is handled by /admin/* URL pattern
         # so this can be called by a cron job.
         taskqueue.add(url='/admin/badgestatistics', queue_name='badge-statistics-queue', params={'start': '1'})
         self.response.out.write("Badge statistics task started.")
 
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def post(self):
         if not self.request_bool("start", default=False):
             return
@@ -320,7 +320,7 @@ class BadgeStatistics(request_handler.RequestHandler):
 # /admin/startnewbadgemapreduce is called periodically by a cron job
 class StartNewBadgeMapReduce(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def get(self):
 
         # Admin-only restriction is handled by /admin/* URL pattern

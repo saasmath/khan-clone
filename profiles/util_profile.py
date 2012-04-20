@@ -97,72 +97,66 @@ def get_coach_student_and_student_list(request_handler):
     return (coach, student, student_list)
 
 class ViewClassProfile(request_handler.RequestHandler):
-    # TODO(sundar) - add login_required_special(demo_allowed = True)
-    @disallow_phantoms
-    @ensure_xsrf_cookie
-    @user_util.manual_access_checking
+    @user_util.login_required_and(phantom_user_allowed=False,
+                                  demo_user_allowed=True)
     def get(self):
         show_coach_resources = self.request_bool('show_coach_resources', default=True)
         coach = UserData.current()
 
-        if coach:
+        user_override = self.request_user_data("coach_email")
+        if user_override and user_override.are_students_visible_to(coach):
+            # Only allow looking at a student list other than your own
+            # if you are a dev, admin, or coworker.
+            coach = user_override
 
-            user_override = self.request_user_data("coach_email")
-            if user_override and user_override.are_students_visible_to(coach):
-                # Only allow looking at a student list other than your own
-                # if you are a dev, admin, or coworker.
-                coach = user_override
+        student_lists = StudentList.get_for_coach(coach.key())
 
-            student_lists = StudentList.get_for_coach(coach.key())
+        student_lists_list = [{
+            'key': 'allstudents',
+            'name': 'All students',
+        }];
+        for student_list in student_lists:
+            student_lists_list.append({
+                'key': str(student_list.key()),
+                'name': student_list.name,
+            })
 
-            student_lists_list = [{
-                'key': 'allstudents',
-                'name': 'All students',
-            }];
-            for student_list in student_lists:
-                student_lists_list.append({
-                    'key': str(student_list.key()),
-                    'name': student_list.name,
-                })
+        list_id, _ = get_last_student_list(self, student_lists, coach==UserData.current())
+        current_list = None
+        for student_list in student_lists_list:
+            if student_list['key'] == list_id:
+                current_list = student_list
 
-            list_id, _ = get_last_student_list(self, student_lists, coach==UserData.current())
-            current_list = None
-            for student_list in student_lists_list:
-                if student_list['key'] == list_id:
-                    current_list = student_list
-
-            selected_graph_type = self.request_string("selected_graph_type") or ClassProgressReportGraph.GRAPH_TYPE
-            if selected_graph_type == 'progressreport' or selected_graph_type == 'goals': # TomY This is temporary until all the graphs are API calls
-                initial_graph_url = "/api/v1/user/students/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
-            else:
-                initial_graph_url = "/profile/graph/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
-            initial_graph_url += 'list_id=%s' % list_id
-
-            template_values = {
-                    'user_data_coach': coach,
-                    'coach_email': coach.email,
-                    'list_id': list_id,
-                    'student_list': current_list,
-                    'student_lists': student_lists_list,
-                    'student_lists_json': json.dumps(student_lists_list),
-                    'coach_nickname': coach.nickname,
-                    'selected_graph_type': selected_graph_type,
-                    'initial_graph_url': initial_graph_url,
-                    'exercises': exercise_models.Exercise.get_all_use_cache(),
-                    'is_profile_empty': not coach.has_students(),
-                    'selected_nav_link': 'coach',
-                    "view": self.request_string("view", default=""),
-                    'stats_charts_class': 'coach-view',
-                    }
-            self.render_jinja2_template('viewclassprofile.html', template_values)
+        selected_graph_type = self.request_string("selected_graph_type") or ClassProgressReportGraph.GRAPH_TYPE
+        if selected_graph_type == 'progressreport' or selected_graph_type == 'goals': # TomY This is temporary until all the graphs are API calls
+            initial_graph_url = "/api/v1/user/students/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
         else:
-            self.redirect(util.create_login_url(self.request.uri))
+            initial_graph_url = "/profile/graph/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
+        initial_graph_url += 'list_id=%s' % list_id
+
+        template_values = {
+                'user_data_coach': coach,
+                'coach_email': coach.email,
+                'list_id': list_id,
+                'student_list': current_list,
+                'student_lists': student_lists_list,
+                'student_lists_json': json.dumps(student_lists_list),
+                'coach_nickname': coach.nickname,
+                'selected_graph_type': selected_graph_type,
+                'initial_graph_url': initial_graph_url,
+                'exercises': exercise_models.Exercise.get_all_use_cache(),
+                'is_profile_empty': not coach.has_students(),
+                'selected_nav_link': 'coach',
+                "view": self.request_string("view", default=""),
+                'stats_charts_class': 'coach-view',
+                }
+        self.render_jinja2_template('viewclassprofile.html', template_values)
 
 class ViewProfile(request_handler.RequestHandler):
     # TODO(sundar) - add login_required_special(demo_allowed = True)
     # However, here only the profile of the students of the demo account are allowed
+    @user_util.open_access   # TODO(csilvers): do login+@phantom instead
     @ensure_xsrf_cookie
-    @user_util.open_access
     def get(self, email_or_username=None, subpath=None):
 
         """Render a student profile.
@@ -399,7 +393,7 @@ class UserProfile(object):
 
 class ProfileGraph(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.open_access    # TODO(csilvers): is this right?
     def get(self):
         html = ""
         json_update = ""

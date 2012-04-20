@@ -133,7 +133,7 @@ def verify_and_cache_oauth_or_cookie(request):
 
 
 def open_access(func):
-    """ Decorator that allows anyone to access a url. """
+    """Decorator that allows anyone to access a url."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         # We try to read the oauth info, so we have access to login
@@ -151,7 +151,7 @@ def open_access(func):
 
 
 def manual_access_checking(func):
-    """ Decorator that documents the site itself is doing authentication.
+    """Decorator that documents the site itself is doing authentication.
 
     This is intended for use by urls that are involved in the oauth
     handshake itself, and thus shouldn't be calling
@@ -176,7 +176,7 @@ def login_required_and(admin_required=False,
                        moderator_required=False,
                        demo_user_allowed=False,
                        phantom_user_allowed=True):
-    """ Decorator for validating an authenticated request.
+    """Decorator for validating an authenticated request.
 
     Checking oauth/cookie is the way to tell whether an API client is
     'logged in', since they can only have gotten an oauth token (or
@@ -248,37 +248,6 @@ def login_required(func):
     a valid user -- see the default values for login_required_and().
     """
     return login_required_and()(func)
-
-
-def open_access(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # We try to read the oauth info, so we have access to login
-        # data if the user *does* happen to be logged in, but if
-        # they're not we don't worry about it.
-        try:
-            verify_and_cache_oauth_or_cookie(request)
-        except OAuthError, e:
-            pass
-        return func(*args, **kwargs)
-
-    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'open-access'   # checked in api.route()
-    return wrapper
-
-
-def manual_access_checking(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # For manual_access_checking we don't even try to read the
-        # oauth data -- that's up for the handler to do itself.  This
-        # makes manual_access_checking appropriate for handlers that
-        # are part of the oauth-authentication process itself.
-        return func(*args, **kwargs)
-
-    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'manual-access'   # checked in api.route()
-    return wrapper
 
 
 def oauth_consumers_must_be_anointed(func):
