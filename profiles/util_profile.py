@@ -107,6 +107,11 @@ class ViewClassProfile(request_handler.RequestHandler):
 
         if coach:
 
+            if coach.is_child_account():
+                # Child accounts can't be coaches!
+                self.redirect("/")
+                return
+
             user_override = self.request_user_data("coach_email")
             if user_override and user_override.are_students_visible_to(coach):
                 # Only allow looking at a student list other than your own
