@@ -306,10 +306,11 @@ class FeedbackNotification(db.Model):
         notification.delete()
 
     @staticmethod
-    def get_feedback_for(user):
-        """Get feedback corresponding to notifications for the user."""
+    def get_feedback_for(user_data):
+        """Get feedback corresponding to notifications for a user_data."""
         all_feedback = []
-        notifications = FeedbackNotification.gql("WHERE user = :1", user)
+        notifications = FeedbackNotification.gql("WHERE user = :1",
+                                                 user_data.user)
 
         for notification in notifications:
             feedback = None

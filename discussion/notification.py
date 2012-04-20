@@ -29,7 +29,7 @@ def get_questions_data(user_data):
 
     # Get unread answers to the above questions
     unread_answers = discussion_models.FeedbackNotification.get_feedback_for(
-            user_data.user)
+            user_data)
     for answer in unread_answers:
         question_key = str(answer.question_key())
         if question_key in dict_meta_questions:
