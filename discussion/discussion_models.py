@@ -305,12 +305,8 @@ class FeedbackNotification(db.Model):
     def get_feedback_for(user):
         """Get feedback corresponding to notifications for the user."""
         all_feedback = []
-
-        user_data = user_models.UserData.get_from_user(user)
-        if not user_data:
-            return all_feedback
-
         notifications = FeedbackNotification.gql("WHERE user = :1", user)
+
         for notification in notifications:
             feedback = None
             try:
