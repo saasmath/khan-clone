@@ -84,27 +84,6 @@ class MetaQuestion(object):
             self.answerer_count = len(answerer_user_ids)
             self.last_date = max([answer.date for answer in viewable_answers])
 
-
-class VideoFeedbackNotificationFeed(request_handler.RequestHandler):
-
-    @user_util.open_access
-    def get(self):
-
-        user_data = self.request_user_data("email")
-
-        max_entries = 100
-        answers = discussion_models.FeedbackNotification.get_feedback_for(
-                user_data.user)
-        answers = sorted(answers, key=lambda answer: answer.date)
-
-        context = {
-                    "answers": answers,
-                    "count": len(answers)
-                  }
-
-        self.response.headers['Content-Type'] = 'text/xml'
-        self.render_jinja2_template('discussion/video_feedback_notification_feed.xml', context)
-
 # Send a notification to the author of this question, letting
 # them know that a new answer is available.
 def new_answer_for_video_question(video, question, answer):

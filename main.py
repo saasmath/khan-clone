@@ -831,7 +831,6 @@ application = webapp2.WSGIApplication([
     ('/admin/discussion/finishvoteentity', voting.FinishVoteEntity),
     ('/discussion/deleteentity', qa.DeleteEntity),
     ('/discussion/changeentitytype', qa.ChangeEntityType),
-    ('/discussion/videofeedbacknotificationfeed', notification.VideoFeedbackNotificationFeed),
 
     ('/discussion/mod', moderation.ModPanel),
     ('/discussion/mod/flaggedfeedback', moderation.FlaggedFeedback),
