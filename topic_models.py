@@ -1546,8 +1546,8 @@ class Topic(search.Searchable, db.Model):
         else:
             return progress_tree
 
-    def get_search_data(self):
-        child_topics = db.get([k for k in self.child_keys if k.kind() == "Topic"])
+    def get_search_data(self, topics_cache):
+        child_topics = [topics_cache[str(k)] for k in self.child_keys if k.kind() == "Topic" and str(k) in topics_cache]
         child_list = [{ "title": t.title, "url": t.relative_url } for t in child_topics]
         return {
             "kind": "Topic",
@@ -1558,6 +1558,29 @@ class Topic(search.Searchable, db.Model):
             "parent_topic": unicode(self.parent_keys[0]) if self.parent_keys else None,
             "child_topics": jsonify.jsonify(child_list)
         }
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda version=None:
+        "Topic.get_all_search_data.%d.%s" %
+        (version.number if version else -1, setting_model.Setting.cached_content_add_date()))
+    def get_all_search_data(version=None):
+        topic_search_data = []
+
+        if not version:
+            version = TopicVersion.get_by_id(None)
+
+        topics = Topic.all().filter('version =', version).filter("hide =", False)
+        topics_cache = {}
+        for topic in topics:
+            topics_cache[str(topic.key())] = topic
+
+        for topic in topics:
+            topic_data = topic.get_search_data(topics_cache)
+            topic_data["version"] = version.number
+
+            topic_search_data.append(topic_data)
+
+        return topic_search_data
 
 class UserTopic(db.Model):
     user = db.UserProperty()

@@ -372,6 +372,24 @@ class Video(search.Searchable, db.Model):
             "parent_topic": self.topic_string_keys[0],
         }
 
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda version_number:
+        "Video.get_all_search_data.%s" %
+        setting_model.Setting.cached_content_add_date())
+    def get_all_search_data(version_number):
+        video_search_data = []
+
+        videos = Video.all()
+        for video in videos:
+            if video.topic_string_keys:
+        
+                video_data = video.get_search_data()
+                video_data["version"] = version_number
+
+                video_search_data.append(video_data)
+
+        return video_search_data
+
 class VideoSubtitles(db.Model):
     """Subtitles for a YouTube video
 

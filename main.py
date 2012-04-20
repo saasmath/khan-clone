@@ -484,7 +484,7 @@ class Search(request_handler.RequestHandler):
         exvids_query = ExerciseVideo.all()
         exvids_future = util.async_queries([exvids_query])
 
-        url = "http://search-rpc.khanacademy.org/solr/select/?q=version%%3A1+%%2B%s&start=0&rows=9999&indent=on&wt=json" % query
+        url = "http://search-rpc.khanacademy.org/solr/select/?q=version%%3A1+%%2B%s&start=0&rows=9999&indent=on&wt=json&fl=*%%20score" % query
         try:
             logging.info("Fetching: %s" % url)
             response = urlfetch.fetch(url = url, deadline=25)

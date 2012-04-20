@@ -766,26 +766,12 @@ def save_url(url_id = None, version_id=None):
 @jsonify
 def get_topictree_search_index():
     # Get current version
-    version = models.TopicVersion.get_by_id(None)
+    version = topic_models.TopicVersion.get_by_id(None)
 
     search_data = []
 
-    # Add all videos to index
-    videos = models.Video.all()
-    for video in videos:
-        if video.topic_string_keys:
-    
-            video_data = video.get_search_data()
-            video_data["version"] = version.number
-
-            search_data.append(video_data)
-
-    topics = models.Topic.all()
-    for topic in topics:
-        topic_data = topic.get_search_data()
-        topic_data["version"] = version.number
-
-        search_data.append(topic_data)
+    search_data.extend(models.Video.get_all_search_data(version.number))
+    search_data.extend(topic_models.Topic.get_all_search_data())
 
     return search_data
 
