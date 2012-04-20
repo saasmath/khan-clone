@@ -65,7 +65,6 @@
 ./deploy/hipchat/user.py
 ./deploy/npm.py
 ./discussion/comments.py
-./discussion/moderation.py
 ./discussion/notification.py
 ./discussion/qa.py
 ./discussion/util_discussion.py
