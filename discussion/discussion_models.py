@@ -118,6 +118,13 @@ class Feedback(db.Model):
             cache_class=layer_cache.KeyValueCache)
 
     def delete(self):
+        """Feedback entities can only be deleted by the original author.
+        
+        They can "appear as deleted" but not actually deleted if the author
+        is hellbanned or if the specific feedback was moderated as such.
+        """
+        if self.is_type(FeedbackType.Answer):
+            FeedbackNotification.delete_notification_for_answer(self)
         db.delete(self)
         self.clear_cache_for_video()
 
@@ -137,7 +144,7 @@ class Feedback(db.Model):
         return (not self.deleted and not self.is_hidden_by_flags)
 
     def is_visible_to(self, user_data):
-        """ Return true if this post should be visible to user_data.
+        """Return true if this post should be visible to user_data.
         
         If the post has been deleted or flagged, it's only visible to the
         original author and developers.
@@ -147,10 +154,10 @@ class Feedback(db.Model):
                 (user_data and user_data.developer))
 
     def appears_as_deleted_to(self, user_data):
-        """ Return true if the post should appear as deleted to user_data.
+        """Return true if the post should appear as deleted to user_data.
         
-        This should only be true for posts that are deleted and being viewed
-        by developers.
+        This should only be true for posts that are marked as deleted and
+        being viewed by developers.
         """
         return (user_data and
                 (user_data.developer or user_data.moderator) and
@@ -277,6 +284,20 @@ class FeedbackNotification(db.Model):
     user = db.UserProperty()
 
     @staticmethod
+    def delete_notification_for_answer(answer):
+        query = FeedbackNotification.all()
+        query.filter('feedback =', answer)
+        notification = query.get()
+
+        if not notification:
+            return
+
+        user_data = user_models.UserData.get_from_user(notification.user)
+        user_data.mark_feedback_notification_count_as_stale()
+
+        notification.delete()
+
+    @staticmethod
     def get_feedback_for(user):
         """Get feedback corresponding to notifications for the user."""
         all_feedback = []
@@ -288,17 +309,16 @@ class FeedbackNotification(db.Model):
                 feedback = notification.feedback
                 all_feedback.append(feedback)
             except db.ReferencePropertyResolveError:
-                # TODO(marcia): Figure out why we error here since
-                # we never delete feedback entities (though they may appear
-                # deleted to normal users)
+                # TODO(marcia): We error here because we didn't delete
+                # associated notifications when an answer was deleted.
+                # Fixed 19 Apr 2012 and will be cleaned up organically or we
+                # could run a MR job.
                 notification_id = notification.key().id()
                 message  = ("Reference error w FeedbackNotification: %s" %
                             notification_id)
-                logging.error(message)
+                logging.warning(message)
 
-                # TODO(marcia): Could delete these notifications to keep
-                # the DB clean but I'll leave them around to help debug
-                # notification.delete()
+                notification.delete()
 
         return all_feedback
 
