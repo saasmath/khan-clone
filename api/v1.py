@@ -780,14 +780,8 @@ def get_topictree_search_index():
 @jsonp
 @jsonify
 def refresh_topictree_search_index():
-    deferred.defer(refresh_topictree_search_index_deferred)
+    deferred.defer(topic_models.refresh_topictree_search_index_deferred)
     return ""
-
-def refresh_topictree_search_index_deferred():
-    version = topic_models.TopicVersion.get_by_id(None)
-    models.Video.get_all_search_data(version.number, bust_cache=True)
-    topic_models.Topic.get_all_search_data(bust_cache=True)
-    logging.info("Refreshed search index cache.")
 
 @route("/api/v1/videos/<video_id>/explore_url", methods=["GET"])
 @api.auth.decorators.open_access

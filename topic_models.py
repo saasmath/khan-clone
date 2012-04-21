@@ -1754,6 +1754,7 @@ def _preload_default_version_data(version_number, run_code):
                                   run_code)
 
 
+
 def _change_default_version(version_number, run_code):
     setting_model.Setting.topic_admin_task_message(
         "Publish: changing default version")
@@ -1927,9 +1928,19 @@ def _rebuild_content_caches(version_number, run_code):
     setting_model.Setting.cached_exercises_date(str(datetime.datetime.now()))
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
+
+    # Preload the search index (accessed via the API /api/v1/searchindex)
+    refresh_topictree_search_index_deferred()
+
     logging.info("set_default_version complete")
     setting_model.Setting.topic_admin_task_message("Publish: finished successfully")
 
+
+def refresh_topictree_search_index_deferred():
+    version = TopicVersion.get_by_id(None)
+    video_models.Video.get_all_search_data(version.number, bust_cache=True)
+    Topic.get_all_search_data(bust_cache=True)
+    logging.info("Refreshed search index cache.")
 
 
 class VersionContentChange(db.Model):
