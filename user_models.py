@@ -234,7 +234,8 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             return False
 
         value = self.email
-        return (not facebook_util.is_facebook_user_id(value) and
+        return (value and
+                not facebook_util.is_facebook_user_id(value) and
                 not phantom_users.phantom_util.is_phantom_id(value))
 
     @property
