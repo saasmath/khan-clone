@@ -5,6 +5,7 @@ import urllib2
 import cookielib
 import json
 
+# TODO: convert this unit test file to the correct unit test pattern used by the rest of our codebase
 TEST_GAE_HOST = "http://localhost:8098"
 
 last_opener = None
