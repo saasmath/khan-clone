@@ -127,8 +127,7 @@ class FeedbackNotificationTest(BaseTest):
         answerer = self.make_user_data('hermione@gmail.com')
 
         question = self.make_question("Where did Harry go?", video, asker)
-        answer = self.make_answer("He went to the loo.", question, answerer)
+        self.make_answer("He went to the loo.", question, answerer)
 
         question.delete()
         self.assertEqual(0, asker.feedback_notification_count())
-
