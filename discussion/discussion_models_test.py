@@ -120,3 +120,15 @@ class FeedbackNotificationTest(BaseTest):
         answer.put()
 
         self.assertEqual(0, asker.feedback_notification_count())
+
+    def test_no_notification_if_question_is_deleted(self):
+        video = self.make_video()
+        asker = self.make_user_data('weasley@gmail.com')
+        answerer = self.make_user_data('hermione@gmail.com')
+
+        question = self.make_question("Where did Harry go?", video, asker)
+        answer = self.make_answer("He went to the loo.", question, answerer)
+
+        question.delete()
+        self.assertEqual(0, asker.feedback_notification_count())
+
