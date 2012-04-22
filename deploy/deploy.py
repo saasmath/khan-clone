@@ -145,7 +145,14 @@ def hg_pull_up():
         # Ran into merge or other problem
         return -1
 
-    return hg_version()
+    return dated_hg_version()
+
+def dated_hg_version():
+    version = hg_version()
+
+    # e.g. "0421" for April 21:
+    date_prefix = datetime.date.today().strftime("%m%d")
+    return "%s-%s" % (date_prefix, version)
 
 def hg_version():
     # grab the tip changeset hash
