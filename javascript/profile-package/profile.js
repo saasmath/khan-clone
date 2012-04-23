@@ -183,16 +183,21 @@ var Profile = {
         },
 
         showVitalStatistics: function(graph, exercise, timePeriod) {
-            var exercise = exercise || "addition_1",
-                emailEncoded = encodeURIComponent(USER_EMAIL),
-                hrefLookup = {
-                    "activity": "/profile/graph/activity?student_email=" + emailEncoded,
-                    "focus": "/profile/graph/focus?student_email=" + emailEncoded,
-                    "skill-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
-                    "skill-progress": "/api/v1/user/exercises?email=" + emailEncoded,
+            var exercise = exercise || "addition_1";
+            var identityParam = "";
+            if (Profile.profile.get("email")) {
+                identityParam = "email=" +
+                        encodeURIComponent(Profile.profile.get("email"));
+            }
+
+            var hrefLookup = {
+                    "activity": "/profile/graph/activity?" + identityParam,
+                    "focus": "/profile/graph/focus?" + identityParam,
+                    "skill-progress-over-time": "/profile/graph/exercisesovertime?" + identityParam,
+                    "skill-progress": "/api/v1/user/exercises?" + identityParam,
                     "problems": "/profile/graph/exerciseproblems?" +
                                             "exercise_name=" + exercise +
-                                            "&" + "student_email=" + emailEncoded
+                                            "&" + identityParam
                 },
                 timePeriodLookup = {
                     "today": "&dt_start=today",
@@ -226,7 +231,8 @@ var Profile = {
                 this.updateTitleBreadcrumbs([prettyGraphName]);
             }
 
-            if (Profile.profile.get("email")) {
+            if (Profile.profile.get("isSelf") ||
+                    Profile.profile.get("email")) {
                 // If we have access to the profiled person's email, load real data.
                 Profile.loadGraph(href);
             } else {
@@ -332,7 +338,7 @@ var Profile = {
                 parts.unshift(rootCrumb);
                 sheetTitle.text(parts.join(" » ")).show();
 
-                if (!Profile.profile.get("email")) {
+                if (!Profile.profile.get("isSelf") && !Profile.profile.get("email")) {
                     $(".profile-notification").show();
                 }
             } else {

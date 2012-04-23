@@ -1,9 +1,11 @@
 {% import 'macros/discussion.html' as discussion %}
 
+{% set user_data = UserData.current() %}
+{% set restrict_posting = user_data and user_data.is_child_account() %}
 {% for question in questions %}
     <div id="{{question.key()}}" class="question_container {% if qa_expand_key == question.key().__str__() %}question_container_expanded{% endif %}">
         <input type="hidden" name="entity_key" value="{{ question.key() }}">
-        <div class="question {% if question.appears_as_deleted_to(UserData.current()) %}deleted{% endif %}" data-question_key="{{ question.key() }}">
+        <div class="question {% if question.appears_as_deleted_to(user_data) %}deleted{% endif %}" data-question_key="{{ question.key() }}">
             {{ discussion.vote_tools(question) }}
             {% if qa_expand_key != question.key().__str__() %}
                 <a class="question_link" href="javascript:void(0);">
@@ -24,14 +26,16 @@
                     <a href="javascript:void(0);">{{ question.children_cache|length }} answer{{question.children_cache|length|pluralize}}</a>
                 </td>
                 <td>
+                    {% if not restrict_posting %}
                     <span class="question_answer_count_add_yours">
                         <input type="button" class="button add_yours" value="Add yours" />
                     </span>
+                    {% endif %}
                 </td>
                 </tr></table>
             </div>
         {% endif %}
-        
+
         <div class="question_sig sig">
             {{ discussion.signature(question, "asked") }}
         </div>
@@ -43,6 +47,7 @@
                 {{ discussion.question_answers(question.children_cache) }}
             </div>
 
+            {% if not restrict_posting %}
             <div class="answer_container">
                 <div class="answer_form">
                     <form class="answer">
@@ -56,6 +61,7 @@
                     </form>
                 </div>
             </div>
+            {% endif %}
 
         </div>
     </div>

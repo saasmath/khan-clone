@@ -80,9 +80,7 @@ class AddAnswer(request_handler.RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
             return
 
-        if not util_discussion.is_honeypot_empty(self.request):
-            # Honeypot caught a spammer (in case this is ever public or spammers
-            # have google accounts)!
+        if not util_discussion.is_post_allowed(user_data, self.request):
             return
 
         answer_text = self.request.get("answer_text")
@@ -146,9 +144,7 @@ class AddQuestion(request_handler.RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
             return
 
-        if not util_discussion.is_honeypot_empty(self.request):
-            # Honeypot caught a spammer (in case this is ever public or spammers
-            # have google accounts)!
+        if not util_discussion.is_post_allowed(user_data, self.request):
             return
 
         text = self.request.get("question_text")
