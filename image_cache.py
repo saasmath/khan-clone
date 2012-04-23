@@ -6,19 +6,23 @@ import logging
 
 import layer_cache
 
-CACHE_EXPIRATION = 60 * 60 * 24 * 60 # Cache for two months
+CACHE_EXPIRATION = 60 * 60 * 24 * 60  # Cache for two months
+
 
 class ImageCache(blobstore_handlers.BlobstoreDownloadHandler):
-    """ ImageCache is a little utility used to cache images at other URLs
-    in our blobstore with our own aggressive caching headers for client-side perf.
+    """ ImageCache is a little utility used to cache images at other
+    URLs in our blobstore with our own aggressive caching headers for
+    client-side perf.
 
-    Example: youtube_url = ImageCache.url_for("http://youtube.com/some/thumbnail")
+    Example:
+        youtube_url = ImageCache.url_for("http://youtube.com/some/thumbnail")
     """
 
     @staticmethod
-    def url_for(source_url, fallback_url = None):
+    def url_for(source_url, fallback_url=None):
         if fallback_url:
-            return "/image_cache/%s?fallback=%s" % (urllib.quote(source_url), urllib.quote(fallback_url))
+            return "/image_cache/%s?fallback=%s" % (urllib.quote(source_url),
+                                                    urllib.quote(fallback_url))
         else:
             return "/image_cache/%s" % urllib.quote(source_url)
 
@@ -31,9 +35,11 @@ class ImageCache(blobstore_handlers.BlobstoreDownloadHandler):
             blob_key = self.image_cache_blob_key(fallback_url)
 
         if not blob_key:
-            # If we failed to grab something outta the blob store, just try a redirect.
+            # If we failed to grab something outta the blob store,
+            # just try a redirect.
             # ...but log the error, cuz we don't like this.
-            logging.error("Failed to load image cache for source url, redirecting: %s" % source_url)
+            logging.error("Failed to load image cache for source url, "
+                          "redirecting: %s" % source_url)
             self.redirect(source_url)
             return
 
@@ -57,31 +63,38 @@ class ImageCache(blobstore_handlers.BlobstoreDownloadHandler):
             response = None
 
             try:
-                response = urlfetch.fetch(url = source_url, headers = self.request.headers, deadline=10)
+                response = urlfetch.fetch(url=source_url,
+                                          headers=self.request.headers,
+                                          deadline=10)
             except Exception, e:
-                logging.info("Failed to load image cache source url %s due to %s" % (source_url, e))
+                logging.info("Failed to load image cache source url "
+                             "%s due to %s" % (source_url, e))
 
             if response and response.status_code == 200:
-                return blob_key_for_data(response.headers.get("Content-Type"), response.content)
+                return blob_key_for_data(response.headers.get("Content-Type"),
+                                         response.content)
             else:
                 tries += 1
 
         return layer_cache.UncachedResult(None)
 
+
 def blob_key_for_data(content_type, data):
 
     if "image" not in content_type:
-        raise Exception("Image cache is currently only used for image content types.")
+        raise Exception("Image cache is currently only used for "
+                        "image content types.")
 
     # Create the file
-    file_name = files.blobstore.create(mime_type = content_type)
+    file_name = files.blobstore.create(mime_type=content_type)
 
-    # Writing too large a chunk to the blobstore at a single time throws an error, so it should be done in pieces 
+    # Writing too large a chunk to the blobstore at a single time
+    # throws an error, so it should be done in pieces
     pos = 0
     chunkSize = 65536
     with files.open(file_name, 'a') as f:
         while pos < len(data):
-            chunk = data[pos:pos+chunkSize]
+            chunk = data[pos:pos + chunkSize]
             pos += chunkSize
             f.write(chunk)
 

@@ -3,6 +3,7 @@ import datetime
 from badges import Badge, BadgeCategory
 from templatefilters import seconds_to_time_string
 
+
 # All badges awarded for watching a specific amount of playlist time *and* 
 # completing a certain number of exercise problems within a set amount of time 
 # inherit from PowerTimeBadge
@@ -24,7 +25,7 @@ class PowerTimeBadge(Badge):
         date_problem_end = action_cache.get_problem_log(c_problem_logs - 1).time_done
 
         date_end = max(date_video_end, date_problem_end)
-        date_start = date_end - datetime.timedelta(seconds = self.seconds_allotted)
+        date_start = date_end - datetime.timedelta(seconds=self.seconds_allotted)
 
         seconds_watched = 0
         for i in range(c_video_logs):
@@ -50,7 +51,11 @@ class PowerTimeBadge(Badge):
         return True
 
     def extended_description(self):
-        return "Correctly answer %s problems and watch %s of video in %s" % (self.problems_required, seconds_to_time_string(self.video_seconds_required), seconds_to_time_string(self.seconds_allotted))
+        return "Correctly answer %s problems and watch %s of video in %s" % (
+            self.problems_required,
+            seconds_to_time_string(self.video_seconds_required),
+            seconds_to_time_string(self.seconds_allotted))
+
 
 class PowerFifteenMinutesBadge(PowerTimeBadge):
 
@@ -63,6 +68,7 @@ class PowerFifteenMinutesBadge(PowerTimeBadge):
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
 
+
 class PowerHourBadge(PowerTimeBadge):
 
     def __init__(self):
@@ -74,6 +80,7 @@ class PowerHourBadge(PowerTimeBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 0
 
+
 class DoublePowerHourBadge(PowerTimeBadge):
 
     def __init__(self):
@@ -84,4 +91,3 @@ class DoublePowerHourBadge(PowerTimeBadge):
         self.description = "Double Power Hour"
         self.badge_category = BadgeCategory.GOLD
         self.points = 0
-

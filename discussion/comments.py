@@ -7,7 +7,7 @@ except ImportError:
     import simplejson as json
 
 import user_models
-import models_discussion
+import discussion_models
 import util_discussion
 import user_util
 import util
@@ -25,23 +25,12 @@ class PageComments(request_handler.RequestHandler):
             pass
 
         video_key = self.request.get("video_key")
-        topic_key = self.request.get("topic_key")
         sort_order = self.request_int("sort_order", default=voting.VotingSortOrder.HighestPointsFirst)
-
-        try:
-            video = db.get(video_key)
-        except db.BadRequestError:
-            # Temporarily ignore errors caused by cached google pages of non-HR app
-            return
+        video = db.get(video_key)
 
         if video:
-            try:
-                topic = db.get(topic_key)
-            except db.BadKeyError:
-                topic = video.first_topic()
-
             comments_hidden = self.request_bool("comments_hidden", default=True)
-            template_values = video_comments_context(video, topic, page, comments_hidden, sort_order)
+            template_values = video_comments_context(video, page, comments_hidden, sort_order)
 
             html = self.render_jinja2_template_to_string("discussion/video_comments_content.html", template_values)
             self.render_json({"html": html, "page": page})
@@ -56,26 +45,23 @@ class AddComment(request_handler.RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
             return
 
-        if not util_discussion.is_honeypot_empty(self.request):
-            # Honeypot caught a spammer (in case this is ever public or spammers
-            # have google accounts)!
+        if not util_discussion.is_post_allowed(user_data, self.request):
             return
 
         comment_text = self.request.get("comment_text")
         comments_hidden = self.request.get("comments_hidden")
         video_key = self.request.get("video_key")
-        topic_key = self.request.get("topic_key")
         video = db.get(video_key)
 
         if comment_text and video:
             if len(comment_text) > 300:
                 comment_text = comment_text[0:300] # max comment length, also limited by client
 
-            comment = models_discussion.Feedback(parent=user_data)
+            comment = discussion_models.Feedback(parent=user_data)
             comment.set_author(user_data)
             comment.content = comment_text
             comment.targets = [video.key()]
-            comment.types = [models_discussion.FeedbackType.Comment]
+            comment.types = [discussion_models.FeedbackType.Comment]
 
             if user_data.discussion_banned:
                 # Hellbanned users' posts are automatically hidden
@@ -83,10 +69,10 @@ class AddComment(request_handler.RequestHandler):
 
             comment.put()
 
-        self.redirect("/discussion/pagecomments?video_key=%s&topic_key=%s&page=0&comments_hidden=%s&sort_order=%s" % 
-                (video_key, topic_key, comments_hidden, voting.VotingSortOrder.NewestFirst))
+        self.redirect("/discussion/pagecomments?video_key=%s&page=0&comments_hidden=%s&sort_order=%s" % 
+                (video_key, comments_hidden, voting.VotingSortOrder.NewestFirst))
 
-def video_comments_context(video, topic, page=0, comments_hidden=True, sort_order=voting.VotingSortOrder.HighestPointsFirst):
+def video_comments_context(video, page=0, comments_hidden=True, sort_order=voting.VotingSortOrder.HighestPointsFirst):
 
     user_data = user_models.UserData.current()
 
@@ -98,13 +84,13 @@ def video_comments_context(video, topic, page=0, comments_hidden=True, sort_orde
     limit_per_page = 10
     limit_initially_visible = 2 if comments_hidden else limit_per_page
 
-    comments = util_discussion.get_feedback_by_type_for_video(video, models_discussion.FeedbackType.Comment, user_data)
+    comments = util_discussion.get_feedback_by_type_for_video(video, discussion_models.FeedbackType.Comment, user_data)
     comments = voting.VotingSortOrder.sort(comments, sort_order=sort_order)
 
     count_total = len(comments)
     comments = comments[((page - 1) * limit_per_page):(page * limit_per_page)]
 
-    dict_votes = models_discussion.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
+    dict_votes = discussion_models.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
     for comment in comments:
         voting.add_vote_expando_properties(comment, dict_votes)
 
@@ -113,7 +99,6 @@ def video_comments_context(video, topic, page=0, comments_hidden=True, sort_orde
     return {
             "is_mod": user_util.is_current_user_moderator(),
             "video": video,
-            "topic": topic,
             "comments": comments,
             "count_total": count_total,
             "comments_hidden": count_page > limit_initially_visible,

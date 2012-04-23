@@ -13,6 +13,9 @@ import request_cache
 
 FACEBOOK_ID_PREFIX = "http://facebookid.khanacademy.org/"
 
+# TODO(benkomalo): rename these methods to have consistent naming
+#   ("facebook" vs "fb")
+
 def is_facebook_user_id(user_id):
     return user_id.startswith(FACEBOOK_ID_PREFIX)
 
@@ -41,10 +44,37 @@ def get_facebook_nickname(user_id):
 def get_current_facebook_user_id_from_cookies():
     return get_user_id_from_profile(get_profile_from_cookies())
 
+def delete_fb_cookies(handler):
+    """ Given the request handler, have it send headers to delete all FB cookies
+    associated with Khan Academy. """
+    if App.facebook_app_id:
+        # Note that Facebook also sets cookies on ".www.khanacademy.org"
+        # and "www.khanacademy.org" so we need to clear both.
+        handler.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
+        handler.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+
 def get_facebook_user_id_from_oauth_map(oauth_map):
     if oauth_map:
-        return get_user_id_from_profile(get_profile_from_fb_token(oauth_map.facebook_access_token))
+        profile = _get_profile_from_fb_token(oauth_map.facebook_access_token)
+        return get_user_id_from_profile(profile)
     return None
+
+def get_fb_email_from_oauth_map(oauth_map):
+    """Return the e-mail of the current logged in Facebook user, if possible.
+
+    A user's Facebook e-mail is the one specified as her primary e-mail account
+    in Facebook (not user@facebook.com).
+
+    This may return None if no valid Facebook credentials were found in the
+    OAuthmap.
+    """
+    
+    if oauth_map:
+        profile = _get_profile_from_fb_token(oauth_map.facebook_access_token)
+        if profile:
+            return profile.get("email", None)
+    return None
+
 
 def get_user_id_from_profile(profile):
 
@@ -59,6 +89,21 @@ def get_user_id_from_profile(profile):
 
         return user_id
 
+    return None
+
+def get_fb_email_from_cookies():
+    """Return the e-mail of the current logged in Facebook user, if possible.
+    
+    A user's Facebook e-mail is the one specified as her primary e-mail account
+    in Facebook (not user@facebook.com).
+
+    This may return None if no valid Facebook credentials were found, or
+    if the user did not allow us to see her e-mail address.
+    """
+    
+    profile = get_profile_from_cookies()
+    if profile:
+        return profile.get("email", None)
     return None
 
 def get_profile_from_cookies():
@@ -109,7 +154,7 @@ def get_profile_from_cookie_key_value(cookie_key, cookie_value):
             App.facebook_app_secret)
 
     if fb_auth_dict:
-        profile = get_profile_from_fb_token(fb_auth_dict["access_token"])
+        profile = _get_profile_from_fb_token(fb_auth_dict["access_token"])
 
         if profile:
             return profile
@@ -117,7 +162,7 @@ def get_profile_from_cookie_key_value(cookie_key, cookie_value):
     # Don't cache any missing results in memcache
     return layer_cache.UncachedResult(None)
 
-def get_profile_from_fb_token(access_token):
+def _get_profile_from_fb_token(access_token):
 
     if App.facebook_app_secret is None:
         return None
@@ -136,7 +181,8 @@ def get_profile_from_fb_token(access_token):
         except (facebook.GraphAPIError, urlfetch.DownloadError, AttributeError, urllib2.HTTPError), error:
             if type(error) == urllib2.HTTPError and error.code == 400:
                 c_facebook_tries_left = 0
-                logging.debug("Ignoring '%s'. Assuming access_token is no longer valid: %s" % (error, access_token))
+                logging.error(("Ignoring '%s'. Assuming access_token " +
+                               "is no longer valid: %s") % (error, access_token))
             else:
                 c_facebook_tries_left -= 1
 

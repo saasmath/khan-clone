@@ -3,15 +3,16 @@
 from gae_bingo.gae_bingo import ab_test, find_alternative_for_user
 from gae_bingo.models import ConversionTypes
 
+
 class StrugglingExperiment(object):
 
     DEFAULT = 'old'
 
     # "Struggling" model experiment parameters.
     _ab_test_alternatives = {
-        'old': 8, # The original '>= 20 problems attempted' heuristic
-        'accuracy_1.8': 1, # Using an accuracy model with 1.8 as the parameter
-        'accuracy_2.0': 1, # Using an accuracy model with 2.0 as the parameter
+        'old': 8,  # The original '>= 20 problems attempted' heuristic
+        'accuracy_1.8': 1,  # Using an accuracy model with 1.8 as the parameter
+        'accuracy_2.0': 1,  # Using an accuracy model with 2.0 as the parameter
     }
     _conversion_tests = [
         ('struggling_problems_done', ConversionTypes.Counting),
@@ -38,7 +39,6 @@ class StrugglingExperiment(object):
     _conversion_names, _conversion_types = [
         list(x) for x in zip(*_conversion_tests)]
 
-
     @staticmethod
     def get_alternative_for_user(user_data, current_user=False):
         """ Returns the experiment alternative for the specified user, or
@@ -62,8 +62,8 @@ class StrugglingExperiment(object):
         # actions of the user affect her participation in the experiment.
         if current_user:
             return ab_test(exp_name,
-                       	   StrugglingExperiment._ab_test_alternatives,
-                       	   StrugglingExperiment._conversion_names,
+                           StrugglingExperiment._ab_test_alternatives,
+                           StrugglingExperiment._conversion_names,
                            StrugglingExperiment._conversion_types)
 
         return find_alternative_for_user(exp_name, user_data)

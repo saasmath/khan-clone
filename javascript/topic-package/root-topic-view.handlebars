@@ -18,7 +18,7 @@
   <div class="subtopics-list first">
     {{#each subtopicsA }}
       <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{else}}first{{/if}}">
-        <a class="subtopic-link-and-scroll" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
+        <a class="subtopic-link-and-scroll" data-tag="Topic Page Root Subtopic" href="/{{ ../topicInfo.extendedSlug }}/{{ id }}" data-id="{{ id }}">
           <div class="thumb" style="background-image:url('{{ thumbnailLink.thumbUrls.hq }}')"></div>
         <div class="topic-info">
           <div class="topic-title">{{ title }}</div>
@@ -32,7 +32,7 @@
   <div class="subtopics-list second">
     {{#each subtopicsB }}
       <div class="subtopic thumbnail_td {{#if notFirst }}not-first{{else}}first{{/if}}">
-        <a class="subtopic-link-and-scroll" data-tag="Topic Page Root Subtopic" href="/{{ ../extendedSlug }}/{{ id }}" data-id="{{ id }}">
+        <a class="subtopic-link-and-scroll" data-tag="Topic Page Root Subtopic" href="/{{ ../topicInfo.extendedSlug }}/{{ id }}" data-id="{{ id }}">
           <div class="thumb" style="background-image:url('{{ thumbnailLink.thumbUrls.hq }}')"></div>
         <div class="topic-info">
           <div class="topic-title">{{ title }}</div>

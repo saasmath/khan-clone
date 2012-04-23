@@ -3,9 +3,9 @@ import topic_models
 from setting_model import Setting
 import request_handler
 import shared_jinja
-import time
 import math
 import user_util
+
 
 # helpful function to see topic structure from the console.  In the console:
 # import library
@@ -28,8 +28,9 @@ def print_topics(topics):
             print " "
         print " "
 
+
 def flatten_tree(tree, parent_topics=[]):
-    homepage_topics=[]
+    homepage_topics = []
     tree.content = []
     tree.subtopics = []
 
@@ -37,7 +38,8 @@ def flatten_tree(tree, parent_topics=[]):
 
     if parent_topics:
         if tree.depth == 1 and len(parent_topics[0].subtopics) > 1:
-            tree.homepage_title = parent_topics[0].standalone_title + ": " + tree.title
+            tree.homepage_title = '%s: %s' % (
+                parent_topics[0].standalone_title, tree.title)
         else:
             tree.homepage_title = tree.title
     else:
@@ -61,7 +63,7 @@ def flatten_tree(tree, parent_topics=[]):
     del tree.children
 
     if tree.content:
-        tree.height = math.ceil(len(tree.content)/3.0) * 18
+        tree.height = math.ceil(len(tree.content) / 3.0) * 18
 
     if hasattr(tree, "is_super") or (not parent_topics and tree.content):
         homepage_topics.append(tree)
@@ -70,6 +72,7 @@ def flatten_tree(tree, parent_topics=[]):
         homepage_topics += flatten_tree(subtopic, child_parent_topics)
 
     return homepage_topics
+
 
 def add_next_topic(topics, prev_topic=None, depth=0):
     """ Does a depth first search through the topic tree and keeps the last 
@@ -120,25 +123,32 @@ def library_content_html(ajax=False, version_number=None):
     else:
         version = topic_models.TopicVersion.get_default_version()
 
-    tree = topic_models.Topic.get_root(version).make_tree(types = ["Topics", "Video", "Url"])
+    tree = topic_models.Topic.get_root(version).make_tree(
+        types=["Topics", "Video", "Url"])
     topics = flatten_tree(tree)
 
-    # TODO(tomyedwab): Remove this once the confusion over the old Developmental Math playlists settles down
+    # TODO(tomyedwab): Remove this once the confusion over the old
+    # Developmental Math playlists settles down
     developmental_math = topic_models.Topic(
         id="developmental-math",
         version=version,
         title="Developmental Math",
         standalone_title="Developmental Math",
-        description="The Developmental Math playlist has been reorganized. The videos which used to be in the Developmental Math playlist can now be found under <a href=\"#algebra\">Algebra</a>."
+        description="The Developmental Math playlist has been reorganized. "
+                    "The videos which used to be in the Developmental Math "
+                    "playlist can now be found under "
+                    "<a href=\"#algebra\">Algebra</a>."
     )
     developmental_math.is_super = True
     developmental_math.subtopics = []
     developmental_math.homepage_title = "Developmental Math"
     topics.append(developmental_math)
 
-    topics.sort(key = lambda topic: topic.standalone_title)
+    topics.sort(key=lambda topic: topic.standalone_title)
 
-    # special case the duplicate topics for now, eventually we need to either make use of multiple parent functionality (with a hack for a different title), or just wait until we rework homepage
+    # special case the duplicate topics for now, eventually we need to
+    # either make use of multiple parent functionality (with a hack
+    # for a different title), or just wait until we rework homepage
     topics = [topic for topic in topics 
               if not topic.id == "new-and-noteworthy" and not
               (topic.standalone_title == "California Standards Test: Geometry" 
@@ -150,27 +160,28 @@ def library_content_html(ajax=False, version_number=None):
 
     template_values = {
         'topics': topics,
-        'ajax' : ajax,
+        'ajax': ajax,
         'version_date': str(version.made_default_on),
         'version_id': version.number
     }
 
-    html = shared_jinja.get().render_template("library_content_template.html", **template_values)
+    html = shared_jinja.get().render_template("library_content_template.html",
+                                              **template_values)
 
     return html
+
 
 class GenerateLibraryContent(request_handler.RequestHandler):
 
     @user_util.open_access
     def post(self):
         # We support posts so we can fire task queues at this handler
-        self.get(from_task_queue = True)
+        self.get(from_task_queue=True)
 
     @user_util.open_access
-    def get(self, from_task_queue = False):
+    def get(self, from_task_queue=False):
         library_content_html(ajax=True, version_number=None, bust_cache=True)
         library_content_html(ajax=False, version_number=None, bust_cache=True)
 
         if not from_task_queue:
             self.redirect("/")
-

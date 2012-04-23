@@ -28,7 +28,7 @@ var ProfileModel = Backbone.Model.extend({
 
     isPhantom: function() {
         var email = this.get("email");
-        return email.indexOf(ProfileModel.PHANTOM_EMAIL_PREFIX) === 0;
+        return email && email.indexOf(ProfileModel.PHANTOM_EMAIL_PREFIX) === 0;
     },
 
     isInaccessible: function() {

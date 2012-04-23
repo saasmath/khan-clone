@@ -259,6 +259,7 @@
             margin-top: -7px;
             padding: 0 10px;
             line-height: 23px;
+            display: inline-block;
         }
     .tab-content .graph-options {
         font-size: 10px;
@@ -632,7 +633,7 @@ div.profile-notification {
     background-color: #FFFFFF;
     opacity: 0.90;
     filter:alpha(opacity=90);
-    z-index: 101; /* must overlay the goal name shmedit .simple-input at z-index 100 */
+    z-index: 6; /* Must overlay  #achievement-list > ul li.selected at z-index 5 */
 }
 div.profile-notification.uncover-nav {
     top: 105px;
@@ -852,8 +853,11 @@ a[rel="achievements"] {
 a[rel="goals"] {
     background: transparent url(/images/profile-icons/tick-circle.png) no-repeat 4px 50%;
 }
-a[rel="people coaches"] {
+a[rel="community coaches"] {
     background: transparent url(/images/profile-icons/user-silhouette.png) no-repeat 4px 50%;
+}
+a[rel="community discussion"] {
+    background: transparent url(/images/profile-icons/discussions.png) no-repeat 4px 50%;
 }
 li.profile-tab {
     margin-bottom: 10px;
@@ -875,7 +879,7 @@ li.profile-tab {
 .user-deets {
     float:left;
     margin-left: 10px;
-    max-width: 240px;
+    max-width: 230px;
 }
 .user-deets .nickname {
     font-size: 150%;
@@ -1129,11 +1133,51 @@ li.profile-tab {
 .coach-row .controls {
     float: right;
 }
+/* "Edit Profile" dropdown */
 .user-profile-controls {
     margin-top: 10px;
 }
-
-
+.user-profile-controls .dropdown {
+    position: static;
+}
+.user-profile-controls .dropdown-toggle .caret {
+    margin-top: 8px;
+}
+.user-profile-controls .dropdown-toggle:hover,
+.user-profile-controls .dropdown-toggle:active,
+.user-profile-controls .dropdown-toggle.toggled {
+    color: #263500;
+    background-color: #bdd98d;
+}
+#tab-content-discussion .graph-picker {
+    margin-bottom: 0;
+    margin-left: -10px;
+    padding-left: 10px;
+}
+#tab-content-discussion .question {
+    line-height: 18px;
+    padding: 10px;
+    border-bottom: 1px solid #CCC;
+    color: #777;
+}
+#tab-content-discussion .question .ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#tab-content-discussion .question .content {
+    font-style: italic;
+}
+#tab-content-discussion .question .discussion-link:hover {
+    color: #005987;
+}
+#tab-content-discussion .question .timeago {
+    float: right;
+    color: #BBB;
+    font-size: 12px;
+    position: relative;
+    top: 1px;
+}
 .settings-iframe {
     height: 400px;
     width: 640px;

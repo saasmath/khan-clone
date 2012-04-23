@@ -61,6 +61,7 @@ class Consumer(db.Model):
         self.key_ = key_
         self.secret = secret
         self.put()
+        db.get(self.key())  # force-commit (needed for the high-repl datastore)
 
 class Token(db.Model):
     REQUEST = 1
@@ -117,6 +118,7 @@ class Token(db.Model):
         self.key_ = key
         self.secret = secret
         self.put()
+        db.get(self.key())  # force-commit (needed for the high-repl datastore)
 
     def get_callback_url(self):
         """
@@ -146,6 +148,7 @@ class Token(db.Model):
             callback_confirmed=callback_confirmed)
         token.generate_random_codes()
         token.put()
+        db.get(token.key())  # force-commit, needed for the high-repl datastore
 
         return token
     create_token = classmethod(create_token)

@@ -41,12 +41,14 @@ import cgi
 import os
 from getpass import getpass
 
+
 def main():
     yt_service = gdata.youtube.service.YouTubeService()
     yt_service.email = 'khanacademy'
-    yt_service.password = getpass('Enter the password for the khanacademy account YouTube account: ')
+    yt_service.password = getpass('Enter the password for the khanacademy '
+                                  'account YouTube account: ')
     yt_service.source = 'upload_captions.py'
-    yt_service.additional_headers = { 'GData-Version': 2 }
+    yt_service.additional_headers = {'GData-Version': 2}
     yt_service.ProgrammaticLogin()
     yt_service.developer_key = getpass('Enter your YouTube developer key: ')
     delay = 3

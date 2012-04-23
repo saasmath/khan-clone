@@ -63,6 +63,7 @@ class ViewExercise(request_handler.RequestHandler):
     def get(self, topic_path, exid=None):
 
         title = None
+        description = None
         review_mode = "review" == topic_path
 
         practice_mode = bool(exid)
@@ -100,6 +101,7 @@ class ViewExercise(request_handler.RequestHandler):
                     raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
 
                 title = practice_exercise.display_name
+                description = practice_exercise.description
 
         user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
 
@@ -124,6 +126,7 @@ class ViewExercise(request_handler.RequestHandler):
 
         template_values = {
             "title": title,
+            "description": description, 
             "selected_nav_link": "practice",
             "renderable": True,
             "read_only": False,

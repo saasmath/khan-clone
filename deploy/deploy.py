@@ -63,25 +63,28 @@ def send_hipchat_deploy_message(version, includes_local_changes, email):
     url = "http://%s.%s.appspot.com" % (version, app_id)
 
     hg_id = hg_version()
-    hg_msg = hg_changeset_msg(hg_id)
+    hg_msg = hg_changeset_msg(hg_id.replace('+', ''))
     kiln_url = "https://khanacademy.kilnhg.com/Search?search=%s" % hg_id
 
     git_id = git_version()
     git_msg = git_revision_msg(git_id)
     github_url = "https://github.com/Khan/khan-exercises/commit/%s" % git_id
 
-    local_changes_warning = " (including uncommitted local changes)" if includes_local_changes else ""
+    local_changes_warning = " (with local changes)" if includes_local_changes else ""
+    changeset_id = "%s as " % hg_id if hg_id != version else ""
     message_tmpl = """
-            %(hg_id)s%(local_changes_warning)s to <a href='%(url)s'>a non-default url</a>. Includes
-            website changeset "<a href='%(kiln_url)s'>%(hg_msg)s</a>" and khan-exercises
-            revision "<a href='%(github_url)s'>%(git_msg)s</a>."
+            %(changeset_id)sversion <a href='%(url)s'>%(version)s</a>.<br>
+            &bull; website changeset: <a href='%(kiln_url)s'>%(hg_msg)s</a>%(local_changes_warning)s<br>
+            &bull; khan-exercises revision: <a href='%(github_url)s'>%(git_msg)s</a>
             """ % {
+                "changeset_id": changeset_id,
                 "url": url,
+                "version": version,
                 "hg_id": hg_id,
                 "kiln_url": kiln_url,
-                "hg_msg": hg_msg,
+                "hg_msg": truncate(hg_msg, 60),
                 "github_url": github_url,
-                "git_msg": git_msg,
+                "git_msg": truncate(git_msg, 60),
                 "local_changes_warning": local_changes_warning,
             }
     public_message = "Just deployed %s" % message_tmpl
@@ -111,6 +114,12 @@ def hipchat_message(msg, rooms):
             else:
                 print "Failed to send message to Hipchat: %s" % msg
 
+def truncate(s, n):
+    if len(s) <= n:
+        return s
+    else:
+        return s[:(n - 3)] + '...'
+
 def get_app_id():
     f = open("app.yaml", "r")
     contents = f.read()
@@ -136,7 +145,14 @@ def hg_pull_up():
         # Ran into merge or other problem
         return -1
 
-    return hg_version()
+    return dated_hg_version()
+
+def dated_hg_version():
+    version = hg_version()
+
+    # e.g. "0421" for April 21:
+    date_prefix = datetime.date.today().strftime("%m%d")
+    return "%s-%s" % (date_prefix, version)
 
 def hg_version():
     # grab the tip changeset hash
@@ -146,7 +162,7 @@ def hg_version():
 def hg_changeset_msg(changeset_id):
     # grab the summary and date
     output = popen_results(['hg', 'log', '--template','{desc}', '-r', changeset_id])
-    return output
+    return output.split('\n')[0]
 
 def git_version():
     # grab the tip changeset hash

@@ -5,7 +5,8 @@ import urllib2
 import cookielib
 import json
 
-TEST_GAE_HOST = "http://localhost:8100"
+# TODO: convert this unit test file to the correct unit test pattern used by the rest of our codebase
+TEST_GAE_HOST = "http://localhost:8098"
 
 last_opener = None
 
@@ -41,10 +42,10 @@ def run_tests():
     assert(test_response("delete_all") == 0)
 
     # Test constructing a redirect URL that converts in monkey and chimps
-    redirect_url_monkeys = test_response("construct_monkeys_redirect_url")
+    redirect_url_monkeys = test_response("create_monkeys_redirect_url")
     assert(redirect_url_monkeys == "/gae_bingo/redirect?continue=http%3A//www.google.com&conversion_name=monkeys")
 
-    redirect_url_chimps = test_response("construct_chimps_redirect_url")
+    redirect_url_chimps = test_response("create_chimps_redirect_url")
     assert(redirect_url_chimps == "/gae_bingo/redirect?continue=http%3A//www.google.com&conversion_name=chimps_conversion_1&conversion_name=chimps_conversion_2")
 
     # Test participating in monkeys and chimps once, and use previously constructed redirect URLs to convert

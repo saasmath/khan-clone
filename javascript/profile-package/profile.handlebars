@@ -27,14 +27,15 @@
                 <li><a href="{{profileRoot}}vital-statistics/skill-progress-over-time" class="tab-link has-icon no-recolor" rel="vital-statistics skill-progress-over-time">Progress Over Time</a></li>
             </ul>
         </li>
-        {{#if profileData.isSelf}}
         <li>
-            <span class="inactive link-section-header">People</span>
+            <span class="inactive link-section-header">Community</span>
             <ul class="vertical-tab-list second-tier">
-                <li><a href="{{profileRoot}}coaches" class="tab-link has-icon no-recolor" rel="people coaches">Coaches</a></li>
+                <li><a href="{{profileRoot}}discussion" class="tab-link has-icon no-recolor" rel="community discussion">Discussion</a></li>
+                {{#if profileData.isSelf}}
+                <li><a href="{{profileRoot}}coaches" class="tab-link has-icon no-recolor" rel="community coaches">Coaches</a></li>
+                {{/if}}
             </ul>
         </li>
-        {{/if}}
     </ul>
 </menu>
 
@@ -52,7 +53,10 @@
             </div>
             <div class="no-coaches-for-phantoms">
                 <h2><a href="{{toLoginRedirectHref "/profile"}}">Log in</a> to add a coach!</h2>
-                <p></p>
+            </div>
+            <div class="no-discussion">
+                <h2><a href='/#browse'>Watch a video</a> and join the discussion!</h2>
+                <p>Once you do, your questions will show up here.</p>
             </div>
         {{else}}
             <div class="public">
@@ -106,13 +110,18 @@
                         <a href="{{profileRoot}}goals/abandoned" class="graph-link no-recolor">Abandoned</a>
                     </li>
                     <li>
-                        <a class="new-goal simple-button action-gradient disabled" href="javascript:void(0);" style="display: inline-block;">Create a new goal</a>
+                        <a class="new-goal simple-button action-gradient disabled" href="javascript:void(0);">Create a new goal</a>
                     </li>
                 </ul>
             </div>
             <div id="profile-goals-content"></div>
         </div>
         <div id="tab-content-coaches" rel="coaches">
+        </div>
+        <div id="tab-content-discussion" rel="discussion" style="width: 60%">
+            <div class="graph-picker">
+                Shows the questions that you've asked.
+            </div>
         </div>
         <div id="tab-content-settings" rel="settings">
         </div>

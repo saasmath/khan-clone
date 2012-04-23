@@ -5,6 +5,7 @@ from jinja2.utils import escape
 from templatefilters import escapejs, timesince_ago
 from exercise_models import Exercise, UserExerciseGraph
 
+
 def class_progress_report_graph_context(user_data, list_students):
     if not user_data:
         return {}
@@ -26,8 +27,11 @@ def class_progress_report_graph_context(user_data, list_students):
                 exercises_found.append(exercise)
                 break
 
-    exercise_names = [(e.name, e.display_name, escapejs(e.name)) for e in exercises_found]
-    exercise_list = [{'name': e.name, 'display_name': e.display_name} for e in exercises_found]
+    exercise_names = [(e.name, e.display_name, escapejs(e.name))
+                      for e in exercises_found]
+
+    exercise_list = [{'name': e.name, 'display_name': e.display_name}
+                     for e in exercises_found]
 
     exercise_data = {}
 

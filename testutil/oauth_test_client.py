@@ -36,7 +36,6 @@ from google.appengine.ext.remote_api import remote_api_stub
 from oauth_provider import consts
 from oauth_provider import models_oauth
 from oauth_provider import oauth
-from oauth_provider import stores
 import user_models
 
 

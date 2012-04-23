@@ -56,7 +56,7 @@ var Profile = {
 
         Profile.render();
 
-        Profile.router = new Profile.TabRouter({routes: this.getRoutes_()});
+        Profile.router = new Profile.TabRouter({routes: this.buildRoutes_()});
         Profile.router.bind("all", Analytics.handleRouterNavigation);
 
         Backbone.history.start({
@@ -116,7 +116,7 @@ var Profile = {
         "vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
         "vital-statistics/:graph": "showVitalStatistics",
         "coaches": "showCoaches",
-
+        "discussion": "showDiscussion",
         // Not associated with any tab highlighting.
         "settings": "showSettings",
 
@@ -141,8 +141,19 @@ var Profile = {
     /**
      * Generate routes hash to be used by Profile.router
      */
-    getRoutes_: function() {
-        return this.subRoutes;
+    buildRoutes_: function() {
+        var routes = this.subRoutes;
+        var n = this.profileRoot.length;
+
+        // Yet another hack: we want to allow /profile/bob to navigate
+        // to the profile root, even though the root is /profile/bob/.
+        // To do this, we create a pathName without leading/trailing
+        // slash to show the default page.
+        if (this.profileRoot.lastIndexOf("/") === n - 1) {
+            var profileRootNoSlash = this.profileRoot.substr(1, n - 2);
+            routes[profileRootNoSlash] = "showDefault";
+        }
+        return routes;
     },
 
     /**
@@ -172,16 +183,21 @@ var Profile = {
         },
 
         showVitalStatistics: function(graph, exercise, timePeriod) {
-            var exercise = exercise || "addition_1",
-                emailEncoded = encodeURIComponent(USER_EMAIL),
-                hrefLookup = {
-                    "activity": "/profile/graph/activity?student_email=" + emailEncoded,
-                    "focus": "/profile/graph/focus?student_email=" + emailEncoded,
-                    "skill-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
-                    "skill-progress": "/api/v1/user/exercises?email=" + emailEncoded,
+            var exercise = exercise || "addition_1";
+            var identityParam = "";
+            if (Profile.profile.get("email")) {
+                identityParam = "email=" +
+                        encodeURIComponent(Profile.profile.get("email"));
+            }
+
+            var hrefLookup = {
+                    "activity": "/profile/graph/activity?" + identityParam,
+                    "focus": "/profile/graph/focus?" + identityParam,
+                    "skill-progress-over-time": "/profile/graph/exercisesovertime?" + identityParam,
+                    "skill-progress": "/api/v1/user/exercises?" + identityParam,
                     "problems": "/profile/graph/exerciseproblems?" +
                                             "exercise_name=" + exercise +
-                                            "&" + "student_email=" + emailEncoded
+                                            "&" + identityParam
                 },
                 timePeriodLookup = {
                     "today": "&dt_start=today",
@@ -190,8 +206,8 @@ var Profile = {
                     "last-month": "&dt_start=lastmonth&dt_end=today"
                 },
                 graph = !!(hrefLookup[graph]) ? graph : "activity",
-                timePeriod = !!(timePeriodLookup[timePeriod]) ? timePeriod : "",
-                timeURLParameter = timePeriod ? timePeriodLookup[timePeriod] : "",
+                timePeriod = !!(timePeriodLookup[timePeriod]) ? timePeriod : "last-week",
+                timeURLParameter = timePeriodLookup[timePeriod],
                 href = hrefLookup[graph] + timeURLParameter;
 
             // Known bug: the wrong graph-date-picker item is selected when
@@ -215,7 +231,8 @@ var Profile = {
                 this.updateTitleBreadcrumbs([prettyGraphName]);
             }
 
-            if (Profile.profile.get("email")) {
+            if (Profile.profile.get("isSelf") ||
+                    Profile.profile.get("email")) {
                 // If we have access to the profiled person's email, load real data.
                 Profile.loadGraph(href);
             } else {
@@ -260,12 +277,22 @@ var Profile = {
             $("#tab-content-coaches").show()
                 .siblings().hide();
 
-            this.activateRelatedTab("people coaches");
+            this.activateRelatedTab("community coaches");
             this.updateTitleBreadcrumbs(["Coaches"]);
 
             if (Profile.profile.get("isPhantom")) {
                 Profile.showNotification("no-coaches-for-phantoms");
             }
+        },
+
+        showDiscussion: function() {
+            $("#tab-content-discussion").show()
+                .siblings().hide();
+
+            this.activateRelatedTab("community discussion");
+            this.updateTitleBreadcrumbs(["Discussion"]);
+
+            Profile.populateDiscussion();
         },
 
         settingsIframe_: null,
@@ -311,7 +338,7 @@ var Profile = {
                 parts.unshift(rootCrumb);
                 sheetTitle.text(parts.join(" » ")).show();
 
-                if (!Profile.profile.get("email")) {
+                if (!Profile.profile.get("isSelf") && !Profile.profile.get("email")) {
                     $(".profile-notification").show();
                 }
             } else {
@@ -567,7 +594,7 @@ var Profile = {
     showNotification: function(className) {
         var jel = $(".profile-notification").removeClass("uncover-nav");
 
-        if (className === "empty-graph") {
+        if (className === "empty-graph" || className === "no-discussion") {
             jel.addClass("uncover-nav");
         }
 
@@ -932,6 +959,70 @@ var Profile = {
         Profile.coachesDeferred_ = Coaches.init();
 
         return Profile.coachesDeferred_;
+    },
+
+    discussionDeferred_: null,
+    noDiscussion_: false,
+    populateDiscussion: function() {
+        if (Profile.noDiscussion_) {
+            Profile.showNotification("no-discussion");
+        }
+
+        if (Profile.discussionDeferred_) {
+            return Profile.discussionDeferred_;
+        }
+
+        var email = Profile.profile.get("email");
+        if (email) {
+            Profile.discussionDeferred_ = $.ajax({
+                type: "GET",
+                url: "/api/v1/user/questions",
+                data: {
+                    email: email,
+                    casing: "camel"
+                },
+                dataType: "json",
+                success: function(questions) {
+                    if (questions.length === 0) {
+                        Profile.noDiscussion_ = true;
+                        Profile.showNotification("no-discussion");
+                        return;
+                    }
+
+                    var template = Templates.get("profile.questions-list");
+
+                    // Order questions from oldest to newest
+                    questions = _.sortBy(questions, function(question) {
+                        return question["lastDate"];
+                    });
+
+                    // Then reverse to get newest to oldest
+                    questions.reverse();
+
+                    $("#tab-content-discussion")
+                        .append(template(questions))
+                        .find("div.timeago").timeago();
+
+                    if (Profile.profile.get("isSelf")) {
+                        var initialPause = 500;
+                        var rampOn = 500;
+                        var hiOn = 300;
+                        var rampOff = 300;
+
+                        $("#tab-content-discussion .unread")
+                            .delay(initialPause)
+                            .animate({"background-color": "#dcf2fa"}, rampOn)
+                            .delay(hiOn)
+                            .animate({"background-color": "#ebf7fb"}, rampOff);
+                    }
+                }
+            });
+        } else {
+            Profile.discussionDeferred_ = new $.Deferred();
+            Profile.discussionDeferred_.resolve();
+        }
+
+        return Profile.discussionDeferred_;
     },
 
     populateSuggestedActivity: function(activities) {

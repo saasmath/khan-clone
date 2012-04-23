@@ -5,6 +5,7 @@ default options for connecting to production, and automatically imports some
 models so that you can do something useful once you're connected.
 """
 
+from __future__ import with_statement
 import optparse
 import os
 import struct

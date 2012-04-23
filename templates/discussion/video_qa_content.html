@@ -1,17 +1,14 @@
 {% import 'macros/discussion.html' as discussion %}
 
+{% set user_data = UserData.current() %}
+{% set restrict_posting = user_data and user_data.is_child_account() %}
 {% for question in questions %}
-    <a name="q_{{ question.key() }}"></a>
-    <div class="question_container
-        {% if qa_expand_key == question.key().__str__() %}
-            question_container_expanded
-        {% endif %}
-    ">
-        <input type="hidden" name="entity_key" value="{{ question.key() }}" />
-        <div class="question {% if question.appears_as_deleted_to(UserData.current()) %}deleted{% endif %}" data-question_key="{{ question.key() }}">
+    <div id="{{question.key()}}" class="question_container {% if qa_expand_key == question.key().__str__() %}question_container_expanded{% endif %}">
+        <input type="hidden" name="entity_key" value="{{ question.key() }}">
+        <div class="question {% if question.appears_as_deleted_to(user_data) %}deleted{% endif %}" data-question_key="{{ question.key() }}">
             {{ discussion.vote_tools(question) }}
             {% if qa_expand_key != question.key().__str__() %}
-                <a class="question_link" href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}&qa_expand_key={{question.key()}}#q_{{question.key()}}" onclick="return false;">
+                <a class="question_link" href="javascript:void(0);">
                     <span>{{ question.content|escape|linebreaksbr_ellipsis|youtube_timestamp_links }}</span>
                 </a>
             {% endif %}
@@ -23,45 +20,39 @@
         </div>
 
         {% if qa_expand_key != question.key().__str__() %}
-            <div class="question_answer_count
-            {% if not question.children_cache %}
-                unanswered
-            {% endif %}
-            ">
+            <div class="question_answer_count {% if not question.children_cache %}unanswered{% endif %}">
                 <table><tr>
                 <td style="vertical-align: middle;">
-                    <a href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}&qa_expand_key={{question.key()}}#q_{{question.key()}}" onclick="return false;">{{ question.children_cache|length }} answer{{ "s" if question.children_cache.__len__() != 1 else "" }}</a>
+                    <a href="javascript:void(0);">{{ question.children_cache|length }} answer{{question.children_cache|length|pluralize}}</a>
                 </td>
                 <td>
+                    {% if not restrict_posting %}
                     <span class="question_answer_count_add_yours">
                         <input type="button" class="button add_yours" value="Add yours" />
                     </span>
+                    {% endif %}
                 </td>
                 </tr></table>
             </div>
         {% endif %}
-        
+
         <div class="question_sig sig">
             {{ discussion.signature(question, "asked") }}
         </div>
 
         {{ discussion.feedback_controls_question("Edit this question", question) }}
 
-        <div class="answers_and_form_container"
-            {% if qa_expand_key != question.key().__str__() %}
-                style="display:none;"
-            {% endif %}
-        >
+        <div class="answers_and_form_container" {% if qa_expand_key != question.key().__str__() %}style="display:none;"{% endif %}>
             <div class="answers_container">
                 {{ discussion.question_answers(question.children_cache) }}
             </div>
 
+            {% if not restrict_posting %}
             <div class="answer_container">
                 <div class="answer_form">
                     <form class="answer">
                         {{ discussion.honeypots() }}
                         <input type="hidden" id="video_key" name="video_key" value="{{ video.key() }}" />
-                        <input type="hidden" id="topic_key" name="topic_key" value="{{ topic.key() }}" />
                         <input type="hidden" name="question_key" value="{{ question.key() }}" />
                         <div class="answer_placeholder">
                             <textarea name="answer_text" class="answer_text" rows="2" cols="40" placeholder="Answer this question"></textarea>
@@ -70,6 +61,7 @@
                     </form>
                 </div>
             </div>
+            {% endif %}
 
         </div>
     </div>
@@ -81,11 +73,11 @@
 <div class="page_controls questions_page_controls">
     <span>
         {% if current_page_1_based != 1 %}
-        <a href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}&qa_page={{ prev_page_1_based }}#qa" class="button page questions_page" page="{{ prev_page_1_based }}"><img class="icon" src="{{ "/images/arrow-left.png"|static_url }}" /> {% if sort_order == 2 %}Newer questions{% else %}Q&A with higher votes{% endif %}</a>
+        <a href="javascript:void(0);" class="button page questions_page" page="{{ prev_page_1_based }}"><img class="icon" src="{{ "/images/arrow-left.png"|static_url }}" /> {% if sort_order == 2 %}Newer questions{% else %}Q&A with higher votes{% endif %}</a>
         {% endif %}
 
         {% if current_page_1_based != pages_total %}
-        <a href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}&qa_page={{ next_page_1_based }}#qa" class="button page questions_page" page="{{ next_page_1_based }}">{% if sort_order == 2 %}Older questions{% else %}Q&A with lower votes{% endif %} <img class="icon" src="{{ "/images/arrow-right.png"|static_url }}" /></a>
+        <a href="javascript:void(0);" class="button page questions_page" page="{{ next_page_1_based }}">{% if sort_order == 2 %}Older questions{% else %}Q&A with lower votes{% endif %} <img class="icon" src="{{ "/images/arrow-right.png"|static_url }}" /></a>
         {% endif %}
     </span>
 </div>

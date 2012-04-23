@@ -549,7 +549,7 @@ var TopicTreeEditor = {
         children.splice(parent_pos, 0, newChild);
         parent_model.set({ children: children });
 
-        parent_node.expand();
+        parent_node.reloadChildren();
         parent_node.getChildren()[parent_pos].activate();
 
         var data = {

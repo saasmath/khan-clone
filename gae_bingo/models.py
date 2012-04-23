@@ -44,7 +44,8 @@ class _GAEBingoExperiment(db.Model):
         return pickle.loads(self.short_circuit_pickled_content)
 
     def set_short_circuit_content(self, value):
-        self.short_circuit_pickled_content = pickle.dumps(value)
+        self.short_circuit_pickled_content = pickle.dumps(value, 
+                                                    pickle.HIGHEST_PROTOCOL)
 
     @property
     def pretty_name(self):
@@ -162,7 +163,7 @@ class _GAEBingoIdentityRecord(db.Model):
 
     @staticmethod
     def load(identity):
-        gae_bingo_identity_record = _GAEBingoIdentityRecord.all().filter("identity =", identity).get()
+        gae_bingo_identity_record = _GAEBingoIdentityRecord.get_by_key_name(_GAEBingoIdentityRecord.key_for_identity(identity))
         if gae_bingo_identity_record:
             return pickle.loads(gae_bingo_identity_record.pickled)
 

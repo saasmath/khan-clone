@@ -291,6 +291,9 @@ def parse_signed_request(signed_request, secret):
     Parse signed_request given by Facebook (usually via POST),
     decrypt with app secret.
 
+    See https://developers.facebook.com/docs/authentication/signed_request/
+    for details.
+
     Arguments:
     signed_request -- Facebook's signed request given through POST
     secret -- Application's app_secret required to decrpyt signed_request
@@ -299,21 +302,32 @@ def parse_signed_request(signed_request, secret):
     if "." in signed_request:
         esig, payload = signed_request.split(".")
     else:
+        logging.error("Malformed FB signed request [%s]" % signed_request)
         return {}
 
     sig = urlsafe_b64decode(str(esig))
-    data = json.loads(urlsafe_b64decode(str(payload)))
-
-    if not isinstance(data, dict):
-        raise SignedRequestError("Pyload is not a json string!")
+    try:
+        data = json.loads(urlsafe_b64decode(str(payload)))
+    except Exception, e:
+        logging.error("Error decoding FB signed request [%s]: %s" %
+                      (signed_request, e))
         return {}
 
-    if data["algorithm"].upper() == "HMAC-SHA256":
+    if not isinstance(data, dict):
+        logging.error("FB signed request payload is not a JSON dict [%s]" %
+                      signed_request)
+        return {}
+
+    if data.get("algorithm", "").upper() == "HMAC-SHA256":
         if hmac.new(secret, payload, hashlib.sha256).digest() == sig:
             return data
-
+        else:
+            logging.error("Signature mismatch in FB signed request [%s]" %
+                          signed_request)
     else:
-        raise SignedRequestError("Not HMAC-SHA256 encrypted!")
+        logging.error("FB signed request not HMAC-SHA256 encrypted [%s]" %
+                      signed_request)
+        return  {}
 
     return {}
-    
+

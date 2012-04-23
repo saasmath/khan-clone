@@ -12,6 +12,7 @@ from google.appengine.api import memcache
 
 import webapp2
 from webapp2_extras.routes import DomainRoute
+from webapp2_extras.routes import RedirectRoute
 
 # It's important to have this prior to the imports below that require imports
 # to request_handler.py. The structure of the imports are such that this
@@ -161,8 +162,10 @@ class TopicPage(request_handler.RequestHandler):
 class ViewVideo(request_handler.RequestHandler):
 
     @staticmethod
-    def show_video(handler, readable_id, topic_id, redirect_to_canonical_url=False):
+    def show_video(handler, readable_id, topic_id,
+                   redirect_to_canonical_url=False):
         topic = None
+        query_string = ''
 
         if topic_id is not None and len(topic_id) > 0:
             topic = Topic.get_by_id(topic_id)
@@ -171,29 +174,39 @@ class ViewVideo(request_handler.RequestHandler):
         # If a topic_id wasn't specified or the specified topic wasn't found
         # use the first topic for the requested video.
         if topic is None:
-            # Get video by readable_id just to get the first topic for the video
+            # Get video by readable_id to get the first topic for the video
             video = Video.get_for_readable_id(readable_id)
             if video is None:
-                raise MissingVideoException("Missing video '%s'" % readable_id)
+                raise MissingVideoException("Missing video '%s'" %
+                                            readable_id)
 
             topic = video.first_topic()
             if not topic:
-                raise MissingVideoException("No topic has video '%s'" % readable_id)
+                raise MissingVideoException("No topic has video '%s'" %
+                                            readable_id)
+
+            if handler.request.query_string:
+                query_string = '?' + handler.request.query_string
 
             redirect_to_canonical_url = True
 
+
         if redirect_to_canonical_url:
-            url = "/%s/v/%s" % (topic.get_extended_slug(), urllib.quote(readable_id))
+            url = "/%s/v/%s%s" % (topic.get_extended_slug(),
+                                  urllib.quote(readable_id),
+                                  query_string)
             logging.info("Redirecting to %s" % url)
             handler.redirect(url, True)
             return None
 
-        # Note: Bingo conversions are tracked on the client now, so they have been removed here. (tomyedwab)
+        # Note: Bingo conversions are tracked on the client now,
+        # so they have been removed here. (tomyedwab)
 
         topic_data = topic.get_play_data()
 
         discussion_options = qa.add_template_values({}, handler.request)
-        video_data = Video.get_play_data(readable_id, topic, discussion_options)
+        video_data = Video.get_play_data(readable_id, topic,
+                                         discussion_options)
         if video_data is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
@@ -202,7 +215,7 @@ class ViewVideo(request_handler.RequestHandler):
             "topic_data_json": api.jsonify.jsonify(topic_data),
             "video": video_data,
             "video_data_json": api.jsonify.jsonify(video_data),
-            "selected_nav_link": 'watch'
+            "selected_nav_link": 'watch',
         }
 
         return template_values
@@ -327,17 +340,6 @@ class MobileSite(request_handler.RequestHandler):
     def get(self):
         self.set_mobile_full_site_cookie(False)
         self.redirect("/")
-
-class ViewFAQ(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        self.redirect("/about/faq", True)
-        return
-
-class ViewGetInvolved(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        self.redirect("/contribute", True)
 
 class ViewContribute(request_handler.RequestHandler):
     @user_util.open_access
@@ -627,16 +629,6 @@ class Search(request_handler.RequestHandler):
 
         self.render_jinja2_template("searchresults.html", template_values)
 
-class RedirectToJobvite(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        self.redirect("http://hire.jobvite.com/CompanyJobs/Careers.aspx?k=JobListing&c=qd69Vfw7")
-
-class RedirectToSchoolImplementationsBlog(request_handler.RequestHandler):
-    @user_util.open_access
-    def get(self):
-        self.redirect("http://ka-implementations.tumblr.com/")
-
 class PermanentRedirectToHome(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
@@ -692,7 +684,9 @@ application = webapp2.WSGIApplication([
     ('/', homepage.ViewHomePage),
     ('/about', util_about.ViewAbout),
     ('/about/blog', blog.ViewBlog),
-    ('/about/blog/schools', RedirectToSchoolImplementationsBlog),
+    RedirectRoute('/about/blog/schools',
+        redirect_to='http://ka-implementations.tumblr.com/',
+        defaults={'_permanent': False}),
     ('/about/blog/.*', blog.ViewBlogPost),
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
@@ -702,12 +696,12 @@ application = webapp2.WSGIApplication([
     ('/about/privacy-policy', ViewPrivacyPolicy),
     ('/about/dmca', ViewDMCA),
     ('/contribute', ViewContribute),
+    RedirectRoute('/getinvolved', redirect_to='/contribute'),
     ('/contribute/credits', ViewCredits),
     ('/frequently-asked-questions', util_about.ViewFAQ),
     ('/about/faq', util_about.ViewFAQ),
     ('/downloads', util_about.ViewDownloads),
     ('/about/downloads', util_about.ViewDownloads),
-    ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
     ('/exercisedashboard', knowledgemap.handlers.ViewKnowledgeMap),
 
@@ -812,6 +806,8 @@ application = webapp2.WSGIApplication([
     ('/signup', login.Signup),
     ('/completesignup', login.CompleteSignup),
     ('/pwchange', login.PasswordChange),
+    ('/forgotpw', login.ForgotPassword),  # Start of pw-recovery flow
+    ('/pwreset', login.PasswordReset),  # For after user clicks on email link
 
     ('/api-apps/register', oauth_apps.Register),
 
@@ -832,15 +828,13 @@ application = webapp2.WSGIApplication([
     ('/admin/discussion/finishvoteentity', voting.FinishVoteEntity),
     ('/discussion/deleteentity', qa.DeleteEntity),
     ('/discussion/changeentitytype', qa.ChangeEntityType),
-    ('/discussion/videofeedbacknotificationlist', notification.VideoFeedbackNotificationList),
-    ('/discussion/videofeedbacknotificationfeed', notification.VideoFeedbackNotificationFeed),
 
     ('/discussion/mod', moderation.ModPanel),
-    ('/discussion/moderatorlist', moderation.RedirectToModPanel),
-    ('/discussion/flaggedfeedback', moderation.RedirectToModPanel),
     ('/discussion/mod/flaggedfeedback', moderation.FlaggedFeedback),
     ('/discussion/mod/moderatorlist', moderation.ModeratorList),
     ('/discussion/mod/bannedlist', moderation.BannedList),
+    RedirectRoute('/discussion/moderatorlist', redirect_to='/discussion/mod'),
+    RedirectRoute('/discussion/flaggedfeedback', redirect_to='/discussion/mod'),
 
     ('/githubpost', github.NewPost),
     ('/githubcomment', github.NewComment),
@@ -854,9 +848,6 @@ application = webapp2.WSGIApplication([
 
     ('/notifierclose', util_notify.ToggleNotify),
     ('/newaccount', Clone),
-
-    ('/jobs', RedirectToJobvite),
-    ('/jobs/.*', RedirectToJobvite),
 
     ('/dashboard', dashboard.handlers.Dashboard),
     ('/contentdash', dashboard.handlers.ContentDashboard),
@@ -898,6 +889,18 @@ application = webapp2.WSGIApplication([
 
     ('/robots.txt', robots.RobotsTxt),
 
+    # Hard-coded redirects
+    RedirectRoute('/shop', 
+            redirect_to='http://khanacademy.myshopify.com',
+            defaults={'_permanent': False}),
+    RedirectRoute('/jobs<:/?.*>', 
+            redirect_to='http://hire.jobvite.com/CompanyJobs/Careers.aspx?k=JobListing&c=qd69Vfw7',
+            defaults={'_permanent': False}),
+    RedirectRoute('/jobs/<:.*>', 
+            redirect_to='http://hire.jobvite.com/CompanyJobs/Careers.aspx?k=JobListing&c=qd69Vfw7',
+            defaults={'_permanent': False}),
+
+    # Dynamic redirects are prefixed w/ "/r/" and managed by "/redirects"
     ('/r/.*', redirects.Redirect),
     ('/redirects', redirects.List),
     ('/redirects/add', redirects.Add),
