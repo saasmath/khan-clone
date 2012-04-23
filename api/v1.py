@@ -6,8 +6,14 @@ from itertools import izip
 from flask import request, current_app, Response
 
 import custom_exceptions
-import models
+import backup_model
+import exercise_models
+import parent_signup_model
+import promo_record_model
+import setting_model
 import topic_models
+import url_model
+import video_models
 import layer_cache
 import templatetags # Must be imported to register template tags
 import exercises.exercise_util
@@ -135,7 +141,9 @@ def get_user_data_coach_from_request():
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda version_id = None: "api_content_topics_%s_%s" % (version_id, models.Setting.topic_tree_version()),
+    lambda version_id=None:
+        "api_content_topics_%s_%s" %
+        (version_id, setting_model.Setting.topic_tree_version()),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def content_topics(version_id = None):
@@ -149,10 +157,11 @@ def content_topics(version_id = None):
 @route("/api/v1/topics/library/compact", methods=["GET"])
 @api.auth.decorators.open_access
 @cacheable(caching_age=(60 * 60 * 24 * 60))
-@etag(lambda: models.Setting.topic_tree_version())
+@etag(lambda: setting_model.Setting.topic_tree_version())
 @jsonp
 @layer_cache.cache_with_key_fxn(
-    lambda: "api_topics_library_compact_%s" % models.Setting.topic_tree_version(),
+    lambda: "api_topics_library_compact_%s" %
+            setting_model.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topics_library_compact():
@@ -196,9 +205,9 @@ def topic_version_change_list(version_id):
     # add the related_videos of ExerciseVideos of the change.content
     exercise_dict = dict((change.content.key(), change.content)
                          for change in changes
-                         if type(change.content) == models.Exercise)
+                         if type(change.content) == exercise_models.Exercise)
 
-    models.Exercise.add_related_videos_prop(exercise_dict)
+    exercise_models.Exercise.add_related_videos_prop(exercise_dict)
     return changes
 
 
@@ -207,7 +216,7 @@ def topic_version_change_list(version_id):
 @jsonp
 @jsonify
 def topic_version_delete_change(version_id):
-    version = models.TopicVersion.get_by_id(version_id)
+    version = topic_models.TopicVersion.get_by_id(version_id)
     if version is None:
         return api_invalid_param_response("Could not find version_id %s"
                                           % version_id)
@@ -237,7 +246,7 @@ def topic_version_delete_change(version_id):
     "casing",
     (lambda topic_id, version_id = None: "api_topic_videos_%s_%s_%s" % (topic_id,
         version_id,
-        models.Setting.topic_tree_version())
+        setting_model.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -265,7 +274,7 @@ def topic_videos(topic_id, version_id = None):
 @cache_with_key_fxn_and_param(
     "casing",
     (lambda topic_id, version_id = None: "api_topic_exercises_%s_%s_%s" % (
-        topic_id, version_id, models.Setting.topic_tree_version())
+        topic_id, version_id, setting_model.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -305,7 +314,7 @@ def topic_progress(topic_id):
 @jsonp
 @layer_cache.cache_with_key_fxn(
     (lambda version_id = None: "api_topictree_%s_%s" % (version_id,
-        models.Setting.topic_tree_version())
+        setting_model.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -332,7 +341,7 @@ def topic_tree_problems(version_id = "edit"):
 @jsonp
 @layer_cache.cache_with_key_fxn(
     (lambda version_id = None, topic_id = "root": "api_topictree_export_%s_%s" % (version_id,
-        models.Setting.topic_tree_version())
+        setting_model.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -386,7 +395,7 @@ def topictreesearch(version_id, query):
     (lambda topic_id, version_id = None: ("api_topic_%s_%s_%s" % (
         topic_id,
         version_id,
-        models.Setting.topic_tree_version())
+        setting_model.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None)),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -446,7 +455,7 @@ def put_topic(topic_id, version_id = "edit"):
 @api.auth.decorators.open_access
 @cacheable(caching_age=(60 * 60 * 24 * 60))
 @etag(lambda topic_id, version_id=None:
-      "%s_v%s" % (topic_id, models.Setting.topic_tree_version())
+      "%s_v%s" % (topic_id, setting_model.Setting.topic_tree_version())
       if version_id is None else None)
 @jsonp
 def get_topic_page_data(topic_id, version_id = "default"):
@@ -506,7 +515,7 @@ def get_default_topic_version_id():
 @jsonp
 @jsonify
 def get_topic_admin_task_message():
-    return models.Setting.topic_admin_task_message()
+    return setting_model.Setting.topic_admin_task_message()
 
 def topic_find_child(parent_id, version_id, kind, id):
     version = topic_models.TopicVersion.get_by_id(version_id)
@@ -531,11 +540,11 @@ def get_content_entity(kind, id, version):
     if kind == "Topic":
         return topic_models.Topic.get_by_id(id, version)
     elif kind == "Exercise":
-        return models.Exercise.get_by_name(id, version)
+        return exercise_models.Exercise.get_by_name(id, version)
     elif kind == "Video":
-        return models.Video.get_for_readable_id(id, version)
+        return video_models.Video.get_for_readable_id(id, version)
     elif kind == "Url":
-        return models.Url.get_by_id_for_version(int(id), version)
+        return url_model.Url.get_by_id_for_version(int(id), version)
     else:
         return "Invalid kind"
 
@@ -626,7 +635,7 @@ def topic_ungroup(topic_id, version_id = "edit"):
 @jsonp
 @layer_cache.cache_with_key_fxn(
     (lambda topic_id, version_id = None: "api_topic_children_%s_%s_%s" % (
-        topic_id, version_id, models.Setting.topic_tree_version())
+        topic_id, version_id, setting_model.Setting.topic_tree_version())
         if version_id is None or version_id=="default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -718,7 +727,7 @@ def get_url(url_id, version_id=None):
                                               % version_id)
     else:
         version = None
-    return models.Url.get_by_id_for_version(url_id, version)
+    return url_model.Url.get_by_id_for_version(url_id, version)
 
 @route("/api/v1/topicversion/<version_id>/url/", methods=["PUT"])
 @route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["PUT"])
@@ -735,12 +744,12 @@ def save_url(url_id = None, version_id=None):
     changeable_props = ["tags", "title", "url"]
 
     if url_id is None:
-        return topic_models.VersionContentChange.add_new_content(models.Url,
+        return topic_models.VersionContentChange.add_new_content(url_model.Url,
                                                            version,
                                                            request.json,
                                                            changeable_props)
     else:
-        url = models.Url.get_by_id_for_version(url_id, version)
+        url = url_model.Url.get_by_id_for_version(url_id, version)
         if url is None:
             return api_invalid_param_response("Could not find a Url with ID %s " % (url_id))
         return topic_models.VersionContentChange.add_content_change(
@@ -755,7 +764,7 @@ def save_url(url_id = None, version_id=None):
 @jsonp
 @jsonify
 def get_explore_url(video_id):
-    video = models.Video.all().filter("youtube_id =", video_id).get()
+    video = video_models.Video.all().filter("youtube_id =", video_id).get()
     if video and video.extra_properties:
         return video.extra_properties.get('explore_url')
     return None
@@ -766,7 +775,7 @@ def get_explore_url(video_id):
 @jsonp
 @jsonify
 def set_explore_url(video_id):
-    video = models.Video.all().filter("youtube_id =", video_id).get()
+    video = video_models.Video.all().filter("youtube_id =", video_id).get()
     if video:
         if video.extra_properties is None:
             video.extra_properties = {}
@@ -778,11 +787,11 @@ def set_explore_url(video_id):
 
 @route("/api/v1/playlists/library", methods=["GET"])
 @api.auth.decorators.open_access
-@etag(lambda: models.Setting.topic_tree_version())
+@etag(lambda: setting_model.Setting.topic_tree_version())
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda: "api_library_%s" % models.Setting.topic_tree_version(),
+    lambda: "api_library_%s" % setting_model.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def playlists_library():
@@ -834,7 +843,7 @@ def playlists_library():
     "casing",
     lambda fresh=False: (
         None if fresh else
-        "api_library_list_%s" % models.Setting.topic_tree_version()),
+        "api_library_list_%s" % setting_model.Setting.topic_tree_version()),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def playlists_library_list(fresh=False):
@@ -857,7 +866,7 @@ def playlists_library_list(fresh=False):
 @jsonp
 @jsonify
 def get_exercises():
-    return models.Exercise.get_all_use_cache()
+    return exercise_models.Exercise.get_all_use_cache()
 
 @route("/api/v1/topicversion/<version_id>/exercises/<exercise_name>", methods=["GET"])
 @route("/api/v1/exercises/<exercise_name>", methods=["GET"])
@@ -872,7 +881,7 @@ def get_exercise(exercise_name, version_id = None):
                                               % version_id)
     else:
         version = None
-    exercise = models.Exercise.get_by_name(exercise_name, version)
+    exercise = exercise_models.Exercise.get_by_name(exercise_name, version)
     # TODO(james): rename related_videos to related_video_readable_ids
     # then save these on the exercise and video objects
     if exercise:
@@ -885,14 +894,14 @@ def get_exercise(exercise_name, version_id = None):
 @jsonp
 @jsonify
 def exercise_recent_list():
-    return models.Exercise.all().order('-creation_date').fetch(20)
+    return exercise_models.Exercise.all().order('-creation_date').fetch(20)
 
 @route("/api/v1/exercises/<exercise_name>/followup_exercises", methods=["GET"])
 @api.auth.decorators.open_access
 @jsonp
 @jsonify
 def exercise_info(exercise_name):
-    exercise = models.Exercise.get_by_name(exercise_name)
+    exercise = exercise_models.Exercise.get_by_name(exercise_name)
     return exercise.followup_exercises() if exercise else []
 
 @route("/api/v1/exercises/<exercise_name>/videos", methods=["GET"])
@@ -900,7 +909,7 @@ def exercise_info(exercise_name):
 @jsonp
 @jsonify
 def exercise_videos(exercise_name):
-    exercise = models.Exercise.get_by_name(exercise_name)
+    exercise = exercise_models.Exercise.get_by_name(exercise_name)
     if exercise:
         exercise_videos = exercise.related_videos_query()
         return map(lambda exercise_video: exercise_video.video, exercise_videos)
@@ -917,7 +926,7 @@ def exercise_save(exercise_name = None, version_id = "edit"):
     if version is None:
         return api_invalid_param_response("Could not find version_id %s"
                                           % version_id)
-    query = models.Exercise.all()
+    query = exercise_models.Exercise.all()
     query.filter('name =', exercise_name)
     exercise = query.get()
     return v1_utils.exercise_save_data(version, request.json, exercise)
@@ -936,9 +945,9 @@ def video(video_id, version_id = None):
     else:
         version = None
 
-    video = models.Video.get_for_readable_id(video_id, version)
+    video = video_models.Video.get_for_readable_id(video_id, version)
     if video is None:
-        video = models.Video.all().filter("youtube_id =", video_id).get()
+        video = video_models.Video.all().filter("youtube_id =", video_id).get()
 
     return video
 
@@ -948,7 +957,7 @@ def video(video_id, version_id = None):
 @jsonp
 @jsonify
 def video_recent_list():
-    return models.Video.all().order('-date_added').fetch(20)
+    return video_models.Video.all().order('-date_added').fetch(20)
 
 @route("/api/v1/videos/<video_id>/download_available", methods=["POST"])
 @api.auth.decorators.developer_required
@@ -963,7 +972,7 @@ def video_download_available(video_id):
 
     # If for any crazy reason we happen to have multiple entities for a single youtube id,
     # make sure they all have the same downloadable_formats so we don't keep trying to export them.
-    for video in models.Video.all().filter("youtube_id =", video_id):
+    for video in video_models.Video.all().filter("youtube_id =", video_id):
 
         modified = False
 
@@ -982,7 +991,7 @@ def video_download_available(video_id):
 @jsonp
 @jsonify
 def video_exercises(video_id):
-    video = models.Video.all().filter("youtube_id =", video_id).get()
+    video = video_models.Video.all().filter("youtube_id =", video_id).get()
     if video:
         return video.related_exercises(bust_cache=True)
     return []
@@ -1005,7 +1014,7 @@ def video_play_data(topic_id, video_id):
         "sort": -1
     }
     ret = {
-        "video": models.Video.get_play_data(video_id, topic, discussion_options)
+        "video": video_models.Video.get_play_data(video_id, topic, discussion_options)
     }
 
     if get_topic_data:
@@ -1028,12 +1037,13 @@ def get_cc_map():
 @jsonp
 @jsonify
 def get_youtube_info(youtube_id):
-    video_data = models.Video.all().filter("youtube_id =", youtube_id).get()
+    video_data = \
+        video_models.Video.all().filter("youtube_id =", youtube_id).get()
     if video_data:
         setattr(video_data, "existing", True)
         return video_data
 
-    video_data = models.Video(youtube_id = youtube_id)
+    video_data = video_models.Video(youtube_id = youtube_id)
     return youtube_get_video_data(video_data)
 
 @route("/api/v1/topicversion/<version_id>/videos/", methods=["POST", "PUT"])
@@ -1048,11 +1058,11 @@ def save_video(video_id="", version_id = "edit"):
     if version is None:
         return api_invalid_param_response("Could not find version_id %s"
                                           % version_id)
-    video = models.Video.get_for_readable_id(video_id, version)
+    video = video_models.Video.get_for_readable_id(video_id, version)
 
     def check_duplicate(new_data, video=None):
         # make sure we are not changing the video's readable_id to another one's
-        query = models.Video.all()
+        query = video_models.Video.all()
         query = query.filter("readable_id =", new_data["readable_id"])
         if video:
             query = query.filter("__key__ !=", video.key())
@@ -1064,7 +1074,7 @@ def save_video(video_id="", version_id = "edit"):
                 (new_data["readable_id"]))
 
         # make sure we are not changing the video's youtube_id to another one's
-        query = models.Video.all()
+        query = video_models.Video.all()
         query = query.filter("youtube_id =", new_data["youtube_id"])
         if video:
             query = query.filter("__key__ !=", video.key())
@@ -1078,8 +1088,8 @@ def save_video(video_id="", version_id = "edit"):
         # make sure we are not changing the video's readable_id to an updated one in the Version's Content Changes
         changes = topic_models.VersionContentChange.get_updated_content_dict(version)
         for key, content in changes.iteritems():
-            if type(content) == models.Video and (video is None or
-                                                  key != video.key()):
+            if type(content) == video_models.Video and (video is None or
+                                                        key != video.key()):
 
                 if content.readable_id == new_data["readable_id"]:
                     return api_invalid_param_response(
@@ -1110,9 +1120,10 @@ def save_video(video_id="", version_id = "edit"):
         video_data = youtube_get_video_data_dict(request.json["youtube_id"])
         if video_data is None:
             return None
-        return topic_models.VersionContentChange.add_new_content(models.Video,
-                                                           version,
-                                                           video_data)
+        return topic_models.VersionContentChange.add_new_content(
+                video_models.Video,
+                version,
+                video_data)
 
 def replace_playlist_values(structure, playlist_dict):
     if type(structure) == list:
@@ -1165,7 +1176,8 @@ def is_username_available():
 @jsonify
 def has_seen_promo(promo_name):
     user_data = user_models.UserData.current()
-    return models.PromoRecord.has_user_seen_promo(promo_name, user_data.user_id)
+    return (promo_record_model.PromoRecord.
+            has_user_seen_promo(promo_name, user_data.user_id))
 
 @route("/api/v1/user/promo/<promo_name>", methods=["POST"])
 @api.auth.decorators.login_required
@@ -1173,7 +1185,8 @@ def has_seen_promo(promo_name):
 @jsonify
 def mark_promo_as_seen(promo_name):
     user_data = user_models.UserData.current()
-    return models.PromoRecord.record_promo(promo_name, user_data.user_id)
+    return (promo_record_model.PromoRecord.
+            record_promo(promo_name, user_data.user_id))
 
 @route("/api/v1/user/profile", methods=["GET"])
 @api.auth.decorators.open_access   # TODO(csilvers): do login+@phantom instead
@@ -1380,7 +1393,7 @@ def user_videos_all():
         user_data_student = get_visible_user_data_from_request()
 
         if user_data_student:
-            user_videos_query = models.UserVideo.all().filter("user =", user_data_student.user)
+            user_videos_query = video_models.UserVideo.all().filter("user =", user_data_student.user)
 
             try:
                 filter_query_by_request_dates(user_videos_query, "last_watched")
@@ -1397,10 +1410,10 @@ def user_videos_all():
 @jsonify
 def user_videos_specific(youtube_id):
     user_data_student = get_visible_user_data_from_request()
-    video = models.Video.all().filter("youtube_id =", youtube_id).get()
+    video = video_models.Video.all().filter("youtube_id =", youtube_id).get()
 
     if user_data_student and video:
-        user_videos = models.UserVideo.all().filter("user =", user_data_student.user).filter("video =", video)
+        user_videos = video_models.UserVideo.all().filter("user =", user_data_student.user).filter("video =", video)
         return user_videos.get()
 
     return None
@@ -1437,7 +1450,10 @@ def log_user_video(youtube_id):
         key = db.Key(video_key_str)
         video = db.get(key)
     else:
-        video = models.Video.all().filter("youtube_id =", youtube_id).get()
+        video = (video_models.Video.
+                 all().
+                 filter("youtube_id =", youtube_id).
+                 get())
 
     if not video:
         logging.error("Could not find video for %s" % (video_key_str or youtube_id))
@@ -1446,7 +1462,7 @@ def log_user_video(youtube_id):
     seconds_watched = int(request.request_float("seconds_watched", default=0))
     last_second = int(request.request_float("last_second_watched", default=0))
 
-    user_video, video_log, _, goals_updated = models.VideoLog.add_entry(
+    user_video, video_log, _, goals_updated = video_models.VideoLog.add_entry(
         user_data, video, seconds_watched, last_second)
 
     if video_log:
@@ -1477,7 +1493,8 @@ def topic_next_exercises(topic_id):
     if not topic:
         return api_invalid_param_response("Could not find topic with id: %s " + topic_id)
 
-    return models.UserExercise.next_in_topic(user_data, topic, queued=request.values.getlist("queued[]"))
+    return exercise_models.UserExercise.next_in_topic(
+        user_data, topic, queued=request.values.getlist("queued[]"))
 
 @route("/api/v1/user/exercises", methods=["GET"])
 @route("/api/v1/user/topic/<topic_id>/exercises", methods=["GET"])
@@ -1515,15 +1532,15 @@ def user_exercises_list(topic_id = None):
     else:
 
         # Grab all exercises
-        exercises = models.Exercise.get_all_use_cache()
+        exercises = exercise_models.Exercise.get_all_use_cache()
 
-    user_exercise_graph = models.UserExerciseGraph.get(student, exercises_allowed=exercises)
+    user_exercise_graph = exercise_models.UserExerciseGraph.get(student, exercises_allowed=exercises)
 
     user_exercises_dict = {}
 
     if not student.is_pre_phantom:
         user_exercises_dict = dict(
-            (attrs["name"], models.UserExercise.from_dict(attrs, student))
+            (attrs["name"], exercise_models.UserExercise.from_dict(attrs, student))
             for attrs in user_exercise_graph.graph_dicts()
         )
 
@@ -1534,7 +1551,7 @@ def user_exercises_list(topic_id = None):
         name = exercise.name
 
         if name not in user_exercises_dict:
-            user_exercise = models.UserExercise()
+            user_exercise = exercise_models.UserExercise()
             user_exercise.exercise = name
             user_exercise.user = student.user
         else:
@@ -1562,13 +1579,13 @@ def get_students_progress_summary():
         return api_invalid_param_response(e.message)
 
     list_students = sorted(list_students, key=lambda student: student.nickname)
-    user_exercise_graphs = models.UserExerciseGraph.get(list_students)
+    user_exercise_graphs = exercise_models.UserExerciseGraph.get(list_students)
 
     student_review_exercise_names = []
     for user_exercise_graph in user_exercise_graphs:
         student_review_exercise_names.append(user_exercise_graph.review_exercise_names())
 
-    exercises = models.Exercise.get_all_use_cache()
+    exercises = exercise_models.Exercise.get_all_use_cache()
     exercise_data = []
 
     for exercise in exercises:
@@ -1622,13 +1639,13 @@ def get_students_progress_summary():
 @jsonify
 def user_exercises_specific(exercise_name):
     user_data_student = get_visible_user_data_from_request()
-    exercise = models.Exercise.get_by_name(exercise_name)
+    exercise = exercise_models.Exercise.get_by_name(exercise_name)
 
     if user_data_student and exercise:
-        user_exercise = models.UserExercise.all().filter("user =", user_data_student.user).filter("exercise =", exercise_name).get()
+        user_exercise = exercise_models.UserExercise.all().filter("user =", user_data_student.user).filter("exercise =", exercise_name).get()
 
         if not user_exercise:
-            user_exercise = models.UserExercise()
+            user_exercise = exercise_models.UserExercise()
             user_exercise.exercise_model = exercise
             user_exercise.exercise = exercise_name
             user_exercise.user = user_data_student.user
@@ -1645,10 +1662,13 @@ def user_followup_exercises(exercise_name):
     if user_data and exercise_name:
 
         user_data_student = get_visible_user_data_from_request()
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        user_exercise_graph = exercise_models.UserExerciseGraph.get(user_data)
 
-        user_exercises = models.UserExercise.all().filter("user =", user_data_student.user).fetch(10000)
-        followup_exercises = models.Exercise.get_by_name(exercise_name).followup_exercises()
+        user_exercises = (exercise_models.UserExercise.
+                          all().
+                          filter("user =", user_data_student.user).
+                          fetch(10000))
+        followup_exercises = exercise_models.Exercise.get_by_name(exercise_name).followup_exercises()
 
         followup_exercises_dict = dict((exercise.name, exercise) for exercise in followup_exercises)
         user_exercises_dict = dict((user_exercise.exercise, user_exercise) for user_exercise in user_exercises
@@ -1657,7 +1677,7 @@ def user_followup_exercises(exercise_name):
         # create user_exercises that haven't been attempted yet
         for exercise_name in followup_exercises_dict:
             if not exercise_name in user_exercises_dict:
-                user_exercise = models.UserExercise()
+                user_exercise = exercise_models.UserExercise()
                 user_exercise.exercise = exercise_name
                 user_exercise.user = user_data_student.user
                 user_exercises_dict[exercise_name] = user_exercise
@@ -1691,11 +1711,13 @@ def user_playlists_all():
         user_data_student = get_visible_user_data_from_request()
 
         if user_data_student:
-            user_playlists = models.UserTopic.all().filter("user =", user_data_student.user)
+            user_playlists = topic_models.UserTopic.all().filter("user =", user_data_student.user)
             return user_playlists.fetch(10000)
 
     return None
 
+# TODO(csilvers): this seems to be unused (as evidenced by the fact it
+#                 has a typo that makes it never complete).  Remove it.
 @route("/api/v1/user/topic/<topic_id>", methods=["GET"])
 @route("/api/v1/user/playlists/<topic_id>", methods=["GET"])
 @api.auth.decorators.login_required
@@ -1711,7 +1733,7 @@ def user_playlists_specific(topic_id):
             topic = topic_models.Topic.all().filter("standalone_title =", topic_id).get()
 
         if user_data_student and topic:
-            return models.UserTopic.get_for_topic_and_user_data(topic, user_data_student)
+            return topic_models.UserTopic.get_for_topic_and_user_data(topic, user_data_student)
 
     return None
 
@@ -1721,7 +1743,7 @@ def user_playlists_specific(topic_id):
 @jsonify
 def reviews_count():
     user_data = user_models.UserData.current()
-    user_exercise_graph = models.UserExerciseGraph.get(user_data)
+    user_exercise_graph = exercise_models.UserExerciseGraph.get(user_data)
     return len(user_exercise_graph.review_exercise_names())
 
 @route("/api/v1/user/exercises/<exercise_name>/log", methods=["GET"])
@@ -1733,11 +1755,11 @@ def user_problem_logs(exercise_name):
 
     if user_data and exercise_name:
         user_data_student = get_visible_user_data_from_request()
-        exercise = models.Exercise.get_by_name(exercise_name)
+        exercise = exercise_models.Exercise.get_by_name(exercise_name)
 
         if user_data_student and exercise:
 
-            problem_log_query = models.ProblemLog.all()
+            problem_log_query = exercise_models.ProblemLog.all()
             problem_log_query.filter("user =", user_data_student.user)
             problem_log_query.filter("exercise =", exercise.name)
 
@@ -1762,7 +1784,7 @@ def user_problem_logs(exercise_name):
 def attempt_problem_number(exercise_name, problem_number):
     user_data = user_models.UserData.current()
 
-    exercise = models.Exercise.get_by_name(exercise_name)
+    exercise = exercise_models.Exercise.get_by_name(exercise_name)
     user_exercise = user_data.get_or_insert_exercise(exercise)
 
     if user_exercise and problem_number:
@@ -1827,12 +1849,12 @@ def hint_problem_number(exercise_name, problem_number):
 
     user_data = user_models.UserData.current()
 
-    exercise = models.Exercise.get_by_name(exercise_name)
+    exercise = exercise_models.Exercise.get_by_name(exercise_name)
     user_exercise = user_data.get_or_insert_exercise(exercise)
 
     if user_exercise and problem_number:
 
-        prev_user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        prev_user_exercise_graph = exercise_models.UserExerciseGraph.get(user_data)
 
         attempt_number = request.request_int("attempt_number")
         count_hints = request.request_int("count_hints")
@@ -1896,7 +1918,7 @@ def _attempt_problem_wrong(exercise_name):
     user_data = user_models.UserData.current()
 
     if user_data and exercise_name:
-        user_exercise = user_data.get_or_insert_exercise(models.Exercise.get_by_name(exercise_name))
+        user_exercise = user_data.get_or_insert_exercise(exercise_models.Exercise.get_by_name(exercise_name))
         return exercises.exercise_util.make_wrong_attempt(user_data, user_exercise)
 
     return unauthorized_response()
@@ -1906,14 +1928,12 @@ def _attempt_problem_wrong(exercise_name):
 @jsonp
 @jsonify
 def user_video_logs(youtube_id):
-    user_data = user_models.UserData.current()
-
     user_data_student = get_visible_user_data_from_request()
-    video = models.Video.all().filter("youtube_id =", youtube_id).get()
+    video = video_models.Video.all().filter("youtube_id =", youtube_id).get()
 
     if user_data_student and video:
 
-        video_log_query = models.VideoLog.all()
+        video_log_query = video_models.VideoLog.all()
         video_log_query.filter("user =", user_data_student.user)
         video_log_query.filter("video =", video)
 
@@ -2152,7 +2172,7 @@ def autocomplete():
 
         exercise_results = filter(
                 lambda exercise: query in exercise.display_name.lower(),
-                models.Exercise.get_all_use_cache())
+                exercise_models.Exercise.get_all_use_cache())
         video_results = filter(
                 lambda video_dict: query in video_dict["title"].lower(),
                 video_title_dicts())
@@ -2188,8 +2208,8 @@ def autocomplete():
 @api.auth.decorators.developer_required
 @jsonify
 def backupmodels():
-    """Return the names of all models that inherit from models.BackupModel."""
-    return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
+    """Return the names of all models that inherit from backup_model.BackupModel."""
+    return map(lambda x: x.__name__, backup_model.BackupModel.__subclasses__())
 
 @route("/api/v1/dev/protobufquery", methods=["GET"])
 @api.auth.decorators.developer_required
@@ -2224,7 +2244,7 @@ def protobuf_query():
 def protobuf_entities(entity):
     """Return up to 'max' entities last altered between 'dt_start' and 'dt_end'.
 
-    Notes: 'entity' must be a subclass of 'models.BackupModel'
+    Notes: 'entity' must be a subclass of 'backup_model.BackupModel'
            'dt{start,end}' must be in ISO 8601 format
            'max' defaults to 500
     Example:
@@ -2232,9 +2252,9 @@ def protobuf_entities(entity):
         Returns up to 500 problem_logs from between 'dt_start' and 'dt_end'
     """
     entity_class = db.class_for_kind(entity)
-    if not (entity_class and issubclass(entity_class, models.BackupModel)):
+    if not (entity_class and issubclass(entity_class, backup_model.BackupModel)):
         return api_error_response(ValueError("Invalid class '%s' (must be a \
-                subclass of models.BackupModel)" % entity))
+                subclass of backup_model.BackupModel)" % entity))
     query = entity_class.all()
     filter_query_by_request_dates(query, "backup_timestamp")
     query.order("backup_timestamp")
@@ -2247,7 +2267,7 @@ def protobuf_entities(entity):
 @jsonp
 @jsonify
 def problem_logs():
-    problem_log_query = models.ProblemLog.all()
+    problem_log_query = exercise_models.ProblemLog.all()
     filter_query_by_request_dates(problem_log_query, "time_done")
     problem_log_query.order("time_done")
     return problem_log_query.fetch(request.request_int("max", default=500))
@@ -2257,7 +2277,7 @@ def problem_logs():
 @jsonp
 @jsonify
 def video_logs():
-    video_log_query = models.VideoLog.all()
+    video_log_query = video_models.VideoLog.all()
     filter_query_by_request_dates(video_log_query, "time_watched")
     video_log_query.order("time_watched")
     return video_log_query.fetch(request.request_int("max", default=500))
@@ -2327,7 +2347,7 @@ def get_student_goals():
     dt_start = dt_end - datetime.timedelta(days=days)
 
     students = sorted(students, key=lambda student: student.nickname)
-    user_exercise_graphs = models.UserExerciseGraph.get(students)
+    user_exercise_graphs = exercise_models.UserExerciseGraph.get(students)
 
     return_data = []
     for student, uex_graph in izip(students, user_exercise_graphs):
@@ -2384,16 +2404,16 @@ def create_user_goal():
                 objective_descriptors.append(obj)
 
             if obj['type'] == 'GoalObjectiveExerciseProficiency':
-                obj['exercise'] = models.Exercise.get_by_name(obj['internal_id'])
+                obj['exercise'] = exercise_models.Exercise.get_by_name(obj['internal_id'])
                 if not obj['exercise'] or not obj['exercise'].is_visible_to_current_user():
                     return api_invalid_param_response("Internal error: Could not find exercise.")
                 objective_descriptors.append(obj)
 
             if obj['type'] == 'GoalObjectiveWatchVideo':
-                obj['video'] = models.Video.get_for_readable_id(obj['internal_id'])
+                obj['video'] = video_models.Video.get_for_readable_id(obj['internal_id'])
                 if not obj['video']:
                     return api_invalid_param_response("Internal error: Could not find video.")
-                user_video = models.UserVideo.get_for_video_and_user_data(obj['video'], user_data)
+                user_video = video_models.UserVideo.get_for_video_and_user_data(obj['video'], user_data)
                 if user_video and user_video.completed:
                     return api_invalid_param_response("Video has already been watched.")
                 if obj['video'].readable_id in goal_videos:
@@ -2512,5 +2532,5 @@ def get_version_id():
 def signup_parent():
     email = request.request_string("email")
     if email:
-        models.ParentSignup(key_name=email).put()
+        parent_signup_model.ParentSignup(key_name=email).put()
     return {}

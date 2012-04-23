@@ -7,6 +7,7 @@ TEST_GANDALF_URL = "http://localhost:8080/gandalf/tests/run_step"
 
 last_opener = None
 
+
 def test_response(step, data={}):
     global last_opener
 
@@ -27,6 +28,7 @@ def test_response(step, data={}):
         req.close()
 
     return json.loads(response)
+
 
 def run_tests():
 

@@ -76,13 +76,13 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     # A globally unique user-specified username,
     # which will be used in URLS like khanacademy.org/profile/<username>
     username = db.StringProperty(default="")
-    
+
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
 
     # Account creation date in UTC
     joined = db.DateTimeProperty(auto_now_add=True)
-    
+
     # Last login date in UTC. Note that this was incorrectly set, and could
     # have stale values (though is always non-empty) for users who have never
     # logged in prior to the launch of our own password based logins(2012-04-12)
@@ -312,15 +312,11 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
         return properties_list
 
-    # TODO(benkomalo): change create_if_none to default to False. 
-    #     We really should not be creating accounts in any call to this method,
-    #     and only create accounts through an explicit user flow to get a
-    #     chance to do things like existing-email clashing detection.
     @staticmethod
     @request_cache.cache()
-    def current(create_if_none=True):
+    def current(create_if_none=False):
         """Determine the current logged in user and return it.
-        
+
         Arguments:
             create_if_none: Whether or not to create a new user if valid
                 auth credentials are detected, but no existing user was found
@@ -341,7 +337,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             email = google_user.email()
         else:
             email = user_id
-            
+
         existing = UserData.get_from_request_info(user_id, email)
         if existing:
             return existing
@@ -377,7 +373,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
                 The OAuthMap corresponding to this request. If None is
                 provided, this method will look at the cookies for the
                 current request (if cookie auth is allowed).
-        
+
         Returns:
             The existing UserData object matching the parameters, if any.
             None if no user was found.
@@ -455,7 +451,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         query.order('-points') # Temporary workaround for issue 289
 
         return query.get()
-    
+
     @staticmethod
     def get_all_for_user_input_email(email):
         if not email:
