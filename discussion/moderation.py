@@ -10,12 +10,7 @@ import user_util
 
 
 class ModPanel(request_handler.RequestHandler):
-<<<<<<< local
-
     @user_util.moderator_required
-=======
-    @user_util.moderator_only
->>>>>>> other
     def get(self):
         template_values = {
             'selected_id': 'panel',
@@ -25,14 +20,8 @@ class ModPanel(request_handler.RequestHandler):
 
 
 class ModeratorList(request_handler.RequestHandler):
-<<<<<<< local
-
     # Must be an admin to change moderators
     @user_util.admin_required
-=======
-    @user_util.admin_only
-    @api.auth.xsrf.ensure_xsrf_cookie
->>>>>>> other
     def get(self):
         mods = user_models.UserData.gql('WHERE moderator = :1', True)
         template_values = {
@@ -59,12 +48,7 @@ class ModeratorList(request_handler.RequestHandler):
 
 
 class FlaggedFeedback(request_handler.RequestHandler):
-<<<<<<< local
-
     @user_util.moderator_required
-=======
-    @user_util.moderator_only
->>>>>>> other
     def get(self):
         # Show all non-deleted feedback flagged for moderator attention
         feedback_query = discussion_models.Feedback.all()
@@ -107,12 +91,7 @@ class FlaggedFeedback(request_handler.RequestHandler):
 
 
 class BannedList(request_handler.RequestHandler):
-<<<<<<< local
-
     @user_util.moderator_required
-=======
-    @user_util.moderator_only
->>>>>>> other
     def get(self):
         banned_user_data_list = user_models.UserData.gql(
                 'WHERE discussion_banned = :1', True)
