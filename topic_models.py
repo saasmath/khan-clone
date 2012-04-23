@@ -1930,8 +1930,6 @@ class VersionContentChange(db.Model):
         else:
             raise Exception("content does not exit yet, call add_new_content instead")
 
-        logging.info(change.content_changes)
-
         # only put the change if we have actually changed any props
         if change.content_changes:
             change.put()

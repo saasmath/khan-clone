@@ -1208,7 +1208,7 @@ function stringArraysEqual(ar1, ar2) {
             update: $.proxy(function(event, ui) {
                 this.videos = $(".exercise-videos-list", this.el)
                     .sortable("toArray").map(function(id){
-                        return id.substring(14)
+                        return id.substring(14);
                     })
             }, this)   
         })

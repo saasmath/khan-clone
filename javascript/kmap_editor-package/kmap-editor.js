@@ -687,7 +687,7 @@ var KMapEditor = {
                     update: function(event, ui) {
                         KMapEditor.exercises.get(exerciseName).related_video_readable_ids = 
                             $("#video-container").sortable("toArray").map(function(id){
-                                return id.substring(14)
+                                return id.substring(14);
                             })
                     }  
                 })
