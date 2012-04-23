@@ -118,7 +118,8 @@ class YouTubeSync(request_handler.RequestHandler):
         log.generation = int(Setting.last_youtube_sync_generation_start())
         log.put()
 
-        if step < YouTubeSyncStep.UPDATE_FROM_TOPICS:
+        # check to see if we have more steps to go
+        if step < YouTubeSyncStep.UPDATE_VIDEO_STATS:
             self.task_step(step + 1)
 
     def task_step(self, step):

@@ -117,3 +117,46 @@ class ExerciseVideo(db.Model):
             # ExerciseVideo.video.get_value_for_datastore(ev) is not needed
             # because we populated ev.video
             return [ev for ev in evs if ev.video.key() not in video_keys]
+
+    @staticmethod
+    def update_related_videos(exercise, related_video_readable_ids):
+        ''' This function updates the exercise's related videos according to
+        the order that they appear in the related_video_readable_ids list
+        '''
+        # Get the video keys
+        video_keys = []
+        for video_name in related_video_readable_ids:
+            video = video_models.Video.get_for_readable_id(video_name)
+            if video and not video.key() in video_keys:
+                video_keys.append(str(video.key()))
+
+        # Get the existing exercise videos
+        query = exercise_video_model.ExerciseVideo.all()
+        query.filter('exercise =', exercise.key())
+        existing_exercise_videos = query.fetch(1000)
+
+        existing_video_keys = []
+        for exercise_video in existing_exercise_videos:
+            existing_video_keys.append(exercise_video.video.key())
+            
+            if not exercise_video.video.key() in video_keys:
+                # delete the exercise videos that are no longer there
+                exercise_video.delete()
+
+            elif exercise_video.exercise_order != video_keys.index(
+                    exercise_video.video.key()):
+                # update new position of videos that are still there and whose
+                # position changed
+                exercise_video.exercise_order = video_keys.index(
+                    exercise_video.video.key())
+                exercise_video.put()
+
+        for i, video_key in enumerate(video_keys):
+            if not video_key in existing_video_keys:
+                # add the videos that don't exist
+                exercise_video = exercise_video_model.ExerciseVideo()
+                exercise_video.exercise = exercise
+                exercise_video.video = db.Key(video_key)
+                exercise_video.exercise_order = i
+                exercise_video.put()
+

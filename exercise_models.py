@@ -36,7 +36,6 @@ import user_models
 import user_util
 import util
 
-
 class Exercise(db.Model):
     """Information about a single exercise."""
     name = db.StringProperty()
@@ -65,7 +64,7 @@ class Exercise(db.Model):
 
     # List of parent topics
     topic_string_keys = object_property.TsvProperty(indexed=False)
-
+    
     _serialize_blacklist = [
             "author", "raw_html", "last_modified",
             "coverers", "prerequisites_ex", "assigned",
@@ -153,14 +152,16 @@ class Exercise(db.Model):
         return exercise_videos
 
     @staticmethod
-    def add_related_videos_prop(exercise_dict, evs=None, video_dict=None):
+    def add_related_video_readable_ids_prop(exercise_dict, 
+                                            evs=None, 
+                                            video_dict=None):
         # TODO(csilvers): get rid of circular dependency here
         import exercise_video_model
 
         if video_dict is None:
             video_dict = {}
 
-        # if no pregotten evs were passed in asynchrnously get them for all
+        # if no pregotten evs were passed in asynchronously get them for all
         # exercises in exercise_dict
         if evs is None:
             queries = []
@@ -206,7 +207,7 @@ class Exercise(db.Model):
             related_videos = sorted(related_videos.items(),
                                     key=lambda i:i[1][1])
             exercise.related_video_keys = map(lambda i: i[0], related_videos)
-            exercise.related_videos = map(lambda i: i[1][0], related_videos)
+            exercise.related_video_readable_ids = map(lambda i: i[1][0], related_videos)
 
     # followup_exercises reverse walks the prerequisites to give you
     # the exercises that list the current exercise as its prerequisite.
@@ -271,7 +272,6 @@ class Exercise(db.Model):
         for exercise in query.fetch(10000):
             exercise_dict[fxn_key(exercise)] = exercise
         return exercise_dict
-
 
 class UserExercise(db.Model):
     """Information about a single user's interaction with a single exercise."""

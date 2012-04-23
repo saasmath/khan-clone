@@ -4,6 +4,8 @@
     <h2 class="pulls"><a href="{{ post.local_url|escape }}">{{ post.title|escape }}</a></h2>
     <p class="pulled" style="color: #999; font-style: italic; font-family: Georgia;">{{ post.dt }}</p>
     <div id="post-content">{{ post.body }}</div>
+    {% set user_data = UserData.current() %}
+    {% if not user_data or not user_data.is_child_account() %}
     <script type="text/javascript">var disqus_url = "{{post.url|escapejs}}"; var disqus_title ="{{ post.title|escapejs }}";</script><hr/><div id="disqus_thread"></div>
     <script type="text/javascript">
       /**
@@ -25,4 +27,5 @@
       (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
     }());
     </script>
+    {% endif %}
 {% endblock posts %}

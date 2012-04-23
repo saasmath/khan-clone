@@ -9,7 +9,7 @@ from mapreduce import operation as op
 from privileges import Privileges
 from rate_limiter import VoteRateLimiter
 from user_models import UserData
-from models_discussion import FeedbackVote
+from discussion_models import FeedbackVote
 import request_handler
 import user_util
 import util
@@ -172,7 +172,7 @@ class StartNewVoteMapReduce(request_handler.RequestHandler):
                 name="UpdateFeedbackVotes",
                 handler_spec="discussion.voting.vote_update_map",
                 reader_spec="mapreduce.input_readers.DatastoreInputReader",
-                reader_parameters={"entity_kind": "discussion.models_discussion.Feedback"},
+                reader_parameters={"entity_kind": "discussion.discussion_models.Feedback"},
                 queue_name="backfill-mapreduce-queue",
                 )
 

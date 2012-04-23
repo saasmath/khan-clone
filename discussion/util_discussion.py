@@ -1,23 +1,19 @@
-from google.appengine.api import users
+import logging
 
-from user_models import UserData
-from api.decorators import pickle, unpickle, compress, decompress, base64_encode, base64_decode, protobuf_encode, protobuf_decode
-import request_cache
+from api.decorators import protobuf_encode, protobuf_decode
+import discussion_models
 import layer_cache
-import models_discussion
-
-def is_honeypot_empty(request):
-    return not request.get("honey_input") and not request.get("honey_textarea")
+import request_cache
 
 def feedback_query(target_key):
-    query = models_discussion.Feedback.all()
+    query = discussion_models.Feedback.all()
     query.filter("targets =", target_key)
     query.order('-date')
     return query
 
-@request_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video)
+@request_cache.cache_with_key_fxn(discussion_models.Feedback.cache_key_for_video)
 @protobuf_decode
-@layer_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video,
+@layer_cache.cache_with_key_fxn(discussion_models.Feedback.cache_key_for_video,
                                 layer=layer_cache.Layers.Datastore)
 @protobuf_encode
 def get_feedback_for_video(video):
@@ -43,3 +39,28 @@ def get_feedback_by_type_for_video(video, feedback_type, user_data=None):
     feedback = filter(lambda f: f.is_visible_to(user_data), feedback)
 
     return sorted(feedback, key=lambda s: s.date, reverse=True)
+
+def _is_honeypot_empty(request):
+    return (not request.get("honey_input") and
+            not request.get("honey_textarea"))
+
+
+def is_post_allowed(user_data, request):
+    """Determine whether a request to post discussion content is allowed.
+
+    There may be multiple reasons why a post to create content is disallowed,
+    based on actor privileges or spam detection."""
+
+    if not _is_honeypot_empty(request):
+        return False
+
+    if not user_data:
+        return False
+
+    if user_data.is_child_account():
+        logging.warn("Received unexpected post to create discussion content "
+                     "by user with id [%s]" % user_data.user_id)
+        return False
+
+    return True
+

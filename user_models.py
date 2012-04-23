@@ -25,7 +25,7 @@ from api import jsonify   # TODO(csilvers): move out of api/?
 import auth.models
 from auth import age_util
 from counters import user_counter
-from discussion import models_discussion
+from discussion import discussion_models
 import badges
 import facebook_util
 import gae_bingo.models
@@ -234,7 +234,8 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             return False
 
         value = self.email
-        return (not facebook_util.is_facebook_user_id(value) and
+        return (value and
+                not facebook_util.is_facebook_user_id(value) and
                 not phantom_users.phantom_util.is_phantom_id(value))
 
     @property
@@ -252,7 +253,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @staticmethod
     def get_from_url_segment(segment):
-        """ Retrieves a user by a URL segment, as expected to be built from
+        """Retrieve a user by a URL segment, as expected to be built from
         the user's UserData.profile_root value.
         
         Arguments:
@@ -451,15 +452,6 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         query.order('-points') # Temporary workaround for issue 289
 
         return query.get()
-
-    @staticmethod
-    def get_all_for_user_input_email(email):
-        if not email:
-            return []
-
-        query = UserData.all()
-        query.filter('user_email =', email)
-        return query
 
     @staticmethod
     def get_from_username(username):
@@ -708,30 +700,79 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
         if not self.is_phantom:
             user_counter.add(-1)
-        
+
         # TODO(benkomalo): handle cleanup of nickname indices!
 
         # Delegate to the normal implentation
         super(UserData, self).delete()
 
-    def is_certain_to_be_thirteen(self):
-        """ A conservative check that guarantees a user is at least 13 years
-        old based on their login type.
+    def is_over_eighteen(self):
+        """A conservative check that guarantees a user is at least 18.
 
-        Note that even if someone is over 13, this can return False, but if
-        this returns True, they're guaranteed to be over 13.
+        Note that even if someone is over 18, this can return False, since we
+        may not have their birthdate. However, if this returns True,
+        they're guaranteed to be over 18.
         """
 
         if self.birthdate:
-            return age_util.get_age(self.birthdate) >= 13
-            
-        # Normal Gmail accounts and FB accounts require users be at least 13yo.
-        email = self.email
-        return (email.endswith("@gmail.com") or
-                email.endswith("@googlemail.com") or # Gmail in Germany
-                email.endswith("@khanacademy.org") or # We're special
-                self.developer or # Really little kids don't write software
-                self.is_facebook_user)
+            return age_util.get_age(self.birthdate) >= 18
+        return False
+
+    def is_child_account(self):
+        """Whether or not this account is intended for someone under 13.
+
+        Child accounts have restricted functionality on the site, such as
+        limited ability to interact with the community.
+        """
+
+        if self.birthdate:
+            return age_util.get_age(self.birthdate) < 13
+
+        # Users who are missing a birthdate in the system registered via
+        # third party accounts (Google or Facebook), and their ToS requires
+        # users to be 13 years old (with the exception of Google Apps for Edu,
+        # though they have parental consent to be treated as full users)
+        return False
+
+    def is_maybe_edu_account(self):
+        """A conservative check for Google Apps for Education users.
+
+        Note that this method may return True for users in the gray area,
+        even though they may not be GAFE users, since there is no official,
+        sanctioned way by Google to check if a domain is a GAFE domain.
+        """
+
+        if self.developer:
+            return False
+
+        if self.is_facebook_user:
+            return False
+
+        if not self.has_sendable_email():
+            return False
+
+        domain_index = self.email.rfind('@')
+        email_domain = self.email[domain_index + 1:]
+
+        white_listed_domains = set(["gmail.com",
+                                    "googlemail.com",  # Gmail in germany
+                                    "khanacademy.org",
+                                    "hotmail.com",
+                                    "aol.com",
+                                    "yahoo.com",
+                                    "comcast.net",
+                                    "live.com",
+                                    "sbcglobal.net",
+                                    "msn.com",
+                                    "ymail.com",
+                                    "hotmail.co.uk",
+                                    "verizon.net",
+                                    "att.net",
+                                    "me.com",
+                                    "rocketmail.com",
+                                   ])
+
+        return email_domain not in white_listed_domains
 
     def get_or_insert_exercise(self, exercise, allow_insert=True):
         # TODO(csilvers): get rid of the circular import here
@@ -957,17 +998,28 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             self.put()
         return self.videos_completed
 
+    def mark_feedback_notification_count_as_stale(self):
+        """Mark that the feedback notification count must be recalculated."""
+        self.count_feedback_notification = -1
+        self.put()
+
     def feedback_notification_count(self):
-        """ Return the number of new discussion notifications since the
-        last time the user viewed her notifications
+        """Return the number of questions with unread answers.
+        
+        May calculate (and cache) a stale count if called shortly after any
+        change to the FeedbackNotification index.
         """
         if self.count_feedback_notification == -1:
-            # Notifications are grouped by question when displayed to users,
-            # though there is a FeedbackNotification for each unread answer
-            notifications = models_discussion.FeedbackNotification.gql(
-                    "WHERE user = :1", self.user)
+            # Recalculate feedback notification count
 
-            questions = set(n.feedback.question_key() for n in notifications)
+            # Get all unread answers
+            answers = discussion_models.FeedbackNotification.get_feedback_for(
+                    self)
+
+            # Group the unread answers by question
+            questions = set(answer.question_key() for answer in answers
+                            if answer.question().is_type(
+                                discussion_models.FeedbackType.Question))
 
             self.count_feedback_notification = len(questions)
             self.put()

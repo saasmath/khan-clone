@@ -162,8 +162,10 @@ class TopicPage(request_handler.RequestHandler):
 class ViewVideo(request_handler.RequestHandler):
 
     @staticmethod
-    def show_video(handler, readable_id, topic_id, redirect_to_canonical_url=False):
+    def show_video(handler, readable_id, topic_id,
+                   redirect_to_canonical_url=False):
         topic = None
+        query_string = ''
 
         if topic_id is not None and len(topic_id) > 0:
             topic = Topic.get_by_id(topic_id)
@@ -172,29 +174,39 @@ class ViewVideo(request_handler.RequestHandler):
         # If a topic_id wasn't specified or the specified topic wasn't found
         # use the first topic for the requested video.
         if topic is None:
-            # Get video by readable_id just to get the first topic for the video
+            # Get video by readable_id to get the first topic for the video
             video = Video.get_for_readable_id(readable_id)
             if video is None:
-                raise MissingVideoException("Missing video '%s'" % readable_id)
+                raise MissingVideoException("Missing video '%s'" %
+                                            readable_id)
 
             topic = video.first_topic()
             if not topic:
-                raise MissingVideoException("No topic has video '%s'" % readable_id)
+                raise MissingVideoException("No topic has video '%s'" %
+                                            readable_id)
+
+            if handler.request.query_string:
+                query_string = '?' + handler.request.query_string
 
             redirect_to_canonical_url = True
 
+
         if redirect_to_canonical_url:
-            url = "/%s/v/%s" % (topic.get_extended_slug(), urllib.quote(readable_id))
+            url = "/%s/v/%s%s" % (topic.get_extended_slug(),
+                                  urllib.quote(readable_id),
+                                  query_string)
             logging.info("Redirecting to %s" % url)
             handler.redirect(url, True)
             return None
 
-        # Note: Bingo conversions are tracked on the client now, so they have been removed here. (tomyedwab)
+        # Note: Bingo conversions are tracked on the client now,
+        # so they have been removed here. (tomyedwab)
 
         topic_data = topic.get_play_data()
 
         discussion_options = qa.add_template_values({}, handler.request)
-        video_data = Video.get_play_data(readable_id, topic, discussion_options)
+        video_data = Video.get_play_data(readable_id, topic,
+                                         discussion_options)
         if video_data is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
@@ -203,7 +215,7 @@ class ViewVideo(request_handler.RequestHandler):
             "topic_data_json": api.jsonify.jsonify(topic_data),
             "video": video_data,
             "video_data_json": api.jsonify.jsonify(video_data),
-            "selected_nav_link": 'watch'
+            "selected_nav_link": 'watch',
         }
 
         return template_values
@@ -709,9 +721,6 @@ application = webapp2.WSGIApplication([
 
     ('/khan-exercises/exercises/.*', exercises.exercise_util.RawExercise),
     ('/viewexercisesonmap', knowledgemap.handlers.ViewKnowledgeMap),
-    ('/editexercise', exercises.exercise_util.EditExercise),
-    ('/updateexercise', exercises.exercise_util.UpdateExercise),
-    ('/admin94040', exercises.exercise_util.ExerciseAdmin),
     ('/video/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/v/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/video', ViewVideoDeprecated), # Backwards URL compatibility
@@ -812,7 +821,6 @@ application = webapp2.WSGIApplication([
     ('/admin/discussion/finishvoteentity', voting.FinishVoteEntity),
     ('/discussion/deleteentity', qa.DeleteEntity),
     ('/discussion/changeentitytype', qa.ChangeEntityType),
-    ('/discussion/videofeedbacknotificationfeed', notification.VideoFeedbackNotificationFeed),
 
     ('/discussion/mod', moderation.ModPanel),
     ('/discussion/mod/flaggedfeedback', moderation.FlaggedFeedback),
