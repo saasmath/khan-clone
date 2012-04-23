@@ -425,8 +425,6 @@ def put_topic(topic_id, version_id = "edit"):
                                           % version_id)
 
     user_data = user_models.UserData.current()
-    if not user_data:
-        return api_invalid_param_response("User not logged in")
 
     topic_json = request.json
 
@@ -1151,14 +1149,8 @@ def get_students_data_from_request(user_data):
 @jsonp
 @jsonify
 def user_data_other():
-    user_data = user_models.UserData.current()
-
-    if user_data:
-        user_data_student = get_visible_user_data_from_request()
-        if user_data_student:
-            return user_data_student
-
-    return None
+    user_data_student = get_visible_user_data_from_request()
+    return user_data_student    # may be None
 
 @route("/api/v1/user/username_available", methods=["GET"])
 @api.auth.decorators.open_access
@@ -1307,12 +1299,9 @@ def update_coaches_and_requesters():
 @jsonp
 @jsonify
 def user_data_student():
-    user_data = user_models.UserData.current()
-
-    if user_data:
-        user_data_student = get_visible_user_data_from_request(disable_coach_visibility=True)
-        if user_data_student:
-            return get_students_data_from_request(user_data_student)
+    user_data_student = get_visible_user_data_from_request(disable_coach_visibility=True)
+    if user_data_student:
+        return get_students_data_from_request(user_data_student)
 
     return None
 
@@ -1321,19 +1310,16 @@ def user_data_student():
 @jsonp
 @jsonify
 def get_user_studentlists():
-    user_data = user_models.UserData.current()
-
-    if user_data:
-        user_data_student = get_visible_user_data_from_request()
-        if user_data_student:
-            student_lists_model = user_models.StudentList.get_for_coach(user_data_student.key())
-            student_lists = []
-            for student_list in student_lists_model:
-                student_lists.append({
-                    'key': str(student_list.key()),
-                    'name': student_list.name,
-                })
-            return student_lists
+    user_data_student = get_visible_user_data_from_request()
+    if user_data_student:
+        student_lists_model = user_models.StudentList.get_for_coach(user_data_student.key())
+        student_lists = []
+        for student_list in student_lists_model:
+            student_lists.append({
+                'key': str(student_list.key()),
+                'name': student_list.name,
+            })
+        return student_lists
 
     return None
 
@@ -1390,20 +1376,17 @@ def filter_query_by_request_dates(query, property):
 @jsonp
 @jsonify
 def user_videos_all():
-    user_data = user_models.UserData.current()
+    user_data_student = get_visible_user_data_from_request()
 
-    if user_data:
-        user_data_student = get_visible_user_data_from_request()
+    if user_data_student:
+        user_videos_query = video_models.UserVideo.all().filter("user =", user_data_student.user)
 
-        if user_data_student:
-            user_videos_query = video_models.UserVideo.all().filter("user =", user_data_student.user)
+        try:
+            filter_query_by_request_dates(user_videos_query, "last_watched")
+        except ValueError, e:
+            return api_error_response(e)
 
-            try:
-                filter_query_by_request_dates(user_videos_query, "last_watched")
-            except ValueError, e:
-                return api_error_response(e)
-
-            return user_videos_query.fetch(10000)
+        return user_videos_query.fetch(10000)
 
     return None
 
@@ -1440,9 +1423,6 @@ def log_user_video(youtube_id):
             "last_second_watched")
 
     user_data = user_models.UserData.current()
-    if not user_data:
-        logging.warning("Video watched with no user_data present")
-        return unauthorized_response()
 
     video_key_str = request.request_string("video_key")
 
@@ -1708,14 +1688,11 @@ def api_user_followups(exercise_name):
 @jsonp
 @jsonify
 def user_playlists_all():
-    user_data = user_models.UserData.current()
+    user_data_student = get_visible_user_data_from_request()
 
-    if user_data:
-        user_data_student = get_visible_user_data_from_request()
-
-        if user_data_student:
-            user_playlists = topic_models.UserTopic.all().filter("user =", user_data_student.user)
-            return user_playlists.fetch(10000)
+    if user_data_student:
+        user_playlists = topic_models.UserTopic.all().filter("user =", user_data_student.user)
+        return user_playlists.fetch(10000)
 
     return None
 
@@ -2000,8 +1977,6 @@ def badge_category(category):
 @jsonify
 def update_public_user_badges():
     user_data = user_models.UserData.current()
-    if not user_data:
-        return api_invalid_param_response("User not logged in")
 
     owned_badges = set([badges.Badge.remove_target_context(name_with_context)
                         for name_with_context in user_data.badges])
