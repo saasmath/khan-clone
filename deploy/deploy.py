@@ -50,7 +50,8 @@ def get_app_engine_credentials():
         password = getpass.getpass("Password for %s: " % email)
         return (email, password)
 
-def send_hipchat_deploy_message(version, includes_local_changes, email):
+def send_hipchat_deploy_message(
+        version, includes_local_changes, email, authors=None):
     if hipchat_deploy_token is None:
         return
 
@@ -70,6 +71,14 @@ def send_hipchat_deploy_message(version, includes_local_changes, email):
     git_msg = git_revision_msg(git_id)
     github_url = "https://github.com/Khan/khan-exercises/commit/%s" % git_id
 
+    authors_tmpl = ""
+    if authors:
+        # TODO(benkomalo): hardcode a mapping of users whose hipchat ID
+        # doesn't match the user part of their e-mail address?
+        authors_tmpl = ("<br>Devs with changesets in this deploy:<br>" +
+                        ", ".join("@%s" % author.split('@')[0]
+                                  for author in authors))
+
     local_changes_warning = " (with local changes)" if includes_local_changes else ""
     changeset_id = "%s as " % hg_id if hg_id != version else ""
     message_tmpl = """
@@ -88,7 +97,7 @@ def send_hipchat_deploy_message(version, includes_local_changes, email):
                 "local_changes_warning": local_changes_warning,
             }
     public_message = "Just deployed %s" % message_tmpl
-    private_message = "%s just deployed %s" % (email, message_tmpl)
+    private_message = "%s just deployed %s%s" % (email, message_tmpl, authors_tmpl)
 
     hipchat_message(public_message, ["Exercises"])
     hipchat_message(private_message, ["1s and 0s"])
@@ -146,6 +155,29 @@ def hg_pull_up():
         return -1
 
     return dated_hg_version()
+
+def get_changeset_authors(from_hg_version, to_hg_version=None):
+    """Retrieves the list of changsets since a given HG version.
+
+    Returns a set of email addresses of all authors with an associated
+    changeset in the list.
+    """
+    if not to_hg_version:
+        to_hg_version = 'tip'
+
+    command = "hg log -r %s:%s --template {author}\\n" % (from_hg_version,
+                                                           to_hg_version)
+    raw_authors = popen_results(command.split(' ')).strip()
+    authors = set()
+
+    for author in raw_authors.split('\n'):
+        if author.endswith('>'):
+            # In the format "Joe Shmoe <email@domain.com>"
+            email = author.split('>')[0].split('<')[-1]
+        else:
+            email = author
+        authors.add(email)
+    return authors
 
 def dated_hg_version():
     version = hg_version()
@@ -226,8 +258,18 @@ def prime_cache(version):
     except:
         print "Error when priming cache"
 
+def _quiet_browser_open(url):
+    """Opens a browser session without the default Python message to stdout."""
+    savout = os.dup(1)
+    os.close(1)
+    os.open(os.devnull, os.O_RDWR)
+    try:
+        webbrowser.open(url)
+    finally:
+        os.dup2(savout, 1)
+
 def open_browser_to_ka_version(version):
-    webbrowser.open("http://%s.%s.appspot.com" % (version, get_app_id()))
+    _quiet_browser_open("http://%s.%s.appspot.com" % (version, get_app_id()))
 
 def deploy(version, email, password):
     print "Deploying version " + str(version)
@@ -288,6 +330,7 @@ def main():
         return
 
     version = -1
+    last_version = None
 
     if not options.noup:
         version = hg_pull_up()
@@ -318,18 +361,31 @@ def main():
     compress_exercises()
 
     if not options.dryrun:
+        changeset_authors = []
         if options.version:
             version = options.version
         elif options.noup:
             print 'You must supply a version when deploying with --no-up'
             return
+        else:
+            # TODO(benkomalo): figure out a way to programmatically do this
+            # without having the deployer enter the SHA of the current default.
+            # For now, just open the versions page for the deployer.
+
+            # Default deploy from tip of tree - find the changesets delta
+            # from the last production default.
+            _quiet_browser_open("https://appengine.google.com/deployment?&app_id=s~khan-academy")
+            last_version = raw_input(
+                    "Changeset SHA of the current default version: ").strip()
+            if last_version:
+                changeset_authors = get_changeset_authors(last_version)
 
         print "Deploying version " + str(version)
 
         (email, password) = get_app_engine_credentials()
         success = deploy(version, email, password)
         if success:
-            send_hipchat_deploy_message(version, includes_local_changes, email)
+            send_hipchat_deploy_message(version, includes_local_changes, email, changeset_authors)
             open_browser_to_ka_version(version)
             prime_cache(version)
 
