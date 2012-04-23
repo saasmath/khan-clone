@@ -288,7 +288,7 @@ def get_public_user_badges(user_data=None):
 
 class ViewBadges(request_handler.RequestHandler):
 
-    @user_util.open_access   # TODO(csilvers): do login+@phantom instead
+    @user_util.open_access
     def get(self):
         user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
         grouped_badges = get_grouped_user_badges(user_data)

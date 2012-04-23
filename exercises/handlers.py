@@ -58,7 +58,7 @@ class ViewTopicExerciseDeprecated(request_handler.RequestHandler):
 
 class ViewExercise(request_handler.RequestHandler):
 
-    @user_util.open_access   # TODO(csilvers): do login+@phantom instead
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, topic_path, exid=None):
 

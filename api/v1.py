@@ -295,7 +295,7 @@ def topic_exercises(topic_id, version_id = None):
     return exercises
 
 @route("/api/v1/topic/<topic_id>/progress", methods=["GET"])
-@api.auth.decorators.open_access   # TODO(csilvers): do login+@phantom instead
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def topic_progress(topic_id):
@@ -1192,13 +1192,13 @@ def mark_promo_as_seen(promo_name):
             record_promo(promo_name, user_data.user_id))
 
 @route("/api/v1/user/profile", methods=["GET"])
-@api.auth.decorators.open_access   # TODO(csilvers): do login+@phantom instead
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_user_profile():
+    current_user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
     # TODO(marcia): This uses user_id, as opposed to email...
     # which means that the GET and POST are not symmetric...
-    current_user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
     user_data = request.request_user_data_by_user_id()
     return util_profile.UserProfile.from_user(user_data, current_user_data)
 
@@ -1480,7 +1480,7 @@ def log_user_video(youtube_id):
     return video_log
 
 @route("/api/v1/user/topic/<topic_id>/exercises/next", methods=["GET"])
-@api.auth.decorators.open_access   # TODO(csilvers): do login+@phantom instead
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def topic_next_exercises(topic_id):
@@ -2035,7 +2035,7 @@ def update_public_user_badges():
     return result
 
 @route("/api/v1/user/badges", methods=["GET"])
-@api.auth.decorators.open_access   # TODO(csilvers): do login+@phantom instead
+@api.auth.decorators.open_access
 @jsonp
 @jsonify
 def get_user_badges():

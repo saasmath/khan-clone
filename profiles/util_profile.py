@@ -156,7 +156,7 @@ class ViewClassProfile(request_handler.RequestHandler):
 class ViewProfile(request_handler.RequestHandler):
     # TODO(sundar) - add login_required_special(demo_allowed = True)
     # However, here only the profile of the students of the demo account are allowed
-    @user_util.open_access   # TODO(csilvers): do login+@phantom instead
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, email_or_username=None, subpath=None):
 
@@ -395,7 +395,7 @@ class UserProfile(object):
 
 class ProfileGraph(request_handler.RequestHandler):
 
-    @user_util.open_access    # TODO(csilvers): is this right?
+    @user_util.open_access    # TODO(csilvers): is this right? -- ask marcia
     def get(self):
         html = ""
         json_update = ""
