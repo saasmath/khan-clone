@@ -1,7 +1,6 @@
 from operator import itemgetter
 from google.appengine.ext import db
 
-import api.auth.xsrf
 import request_handler
 import user_models
 import discussion_models
