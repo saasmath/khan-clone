@@ -74,6 +74,7 @@ def _go_to_login(handler, why):
 def verify_login(admin_required,
                  developer_required,
                  moderator_required,
+                 child_user_allowed,      # under-13
                  demo_user_allowed,
                  phantom_user_allowed):
     """Check if there is a current logged-in user fitting the given criteria.
@@ -116,6 +117,9 @@ def verify_login(admin_required,
     if moderator_required and not is_moderator:
         raise LoginFailedError("moderator-only")
 
+    if (not child_user_allowed) and user_data.is_child_account():
+        raise LoginFailedError("no-child-user")
+
     if (not demo_user_allowed) and user_data.is_demo:
         raise LoginFailedError("no-demo-user")
 
@@ -148,6 +152,7 @@ def manual_access_checking(func):
 def login_required_and(admin_required=False,
                        developer_required=False,
                        moderator_required=False,
+                       child_user_allowed=True,
                        demo_user_allowed=False,
                        phantom_user_allowed=True):
     """Decorator that allows (certain) logged-in users to access this page.
@@ -161,15 +166,17 @@ def login_required_and(admin_required=False,
     allowed, and the only check we make is that they're logged in.)
 
     The default values specify the default permissions: for instance,
-    phantom users are considered a valid user by this routine.
+    phantom users are considered a valid user by this routine, and
+    under-13 users are allowed access all urls unless explicitly
+    stated otherwise.
     """
     def decorator(method):
         @wraps(method)
         def wrapper(self, *args, **kwargs):
             try:
                 verify_login(admin_required, developer_required,
-                             moderator_required, demo_user_allowed,
-                             phantom_user_allowed)
+                             moderator_required, child_user_allowed,
+                             demo_user_allowed, phantom_user_allowed)
             except LoginFailedError, why:
                 return _go_to_login(self, str(why))
 

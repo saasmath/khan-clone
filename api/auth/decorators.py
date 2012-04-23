@@ -174,6 +174,7 @@ def manual_access_checking(func):
 def login_required_and(admin_required=False,
                        developer_required=False,
                        moderator_required=False,
+                       child_user_allowed=True,
                        demo_user_allowed=False,
                        phantom_user_allowed=True):
     """Decorator for validating an authenticated request.
@@ -191,7 +192,9 @@ def login_required_and(admin_required=False,
     allowed, and the only check we make is if they're logged in.)
 
     The default values specify the default permissions: for instance,
-    phantom users are considered a valid user by this routine.
+    phantom users are considered a valid user by this routine, and
+    under-13 users are allowed access all urls unless explicitly
+    stated otherwise.
     """
     def decorator(func):
         @wraps(func)
@@ -203,8 +206,8 @@ def login_required_and(admin_required=False,
 
             try:
                 user_util.verify_login(admin_required, developer_required,
-                                       moderator_required, demo_user_allowed,
-                                       phantom_user_allowed)
+                                       moderator_required, child_user_allowed,
+                                       demo_user_allowed, phantom_user_allowed)
             except user_util.LoginFailedError:
                 return unauthorized_response()
 

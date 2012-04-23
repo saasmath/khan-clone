@@ -98,16 +98,11 @@ def get_coach_student_and_student_list(request_handler):
 
 class ViewClassProfile(request_handler.RequestHandler):
     @user_util.login_required_and(phantom_user_allowed=False,
+                                  child_user_allowed=False,
                                   demo_user_allowed=True)
     def get(self):
         show_coach_resources = self.request_bool('show_coach_resources', default=True)
         coach = UserData.current()
-
-        # TODO(csilvers): add is_child_account to login_required_and().
-        if coach.is_child_account():
-            # Child accounts can't be coaches!
-            self.redirect("/")
-            return
 
         user_override = self.request_user_data("coach_email")
         if user_override and user_override.are_students_visible_to(coach):
