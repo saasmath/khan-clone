@@ -57,14 +57,12 @@ def send_hipchat_deploy_message(
     Arguments:
         version:
             A string indicating the AppEngine version name of the deploy.
-
         includes_local_changes:
             A bool indicating whether or not the current file system
             is dirty and has changes that aren't checked into source control.
-
+            These changes are included in the deploy.
         email:
             The email of the AppEngine account being used to deploy.
-
         authors:
             A list of code authors with changesets since the last deploy,
             and are likely to be interested in this deploy.
@@ -128,7 +126,13 @@ def hipchat_message(msg, rooms):
         if room.name in rooms:
 
             result = ""
-            msg_dict = {"room_id": room.room_id, "from": "Mr Monkey", "message": msg, "color": "purple"}
+            msg_dict = {
+                "room_id": room.room_id,
+                "from": "Mr Monkey",
+                "message": msg,
+                "notify": "1",
+                "color": "purple",
+            }
 
             try:
                 result = str(hipchat.room.Room.message(**msg_dict))
