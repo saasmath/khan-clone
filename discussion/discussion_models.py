@@ -126,15 +126,13 @@ class Feedback(db.Model):
         They can "appear as deleted" but not actually deleted if the author
         is hellbanned or if the specific feedback was moderated as such.
         """
-        if self.is_type(FeedbackType.Answer):
-            FeedbackNotification.delete_notification_for_answer(self)
-
+        FeedbackNotification.delete_notifications_for_feedback(self)
         db.delete(self)
         self.clear_cache_for_video()
 
     def put(self):
         if self.deleted and self.is_type(FeedbackType.Answer):
-            FeedbackNotification.delete_notification_for_answer(self)
+            FeedbackNotification.delete_notifications_for_answer(self)
 
         db.Model.put(self)
         self.clear_cache_for_video()
@@ -292,7 +290,27 @@ class FeedbackNotification(db.Model):
     user = db.UserProperty()
 
     @staticmethod
-    def delete_notification_for_answer(answer):
+    def delete_notifications_for_feedback(feedback):
+        if feedback.is_type(FeedbackType.Question):
+            FeedbackNotification.delete_notifications_for_question(feedback)
+        elif feedback.is_type(FeedbackType.Answer):
+            FeedbackNotification.delete_notifications_for_answer(feedback)
+
+    @staticmethod
+    def delete_notifications_for_question(question):
+        if not question:
+            return
+
+        answer_keys = question.children_keys()
+        for answer_key in answer_keys:
+            answer = db.get(answer_key)
+            FeedbackNotification.delete_notifications_for_answer(answer)
+
+    @staticmethod
+    def delete_notifications_for_answer(answer):
+        if not answer:
+            return
+
         query = FeedbackNotification.all()
         query.filter('feedback =', answer)
         notification = query.get()
