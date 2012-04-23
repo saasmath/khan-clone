@@ -51,7 +51,24 @@ def get_app_engine_credentials():
         return (email, password)
 
 def send_hipchat_deploy_message(
-        version, includes_local_changes, email, authors=None):
+        version, includes_local_changes, email, authors):
+    """Send a summary of the deploy information to HipChat.
+
+    Arguments:
+        version:
+            A string indicating the AppEngine version name of the deploy.
+
+        includes_local_changes:
+            A bool indicating whether or not the current file system
+            is dirty and has changes that aren't checked into source control.
+
+        email:
+            The email of the AppEngine account being used to deploy.
+
+        authors:
+            A list of code authors with changesets since the last deploy,
+            and are likely to be interested in this deploy.
+    """
     if hipchat_deploy_token is None:
         return
 
@@ -157,7 +174,7 @@ def hg_pull_up():
     return dated_hg_version()
 
 def get_changeset_authors(from_hg_version, to_hg_version=None):
-    """Retrieves the list of changsets since a given HG version.
+    """Retrieve the list of changsets since a given HG version.
 
     Returns a set of email addresses of all authors with an associated
     changeset in the list.
@@ -173,7 +190,7 @@ def get_changeset_authors(from_hg_version, to_hg_version=None):
     for author in raw_authors.split('\n'):
         if author.endswith('>'):
             # In the format "Joe Shmoe <email@domain.com>"
-            email = author.split('>')[0].split('<')[-1]
+            email = re.split('[<>]', author)[1]
         else:
             email = author
         authors.add(email)
