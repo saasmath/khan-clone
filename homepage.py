@@ -29,11 +29,11 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None, parent_
             "thumb_urls": video_models.Video.youtube_thumbnail_urls(video.youtube_id),
             "title": video.title,
             "desc_html": templatetags.video_name_and_progress(video),
-            "teaser_html": video.description,
+            "teaser_html": unicode(video.description),
             "youtube_id": video.youtube_id,
             "marquee": ("marquee" in video.keywords),
             "selected": False,
-            "key": video.key(),
+            "key": unicode(video.key()),
             "type": "video-thumb",
         }
 

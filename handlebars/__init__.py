@@ -7,6 +7,7 @@ import traceback
 
 from google.appengine.ext import db
 
+import api.jsonify
 from app import App
 from pybars import Compiler
 
@@ -91,36 +92,29 @@ def handlebars_dynamic_load(package, name):
 
     return function
 
-def handlebars_sanitize_params(obj):
-    """ Convert all non-basic types into lists or dicts.
+def handlebars_check_context(obj, path="context"):
+    """ Validate parameters to Handlebars renderer.
 
-    This may do a deep copy into the structure, which may have performance
-    implications for some objects.
+    Only simple types may be passed into Handlebars template rendering.
     """
 
+    if (obj is not None
+        and not isinstance(obj, api.jsonify.SIMPLE_TYPES)
+        and not isinstance(obj, (dict, list))):
+        raise Exception("Invalid type passed to handlebars_template at path '%s': %s" % (path, type(obj)))
+
     if isinstance(obj, dict):
-        for k in obj.keys():
-            obj[k] = handlebars_sanitize_params(obj[k])
-        return obj
-    elif isinstance(obj, db.Text):
-        return unicode(obj)
-    elif isinstance(obj, db.Model):
-        return db.to_dict(obj)
-    elif hasattr(obj, "__iter__"):
-        return [handlebars_sanitize_params(v) for v in obj]
-    elif hasattr(obj, "__dict__"):
-        data = dict([(key, handlebars_sanitize_params(value)) 
-            for key, value in obj.__dict__.iteritems() 
-            if not callable(value) and not key.startswith('_')])
-        return data
-    else:
-        return obj
+        for key, child in obj.iteritems():
+            handlebars_check_context(child, path + "[\"%s\"]" % key)
+    elif isinstance(obj, list):
+        for idx, child in enumerate(obj):
+            handlebars_check_context(child, path + "[%d]" % idx)
 
 
-def handlebars_template(package, name, params):
+def handlebars_template(package, name, context):
     """ Invoke a template and return the output string """
 
-    params = handlebars_sanitize_params(params)
+    handlebars_check_context(context)
 
     package_name = package.replace("-", "_")
     function_name = name.replace("-", "_")
@@ -147,18 +141,18 @@ def handlebars_template(package, name, params):
             function = getattr(sys.modules[module_name], function_name)
 
     try:
-        ret = function(params, helpers=handlebars_helpers, partials=handlebars_partials)
+        ret = function(context, helpers=handlebars_helpers, partials=handlebars_partials)
         return u"".join(ret)
     except:
         logging.info("Exception running Handlebars template: %s" % traceback.format_exc())
         return u""
 
-def render_from_jinja(package, name, params):
+def render_from_jinja(package, name, context):
     """ Wrapper for rendering a Handlebars template from Jinja.
 
     This is provided in case we want to handle this case specially.
     """
-    ret = handlebars_template(package, name, params)
+    ret = handlebars_template(package, name, context)
     return ret
 
 try:

@@ -358,7 +358,7 @@ class Topic(search.Searchable, db.Model):
         return ret
 
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_topic_page_data_%s_v1" % self.key(),
+        "topic_get_topic_page_data_%s_v2" % self.key(),
         persist_across_app_versions=True,
         layer=layer_cache.Layers.InAppMemory | layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
     def get_topic_page_data(self):
@@ -400,7 +400,7 @@ class Topic(search.Searchable, db.Model):
             child_videos = self.get_library_data(node_dict=node_dict)
 
         topic_info = {
-            "topic": self,
+            "topic": jsonify.dumps(self),
             "marquee_video": thumbnail_link_dict(video=marquee_video, parent_topic=subtopic),
             "subtopics": subtopics,
             "child_videos": child_videos,
