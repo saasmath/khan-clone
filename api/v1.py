@@ -186,14 +186,16 @@ def topics_library_compact():
 @jsonify
 def topic_version_change_list(version_id):
     version = topic_models.TopicVersion.get_by_id(version_id)
-    changes = topic_models.VersionContentChange.all().filter("version =", version).fetch(10000)
+    changes = (topic_models.VersionContentChange.all().
+               filter("version =", version).fetch(10000))
 
-    # add the related_videos of ExerciseVideos of the change.content
+    # add the related_video_readable_ids of ExerciseVideos to the 
+    # change.content
     exercise_dict = dict((change.content.key(), change.content)
                          for change in changes
                          if type(change.content) == models.Exercise)
+    models.Exercise.add_related_video_readable_ids_prop(exercise_dict)
 
-    models.Exercise.add_related_videos_prop(exercise_dict)
     return changes
 
 
@@ -795,11 +797,12 @@ def get_exercises():
 def get_exercise(exercise_name, version_id = None):
     version = topic_models.TopicVersion.get_by_id(version_id) if version_id else None
     exercise = models.Exercise.get_by_name(exercise_name, version)
-    # TODO(james): rename related_videos to related_video_readable_ids
-    # then save these on the exercise and video objects
-    if exercise:
+    
+    # if the exercise has been modified then related_video_readable_ids may
+    # already be set
+    if exercise and not hasattr(exercise, "related_video_readable_ids"):
         exercise_videos = exercise.related_videos_query()
-        exercise.related_videos = map(lambda exercise_video: exercise_video.video.readable_id, exercise_videos)
+        exercise.related_video_readable_ids = map(lambda exercise_video: exercise_video.video.readable_id, exercise_videos)
     return exercise
 
 @route("/api/v1/exercises/recent", methods=["GET"])

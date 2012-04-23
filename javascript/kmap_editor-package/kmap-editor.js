@@ -193,7 +193,7 @@ var KMapEditor = {
                         "short_display_name": exercise.short_display_name,
                         "covers": exercise.covers,
                         "prerequisites": exercise.prerequisites,
-                        "related_videos": exercise.related_videos
+                        "related_video_readable_ids": exercise.related_video_readable_ids
                     };
 
                     $.ajax({
@@ -675,28 +675,37 @@ var KMapEditor = {
 
             var populateRelatedVideos = function() {
                 $("#video-container").empty();
-                $.each(KMapEditor.exercises.get(exerciseName).related_videos, function(n, video) {
+                $.each(KMapEditor.exercises.get(exerciseName).related_video_readable_ids, function(n, video) {
                     if (KMapEditor.readonly) {
-                        $("<div>").html(video).appendTo($("#video-container"));
+                        $("div").html(video).appendTo($("#video-container"));
                     } else {
-                        $("<div>").html(video + ' (<a href="#" onclick="KMapEditor.deleteVideo(&quot;' + video +
+                        $("<div id='related-video-" + video + "'>").html(video + ' (<a href="#" onclick="KMapEditor.deleteVideo(&quot;' + video +
                             '&quot;);return false;">remove</a>)').appendTo($("#video-container"));
                     }
                 });
+                $("#video-container").sortable({
+                    update: function(event, ui) {
+                        KMapEditor.exercises.get(exerciseName).related_video_readable_ids = 
+                            $("#video-container").sortable("toArray").map(function(id){
+                                return id.substring(14)
+                            })
+                    }  
+                })
+
                 $("#related-video-wait").hide();
                 $("#related-video-control").show();
             };
 
-            if (this.exercises.get(exerciseName).related_videos === undefined) {
+            if (this.exercises.get(exerciseName).related_video_readable_ids === undefined) {
                 $.ajax({
                     url: "/api/v1/exercises/" + exerciseName,
                     type: "GET",
                     dataType: "json",
                     contentType: "application/json; charset=utf-8",
                     success: function(exerciseData) {
-                        KMapEditor.defaultVersion.get(exerciseName).related_videos = exerciseData.related_videos.slice();
-                        KMapEditor.editVersion.get(exerciseName).related_videos = exerciseData.related_videos.slice();
-                        KMapEditor.candidateVersion.get(exerciseName).related_videos = exerciseData.related_videos.slice();
+                        KMapEditor.defaultVersion.get(exerciseName).related_video_readable_ids = exerciseData.related_video_readable_ids.slice();
+                        KMapEditor.editVersion.get(exerciseName).related_video_readable_ids = exerciseData.related_video_readable_ids.slice();
+                        KMapEditor.candidateVersion.get(exerciseName).related_video_readable_ids = exerciseData.related_video_readable_ids.slice();
                         populateRelatedVideos();
                     }
                 });
@@ -718,7 +727,7 @@ var KMapEditor = {
                 exercise.short_display_name !== oldExercise.short_display_name ||
                 JSON.stringify(exercise.covers) !== JSON.stringify(oldExercise.covers) ||
                 JSON.stringify(exercise.prerequisites) !== JSON.stringify(oldExercise.prerequisites) ||
-                JSON.stringify(exercise.related_videos) !== JSON.stringify(oldExercise.related_videos));
+                JSON.stringify(exercise.related_video_readable_ids) !== JSON.stringify(oldExercise.related_video_readable_ids));
     },
 
     addPath: function(src, dst) {
@@ -792,13 +801,13 @@ var KMapEditor = {
     },
 
     addVideo: function(video) {
-        KMapEditor.exercises.get(KMapEditor.selected[0]).related_videos.push(video.value.slice(7));
+        KMapEditor.exercises.get(KMapEditor.selected[0]).related_video_readable_ids.push(video.value.slice(7));
         KMapEditor.updateForm(KMapEditor.selected[0]);
         $("#add-video-input").val("");
     },
 
     deleteVideo: function(video) {
-        this.exercises.get(this.selected[0]).related_videos = $.map(this.exercises.get(this.selected[0]).related_videos, function(v) {
+        this.exercises.get(this.selected[0]).related_video_readable_ids = $.map(this.exercises.get(this.selected[0]).related_video_readable_ids, function(v) {
             if (v !== video) {
                 return v;
             }

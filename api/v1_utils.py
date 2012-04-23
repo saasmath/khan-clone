@@ -32,18 +32,23 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
                         "prerequisites", "covers", "seconds_per_fast_problem",
-                        "related_videos", "short_display_name"]
+                        "related_video_readable_ids", "description", 
+                        "short_display_name"]
     if exercise:
-        return topic_models.VersionContentChange.add_content_change(exercise,
-            version,
-            data,
-            changeable_props)
+        exercise_models.Exercise.add_related_video_readable_ids_prop(
+                {exercise.key():exercise})
+        return topic_models.VersionContentChange.add_content_change(
+                exercise,
+                version,
+                data,
+                changeable_props)
     else:
-        return topic_models.VersionContentChange.add_new_content(exercise_models.Exercise,
-                                                           version,
-                                                           data,
-                                                           changeable_props,
-                                                           put_change)
+        return topic_models.VersionContentChange.add_new_content(
+                exercise_models.Exercise,
+                version,
+                data,
+                changeable_props,
+                put_change)
 
 
 def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
@@ -143,12 +148,12 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                     tree["key"] = (exercise_dict[tree["name"]].key() 
                                    if tree["name"] in exercise_dict else None)
                 else:
-                    if "related_videos" in tree:
+                    if "related_video_readable_ids" in tree:
                         # adding keys to entity tree so we don't need to look
                         # it up again when creating the video in 
                         # add_new_content
                         tree["related_video_keys"] = []
-                        for readable_id in tree["related_videos"]:
+                        for readable_id in tree["related_videos_readable_ids"]:
                             video = video_dict[readable_id]
                             tree["related_video_keys"].append(video.key())
 
@@ -193,13 +198,14 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
 
         add_keys_json_tree(tree_json, parent, do_exercises=False)
 
-        # add related_videos prop to exercises
+        # add related_video_readable_ids prop to exercises
         evs = exercise_video_model.ExerciseVideo.all().fetch(10000)
         exercise_key_dict = dict((e.key(), e) for e in exercises)
         video_key_dict = dict((v.key(), v) for v in video_dict.values())
-        exercise_models.Exercise.add_related_videos_prop(exercise_key_dict, 
-                                                         evs, 
-                                                         video_key_dict)
+        exercise_models.Exercise.add_related_video_readable_ids_prop(
+                exercise_key_dict, 
+                evs, 
+                video_key_dict)
 
         # exercises need to be done after, because if they reference ExerciseVideos
         # those Videos have to already exist

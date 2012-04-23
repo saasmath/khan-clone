@@ -318,6 +318,7 @@ javascript = {
         "files": [
             "jquery.ui.draggable.js",
             "jquery.ui.droppable.js",
+            "jquery.ui.sortable.js",
             "jquery.dynatree.js",
             "jquery.contextMenu.js",
             "jquery.ajaxq-0.0.1.js",
@@ -343,6 +344,7 @@ javascript = {
         "files": [
             "../../khan-exercises/utils/raphael.js",
             "../topicsadmin-package/jquery.ui.draggable.js",
+            "../topicsadmin-package/jquery.ui.sortable.js",
             "kmap-editor.js",
         ]
     },

@@ -1107,7 +1107,7 @@ function stringArraysEqual(ar1, ar2) {
             this.covers = this.model.get("covers").slice(0);
             this.updateCovers();
 
-            this.videos = (this.model.get("related_videos") || []).slice(0);
+            this.videos = (this.model.get("related_video_readable_ids") || []).slice(0);
             this.updateVideos();
         }
     };
@@ -1117,7 +1117,7 @@ function stringArraysEqual(ar1, ar2) {
         return ret || !(
             stringArraysEqual(this.prereqs, this.model.get("prerequisites")) &&
             stringArraysEqual(this.covers, this.model.get("covers")) &&
-            stringArraysEqual(this.videos, this.model.get("related_videos"))
+            stringArraysEqual(this.videos, this.model.get("related_video_readable_ids"))
         );
     };
 
@@ -1132,8 +1132,8 @@ function stringArraysEqual(ar1, ar2) {
             attrs.covers = this.covers;
         }
 
-        if (this.videos && !stringArraysEqual(this.videos, this.model.get("related_videos"))) {
-            attrs.related_videos = this.videos;
+        if (this.videos && !stringArraysEqual(this.videos, this.model.get("related_video_readable_ids"))) {
+            attrs.related_video_readable_ids = this.videos;
         }
     };
 
@@ -1198,12 +1198,20 @@ function stringArraysEqual(ar1, ar2) {
         var elements = [];
         _.each(this.videos, function(video) {
             elements.push(
-                $("<div>" + video + " <a href=\"javascript:\">(remove)</a></div>")
+                $("<div id='related-video-" + video + "'>" + video + " <a href=\"javascript:\">(remove)</a></div>")
                     .delegate("a", "click", function() { self.deleteVideo(video); })
             );
         });
         $(".exercise-videos-list", this.el).children().remove();
         _.each(elements, function(element) { element.appendTo(".exercise-videos-list", this.el); });
+        $(".exercise-videos-list", this.el).sortable({
+            update: $.proxy(function(event, ui) {
+                this.videos = $(".exercise-videos-list", this.el)
+                    .sortable("toArray").map(function(id){
+                        return id.substring(14)
+                    })
+            }, this)   
+        })
     };
     editor.ExerciseEditor.prototype.addVideo = function(kind, id, title) {
         if (id) {

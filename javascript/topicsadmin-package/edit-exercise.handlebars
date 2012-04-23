@@ -105,8 +105,8 @@
                     <div><a href="javascript:" data-id="add-video" class="item-action simple-button action-gradient">Add a related video</a></div>
 
                     <em>If the student is struggling on this exercise, we refer them to these related videos.</em>
-                  {{#if oldValues.related_videos}}
-                    {{#each oldValues.related_videos}}
+                  {{#if oldValues.related_video_readable_ids}}
+                    {{#each oldValues.related_video_readable_ids}}
                       <span class="old-value">Old value: <input type="text" disabled value="{{ this }}" maxlength="256"/></span><br/>
                     {{/each}}
                   {{/if}}

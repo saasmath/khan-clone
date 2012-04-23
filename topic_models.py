@@ -954,7 +954,7 @@ class Topic(search.Searchable, db.Model):
             video_dict = dict((k, v) for k, v in content_dict.iteritems() if
                           (k.kind() == "Video"))
 
-            exercise_models.Exercise.add_related_videos_prop(exercise_dict, evs, video_dict)
+            exercise_models.Exercise.add_related_video_readable_ids_prop(exercise_dict, evs, video_dict)
 
         # make any content changes for this version
         changes = VersionContentChange.get_updated_content_dict(self.version)
@@ -1816,10 +1816,11 @@ class VersionContentChange(db.Model):
         content = self.updated_content()
         content.put()
 
-        if (content.key().kind() == "Exercise"
-            and hasattr(content, "related_videos")):
-            exercises.exercise_util.UpdateExercise.do_update_related_videos(content,
-                                                    content.related_videos)
+        if (content.key().kind() == "Exercise" and 
+                hasattr(content, "related_video_readable_ids")):
+            exercise_video_model.ExerciseVideo.update_related_videos(
+                    content,
+                    content.related_video_readable_ids)
 
         return content
 
@@ -1866,14 +1867,17 @@ class VersionContentChange(db.Model):
         content = klass(**filtered_props)
         content.put()
 
-        if (type(content) == exercise_models.Exercise and "related_videos" in new_props):
+        if (type(content) == exercise_models.Exercise 
+                and "related_video_readable_ids" in new_props):
+
             if "related_video_keys" in new_props:
                 related_video_keys = new_props["related_video_keys"]
                 logging.info("related video keys already added")
             else:
                 related_video_keys = []
-                for readable_id in new_props["related_videos"]:
-                    video = video_models.Video.get_for_readable_id(readable_id, version)
+                for readable_id in new_props["related_video_readable_ids"]:
+                    video = video_models.Video.get_for_readable_id(readable_id, 
+                                                                   version)
                     logging.info("doing get for readable_id")
                     related_video_keys.append(video.key())
 
@@ -1915,20 +1919,18 @@ class VersionContentChange(db.Model):
             for prop in changeable_props:
                 if (prop in new_props and
                     new_props[prop] is not None and (
-                        not hasattr(content, prop) or (
-                            prop != "related_videos" and
-                            new_props[prop] != getattr(content, prop)
-                        ) or (
-                            prop == "related_videos" and
-                            set(new_props[prop]) != set(getattr(content, prop))
-                        ))
+                        not hasattr(content, prop) or 
+                        new_props[prop] != getattr(content, prop)
+                        )
                     ):
-
+                    
                     # add new changes for all props that are different from what
                     # is currently in content
                     change.content_changes[prop] = new_props[prop]
         else:
             raise Exception("content does not exit yet, call add_new_content instead")
+
+        logging.info(change.content_changes)
 
         # only put the change if we have actually changed any props
         if change.content_changes:

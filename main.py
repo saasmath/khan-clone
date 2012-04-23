@@ -734,9 +734,6 @@ application = webapp2.WSGIApplication([
 
     ('/khan-exercises/exercises/.*', exercises.exercise_util.RawExercise),
     ('/viewexercisesonmap', knowledgemap.handlers.ViewKnowledgeMap),
-    ('/editexercise', exercises.exercise_util.EditExercise),
-    ('/updateexercise', exercises.exercise_util.UpdateExercise),
-    ('/admin94040', exercises.exercise_util.ExerciseAdmin),
     ('/video/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/v/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/video', ViewVideoDeprecated), # Backwards URL compatibility
