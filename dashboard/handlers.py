@@ -94,7 +94,7 @@ class EntityCounts(request_handler.RequestHandler):
         
 class ContentCountsCSV(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.developer_required
     def get(self):
         root = topic_models.Topic.get_root()
         tree = root.make_tree()
