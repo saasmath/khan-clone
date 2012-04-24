@@ -109,23 +109,17 @@ class RequestInputHandler(object):
     # 2. student_email
     # the precendence is reversed when legacy is True. A warning will be logged
     # if a legacy parameter is encountered when not expected.
-    def request_student_user_data(self, legacy=False):
-        if legacy:
-            email = self.request_student_email_legacy()
-        else:
-            email = self.request_student_email()
+    def request_student_user_data(self):
+        email = self.request_student_email()
         return user_models.UserData.get_possibly_current_user(email)
 
-    # TODO(benkomalo): kill this and consolidate with the other get user data
-    # from request methods above. Please don't use this.
-    def request_student_email_legacy(self):
-        email = self.request_string("email")
-        email = self.request_string("student_email", email)
-        # no warning is logged here as we should aim to completely move to
-        # email, but no effort has been made to update old calls yet.
-        return email
-
     def request_student_email(self):
+        """Retrieve email parameter from the request.
+        
+        This abstracts away some history behind the name changes for the email
+        parameter and is robust to handling "student_email" and "email"
+        parameter names.
+        """
         email = self.request_string("student_email")
         if email:
             logging.warning("API called with legacy student_email parameter")

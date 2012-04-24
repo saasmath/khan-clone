@@ -100,7 +100,6 @@ class ViewClassProfile(request_handler.RequestHandler):
                                   child_user_allowed=False,
                                   demo_user_allowed=True)
     def get(self):
-        show_coach_resources = self.request_bool('show_coach_resources', default=True)
         coach = UserData.current()
 
         user_override = self.request_user_data("coach_email")
