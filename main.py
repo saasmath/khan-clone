@@ -54,7 +54,7 @@ import smarthistory
 import topics
 import goals.handlers
 import appengine_stats
-import stories
+import stories.handlers
 import summer
 import common_core
 import unisubs
@@ -698,8 +698,8 @@ application = webapp2.WSGIApplication([
     ('/donate', Donate),
     ('/exercisedashboard', knowledgemap.handlers.ViewKnowledgeMap),
 
-    ('/stories/submit', stories.SubmitStory),
-    ('/stories/?.*', stories.ViewStories),
+    ('/stories/submit', stories.handlers.SubmitStory),
+    ('/stories/?.*', stories.handlers.ViewStories),
 
     # Labs
     ('/labs', labs.LabsRequestHandler),
