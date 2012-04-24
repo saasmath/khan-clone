@@ -94,7 +94,7 @@ class RequestInputHandler(object):
         """
         override_user_data = self.request_student_user_data()
         if not override_user_data:
-            user_models.UserData.current()
+            return user_models.UserData.current()
         return user_models.UserData.get_visible_user(override_user_data)
 
     def request_user_data_by_user_id(self):
