@@ -171,5 +171,3 @@ class YouTubeSync(request_handler.RequestHandler):
                     videos_to_put.add(video)
 
         db.put(list(videos_to_put))
-            
-

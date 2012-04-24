@@ -126,7 +126,7 @@ class UpdateKind(webapp.RequestHandler):
                 self.response.out.write('To interrupt the request, <a href="%s">click here</a>.' % cancel_uri)
 
     # The "access checking" here is via app.yaml: this method is under /admin/
-    @user_util.manual_access_checking
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def post(self):
         # To prevent CSRF attacks, all requests must be from the task queue
         if 'X-AppEngine-QueueName' not in self.request.headers:
