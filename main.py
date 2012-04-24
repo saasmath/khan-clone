@@ -20,7 +20,7 @@ from webapp2_extras.routes import RedirectRoute
 # the way at first seems to fix some of those issues.
 import templatetags #@UnusedImport
 
-import devpanel
+import devpanel.handlers
 import bulk_update.handler
 import request_cache
 from gae_mini_profiler import profiler
@@ -749,12 +749,12 @@ application = webapp2.WSGIApplication([
     ('/admin/unisubs', unisubs.ReportHandler),
     ('/admin/unisubs/import', unisubs.ImportHandler),
 
-    ('/devadmin', devpanel.Panel),
+    ('/devadmin', devpanel.handlers.Panel),
     ('/devadmin/maplayout', kmap_editor.MapLayoutEditor),
-    ('/devadmin/emailchange', devpanel.MergeUsers),
-    ('/devadmin/managedevs', devpanel.Manage),
-    ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
-    ('/devadmin/managecommoncore', devpanel.ManageCommonCore),
+    ('/devadmin/emailchange', devpanel.handlers.MergeUsers),
+    ('/devadmin/managedevs', devpanel.handlers.Manage),
+    ('/devadmin/managecoworkers', devpanel.handlers.ManageCoworkers),
+    ('/devadmin/managecommoncore', devpanel.handlers.ManageCommonCore),
     ('/commoncore', common_core.CommonCore),
     ('/staging/commoncore', common_core.CommonCore),
     ('/devadmin/content', topics.EditContent),
