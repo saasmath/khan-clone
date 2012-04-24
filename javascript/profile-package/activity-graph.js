@@ -320,7 +320,7 @@ var ActivityGraph = {
         }
         var bucket = this.chart.options.xAxis.categories[ix];
         if (bucket) {
-            Profile.loadGraph("/profile/graph/activity?student_email=" +
+            Profile.loadGraph("/profile/graph/activity?email=" +
                     this.bucketData.studentEmail + "&dt_start=" + bucket);
         }
     },
