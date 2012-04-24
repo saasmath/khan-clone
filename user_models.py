@@ -116,10 +116,10 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     last_badge_review = db.DateTimeProperty(indexed=False)
     last_activity = db.DateTimeProperty(indexed=False)
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
-    count_feedback_notification = db.IntegerProperty(default= -1,
+    count_feedback_notification = db.IntegerProperty(default=-1,
                                                      indexed=False)
 
-    question_sort_order = db.IntegerProperty(default= -1, indexed=False)
+    question_sort_order = db.IntegerProperty(default=-1, indexed=False)
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
