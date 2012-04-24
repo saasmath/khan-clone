@@ -412,6 +412,12 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @property
     def is_facebook_user(self):
+        """Return whether or not this account was registered using Facebook.
+
+        Note that it's possible that the user has logged in with Facebook,
+        but had initially registered the account using a Google or KA login,
+        in which case this will return False.
+        """
         return facebook_util.is_facebook_user_id(self.user_id)
 
     @property
