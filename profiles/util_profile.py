@@ -422,9 +422,7 @@ class ProfileGraph(request_handler.RequestHandler):
             self.response.out.write(html)
 
     def get_profile_target_user_data(self):
-        email = self.request_student_email_legacy()
-        # TODO: ACL
-        return UserData.get_possibly_current_user(email)
+        return self.request_visible_student_user_data()
 
     def redirect_if_not_ajax(self, student):
         if not self.is_ajax_request():
