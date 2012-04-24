@@ -10,7 +10,6 @@ import user_util
 import util
 import request_handler
 import voting
-from phantom_users.phantom_util import disallow_phantoms
 from rate_limiter import FlagRateLimiter
 from badges.discussion_badges import FirstFlagBadge
 
@@ -243,8 +242,7 @@ class ChangeEntityType(request_handler.RequestHandler):
         self.redirect("/discussion/flaggedfeedback")
 
 class DeleteEntity(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.manual_access_checking
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
         user_data = user_models.UserData.current()
         if not user_data:

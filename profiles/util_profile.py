@@ -17,7 +17,6 @@ import util
 import exercise_models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
-from phantom_users.phantom_util import disallow_phantoms
 from user_models import StudentList, UserData
 from coach_resources.coach_request_model import CoachRequest
 from avatars import util_avatars

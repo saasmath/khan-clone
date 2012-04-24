@@ -19,7 +19,6 @@ from badges import util_badges
 from profiles.util_profile import ExercisesOverTimeGraph, ExerciseProblemsGraph
 from profiles.util_profile import ClassProgressReportGraph, ClassEnergyPointsPerMinuteGraph, ClassTimeGraph
 
-from phantom_users.phantom_util import disallow_phantoms
 import profiles.util_profile as util_profile
 
 def update_coaches_and_requests(user_data, coaches_json):
@@ -136,14 +135,9 @@ class ViewStudents(request_handler.RequestHandler):
         self.render_jinja2_template('viewstudentlists.html', template_values)
 
 class RequestStudent(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.manual_access_checking
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
         user_data = UserData.current()
-
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
 
         user_data_student = self.request_user_data("student_email")
         if user_data_student:
@@ -160,17 +154,12 @@ class RequestStudent(request_handler.RequestHandler):
             self.redirect("/students?invalid_student=1")
 
 class AcceptCoach(request_handler.RequestHandler):
-    @user_util.manual_access_checking
+    @user_util.login_required_and(phantom_user_allowed=False)
     @request_handler.RequestHandler.exceptions_to_http(400)
-    @disallow_phantoms
     def get(self):
         """ Only used when a coach deletes a request in studentlists.js.
         """
         user_data = UserData.current()
-
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
 
         accept_coach = self.request_bool("accept", default = False)
         user_data_coach = self.request_user_data("coach_email")

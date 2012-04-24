@@ -21,7 +21,7 @@ from avatars import util_avatars
 from badges import badges, util_badges, models_badges, profile_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
-from phantom_users.phantom_util import api_create_phantom, api_disallow_phantoms
+from phantom_users.phantom_util import api_create_phantom
 from discussion import notification
 import notifications
 import user_models
@@ -1261,8 +1261,7 @@ def get_user_questions():
     return notification.get_questions_data(user_data)
 
 @route("/api/v1/user/coaches", methods=["GET"])
-@api.auth.decorators.login_required
-@api_disallow_phantoms    # TODO(csilvers): use login_required_and() instead
+@api.auth.decorators.login_required_and(phantom_user_allowed=False)
 @jsonp
 @jsonify
 def get_coaches_and_requesters():
@@ -1277,8 +1276,7 @@ def get_coaches_and_requesters():
     return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
 
 @route("/api/v1/user/coaches", methods=["PUT"])
-@api.auth.decorators.login_required
-@api_disallow_phantoms    # TODO(csilvers): use login_required_and() instead
+@api.auth.decorators.login_required_and(phantom_user_allowed=False)
 @jsonp
 @jsonify
 def update_coaches_and_requesters():
@@ -1767,6 +1765,7 @@ def user_problem_logs(exercise_name):
 @jsonify
 def attempt_problem_number(exercise_name, problem_number):
     user_data = user_models.UserData.current()
+    logging.error('phantom: %s' % user_data.is_phantom)
 
     exercise = exercise_models.Exercise.get_by_name(exercise_name)
     user_exercise = user_data.get_or_insert_exercise(exercise)
