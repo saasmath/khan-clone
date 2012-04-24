@@ -62,8 +62,7 @@ def get_last_student_list(request_handler, student_lists, use_cookie=True):
 def get_student(coach, request_handler):
     student = request_handler.request_student_user_data()
     if student is None:
-        raise Exception("No student found with email='%s'."
-            % request_handler.request_student_email())
+        raise Exception("No student found")
     if not student.is_coached_by(coach):
         raise Exception("Not your student!")
     return student

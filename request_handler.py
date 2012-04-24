@@ -88,32 +88,53 @@ class RequestInputHandler(object):
     def request_visible_student_user_data(self):
         """Return the UserData for the given request.
         
-        This looks for an identifying parameter, such as "email" in the
-        request parameters, and attempts to return that user if the current
-        actor for the request has access to view that user's information (will
-        return None if the actor does not have sufficient permissions)
-        
+        This looks for an identifying parameter
+        (see request_student_user_data) and attempts to return that user
+        if the current actor for the request has access to view that
+        user's information (will return None if the actor does not
+        have sufficient permissions)
+
         If no identifying parameter is specified, returns the current user.
         """
         override_user_data = self.request_student_user_data()
         if not override_user_data:
+            # TODO(benkomalo): maybe this shouldn't fallback to current user?
+            # It seems like a weird API to accept an explicit user identifier
+            # but then fallback to the current user if that identifier doesn't
+            # resolve. It should give an error instead.
             return user_models.UserData.current()
         return user_models.UserData.get_visible_user(override_user_data)
 
-    def request_user_data_by_user_id(self):
-        user_id = self.request_string("userID")
-        return user_models.UserData.get_from_user_id(user_id)
-
-    # get the UserData instance based on the querystring. The precedence is:
-    # 1. email
-    # 2. student_email
-    # the precendence is reversed when legacy is True. A warning will be logged
-    # if a legacy parameter is encountered when not expected.
     def request_student_user_data(self):
-        email = self.request_student_email()
-        return user_models.UserData.get_possibly_current_user(email)
+        """Return the specified UserData for the given request.
+        
+        This looks for an identifying parameter, looking first for userID,
+        then username, then email, from the request parameters and returns
+        the user that matches, if any.
+        """
+        current = user_models.UserData.current()
+        user_id = self.request_string("userID")
+        if user_id:
+            if current and current.user_id == user_id:
+                return current
+            return user_models.UserData.get_from_user_id(user_id)
 
-    def request_student_email(self):
+        username = self.request_string("username")
+        if username:
+            if current and user_models.UniqueUsername.matches(
+                    current.username, username):
+                return current
+            return user_models.UserData.get_from_username(username)
+
+        email = self._request_student_email()
+        if email:
+            if current and current.email == email:
+                return current
+            return user_models.UserData.get_from_user_input_email(email)
+
+        return None
+
+    def _request_student_email(self):
         """Retrieve email parameter from the request.
 
         This abstracts away some history behind the name changes for the email
@@ -325,7 +346,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         return decorator
 
     def user_agent(self):
-        return str(self.request.headers['User-Agent'])
+        return str(self.request.headers.get('User-Agent', ""))
 
     def is_mobile_capable(self):
         user_agent_lower = self.user_agent().lower()
