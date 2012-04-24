@@ -78,6 +78,9 @@ class RequestInputHandler(object):
             else:
                 raise # No value available and no default supplied, raise error
 
+    # TODO(benkomalo): kill this, or make it private and
+    # consolidate it with the other request user data methods by
+    # various email keys
     def request_user_data(self, key):
         email = self.request_string(key)
         return user_models.UserData.get_possibly_current_user(email)
@@ -113,6 +116,8 @@ class RequestInputHandler(object):
             email = self.request_student_email()
         return user_models.UserData.get_possibly_current_user(email)
 
+    # TODO(benkomalo): kill this and consolidate with the other get user data
+    # from request methods above. Please don't use this.
     def request_student_email_legacy(self):
         email = self.request_string("email")
         email = self.request_string("student_email", email)
