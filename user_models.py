@@ -116,10 +116,10 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     last_badge_review = db.DateTimeProperty(indexed=False)
     last_activity = db.DateTimeProperty(indexed=False)
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
-    count_feedback_notification = db.IntegerProperty(default= -1,
+    count_feedback_notification = db.IntegerProperty(default=-1,
                                                      indexed=False)
 
-    question_sort_order = db.IntegerProperty(default= -1, indexed=False)
+    question_sort_order = db.IntegerProperty(default=-1, indexed=False)
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
@@ -426,7 +426,8 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @property
     def is_demo(self):
-        return self.user_email.startswith(_COACH_DEMO_COWORKER_EMAIL)
+        return (self.user_email and
+                self.user_email.startswith(_COACH_DEMO_COWORKER_EMAIL))
 
     @property
     def is_pre_phantom(self):
@@ -939,9 +940,11 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         """ Returns whether or not this user's information is *fully* visible
         to the specified user
         """
-        return (self.key_email == user_data.key_email or self.is_coached_by(user_data)
-                or self.is_coached_by_coworker_of_coach(user_data)
-                or user_data.developer or user_data.is_administrator())
+        return (self.key() == user_data.key() or
+                self.is_coached_by(user_data) or
+                self.is_coached_by_coworker_of_coach(user_data) or
+                user_data.developer or
+                user_data.is_administrator())
 
     def are_students_visible_to(self, user_data):
         return self.is_coworker_of(user_data) or user_data.developer or user_data.is_administrator()

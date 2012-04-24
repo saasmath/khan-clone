@@ -185,6 +185,7 @@ var Profile = {
         showVitalStatistics: function(graph, exercise, timePeriod) {
             var exercise = exercise || "addition_1";
             var identityParam = "";
+            // TODO(benkomalo): have this accept username.
             if (Profile.profile.get("email")) {
                 identityParam = "email=" +
                         encodeURIComponent(Profile.profile.get("email"));
@@ -231,8 +232,7 @@ var Profile = {
                 this.updateTitleBreadcrumbs([prettyGraphName]);
             }
 
-            if (Profile.profile.get("isSelf") ||
-                    Profile.profile.get("email")) {
+            if (Profile.profile.isFullyAccessible()) {
                 // If we have access to the profiled person's email, load real data.
                 Profile.loadGraph(href);
             } else {
@@ -338,7 +338,7 @@ var Profile = {
                 parts.unshift(rootCrumb);
                 sheetTitle.text(parts.join(" » ")).show();
 
-                if (!Profile.profile.get("isSelf") && !Profile.profile.get("email")) {
+                if (!Profile.profile.isFullyAccessible()) {
                     $(".profile-notification").show();
                 }
             } else {
@@ -920,6 +920,7 @@ var Profile = {
             return Profile.goalsDeferred_;
         }
 
+        // TODO(benkomalo): have this accept username.
         // TODO: Abstract away profile + actor privileges
         // Also in profile.handlebars
         var email = Profile.profile.get("email");
@@ -972,6 +973,7 @@ var Profile = {
             return Profile.discussionDeferred_;
         }
 
+        // TODO(benkomalo): have this accept username.
         var email = Profile.profile.get("email");
         if (email) {
             Profile.discussionDeferred_ = $.ajax({
@@ -1070,7 +1072,7 @@ var Profile = {
         }
         $("#recent-activity-progress-bar").progressbar({value: 100});
 
-        // TODO: Abstract away profile + actor privileges
+        // TODO(benkomalo): have this accept username.
         var email = Profile.profile.get("email");
         if (email) {
             Profile.activityDeferred_ = $.ajax({
