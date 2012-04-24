@@ -13,7 +13,7 @@ import consts
 # /admin/startnewexercisestatisticsmapreduce is called periodically by a cron job
 class StartNewExerciseStatisticsMapReduce(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def get(self):
 
         # Admin-only restriction is handled by /admin/* URL pattern

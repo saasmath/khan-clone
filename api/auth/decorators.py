@@ -19,7 +19,7 @@ return a 401 if certain conditions aren't met.
    must be true.)
 
 @login_required_and: the above are all special cases of this more generic
-   decorator, which can be used when more complex authorization is
+   decorator, which can be used when more complex access control is
    required.
 
 @open_access: anyone can access this url, they don't need to be logged in.
@@ -55,6 +55,7 @@ from oauth_provider.decorators import is_valid_request, validate_token
 from oauth_provider.oauth import OAuthError
 
 import user_models
+import user_util
 import util
 import os
 import logging
@@ -132,7 +133,7 @@ def verify_and_cache_oauth_or_cookie(request):
 
 
 def open_access(func):
-    """ Decorator that allows anyone to access a url. """
+    """Decorator that allows anyone to access a url."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         # We try to read the oauth info, so we have access to login
@@ -150,7 +151,7 @@ def open_access(func):
 
 
 def manual_access_checking(func):
-    """ Decorator that documents the site itself is doing authentication.
+    """Decorator that documents the site itself is doing authentication.
 
     This is intended for use by urls that are involved in the oauth
     handshake itself, and thus shouldn't be calling
@@ -170,89 +171,73 @@ def manual_access_checking(func):
     return wrapper
 
 
-def login_required_and(func,
-                       admin_required=False,
+def login_required_and(admin_required=False,
                        developer_required=False,
                        moderator_required=False,
+                       child_user_allowed=True,
                        demo_user_allowed=False,
                        phantom_user_allowed=True):
-    """ Decorator for validating an authenticated request.
+    """Decorator for validating an authenticated request.
 
     Checking oauth/cookie is the way to tell whether an API client is
     'logged in', since they can only have gotten an oauth token (or
     cookie token) via the login process.
 
     In addition to checking whether the user is logged in, this
-    function also checks access based on the *type* of the user:
-    if demo_allowed==False, for instance, and the logged-in user
-    is a demo user, then access will be denied.
+    function also checks access based on the *type* of the user: if
+    demo_user_allowed==False, for instance, and the logged-in user is
+    a demo user, then access will be denied.
 
     (Exception: if the user is an admin user, then access is *always*
     allowed, and the only check we make is if they're logged in.)
 
     The default values specify the default permissions: for instance,
-    phantom users are considered a valid user by this routine.
+    phantom users are considered a valid user by this routine, and
+    under-13 users are allowed access all urls unless explicitly
+    stated otherwise.
     """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            verify_and_cache_oauth_or_cookie(request)
-        except OAuthError, e:
-            return oauth_error_response(e)
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                verify_and_cache_oauth_or_cookie(request)
+            except OAuthError, e:
+                return oauth_error_response(e)
 
-        user_data = user_models.UserData.current()
-        # If verify_and_cache_oauth_or_cookie succeeded, it's probably
-        # not possible to be None here, but no harm in checking.
-        if not user_data:
-            return unauthorized_response()
+            try:
+                user_util.verify_login(admin_required, developer_required,
+                                       moderator_required, child_user_allowed,
+                                       demo_user_allowed, phantom_user_allowed)
+            except user_util.LoginFailedError:
+                return unauthorized_response()
 
-        # Admins always have access to everything.
-        if users.is_current_user_admin():
             return func(*args, **kwargs)
 
-        if admin_required and not users.is_current_user_admin():
-            return unauthorized_response()
+        # For purposes of IDing this decorator, just store the True arguments.
+        all_local_vars = locals()
+        arg_names = [var for var in all_local_vars if
+                     all_local_vars[var] and
+                     var not in ('func', 'wrapper', 'all_arg_names')]
+        auth_decorator = 'login-required(%s)' % ','.join(arg_names)
+        assert "_access_control" not in wrapper.func_dict, \
+               ("Mutiple auth decorators: %s and %s"
+                % (wrapper._access_control, auth_decorator))
+        wrapper._access_control = auth_decorator   # checked in api.route()
+        return wrapper
 
-        if developer_required and not user_data.developer:
-            return unauthorized_response()
-
-        # Developers are automatically moderators.
-        is_moderator = user_data.moderator or user_data.developer
-        if moderator_required and not is_moderator:
-            return unauthorized_response()
-
-        if (not demo_user_allowed) and user_data.is_demo:
-            return unauthorized_response()
-
-        if (not phantom_user_allowed) and user_data.is_phantom:
-            return unauthorized_response()
-
-        # They passed the gantlet!
-        return func(*args, **kwargs)
-
-    # For purposes of IDing this decorator, just store the True arguments.
-    all_local_vars = locals()
-    arg_names = [var for var in all_local_vars if
-                 all_local_vars[var] and
-                 var not in ('func', 'wrapper', 'all_arg_names')]
-    auth_decorator = 'login-required(%s)' % ','.join(arg_names)
-    assert "_access_control" not in wrapper.func_dict, \
-           ("Mutiple auth decorators: %s and %s"
-            % (wrapper._access_control, auth_decorator))
-    wrapper._access_control = auth_decorator   # checked in api.route()
-    return wrapper
+    return decorator
 
 
 def admin_required(func):
-    return login_required_and(func, admin_required=True)
+    return login_required_and(admin_required=True)(func)
 
 
 def developer_required(func):
-    return login_required_and(func, developer_required=True)
+    return login_required_and(developer_required=True)(func)
 
 
 def moderator_required(func):
-    return login_required_and(func, moderator_required=True)
+    return login_required_and(moderator_required=True)(func)
 
 
 def login_required(func):
@@ -265,41 +250,10 @@ def login_required(func):
     Note that phantom users with exercise data is considered
     a valid user -- see the default values for login_required_and().
     """
-    return login_required_and(func)
+    return login_required_and()(func)
 
 
-def open_access(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # We try to read the oauth info, so we have access to login
-        # data if the user *does* happen to be logged in, but if
-        # they're not we don't worry about it.
-        try:
-            verify_and_cache_oauth_or_cookie(request)
-        except OAuthError, e:
-            pass
-        return func(*args, **kwargs)
-
-    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'open-access'   # checked in api.route()
-    return wrapper
-
-
-def manual_access_checking(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # For manual_access_checking we don't even try to read the
-        # oauth data -- that's up for the handler to do itself.  This
-        # makes manual_access_checking appropriate for handlers that
-        # are part of the oauth-authentication process itself.
-        return func(*args, **kwargs)
-
-    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
-    wrapper._access_control = 'manual-access'   # checked in api.route()
-    return wrapper
-
-
-def anointed_oauth_consumer_only(func):
+def oauth_consumers_must_be_anointed(func):
     """ Check that if a client is an oauth client, it's an 'anointed' one.
 
     This is a bit different from user authentication -- it only cares

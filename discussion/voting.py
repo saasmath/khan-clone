@@ -64,9 +64,9 @@ class UpdateQASort(request_handler.RequestHandler):
 
 
 class VoteEntity(request_handler.RequestHandler):
-    @user_util.open_access
+    # You have to be logged in to vote
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
-        # You have to be logged in to vote
         user_data = UserData.current()
         if not user_data:
             return
@@ -107,7 +107,7 @@ class VoteEntity(request_handler.RequestHandler):
 
 
 class FinishVoteEntity(request_handler.RequestHandler):
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def post(self):
 
         user_data = self.request_user_data("email")
@@ -161,7 +161,7 @@ class FinishVoteEntity(request_handler.RequestHandler):
 
 class StartNewVoteMapReduce(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def get(self):
 
         # Admin-only restriction is handled by /admin/* URL pattern

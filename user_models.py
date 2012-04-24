@@ -20,7 +20,7 @@ import urllib
 from google.appengine.api import datastore_errors, users
 from google.appengine.ext import db
 
-import accuracy_model
+from accuracy_model import accuracy_model
 from api import jsonify   # TODO(csilvers): move out of api/?
 import auth.models
 from auth import age_util
@@ -600,6 +600,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             # Note that get_or_insert is a transaction itself, and it can't
             # be nested in the above transaction.
             user_data = UserData.get_or_insert(**prop_values)
+            user_data = db.get(user_data.key())   # force-commit for HRD data
 
         if user_data and not user_data.is_phantom:
             # Record that we now have one more registered user

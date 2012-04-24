@@ -268,4 +268,3 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                        _url="/_ah/queue/deferred_log_summary")
 
         return user_exercise, user_exercise_graph, goals_updated
-

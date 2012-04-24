@@ -10,7 +10,6 @@ import user_util
 import util
 import request_handler
 import voting
-from phantom_users.phantom_util import disallow_phantoms
 from rate_limiter import FlagRateLimiter
 from badges.discussion_badges import FirstFlagBadge
 
@@ -19,7 +18,7 @@ def feedback_flag_update_map(feedback):
     yield op.db.Put(feedback)
 
 class StartNewFlagUpdateMapReduce(request_handler.RequestHandler):
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def get(self):
         mapreduce_id = control.start_map(
                 name = "FeedbackFlagUpdate",
@@ -70,15 +69,10 @@ class PageQuestions(request_handler.RequestHandler):
         return
 
 class AddAnswer(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
 
         user_data = user_models.UserData.current()
-
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
 
         if not util_discussion.is_post_allowed(user_data, self.request):
             return
@@ -134,15 +128,10 @@ class Answers(request_handler.RequestHandler):
         return
 
 class AddQuestion(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
 
         user_data = user_models.UserData.current()
-
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
 
         if not util_discussion.is_post_allowed(user_data, self.request):
             return
@@ -171,12 +160,9 @@ class AddQuestion(request_handler.RequestHandler):
                 (video_key, question_key))
 
 class EditEntity(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
         user_data = user_models.UserData.current()
-        if not user_data:
-            return
 
         key = self.request.get("entity_key")
         text = self.request.get("question_text") or self.request.get("answer_text")
@@ -204,13 +190,10 @@ class EditEntity(request_handler.RequestHandler):
                         self.redirect("/discussion/answers?question_key=%s" % question.key())
 
 class FlagEntity(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.open_access
+    # You have to at least be logged in to flag
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
-        # You have to at least be logged in to flag
         user_data = user_models.UserData.current()
-        if not user_data:
-            return
 
         limiter = FlagRateLimiter(user_data)
         if not limiter.increment():
@@ -229,7 +212,7 @@ class FlagEntity(request_handler.RequestHandler):
                     user_data.put()
 
 class ClearFlags(request_handler.RequestHandler):
-    @user_util.moderator_only
+    @user_util.moderator_required
     def post(self):
         key = self.request.get("entity_key")
         if key:
@@ -241,7 +224,7 @@ class ClearFlags(request_handler.RequestHandler):
         self.redirect("/discussion/flaggedfeedback")
 
 class ChangeEntityType(request_handler.RequestHandler):
-    @user_util.moderator_only
+    @user_util.moderator_required
     def post(self):
         # Must be a moderator to change types of anything
         if not user_util.is_current_user_moderator():
@@ -259,8 +242,7 @@ class ChangeEntityType(request_handler.RequestHandler):
         self.redirect("/discussion/flaggedfeedback")
 
 class DeleteEntity(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.manual_access_checking
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
         user_data = user_models.UserData.current()
         if not user_data:

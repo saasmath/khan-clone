@@ -50,19 +50,18 @@ class SaveMapCoords(request_handler.RequestHandler):
     def get(self):
         return
 
-    @user_util.open_access
+    @user_util.login_required
     def post(self):
         user_data = user_models.UserData.current()
 
-        if user_data:
-            try:
-                lat = self.request_float("lat")
-                lng = self.request_float("lng")
-                zoom = self.request_int("zoom")
-            except ValueError:
-                # If any of the above values aren't present in request,
-                # don't try to save.
-                return
+        try:
+            lat = self.request_float("lat")
+            lng = self.request_float("lng")
+            zoom = self.request_int("zoom")
+        except ValueError:
+            # If any of the above values aren't present in request,
+            # don't try to save.
+            return
 
-            user_data.map_coords = serializeMapCoords(lat, lng, zoom)
-            user_data.put()
+        user_data.map_coords = serializeMapCoords(lat, lng, zoom)
+        user_data.put()

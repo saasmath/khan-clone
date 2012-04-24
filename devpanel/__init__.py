@@ -5,7 +5,6 @@ import user_util
 from user_models import UserData
 from common_core.models import CommonCoreMap
 import request_handler
-from api.auth.xsrf import ensure_xsrf_cookie
 
 import csv
 import StringIO
@@ -13,7 +12,7 @@ import StringIO
 
 class Panel(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         self.render_jinja2_template('devpanel/panel.html',
                                     {"selected_id": "panel"})
@@ -21,7 +20,7 @@ class Panel(request_handler.RequestHandler):
 
 class MergeUsers(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
 
         source = self.request_user_data("source_email")
@@ -46,7 +45,7 @@ class MergeUsers(request_handler.RequestHandler):
         self.render_jinja2_template("devpanel/mergeusers.html",
                                     template_values)
 
-    @user_util.developer_only
+    @user_util.developer_required
     def post(self):
 
         if not self.request_bool("confirm", default=False):
@@ -84,8 +83,7 @@ class MergeUsers(request_handler.RequestHandler):
 
 class Manage(request_handler.RequestHandler):
 
-    @user_util.admin_only  # only admins may add devs, devs cannot add devs
-    @ensure_xsrf_cookie
+    @user_util.admin_required  # only admins may add devs, devs cannot add devs
     def get(self):
         developers = UserData.all()
         developers.filter('developer = ', True).fetch(1000)
@@ -99,8 +97,7 @@ class Manage(request_handler.RequestHandler):
 
 class ManageCoworkers(request_handler.RequestHandler):
 
-    @user_util.developer_only
-    @ensure_xsrf_cookie
+    @user_util.developer_required
     def get(self):
 
         user_data_coach = self.request_user_data("coach_email")
@@ -167,8 +164,7 @@ def update_common_core_map(cc_file):
 
 class ManageCommonCore(request_handler.RequestHandler):
 
-    @user_util.developer_only
-    @ensure_xsrf_cookie
+    @user_util.developer_required
     def get(self):
         template_values = {
             "selected_id": "commoncore",
@@ -177,8 +173,7 @@ class ManageCommonCore(request_handler.RequestHandler):
         self.render_jinja2_template("devpanel/uploadcommoncorefile.html",
                                     template_values)
 
-    @user_util.developer_only
-    @ensure_xsrf_cookie
+    @user_util.developer_required
     def post(self):
 
         logging.info("Accessing %s" % self.request.path)

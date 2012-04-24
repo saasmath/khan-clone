@@ -13,7 +13,6 @@ import user_util
 import util
 import request_handler
 import voting
-from phantom_users.phantom_util import disallow_phantoms
 
 class PageComments(request_handler.RequestHandler):
     @user_util.open_access
@@ -36,14 +35,9 @@ class PageComments(request_handler.RequestHandler):
             self.render_json({"html": html, "page": page})
 
 class AddComment(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
         user_data = user_models.UserData.current()
-
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
 
         if not util_discussion.is_post_allowed(user_data, self.request):
             return
