@@ -20,7 +20,7 @@ import urllib
 from google.appengine.api import datastore_errors, users
 from google.appengine.ext import db
 
-from accuracy_model import accuracy_model
+from exercises import accuracy_model
 from api import jsonify   # TODO(csilvers): move out of api/?
 import auth.models
 from auth import age_util

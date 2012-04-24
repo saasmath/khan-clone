@@ -2,7 +2,7 @@ import itertools
 import math
 import operator
 
-from parameters import log_reg_past_20_tail1m as params
+from exercises.accuracy_parameters import log_reg_past_20_tail1m as params
 
 # TODO(david): Find out what this actually is
 PROBABILITY_FIRST_PROBLEM_CORRECT = 0.8
