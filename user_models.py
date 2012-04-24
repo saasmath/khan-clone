@@ -494,7 +494,8 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         user_data = None
 
         if UniqueUsername.is_valid_username(username_or_email):
-            user_data = UserData.get_from_username(username_or_email)
+            user_data = UserData.get_possibly_current_user_by_username(
+                username_or_email)
         else:
             user_data = UserData.get_possibly_current_user(username_or_email)
 
@@ -536,7 +537,8 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             return None
 
         user_data_current = UserData.current()
-        if user_data_current and user_data_current.username == username:
+        if (user_data_current and
+                UniqueUsername.matches(user_data_current.username, username)):
             return user_data_current
 
         return UserData.get_from_username(username)
@@ -1182,6 +1184,21 @@ class UniqueUsername(db.Model):
         if clock is None:
             clock = datetime.datetime
         return entity is None or not entity._is_in_holding(clock.utcnow())
+
+    @staticmethod
+    def matches(username1, username2):
+        """Determine if two username strings match to one canonical name.
+        
+        If either string is not a valid username, will return False.
+        """
+        if not username1 or not username2:
+            return False
+        key1 = UniqueUsername.build_key_name(username1)
+        key2 = UniqueUsername.build_key_name(username2)
+        if (not UniqueUsername.is_valid_username(username1, key1) or
+                not UniqueUsername.is_valid_username(username2, key2)):
+            return False
+        return key1 == key2
 
     def _is_in_holding(self, utcnow):
         return self.release_date + UniqueUsername.HOLDING_PERIOD_DELTA >= utcnow

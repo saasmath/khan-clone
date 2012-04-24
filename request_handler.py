@@ -115,7 +115,7 @@ class RequestInputHandler(object):
 
     def request_student_email(self):
         """Retrieve email parameter from the request.
-        
+
         This abstracts away some history behind the name changes for the email
         parameter and is robust to handling "student_email" and "email"
         parameter names.
