@@ -1262,7 +1262,7 @@ def get_user_questions():
 
 @route("/api/v1/user/coaches", methods=["GET"])
 @api.auth.decorators.login_required
-@api_disallow_phantoms
+@api_disallow_phantoms    # TODO(csilvers): use login_required_and() instead
 @jsonp
 @jsonify
 def get_coaches_and_requesters():
@@ -1278,7 +1278,7 @@ def get_coaches_and_requesters():
 
 @route("/api/v1/user/coaches", methods=["PUT"])
 @api.auth.decorators.login_required
-@api_disallow_phantoms
+@api_disallow_phantoms    # TODO(csilvers): use login_required_and() instead
 @jsonp
 @jsonify
 def update_coaches_and_requesters():
@@ -1410,7 +1410,9 @@ def user_videos_specific(youtube_id):
 # and http://stackoverflow.com/questions/328281/why-content-length-0-in-post-requests
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["POST"])
 @route("/api/v1/user/videos/<youtube_id>/log_compatability", methods=["GET"])
-@api.auth.decorators.login_required
+# @open_access + @create_phantom will log in the user if appropriate
+# (either the cookie or oauth map is set), or else create a phantom user.
+@api.auth.decorators.open_access
 @api.auth.decorators.oauth_consumers_must_be_anointed
 @api_create_phantom
 @jsonp
@@ -1757,7 +1759,9 @@ def user_problem_logs(exercise_name):
 # TODO(david): Factor out duplicated code between attempt_problem_number and
 #     hint_problem_number.
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/attempt", methods=["POST"])
-@api.auth.decorators.login_required
+# @open_access + @create_phantom will log in the user if appropriate
+# (either the cookie or oauth map is set), or else create a phantom user.
+@api.auth.decorators.open_access
 @api_create_phantom
 @jsonp
 @jsonify
@@ -1821,7 +1825,9 @@ def attempt_problem_number(exercise_name, problem_number):
         return user_exercise
 
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/hint", methods=["POST"])
-@api.auth.decorators.login_required
+# @open_access + @create_phantom will log in the user if appropriate
+# (either the cookie or oauth map is set), or else create a phantom user.
+@api.auth.decorators.open_access
 @api_create_phantom
 @jsonp
 @jsonify
@@ -2342,7 +2348,9 @@ def get_student_goals():
     return return_data
 
 @route("/api/v1/user/goals", methods=["POST"])
-@api.auth.decorators.login_required
+# @open_access + @create_phantom will log in the user if appropriate
+# (either the cookie or oauth map is set), or else create a phantom user.
+@api.auth.decorators.open_access
 @api_create_phantom
 @jsonp
 @jsonify
