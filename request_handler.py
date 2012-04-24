@@ -83,10 +83,18 @@ class RequestInputHandler(object):
         return user_models.UserData.get_possibly_current_user(email)
 
     def request_visible_student_user_data(self):
-        """ Return overridden user data allowed. Otherwise, return the
-        currently logged in user.
+        """Return the UserData for the given request.
+        
+        This looks for an identifying parameter, such as "email" in the
+        request parameters, and attempts to return that user if the current
+        actor for the request has access to view that user's information (will
+        return None if the actor does not have sufficient permissions)
+        
+        If no identifying parameter is specified, returns the current user.
         """
         override_user_data = self.request_student_user_data()
+        if not override_user_data:
+            user_models.UserData.current()
         return user_models.UserData.get_visible_user(override_user_data)
 
     def request_user_data_by_user_id(self):
