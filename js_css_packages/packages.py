@@ -343,7 +343,7 @@ javascript = {
         ]
     },
 
-    "kmap_editor": {
+    "knowledgemap": {
         "files": [
             "../../khan-exercises/utils/raphael.js",
             "../topicsadmin-package/jquery.ui.draggable.js",
@@ -468,7 +468,7 @@ stylesheets = {
             "bootstrap.css"
         ]
     },
-    "kmap_editor": {
+    "knowledgemap": {
         "files": [
             "kmap_editor.css"
         ]

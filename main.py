@@ -62,7 +62,7 @@ import api.jsonify
 import socrates
 import labs.explorations
 import layer_cache
-import kmap_editor
+from knowledgemap import kmap_editor
 
 import topic_models
 import video_models
