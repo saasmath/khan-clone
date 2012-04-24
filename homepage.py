@@ -133,7 +133,7 @@ class ViewHomePage(request_handler.RequestHandler):
     # See https://sites.google.com/a/khanacademy.org/forge/for-team-members/how-to-use-new-and-noteworthy-content
     # for info on how to update the New & Noteworthy videos
     @user_util.open_access
-    @ensure_xsrf_cookie
+    @ensure_xsrf_cookie    # TODO(csilvers): remove this (make sure autocomplete works)
     def get(self):
         version_number = None
 

@@ -570,12 +570,15 @@ var TopicTreeEditor = {
 
     moveItem: function(oldParentID, moveData) {
         // Apply the change to the model data first
-        var child = TopicTreeEditor.topicTree.get(oldParentID).removeChild(moveData.kind, moveData.id);
+        var old_parent = TopicTreeEditor.topicTree.get(oldParentID)
+        var child = old_parent.removeChild(moveData.kind, moveData.id);
+        TopicTreeEditor.refreshTreeNode(old_parent)
         var new_parent = TopicTreeEditor.topicTree.fetchByID(moveData.new_parent_id, function(model) {
             model.addChild(child, moveData.new_parent_pos);
 
             var parent_node = TopicTreeEditor.dynatree.getNodeByKey("Topic/" + moveData.new_parent_id);
             parent_node.expand();
+            parent_node.reloadChildren();
             parent_node.getChildren()[moveData.new_parent_pos].activate();
 
             $.ajaxq("topics-admin", {
@@ -887,6 +890,7 @@ function stringArraysEqual(ar1, ar2) {
                             self.model.set(json);
 
                             self.node.expand();
+                            self.node.reloadChildren()
                             self.node.getChildren()[data.pos].activate();
                         },
                         error: TopicTreeEditor.handleError
@@ -963,6 +967,7 @@ function stringArraysEqual(ar1, ar2) {
                 data: deleteData,
                 success: function(json) {
                     self.parentModel.removeChild("Topic", self.model.id);
+                    TopicTreeEditor.refreshTreeNode(self.parentModel)
                 },
                 error: TopicTreeEditor.handleError
             });
@@ -1023,19 +1028,19 @@ function stringArraysEqual(ar1, ar2) {
 
                 editor.addItemToTopic(editor.itemCopyBuffer.kind, editor.itemCopyBuffer.id, editor.itemCopyBuffer.title, this.node.parent, this.parentModel, new_position);
 
-            } else if (this.topicEditor.itemCopyBuffer.type == "cut") {
-                if (this.parentModel.id == this.topicEditor.itemCopyBuffer.originalParent &&
-                    new_position > this.topicEditor.itemCopyBuffer.originalPosition) {
+            } else if (editor.itemCopyBuffer.type == "cut") {
+                if (this.parentModel.id == editor.itemCopyBuffer.originalParent &&
+                    new_position > editor.itemCopyBuffer.originalPosition) {
                     new_position--;
                 }
 
                 var moveData = {
-                    kind: this.topicEditor.itemCopyBuffer.kind,
-                    id: this.topicEditor.itemCopyBuffer.id,
+                    kind: editor.itemCopyBuffer.kind,
+                    id: editor.itemCopyBuffer.id,
                     new_parent_id: this.parentModel.id,
                     new_parent_pos: new_position
                 };
-                this.topicEditor.moveItem(this.topicEditor.itemCopyBuffer.originalParent, moveData);
+                editor.moveItem(editor.itemCopyBuffer.originalParent, moveData);
             }
 
         } else if (action == "remove_item") {
@@ -1049,6 +1054,7 @@ function stringArraysEqual(ar1, ar2) {
                 data: deleteData,
                 success: function(json) {
                     self.parentModel.removeChild(self.node.data.kind, self.node.data.id);
+                    TopicTreeEditor.refreshTreeNode(self.parentModel)
                 },
                 error: TopicTreeEditor.handleError
             });

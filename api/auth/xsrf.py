@@ -8,6 +8,25 @@ from api import (XSRF_API_VERSION, XSRF_COOKIE_KEY, XSRF_HEADER_KEY,
                  is_current_api_version)
 
 
+def create_xsrf_cookie_if_needed(http_response):
+    """http_request is the http response object used to set the cookie on."""
+    xsrf_token = get_xsrf_cookie_value()
+    if xsrf_token and is_current_api_version(xsrf_token):
+        return   # not needed -- the cookie already exists
+    timestamp = int(time.time())
+    xsrf_value = "%s_%s_%d" % (
+        XSRF_API_VERSION,
+        base64.urlsafe_b64encode(os.urandom(10)),
+        timestamp)
+
+    # Set a cookie containing the XSRF value.
+    # The JavaScript is responsible for returning the cookie
+    # in a matching header that is validated by
+    # validate_xsrf_cookie.
+    http_response.set_cookie(XSRF_COOKIE_KEY, xsrf_value, httponly=False)
+    cookie_util.set_request_cookie(XSRF_COOKIE_KEY, xsrf_value)
+    
+
 def ensure_xsrf_cookie(func):
     """ This is a decorator for a method that ensures when the response to
     this request is sent, the user's browser has the appropriate XSRF cookie
@@ -18,22 +37,7 @@ def ensure_xsrf_cookie(func):
     """
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-
-        xsrf_token = get_xsrf_cookie_value()
-        if not xsrf_token or not is_current_api_version(xsrf_token):
-            timestamp = int(time.time())
-            xsrf_value = "%s_%s_%d" % (
-                XSRF_API_VERSION,
-                base64.urlsafe_b64encode(os.urandom(10)),
-                timestamp)
-
-            # Set a cookie containing the XSRF value.
-            # The JavaScript is responsible for returning the cookie
-            # in a matching header that is validated by
-            # validate_xsrf_cookie.
-            self.set_cookie(XSRF_COOKIE_KEY, xsrf_value, httponly=False)
-            cookie_util.set_request_cookie(XSRF_COOKIE_KEY, xsrf_value)
-
+        create_xsrf_cookie_if_needed(self)
         return func(self, *args, **kwargs)
 
     return wrapper

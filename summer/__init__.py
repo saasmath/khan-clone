@@ -255,12 +255,12 @@ class GetStudent(request_handler.RequestHandler):
         return
 
 class UpdateStudentStatus(request_handler.RequestHandler):
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         template_values = {}
         self.render_jinja2_template('summer/uploadstatusfile.html', template_values)
 
-    @user_util.developer_only
+    @user_util.developer_required
     def post(self):
         template_values = {}
         user_data = UserData.current()
@@ -356,7 +356,7 @@ class Download(request_handler.RequestHandler):
         self.response.out.write(f.getvalue())
         return
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         template_values = {}
         user_data = UserData.current()

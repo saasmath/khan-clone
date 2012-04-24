@@ -20,7 +20,8 @@ import random
 
 from google.appengine.ext import db
 
-import accuracy_model
+from accuracy_model import accuracy_model
+from accuracy_model import progress_normalizer
 import app
 import backup_model
 import consts
@@ -301,11 +302,11 @@ class UserExercise(db.Model):
     # Bound function objects to normalize the progress bar display from a probability
     # TODO(david): This is a bit of a hack to not have the normalizer move too
     #     slowly if the user got a lot of wrongs.
-    _all_correct_normalizer = accuracy_model.InvFnExponentialNormalizer(
+    _all_correct_normalizer = progress_normalizer.InvFnExponentialNormalizer(
         accuracy_model=accuracy_model.AccuracyModel().update(correct=False),
         proficiency_threshold=accuracy_model.AccuracyModel.simulate([True] * _MIN_PROBLEMS_REQUIRED)
     ).normalize
-    _had_wrong_normalizer = accuracy_model.InvFnExponentialNormalizer(
+    _had_wrong_normalizer = progress_normalizer.InvFnExponentialNormalizer(
         accuracy_model=accuracy_model.AccuracyModel().update([False] * 3),
         proficiency_threshold=consts.PROFICIENCY_ACCURACY_THRESHOLD
     ).normalize

@@ -137,6 +137,18 @@ class V1EndToEndAuthTest(V1EndToEndTestBase):
         self.set_user(moderator=True)
         self.assert401Error('/api/v1/dev/topictree')
 
+    @testsize.large()
+    def test_anointed_client_access(self):
+        """Only an anointed consumer can access this url."""
+        self.assert401Error('/api/v1/user/videos/SvFtmPhbNRw'
+                            '/log_compatability')
+        self.set_user(anointed_consumer=True)
+        # I don't bother to set all the url-parameters needed, so this
+        # request will fail.  The important point is it gets far
+        # enough into the handling to be looking at the url query fields.
+        self.assert400Error('/api/v1/user/videos/SvFtmPhbNRw'
+                            '/log_compatability')
+
 
 class V1EndToEndGetTest(V1EndToEndTestBase):
     """Test all the GET methods in v1.py, except obsolete /playlist urls."""
@@ -321,7 +333,7 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
     @testsize.large()
     @todo()
     def test_dev__topictree__problems(self):
-        # TODO(james): uncomment once this becomes developer_only in v1.py
+        # TODO(james): uncomment once this becomes developer_required in v1.py
         #self.assert401Error('/api/v1/dev/topictree/problems')
         self.set_user(developer=True)
 

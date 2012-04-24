@@ -58,8 +58,8 @@ class ViewTopicExerciseDeprecated(request_handler.RequestHandler):
 
 class ViewExercise(request_handler.RequestHandler):
 
-    @ensure_xsrf_cookie
     @user_util.open_access
+    @ensure_xsrf_cookie
     def get(self, topic_path, exid=None):
 
         title = None

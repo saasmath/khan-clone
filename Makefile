@@ -59,6 +59,10 @@ check: lint test ;
 quickcheck:
 	$(MAKE) MAX_TEST_SIZE=small check
 
+# Run *all* the tests
+allcheck:
+	$(MAKE) MAX_TEST_SIZE=large check
+
 # Compile handlebars templates
 handlebars:
 	python deploy/compile_handlebar_templates.py

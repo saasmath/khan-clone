@@ -1,7 +1,6 @@
 from operator import itemgetter
 from google.appengine.ext import db
 
-import api.auth.xsrf
 import request_handler
 import user_models
 import discussion_models
@@ -10,7 +9,7 @@ import user_util
 
 
 class ModPanel(request_handler.RequestHandler):
-    @user_util.moderator_only
+    @user_util.moderator_required
     def get(self):
         template_values = {
             'selected_id': 'panel',
@@ -20,8 +19,8 @@ class ModPanel(request_handler.RequestHandler):
 
 
 class ModeratorList(request_handler.RequestHandler):
-    @user_util.admin_only
-    @api.auth.xsrf.ensure_xsrf_cookie
+    # Must be an admin to change moderators
+    @user_util.admin_required
     def get(self):
         mods = user_models.UserData.gql('WHERE moderator = :1', True)
         template_values = {
@@ -31,8 +30,7 @@ class ModeratorList(request_handler.RequestHandler):
         self.render_jinja2_template('discussion/mod/moderatorlist.html',
                                     template_values)
 
-    @user_util.admin_only
-    @api.auth.xsrf.ensure_xsrf_cookie
+    @user_util.admin_required
     def post(self):
         user_data = self.request_user_data('user')
 
@@ -49,7 +47,7 @@ class ModeratorList(request_handler.RequestHandler):
 
 
 class FlaggedFeedback(request_handler.RequestHandler):
-    @user_util.moderator_only
+    @user_util.moderator_required
     def get(self):
         # Show all non-deleted feedback flagged for moderator attention
         feedback_query = discussion_models.Feedback.all()
@@ -92,7 +90,7 @@ class FlaggedFeedback(request_handler.RequestHandler):
 
 
 class BannedList(request_handler.RequestHandler):
-    @user_util.moderator_only
+    @user_util.moderator_required
     def get(self):
         banned_user_data_list = user_models.UserData.gql(
                 'WHERE discussion_banned = :1', True)
@@ -103,7 +101,7 @@ class BannedList(request_handler.RequestHandler):
         self.render_jinja2_template('discussion/mod/bannedlist.html',
                                     template_values)
 
-    @user_util.moderator_only
+    @user_util.moderator_required
     def post(self):
         user_data = self.request_user_data('user')
 
