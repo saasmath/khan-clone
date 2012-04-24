@@ -130,7 +130,6 @@ def hipchat_message(msg, rooms):
                 "room_id": room.room_id,
                 "from": "Mr Monkey",
                 "message": msg,
-                "notify": "1",
                 "color": "purple",
             }
 
