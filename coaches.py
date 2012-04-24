@@ -4,20 +4,13 @@ try:
 except ImportError:
     import simplejson as json
 
-from app import App
-import app
 import custom_exceptions
-import facebook_util
 import util
 import user_util
 import request_handler
 
 from user_models import UserData, StudentList
 from coach_resources.coach_request_model import CoachRequest
-from badges import util_badges
-
-from profiles.util_profile import ExercisesOverTimeGraph, ExerciseProblemsGraph
-from profiles.util_profile import ClassProgressReportGraph, ClassEnergyPointsPerMinuteGraph, ClassTimeGraph
 
 from phantom_users.phantom_util import disallow_phantoms
 import profiles.util_profile as util_profile
