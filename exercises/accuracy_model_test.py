@@ -6,7 +6,7 @@ flaky.
 
 import unittest
 
-from accuracy_model.accuracy_model import AccuracyModel
+from exercises.accuracy_model import AccuracyModel
 
 
 class TestSequenceFunctions(unittest.TestCase):

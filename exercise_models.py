@@ -20,8 +20,8 @@ import random
 
 from google.appengine.ext import db
 
-from accuracy_model import accuracy_model
-from accuracy_model import progress_normalizer
+from exercises import accuracy_model
+from exercises import progress_normalizer
 import app
 import backup_model
 import consts
