@@ -17,7 +17,7 @@
 	    {{#each progress}}
 	    	<div class="skill-status">
                 <h2 class="skill-bar-title">
-                    {{#with exerciseStates}}{{> small-exercise-icon}}{{/with}}
+                    {{#with exerciseStates}}{{> shared_small-exercise-icon}}{{/with}}
                     <a href="{{userExercise.exerciseModel.relativeUrl}}">{{displayName}}</a>
                 </h2>
                 {{{skill-bar end start exerciseStates}}}
@@ -38,7 +38,7 @@
             {{#each unstartedExercises}}
             <div class="skill-status">
                 <h4 class="skill-bar-title">
-                    {{#with exerciseStates}}{{> small-exercise-icon}}{{/with}}
+                    {{#with exerciseStates}}{{> shared_small-exercise-icon}}{{/with}}
                     <a href="{{exerciseModel.relativeUrl}}">{{exerciseModel.displayName}}</a>
                 </h4>
                 {{{skill-bar progress progress}}}
@@ -50,7 +50,7 @@
             {{#each startedExercises}}
             <div class="skill-status">
                 <h4 class="skill-bar-title">
-                    {{#with exerciseStates}}{{> small-exercise-icon}}{{/with}}
+                    {{#with exerciseStates}}{{> shared_small-exercise-icon}}{{/with}}
                     <a href="{{exerciseModel.relativeUrl}}">{{exerciseModel.displayName}}</a>
                 </h4>
                 {{{skill-bar progress progress}}}
@@ -62,7 +62,7 @@
             {{#each proficientExercises}}
         	<div class="skill-status">
     	    	<h4 class="skill-bar-title">
-    	    		{{#with exerciseStates}}{{> small-exercise-icon}}{{/with}}
+    	    		{{#with exerciseStates}}{{> shared_small-exercise-icon}}{{/with}}
                     <a href="{{exerciseModel.relativeUrl}}">{{exerciseModel.displayName}}</a>
     	    	</h4>
                 {{{skill-bar progress progress exerciseStates}}}

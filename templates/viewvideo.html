@@ -14,20 +14,26 @@
 {% endblock pagecss %}
 
 {% block pagesubmenu %}
-<span class="breadcrumbs_nav video-nav"></span>
+<span class="breadcrumbs_nav video-nav">
+  {{ handlebars_template('video', 'video-nav', {'topic': topic_data, 'video': video}) }}
+</span>
 {% endblock pagesubmenu %}
 {% block pagecontent %}
 <article id="video-page">
 <div class="video" data-role="page" data-theme="b">
     <div data-role="header" class="mobile-only">
         <a href="#" data-rel="back" data-icon="arrow-l">Back</a>
-        <h2 class="video-title"></h2>
+        <h2 class="video-title">{{ video.title }}</h2>
         <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse"></a>
     </div>
     <div data-role="content" itemscope itemtype="http://schema.org/VideoObject">
         <div style="min-height: 88px">
-          <div id="description" class="video-description"></div>
-          <div class="video-header" style="min-height: 1px"></div>
+          <div id="description" class="video-description">
+            {{ handlebars_template('video', 'video-description', {'topic': topic_data, 'video': video}) }}
+          </div>
+          <div class="video-header" style="min-height: 1px">
+            {{ handlebars_template('video', 'video-header', {'topic': topic_data, 'video': video}) }}
+          </div>
         </div>
 
         <div id="youtube_blocked" class="desktop-only"></div>
@@ -43,7 +49,9 @@
 
           {{ subtitles.interactive_transcript(video.subtitles_json) }}
 
-          <span class="video-footer"></span>
+          <span class="video-footer">
+            {{ handlebars_template('video', 'video-footer', {'topic': topic_data, 'video': video}) }}
+          </span>
         </div>
 
         <div class="desktop-only video-discussion"></div>

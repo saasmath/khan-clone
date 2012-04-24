@@ -747,6 +747,6 @@ $(function() {
 });
 
 // todo: should we do this globally?
-Handlebars.registerPartial("goal-objectives", Templates.get("shared.goal-objectives"));
-Handlebars.registerPartial("goalbook-row", Templates.get("shared.goalbook-row"));
-Handlebars.registerPartial("goal-new", Templates.get("shared.goal-new"));
+Handlebars.registerPartial("shared_goal-objectives", Templates.get("shared.goal-objectives"));
+Handlebars.registerPartial("shared_goalbook-row", Templates.get("shared.goalbook-row"));
+Handlebars.registerPartial("shared_goal-new", Templates.get("shared.goal-new"));
