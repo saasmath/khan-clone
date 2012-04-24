@@ -135,16 +135,19 @@ def handlebars_template(package, name, context):
             try:
                 __import__(module_name)
             except ImportError:
-                logging.info("Import error!")
+                logging.info("Import error: %s" % traceback.format_exc())
 
         if module_name in sys.modules:
             function = getattr(sys.modules[module_name], function_name)
 
-    try:
-        ret = function(context, helpers=handlebars_helpers, partials=handlebars_partials)
-        return u"".join(ret)
-    except:
-        logging.info("Exception running Handlebars template: %s" % traceback.format_exc())
+    if function:
+        try:
+            ret = function(context, helpers=handlebars_helpers, partials=handlebars_partials)
+            return u"".join(ret)
+        except:
+            logging.info("Exception running Handlebars template: %s" % traceback.format_exc())
+            return u""
+    else:
         return u""
 
 def render_from_jinja(package, name, context):

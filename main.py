@@ -762,6 +762,9 @@ application = webapp2.WSGIApplication([
     ('/devadmin/content', topics.EditContent),
     ('/devadmin/memcacheviewer', MemcacheViewer),
 
+    # Manually refresh the content caches
+    ('/devadmin/refresh', topics.RefreshCaches),
+
     ('/coach/resources', util_coach.ViewCoachResources),
     ('/coach/demo', util_coach.ViewDemo),
     ('/coach/accessdemo', util_coach.AccessDemo),

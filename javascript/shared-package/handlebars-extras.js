@@ -114,3 +114,7 @@ Handlebars.registerHelper("ellipsis", function(text, length) {
     }
 });
 
+Handlebars.registerHelper("arrayLength", function(array) {
+    return array.length;
+});
+

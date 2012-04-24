@@ -11,10 +11,6 @@ Handlebars.registerHelper("pluralize", function(num) {
     return (num === 1) ? "" : "s";
 });
 
-Handlebars.registerHelper("arrayLength", function(array) {
-    return array.length;
-});
-
 /**
  * Convert number of seconds to a time phrase for recent activity video entries.
  * Stolen from templatefilters.py

@@ -418,7 +418,7 @@ class Topic(search.Searchable, db.Model):
         return jsonify.jsonify(topic_info, camel_cased=False)
 
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_topic_page_html_%s_v1" % self.key(),
+        "topic_get_topic_page_html_%s_v2" % self.key(),
         persist_across_app_versions=True,
         layer=layer_cache.Layers.InAppMemory | layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
     def get_topic_page_html(self):
@@ -455,23 +455,31 @@ class Topic(search.Searchable, db.Model):
                     "subtopicsA": children_col1,
                     "subtopicsB": children_col2,
                 })
+        elif topic_info["subtopics"]:
+            subtopic = [t for t in topic_info["subtopics"] if t["id"] == self.id]
+            if subtopic:
+                subtopic = subtopic[0]
+
+                list_length = int((len(subtopic["children"])+1)/2)
+                children_col1 = subtopic["children"][0:list_length]
+                children_col2 = subtopic["children"][list_length:]
+
+                html = handlebars.handlebars_template("topic", "content-topic-videos", {
+                    "topic": subtopic,
+                    "childrenCol1": children_col1,
+                    "childrenCol2": children_col2,
+                })
+            else:
+                logging.info("Skipping hidden subtopic: %s" % self.standalone_title)
+                html = ""
         else:
-            subtopic = [t for t in topic_info["subtopics"] if t["id"] == self.id][0]
-
-            list_length = int((len(subtopic["children"])+1)/2)
-            children_col1 = subtopic["children"][0:list_length]
-            children_col2 = subtopic["children"][list_length:]
-
-            html = handlebars.handlebars_template("topic", "content-topic-videos", {
-                "topic": subtopic,
-                "childrenCol1": children_col1,
-                "childrenCol2": children_col2,
-            })
+            logging.info("Skipping hidden subtopic: %s" % self.standalone_title)
+            html = ""
 
         return html
 
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_topic_page_nav_html_%s_v1" % self.key(),
+        "topic_get_topic_page_nav_html_%s_v2" % self.key(),
         persist_across_app_versions=True,
         layer=layer_cache.Layers.InAppMemory | layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
     def get_topic_page_nav_html(self):
@@ -1640,17 +1648,42 @@ def _apply_version_content_changes(version_number, run_code):
                                   version_number,
                                   run_code)
 
+def preload_library_homepage(version):
+    library.library_content_html(False, version.number)
+    logging.info("preloaded library_content_html")
+
+    library.library_content_html(True, version.number)
+    logging.info("preloaded ajax library_content_html")
+
+
+def preload_topic_pages(version):
+    for topic in Topic.get_all_topics(version=version):
+        topic.get_topic_page_json()
+        topic.get_topic_page_html()
+        topic.get_topic_page_nav_html()
+    logging.info("preloaded topic pages")
+
+
+def preload_topic_browsers(version):
+    templatetags.topic_browser("browse", version.number)
+    templatetags.topic_browser("browse-fixed", version.number)
+    templatetags.topic_browser_data(version_number=version.number, show_topic_pages=False)
+    templatetags.topic_browser_data(version_number=version.number, show_topic_pages=True)
+    logging.info("preloaded topic_browsers")
+
 
 def _preload_default_version_data(version_number, run_code):
     setting_model.Setting.topic_admin_task_message("Publish: preloading cache")
     version = TopicVersion.get_by_id(version_number)
 
     # Preload library for upcoming version
-    library.library_content_html(False, version.number)
-    logging.info("preloaded library_content_html")
+    preload_library_homepage(version)
 
-    library.library_content_html(True, version.number)
-    logging.info("preloaded ajax library_content_html")
+    # Preload topic pages
+    preload_topic_pages(version)
+
+    # Preload topic browsers
+    preload_topic_browsers(version)
 
     # Preload autocomplete cache
     autocomplete.video_title_dicts(version.number)
@@ -1658,20 +1691,6 @@ def _preload_default_version_data(version_number, run_code):
 
     autocomplete.topic_title_dicts(version.number)
     logging.info("preloaded topic autocomplete")
-
-    # Preload topic pages
-    for topic in Topic.get_all_topics(version=version):
-        topic.get_topic_page_json()
-        topic.get_topic_page_html()
-        topic.get_topic_page_nav_html()
-    logging.info("preloaded topic pages")
-
-    # Preload topic browser
-    templatetags.topic_browser("browse", version.number)
-    templatetags.topic_browser("browse-fixed", version.number)
-    templatetags.topic_browser_data(version_number=version.number, show_topic_pages=False)
-    templatetags.topic_browser_data(version_number=version.number, show_topic_pages=True)
-    logging.info("preloaded topic_browsers")
 
     # Sync all topic exercise badges with upcoming version
     badges.topic_exercise_badges.sync_with_topic_version(version)
