@@ -501,9 +501,13 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
         return user_data
 
+    # TODO(benkomalo): collapse this method into the other methods in
+    #   request_handler related to getting a user that may be the current user.
+    #   Either that or make this private and encourage clients to use the
+    #   request_handler versions instead.
     @staticmethod
     def get_possibly_current_user(identifier):
-        """ Returns a UserData object corresponding to the identifier
+        """Return a UserData object corresponding to the identifier
         using the request cache for the current-logged in user if
         the identifier matches.
 
@@ -513,7 +517,6 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             Note that this is the user visible e-mail, not the email used in
             the db User property, as most user-visible operations should
             use that field as parameters and not the db key email.
-
         """
 
         if not identifier:
