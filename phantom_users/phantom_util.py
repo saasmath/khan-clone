@@ -4,8 +4,11 @@ import logging
 import hashlib
 from functools import wraps
 
+from flask import request
 import user_models
 from cookie_util import set_request_cookie
+from api import api_util
+
 
 # TODO: consolidate this with the constants in user_models.py:UserData
 PHANTOM_ID_EMAIL_PREFIX = "http://nouserid.khanacademy.org/"
@@ -91,13 +94,15 @@ def api_create_phantom(method):
 
             if not user_data:
                 logging.warning("api_create_phantom failed to create "
-                                "user_data properly")
+                                "user_data properly. xsrf failure? "
+                                "Headers:\n%s" % str(request.headers).strip())
+                return api_util.api_unauthorized_response(
+                    'Failed to create phantom user')
 
             response = method(*args, **kwargs)
 
-            if user_data:
-                cookie = _get_cookie_from_phantom(user_data)
-                response.set_cookie(PHANTOM_MORSEL_KEY, cookie)
+            cookie = _get_cookie_from_phantom(user_data)
+            response.set_cookie(PHANTOM_MORSEL_KEY, cookie)
 
             return response
 
