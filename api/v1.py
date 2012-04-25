@@ -1765,7 +1765,6 @@ def user_problem_logs(exercise_name):
 @jsonify
 def attempt_problem_number(exercise_name, problem_number):
     user_data = user_models.UserData.current()
-    logging.error('phantom: %s' % user_data.is_phantom)
 
     exercise = exercise_models.Exercise.get_by_name(exercise_name)
     user_exercise = user_data.get_or_insert_exercise(exercise)
