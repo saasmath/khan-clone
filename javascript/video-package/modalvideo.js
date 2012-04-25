@@ -62,14 +62,14 @@ var ModalVideo = {
         });
     },
 
-    init: function(video, points) {
+    init: function(video) {
         var context = {
             video: video,
             downloadUrl: video.downloadUrls && video.downloadUrls.mp4 || null,
             height: 480,
             width: 800,
             youtubeId: video.youtubeId,
-            points: points,
+            points: 0, // will be updated at end of .show()'s ajax request
             possible_points: 750, // VIDEO_POINTS_BASE in consts.py
             logged_in: !!USERNAME, // phantom users have empty string usernames
             video_url: window.Khan && Khan.relatedVideos && Khan.relatedVideos.makeHref(video) || video.relative_url
@@ -89,20 +89,22 @@ var ModalVideo = {
                 this.modal.removeClass("fade");
             }, this));
 
-        VideoStats.updatePointsSaved(points);
         Video.init({});
         ModalVideo.linkifyTooltip();
         return this.modal;
     },
 
     show: function(video) {
+        this.modal = this.init(video);
+        this.modal.modal("show");
+        VideoStats.startLoggingProgress(null, video.youtubeId);
+
         var apiUrl = "/api/v1/user/videos/" + video.youtubeId;
         $.ajax(apiUrl, {
             success: $.proxy(function(data) {
                 var points = data ? data.points : 0;
-                this.modal = this.init(video, points);
-                VideoStats.startLoggingProgress(null, video.youtubeId);
-                this.modal.modal("show");
+                VideoStats.updatePointsSaved(points);
+                VideoStats.updatePointsDisplay(points);
             }, this)
         });
     },
