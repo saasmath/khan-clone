@@ -320,6 +320,7 @@ var ActivityGraph = {
         }
         var bucket = this.chart.options.xAxis.categories[ix];
         if (bucket) {
+            // TODO(benkomalo): should this use username if possible?
             Profile.loadGraph("/profile/graph/activity?email=" +
                     this.bucketData.studentEmail + "&dt_start=" + bucket);
         }
