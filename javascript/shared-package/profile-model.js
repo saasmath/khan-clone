@@ -79,6 +79,7 @@ var ProfileModel = Backbone.Model.extend({
         // to do it here.
         json["isFullyEditable"] =
                 this.isEditable() && this.get("isDataCollectible");
+        json["isFullyAccessible"] = this.isFullyAccessible();
         return json;
     },
 
