@@ -1127,21 +1127,6 @@ def save_video(video_id="", version_id = "edit"):
                 version,
                 video_data)
 
-def replace_playlist_values(structure, playlist_dict):
-    if type(structure) == list:
-        for sub_structure in structure:
-            replace_playlist_values(sub_structure, playlist_dict)
-    else:
-        if "items" in structure:
-            replace_playlist_values(structure["items"], playlist_dict)
-        elif "playlist" in structure:
-            # Replace string playlist title with real playlist object
-            key = structure["playlist"]
-            if key in playlist_dict:
-                structure["playlist"] = playlist_dict[key]
-            else:
-                del structure["playlist"]
-
 def get_students_data_from_request(user_data):
     return util_profile.get_students_data(user_data, request.request_string("list_id"))
 
