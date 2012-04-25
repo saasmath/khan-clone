@@ -331,7 +331,7 @@ class Video(search.Searchable, db.Model):
             'description': video.description,
             'youtube_id': video.youtube_id,
             'readable_id': video.readable_id,
-            'key': video.key(),
+            'key': unicode(video.key()),
             'video_path': video_path,
             'button_top_exercise': button_top_exercise,
             'related_exercises': [], # disabled for now

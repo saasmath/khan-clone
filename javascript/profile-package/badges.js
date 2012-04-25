@@ -212,12 +212,6 @@ Badges.DisplayCase = Backbone.View.extend({
         this.model.bind("change", this.render, this);
         this.template = Templates.get("profile.badge-display-case");
 
-        // TODO: register in some central intializing point?
-        Handlebars.registerPartial(
-            "badge-compact",
-            Templates.get("profile.badge-compact")
-        );
-
         Handlebars.registerHelper("toBadgeDescriptionWithBreaks", function(description) {
             var lines = [];
             var line = "";

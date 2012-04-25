@@ -188,6 +188,8 @@ var Profile = {
             if (Profile.profile.get("email")) {
                 identityParam = "email=" +
                         encodeURIComponent(Profile.profile.get("email"));
+            } else if (Profile.profile.get("username")) {
+                identityParam = "username=" + Profile.profile.get("username");
             }
 
             var hrefLookup = {
@@ -231,8 +233,7 @@ var Profile = {
                 this.updateTitleBreadcrumbs([prettyGraphName]);
             }
 
-            if (Profile.profile.get("isSelf") ||
-                    Profile.profile.get("email")) {
+            if (Profile.profile.isFullyAccessible()) {
                 // If we have access to the profiled person's email, load real data.
                 Profile.loadGraph(href);
             } else {
@@ -338,7 +339,7 @@ var Profile = {
                 parts.unshift(rootCrumb);
                 sheetTitle.text(parts.join(" » ")).show();
 
-                if (!Profile.profile.get("isSelf") && !Profile.profile.get("email")) {
+                if (!Profile.profile.isFullyAccessible()) {
                     $(".profile-notification").show();
                 }
             } else {
@@ -656,8 +657,8 @@ var Profile = {
             this.graph = block.hash.graph;
             return block(this);
         });
-        Handlebars.registerPartial("graph-date-picker", Templates.get("profile.graph-date-picker"));
-        Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
+        Handlebars.registerPartial("profile_graph-date-picker", Templates.get("profile.graph-date-picker"));
+        Handlebars.registerPartial("profile_vital-statistics", Templates.get("profile.vital-statistics"));
 
         $("#profile-content").html(profileTemplate({
             profileRoot: this.profileRoot,
@@ -792,13 +793,13 @@ var Profile = {
                 });
 
                 Handlebars.registerPartial(
-                        "badge-container",
+                        "profile_badge-container",
                         Templates.get("profile.badge-container"));
                 Handlebars.registerPartial(
-                        "badge",
+                        "profile_badge",
                         Templates.get("profile.badge"));
                 Handlebars.registerPartial(
-                        "user-badge",
+                        "profile_user-badge",
                         Templates.get("profile.user-badge"));
 
                 $.each(data["badgeCollections"], function(collectionIndex, collection) {
@@ -920,14 +921,11 @@ var Profile = {
             return Profile.goalsDeferred_;
         }
 
-        // TODO: Abstract away profile + actor privileges
-        // Also in profile.handlebars
-        var email = Profile.profile.get("email");
-        if (email) {
+        if (Profile.profile.isFullyAccessible()) {
             Profile.goalsDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/goals",
-                data: {email: email},
+                data: Profile.getBaseRequestParams_(),
                 dataType: "json",
                 success: function(data) {
                     GoalProfileViewsCollection.render(data);
@@ -972,15 +970,11 @@ var Profile = {
             return Profile.discussionDeferred_;
         }
 
-        var email = Profile.profile.get("email");
-        if (email) {
+        if (Profile.profile.isFullyAccessible()) {
             Profile.discussionDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/questions",
-                data: {
-                    email: email,
-                    casing: "camel"
-                },
+                data: Profile.getBaseRequestParams_(),
                 dataType: "json",
                 success: function(questions) {
                     if (questions.length === 0) {
@@ -1070,16 +1064,11 @@ var Profile = {
         }
         $("#recent-activity-progress-bar").progressbar({value: 100});
 
-        // TODO: Abstract away profile + actor privileges
-        var email = Profile.profile.get("email");
-        if (email) {
+        if (Profile.profile.isFullyAccessible()) {
             Profile.activityDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/activity",
-                data: {
-                    email: email,
-                    casing: "camel"
-                },
+                data: Profile.getBaseRequestParams_(),
                 dataType: "json",
                 success: function(data) {
                     $("#activity-loading-placeholder").fadeOut(
@@ -1096,5 +1085,23 @@ var Profile = {
             Profile.activityDeferred_.resolve();
         }
         return Profile.activityDeferred_;
+    },
+
+    /**
+     * Return an object to be used in an outgoing XHR for user profile data
+     * (e.g. activity graph data).
+     * This includes an identifier for the current profile being viewed at,
+     * and other common properties.
+     */
+    getBaseRequestParams_: function() {
+        var params = {
+            "casing": "camel"
+        };
+        if (Profile.profile.get("email")) {
+            params["email"] = Profile.profile.get("email");
+        } else if (Profile.profile.get("username")) {
+            params["username"] = Profile.profile.get("username");
+        }
+        return params;
     }
 };

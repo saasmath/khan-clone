@@ -38,6 +38,29 @@ var ProfileModel = Backbone.Model.extend({
     },
 
     /**
+     * Whether or not the current actor on the app can access this user's full
+     * profile information.
+     */
+    isFullyAccessible: function() {
+        // Right now we're using "email" as a proxy for full information, since
+        // the server will not send down the e-mail address if you don't have
+        // the full information.
+        return this.get("isSelf") || !!this.get("email");
+    },
+
+    /**
+     * Returns either an e-mail or username that will uniquely identify the
+     * user.
+     *
+     * Note that not all users have a username, and not all users have
+     * an e-mail. However, if the actor has full access to this profile,
+     * at least one of these values will be non empty.
+     */
+    getIdentifier: function() {
+        return this.get("username") || this.get("email");
+    },
+
+    /**
      * Whether or not the current actor can customize this profile.
      * Note that users under 13 without parental consent can only
      * edit some data; clients should also check isDataCollectible for full
@@ -56,6 +79,7 @@ var ProfileModel = Backbone.Model.extend({
         // to do it here.
         json["isFullyEditable"] =
                 this.isEditable() && this.get("isDataCollectible");
+        json["isFullyAccessible"] = this.isFullyAccessible();
         return json;
     },
 

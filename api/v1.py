@@ -438,6 +438,7 @@ def put_topic(topic_id, version_id = "edit"):
         kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['id', 'title', 'standalone_title', 'description', 'tags', 'hide'])
         kwargs["version"]=version
         topic.update(**kwargs)
+        topic.get_extended_slug(bust_cache=True)
 
     return {
         "id": topic.id
@@ -1191,7 +1192,7 @@ def get_user_profile():
     current_user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
     # TODO(marcia): This uses user_id, as opposed to email...
     # which means that the GET and POST are not symmetric...
-    user_data = request.request_user_data_by_user_id()
+    user_data = request.request_student_user_data()
     return util_profile.UserProfile.from_user(user_data, current_user_data)
 
 @route("/api/v1/user/profile", methods=["POST", "PUT"])
@@ -1765,7 +1766,6 @@ def user_problem_logs(exercise_name):
 @jsonify
 def attempt_problem_number(exercise_name, problem_number):
     user_data = user_models.UserData.current()
-    logging.error('phantom: %s' % user_data.is_phantom)
 
     exercise = exercise_models.Exercise.get_by_name(exercise_name)
     user_exercise = user_data.get_or_insert_exercise(exercise)

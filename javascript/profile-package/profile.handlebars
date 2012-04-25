@@ -42,7 +42,7 @@
 <section class="tab-content">
     <h2 class="profile-sheet-title"></h2>
     <div class="profile-notification">
-        {{#if profileData.email}}
+        {{#if profileData.isFullyAccessible}}
             <div class="empty-graph">
                 <h2><a href='/#browse'>Watch a video</a> or <a href='/exercisedashboard'>try a skill</a>!</h2>
                 <p>Once you do, real data will show up here.</p>
@@ -69,7 +69,7 @@
         <div id="tab-content-user-profile" rel="profile">
             <div class="user-info-container"></div>
             <div style="clear: both; margin-bottom: 20px;"></div>
-            {{#if profileData.email}}
+            {{#if profileData.isFullyAccessible}}
             <div class="activity-column">
                 <div id="activity-loading-placeholder">
                     <h2>Loading activity...</h2>
@@ -90,7 +90,7 @@
         </div>
 
         <div id="tab-content-vital-statistics" rel="vital-statistics">
-            {{> vital-statistics}}
+            {{> profile_vital-statistics}}
         </div>
 
         <div id="tab-content-achievements" rel="achievements"{{#unless profileData.email}} class="empty-chart"{{/unless}}>

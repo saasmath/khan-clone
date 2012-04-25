@@ -161,6 +161,38 @@ class EditContent(request_handler.RequestHandler):
         else:
             logging.info("No videos to update.")
 
+
+class RefreshCaches(request_handler.RequestHandler):
+
+    @user_util.developer_required
+    def get(self):
+
+        refresh_homepage = self.request_bool('homepage', False)
+        refresh_topicpages = self.request_bool('topicpages', False)
+        refresh_browsers = self.request_bool('browsers', False)
+
+        if (not refresh_homepage and not refresh_topicpages and not refresh_browsers):
+            print "Cache names to refresh must be passed into the URL, i.e. /devadmin/refresh?homepage=1&topicpages=0&browsers=0"
+            return
+
+        version = topic_models.TopicVersion.get_default_version()
+
+        if refresh_homepage:
+            deferred.defer(topic_models.preload_library_homepage, version,
+                        _queue="topics-set-default-queue")
+            logging.info("Queued preload_library_homepage.")
+        if refresh_topicpages:
+            deferred.defer(topic_models.preload_topic_pages, version,
+                        _queue="topics-set-default-queue")
+            logging.info("Queued preload_topic_pages.")
+        if refresh_browsers:
+            deferred.defer(topic_models.preload_topic_browsers, version,
+                        _queue="topics-set-default-queue")
+            logging.info("Queued preload_topic_browsers.")
+
+        print "Queued refresh of selected queues."
+
+
 # function to create the root, needed for first import into a dev env
 def create_root(version):
     root = Topic.insert(title="The Root of All Knowledge",

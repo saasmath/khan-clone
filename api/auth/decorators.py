@@ -61,6 +61,10 @@ import os
 import logging
 
 
+class NotLoggedInError(Exception):
+    pass
+
+
 def verify_and_cache_oauth_or_cookie(request):
     """ For a given request, try to oauth-verify or cookie-verify it.
 
@@ -109,7 +113,7 @@ def verify_and_cache_oauth_or_cookie(request):
             # identity providers we consume (Google/Facebook)
             # disagree, we act as if our token is no longer valid.
             del flask.g.oauth_map
-            raise OAuthError("Unable to get current user from oauth token")
+            raise NotLoggedInError("verifying oauth token")
 
         # (We can do all the other global-setting after
         #  current_req_has_auth_credentials.)
@@ -121,15 +125,15 @@ def verify_and_cache_oauth_or_cookie(request):
         flask.g.is_anointed = consumer.anointed
 
     elif util.allow_cookie_based_auth():
-        # TODO(csilvers): this duplicates a lot of calls
+        # TODO(csilvers): simplify; this duplicates a lot of calls
         # (current_req_has_auth_credentials calls allow_cookie_based_auth too).
-        # Simplify.
+        # Would suffice to call util._get_current_user_id_from_cookies_unsafe()
+        # and maybe auth_util.current_oauth_map_from_session_unsafe() as well.
         if not util.current_req_has_auth_credentials():
-            logging.warning("Cookie: %s" % os.environ.get('HTTP_COOKIE',''))
-            raise OAuthError("Unable to read user value from cookies/oauth map")
+            raise NotLoggedInError("verifying cookie values")
 
     else:
-        raise OAuthError("Invalid parameters to Oauth request")
+        raise NotLoggedInError("looking at oauth headers and cookies")
 
 
 def open_access(func):
@@ -141,7 +145,7 @@ def open_access(func):
         # they're not we don't worry about it.
         try:
             verify_and_cache_oauth_or_cookie(request)
-        except OAuthError, e:
+        except (OAuthError, NotLoggedInError):
             pass
         return func(*args, **kwargs)
 
@@ -203,6 +207,13 @@ def login_required_and(admin_required=False,
                 verify_and_cache_oauth_or_cookie(request)
             except OAuthError, e:
                 return oauth_error_response(e)
+            except NotLoggedInError, e:
+                # TODO(csilvers): just count how often this happens intead
+                # of logging.  Why warn about something we can't control?
+                # The only reason is it's possible this is caused by a bug.
+                logging.warning('No login info found via %s\nCookie: %s'
+                                % (e, os.environ.get('HTTP_COOKIE', '')))
+                return unauthorized_response()
 
             try:
                 user_util.verify_login(admin_required, developer_required,
@@ -267,18 +278,21 @@ def oauth_consumers_must_be_anointed(func):
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        try:
-            # This sets flask.g.is_anointed, though only if the
-            # request was an oauth request (and not a cookie request).
-            # So for oauth requests, we're always using
-            # flask.g.is_anointed, and for cookie requests, we're
-            # always using the default value (3rd arg to getattr).
-            if is_valid_request(request):   # only check if we're an oauth req.
+        # This checks flask.g.is_anointed, though only if the
+        # request was an oauth request (and not a cookie request).
+        if is_valid_request(request):   # only check if we're an oauth req.
+            try:
                 verify_and_cache_oauth_or_cookie(request)
-            if not getattr(flask.g, "is_anointed", True):
-                raise OAuthError("Consumer access denied.")
-        except OAuthError, e:
-            return oauth_error_response(e)
+                if not getattr(flask.g, "is_anointed", False):
+                    raise OAuthError("Consumer access denied.")
+            except OAuthError, e:
+                return oauth_error_response(e)
+            except NotLoggedInError, e:
+                # TODO(csilvers): just count how often this happens intead
+                # of logging.  Why warn about something we can't control?
+                # The only reason is it's possible this is caused by a bug.
+                logging.warning('is_anointed: no login info found via %s' % e)
+                return unauthorized_response()
         return func(*args, **kwargs)
-        
+
     return wrapper

@@ -6,7 +6,7 @@ maintain consistency. }}
         <span class="goal-title">{{title}}</span>
         <span class="summary-light">
             {{#if complete}}Complete!{{else}}
-            <span class="objectives-complete">{{objectiveProgress}}/{{objectives.length}}</span>
+            <span class="objectives-complete">{{objectiveProgress}}/{{arrayLength objectives}}</span>
             &middot;
             <span class="percent-complete">{{progressStr}}%</span>
             {{/if}}
@@ -17,7 +17,7 @@ maintain consistency. }}
     </p>
     <ul class="inline-list objective-list">
     {{#each objectives}}
-        {{>goal-objectives}}
+        {{>shared_goal-objectives}}
     {{/each}}
     </ul>
     <div class="clear"></div>

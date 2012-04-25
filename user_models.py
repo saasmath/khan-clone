@@ -116,10 +116,10 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     last_badge_review = db.DateTimeProperty(indexed=False)
     last_activity = db.DateTimeProperty(indexed=False)
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
-    count_feedback_notification = db.IntegerProperty(default= -1,
+    count_feedback_notification = db.IntegerProperty(default=-1,
                                                      indexed=False)
 
-    question_sort_order = db.IntegerProperty(default= -1, indexed=False)
+    question_sort_order = db.IntegerProperty(default=-1, indexed=False)
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
@@ -426,7 +426,8 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @property
     def is_demo(self):
-        return self.user_email.startswith(_COACH_DEMO_COWORKER_EMAIL)
+        return (self.user_email and
+                self.user_email.startswith(_COACH_DEMO_COWORKER_EMAIL))
 
     @property
     def is_pre_phantom(self):
@@ -493,15 +494,20 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         user_data = None
 
         if UniqueUsername.is_valid_username(username_or_email):
-            user_data = UserData.get_from_username(username_or_email)
+            user_data = UserData.get_possibly_current_user_by_username(
+                username_or_email)
         else:
             user_data = UserData.get_possibly_current_user(username_or_email)
 
         return user_data
 
+    # TODO(benkomalo): collapse this method into the other methods in
+    #   request_handler related to getting a user that may be the current user.
+    #   Either that or make this private and encourage clients to use the
+    #   request_handler versions instead.
     @staticmethod
     def get_possibly_current_user(identifier):
-        """ Returns a UserData object corresponding to the identifier
+        """Return a UserData object corresponding to the identifier
         using the request cache for the current-logged in user if
         the identifier matches.
 
@@ -511,7 +517,6 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             Note that this is the user visible e-mail, not the email used in
             the db User property, as most user-visible operations should
             use that field as parameters and not the db key email.
-
         """
 
         if not identifier:
@@ -535,7 +540,8 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             return None
 
         user_data_current = UserData.current()
-        if user_data_current and user_data_current.username == username:
+        if (user_data_current and
+                UniqueUsername.matches(user_data_current.username, username)):
             return user_data_current
 
         return UserData.get_from_username(username)
@@ -939,9 +945,11 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         """ Returns whether or not this user's information is *fully* visible
         to the specified user
         """
-        return (self.key_email == user_data.key_email or self.is_coached_by(user_data)
-                or self.is_coached_by_coworker_of_coach(user_data)
-                or user_data.developer or user_data.is_administrator())
+        return (self.key() == user_data.key() or
+                self.is_coached_by(user_data) or
+                self.is_coached_by_coworker_of_coach(user_data) or
+                user_data.developer or
+                user_data.is_administrator())
 
     def are_students_visible_to(self, user_data):
         return self.is_coworker_of(user_data) or user_data.developer or user_data.is_administrator()
@@ -1076,9 +1084,9 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         return self.credential_version is not None
 
     def has_public_profile(self):
-        return (self.is_profile_public
-                and self.username is not None
-                and len(self.username) > 0)
+        return (self.is_profile_public and
+                bool(self.username) and
+                not self.is_child_account())
 
     def __str__(self):
         return self.__unicode__()
@@ -1179,6 +1187,21 @@ class UniqueUsername(db.Model):
         if clock is None:
             clock = datetime.datetime
         return entity is None or not entity._is_in_holding(clock.utcnow())
+
+    @staticmethod
+    def matches(username1, username2):
+        """Determine if two username strings match to one canonical name.
+        
+        If either string is not a valid username, will return False.
+        """
+        if not username1 or not username2:
+            return False
+        key1 = UniqueUsername.build_key_name(username1)
+        key2 = UniqueUsername.build_key_name(username2)
+        if (not UniqueUsername.is_valid_username(username1, key1) or
+                not UniqueUsername.is_valid_username(username2, key2)):
+            return False
+        return key1 == key2
 
     def _is_in_holding(self, utcnow):
         return self.release_date + UniqueUsername.HOLDING_PERIOD_DELTA >= utcnow

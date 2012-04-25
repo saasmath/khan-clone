@@ -4,20 +4,13 @@ try:
 except ImportError:
     import simplejson as json
 
-from app import App
-import app
 import custom_exceptions
-import facebook_util
 import util
 import user_util
 import request_handler
 
 from user_models import UserData, StudentList
 from coach_resources.coach_request_model import CoachRequest
-from badges import util_badges
-
-from profiles.util_profile import ExercisesOverTimeGraph, ExerciseProblemsGraph
-from profiles.util_profile import ClassProgressReportGraph, ClassEnergyPointsPerMinuteGraph, ClassTimeGraph
 
 import profiles.util_profile as util_profile
 
@@ -139,7 +132,7 @@ class RequestStudent(request_handler.RequestHandler):
     def post(self):
         user_data = UserData.current()
 
-        user_data_student = self.request_user_data("student_email")
+        user_data_student = self.request_student_user_data()
         if user_data_student:
             if not user_data_student.is_coached_by(user_data):
                 coach_request = CoachRequest.get_or_insert_for(user_data, user_data_student)
@@ -162,18 +155,13 @@ class AcceptCoach(request_handler.RequestHandler):
         user_data = UserData.current()
 
         accept_coach = self.request_bool("accept", default = False)
-        user_data_coach = self.request_user_data("coach_email")
-        user_data_student = self.request_user_data('student_email')
+        user_data_student = self.request_student_user_data()
 
-        if bool(user_data_coach) == bool(user_data_student):
-            raise Exception('must provide coach_email xor student_email')
-
-        if user_data_coach:
-            user_data_student = user_data
-        elif user_data_student:
+        if user_data_student:
             user_data_coach = user_data
 
-        if user_data_coach and not user_data_student.is_coached_by(user_data_coach):
+        if (user_data_coach and
+                not user_data_student.is_coached_by(user_data_coach)):
             coach_request = CoachRequest.get_for(user_data_coach, user_data_student)
             if coach_request:
                 coach_request.delete()
@@ -219,7 +207,7 @@ class UnregisterStudent(UnregisterStudentCoach):
     @user_util.login_required_and(phantom_user_allowed=False)
     def get(self):
         return self.do_request(
-            self.request_user_data("student_email"),
+            self.request_student_user_data(),
             UserData.current(),
             "/students"
         )

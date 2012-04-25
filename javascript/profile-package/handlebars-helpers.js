@@ -2,6 +2,11 @@ Handlebars.registerHelper("encodeURIComponent", function(str) {
     return encodeURIComponent(str);
 });
 
+Handlebars.registerHelper("commafy", function(numPoints) {
+    // From KhanUtil.commafy in math-format.js
+    return numPoints.toString().replace(/(\d)(?=(\d{3})+$)/g, "$1,");
+});
+
 /**
  * Convert number of seconds to a time phrase for recent activity video entries.
  * Stolen from templatefilters.py
