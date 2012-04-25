@@ -4,9 +4,9 @@ import logging
 import re
 from urlparse import urlparse
 
-import gdata.youtube
-import gdata.youtube.service
-import gdata.alt.appengine
+from third_party import gdata.youtube
+from third_party import gdata.youtube.service
+from third_party import gdata.alt.appengine
 
 from google.appengine.api import taskqueue
 from google.appengine.api import users

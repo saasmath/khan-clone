@@ -1,2 +1,3 @@
 khan-exercises = [git]http://github.com/Khan/khan-exercises.git
 third_party/agar-src = https://bitbucket.org/csilvers/agar
+third_party/gdata-python-client-src = https://csilvers%40khanacademy.org@code.google.com/r/csilvers-gdata-python-client

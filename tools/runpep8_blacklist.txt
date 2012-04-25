@@ -4,7 +4,6 @@
 ./atom
 ./gae_bingo
 ./gae_mini_profiler
-./gdata
 ./jinja2
 ./mapreduce
 ./oauth_provider

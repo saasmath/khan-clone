@@ -32,10 +32,10 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 '''
 
-import gdata.youtube
-import gdata.youtube.data
-import gdata.youtube.service
-import gdata.youtube.client
+from third_party import gdata.youtube
+from third_party import gdata.youtube.data
+from third_party import gdata.youtube.service
+from third_party import gdata.youtube.client
 import time
 import cgi
 import os
