@@ -517,8 +517,8 @@ class Topic(search.Searchable, db.Model):
         return any(child_key.kind() in types for child_key in self.child_keys)
 
     # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
-    def get_extended_slug(self):
-        if self.extended_slug:
+    def get_extended_slug(self, bust_cache=False):
+        if self.extended_slug and not bust_cache:
             return self.extended_slug
 
         parent_ids = [topic.id for topic in db.get(self.ancestor_keys)]

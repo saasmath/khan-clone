@@ -438,6 +438,7 @@ def put_topic(topic_id, version_id = "edit"):
         kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['id', 'title', 'standalone_title', 'description', 'tags', 'hide'])
         kwargs["version"]=version
         topic.update(**kwargs)
+        topic.get_extended_slug(bust_cache=True)
 
     return {
         "id": topic.id
