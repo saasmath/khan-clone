@@ -1,7 +1,6 @@
 # Third-party directories
 ./api/packages
 ./asynctools
-./atom
 ./gae_bingo
 ./gae_mini_profiler
 ./jinja2
