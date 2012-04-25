@@ -18,18 +18,14 @@ except ImportError:
     import simplejson as json
 
 import zlib
-import cPickle as pickle
 
+from google.appengine.ext import db
 from google.appengine.ext import deferred
-
-
 
 from api.jsonify import jsonify
 from api.auth.decorators import developer_required
 
-from google.appengine.ext import db
-
-
+import pickle_util
 from topic_models import Topic, TopicVersion
 from video_models import Video
 from url_model import Url
@@ -89,8 +85,7 @@ class EditContent(request_handler.RequestHandler):
 
             # importing the full topic tree can be too large so pickling and compressing
             deferred.defer(api.v1_utils.topictree_import_task, "edit", "root", True,
-                        zlib.compress(pickle.dumps(topictree), 
-                                      pickle.HIGHEST_PROTOCOL),
+                        zlib.compress(pickle_util.dump(topictree)),
                         _queue="import-queue",
                         _url="/_ah/queue/deferred_import")
 

@@ -2,7 +2,6 @@ import datetime
 import time
 import logging
 import os
-import cPickle as pickle
 import re
 
 # use json in Python 2.7, fallback to simplejson for Python 2.5
@@ -22,6 +21,7 @@ import unformatter
 from pprint import pformat
 import cleanup
 import cookies
+import pickle_util
 
 import gae_mini_profiler.config
 if os.environ["SERVER_SOFTWARE"].startswith("Devel"):
@@ -111,7 +111,7 @@ class RequestStats(object):
 
     def store(self):
         # Store compressed results so we stay under the memcache 1MB limit
-        pickled = pickle.dumps(self, pickle.HIGHEST_PROTOCOL)
+        pickled = pickle_util.dump(self)
         compressed_pickled = zlib.compress(pickled)
 
         return memcache.set(RequestStats.memcache_key(self.request_id), compressed_pickled)
@@ -124,7 +124,7 @@ class RequestStats(object):
 
             if compressed_pickled:
                 pickled = zlib.decompress(compressed_pickled)
-                return pickle.loads(pickled)
+                return pickle_util.load(pickled)
 
         return None
 

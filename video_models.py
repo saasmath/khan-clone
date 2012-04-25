@@ -16,7 +16,6 @@ A 'video' is what's on a Khan page like
    http://www.khanacademy.org/math/algebra/introduction-to-algebra/v/the-beauty-of-algebra
 """
 
-import cPickle as pickle
 import datetime
 import logging
 try:
@@ -38,6 +37,7 @@ import goals.models
 import image_cache
 import layer_cache
 import object_property
+import pickle_util
 import points
 import search
 import setting_model
@@ -622,7 +622,7 @@ class VideoLog(backup_model.BackupModel):
 def _set_css_deferred(user_data_key, video_key, status, version):
     user_data = user_models.UserData.get(user_data_key)
     uvc = UserVideoCss.get_for_user_data(user_data)
-    css = pickle.loads(uvc.pickled_dict)
+    css = pickle_util.load(uvc.pickled_dict)
 
     id = '.v%d' % video_key.id()
     if status == UserVideoCss.STARTED:
@@ -635,7 +635,7 @@ def _set_css_deferred(user_data_key, video_key, status, version):
         css['started'].discard(id)
         css['completed'].add(id)
 
-    uvc.pickled_dict = pickle.dumps(css, pickle.HIGHEST_PROTOCOL)
+    uvc.pickled_dict = pickle_util.dump(css)
     uvc.load_pickled()
 
     # if set_css_deferred runs out of order then we bump the version number
@@ -747,8 +747,7 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def get_for_user_data(user_data):
-        p = pickle.dumps({'started': set([]), 'completed': set([])}, 
-                         pickle.HIGHEST_PROTOCOL)
+        p = pickle_util.dump({'started': set([]), 'completed': set([])})
         return UserVideoCss.get_or_insert(UserVideoCss._key_for(user_data),
                                           user=user_data.user,
                                           video_css='',
@@ -784,7 +783,7 @@ class UserVideoCss(db.Model):
     def load_pickled(self):
         max_selectors = 20
         css_list = []
-        css = pickle.loads(self.pickled_dict)
+        css = pickle_util.load(self.pickled_dict)
 
         started_css = '{background-image:url(/images/video-indicator-started.png);padding-left:14px;}'
         complete_css = '{background-image:url(/images/video-indicator-complete.png);padding-left:14px;}'

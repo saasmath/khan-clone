@@ -15,7 +15,6 @@ A 'topic' the stuff after the # in urls like
 """
 
 import base64
-import cPickle as pickle
 import datetime
 import logging
 import os
@@ -38,6 +37,7 @@ from knowledgemap import layout
 import layer_cache
 import library
 import object_property
+import pickle_util
 import request_cache
 import search
 import setting_model
@@ -1520,7 +1520,7 @@ class Topic(search.Searchable, db.Model):
 
         user_video_css = video_models.UserVideoCss.get_for_user_data(user_data)
         if user_video_css:
-            user_video_dict = pickle.loads(user_video_css.pickled_dict)
+            user_video_dict = pickle_util.load(user_video_css.pickled_dict)
         else:
             user_video_dict = {}
 

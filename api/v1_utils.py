@@ -3,7 +3,6 @@
 TODO(csilvers): this is a terrible grab-bag of functionality.  Refactor.
 """
 
-import cPickle as pickle
 import cStringIO as StringIO
 import datetime
 import logging
@@ -16,6 +15,7 @@ from google.appengine.ext import deferred
 import app
 import exercise_models
 import exercise_video_model
+import pickle_util
 import setting_model
 import topic_models
 import url_model
@@ -53,7 +53,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
 
 def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
     try:
-        tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
+        tree_json = pickle_util.load(zlib.decompress(tree_json_compressed))
 
         logging.info("starting import")
         version = topic_models.TopicVersion.get_by_id(version_id)

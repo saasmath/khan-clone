@@ -1,7 +1,6 @@
 import hashlib
 import zlib
 from base64 import b64encode, b64decode
-from cPickle import dumps, loads
 from functools import wraps
 
 import flask
@@ -15,6 +14,7 @@ from app import App
 import datetime
 from layer_cache import layer_cache_check_set_return, Layers,\
     DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS
+import pickle_util
     
 
 def has_flask_request_context():
@@ -152,13 +152,13 @@ def decompress(func):
 def pickle(func):
     @wraps(func)
     def pickled(*args, **kwargs):
-        return dumps(func(*args, **kwargs))
+        return pickle_util.dump(func(*args, **kwargs))
     return pickled
 
 def unpickle(func):
     @wraps(func)
     def unpickled(*args, **kwargs):
-        return loads(func(*args, **kwargs))
+        return pick_util.load(func(*args, **kwargs))
     return unpickled
 
 def protobuf_encode(func):
