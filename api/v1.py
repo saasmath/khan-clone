@@ -1470,6 +1470,10 @@ def topic_next_exercises(topic_id):
 
     user_data = user_models.UserData.current()
 
+    # Be forgiving in the event that a user asks for next exercises even when
+    # they're not logged in. There's little reason to fail here, so we just
+    # use a pre_phantom user to return the next exercises that would be
+    # handed out if a new user tackled this topic.
     if not user_data:
         user_data = user_models.UserData.pre_phantom()
 
