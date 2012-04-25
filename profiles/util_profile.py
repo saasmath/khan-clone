@@ -236,7 +236,7 @@ class ViewProfile(request_handler.RequestHandler):
 
 
 class UserProfile(object):
-    """ Profile information about a user.
+    """Profile information about a user.
 
     This is a transient object and derived from the information in UserData,
     and formatted/tailored for use as an object about a user's public profile.

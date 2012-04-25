@@ -1081,9 +1081,9 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         return self.credential_version is not None
 
     def has_public_profile(self):
-        return (self.is_profile_public
-                and self.username is not None
-                and len(self.username) > 0)
+        return (self.is_profile_public and
+                bool(self.username) and
+                not self.is_child_account())
 
     def __str__(self):
         return self.__unicode__()
