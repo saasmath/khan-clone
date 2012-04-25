@@ -8,8 +8,10 @@ import request_handler
 import testutil
 import user_models
 
+
 class DummyHandler(request_handler.RequestHandler):
     pass
+
 
 # TODO(benkomalo): write tests to check for ACL-checking of
 #     request_visible_student_user_data
@@ -73,7 +75,7 @@ class RequestHandlerTest(testutil.GAEModelTestCase):
         # Legacy naming should work, too, though it warns
         with mock.patch("logging.warning") as warnmock:
             self.fake_request(params={"student_email": "other"},
-                          	  current_user=actor)
+                              current_user=actor)
             self.assertEquals(
                 other.key(),
                 self.handler.request_student_user_data().key())

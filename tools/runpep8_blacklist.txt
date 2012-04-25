@@ -18,6 +18,7 @@
 
 # Our code, which should be made pep8-compliant but isn't yet
 ./activity_summary.py
+./accuracy_model/__init__.py
 ./api/auth/__init__.py
 ./api/auth/auth_util.py
 ./api/auth/decorators.py
