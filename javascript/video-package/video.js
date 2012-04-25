@@ -56,12 +56,27 @@ var Video = {
 
     },
 
-    renderPage: function(topicData, videoData) {
-        var self = this;
+    renderTemplates: function(topicData, videoData) {
         var navTemplate = Templates.get("video.video-nav");
         var descTemplate = Templates.get("video.video-description");
         var headerTemplate = Templates.get("video.video-header");
         var footerTemplate = Templates.get("video.video-footer");
+
+        $("span.video-nav").html(navTemplate({topic: topicData.topic, video: videoData}));
+        $(".video-title").html(videoData.title);
+        $("div.video-description").html(descTemplate({topic: topicData.topic, video: videoData}));
+        $("div.video-header").html(headerTemplate({topic: topicData.topic, video: videoData}));
+        $("span.video-footer").html(footerTemplate({topic: topicData.topic, video: videoData}));
+    },
+
+    renderPage: function(topicData, videoData) {
+        var self = this;
+
+        // Fix up data for templating
+        if (videoData.related_exercises &&
+            videoData.related_exercises.length) {
+            videoData.related_exercises[videoData.related_exercises.length - 1].last = true;
+        }
 
         if (!this.rendered) {
             // Initial page load
@@ -82,24 +97,14 @@ var Video = {
                 });
                 this.needsUserVideoCSSReload = false;
             }
+
+            // Re-render templates
+            this.renderTemplates(topicData, videoData);
         }
 
         // Bingo conversions for reaching a video page
         gae_bingo.bingo(["videos_landing",
             "struggling_videos_landing"]);
-
-        // Fix up data for templating
-        if (videoData.related_exercises &&
-            videoData.related_exercises.length) {
-            videoData.related_exercises[videoData.related_exercises.length - 1].last = true;
-        }
-
-        // Render HTML
-        $("span.video-nav").html(navTemplate({topic: topicData.topic, video: videoData}));
-        $(".video-title").html(videoData.title);
-        $("div.video-description").html(descTemplate({topic: topicData.topic, video: videoData}));
-        $("div.video-header").html(headerTemplate({topic: topicData.topic, video: videoData}));
-        $("span.video-footer").html(footerTemplate({topic: topicData.topic, video: videoData}));
 
         document.title = videoData.title + " | " + topicData.topic.title + " | Khan Academy";
 

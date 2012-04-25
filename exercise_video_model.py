@@ -131,7 +131,7 @@ class ExerciseVideo(db.Model):
                 video_keys.append(str(video.key()))
 
         # Get the existing exercise videos
-        query = exercise_video_model.ExerciseVideo.all()
+        query = ExerciseVideo.all()
         query.filter('exercise =', exercise.key())
         existing_exercise_videos = query.fetch(1000)
 
@@ -154,7 +154,7 @@ class ExerciseVideo(db.Model):
         for i, video_key in enumerate(video_keys):
             if not video_key in existing_video_keys:
                 # add the videos that don't exist
-                exercise_video = exercise_video_model.ExerciseVideo()
+                exercise_video = ExerciseVideo()
                 exercise_video.exercise = exercise
                 exercise_video.video = db.Key(video_key)
                 exercise_video.exercise_order = i
