@@ -7,10 +7,6 @@ Handlebars.registerHelper("commafy", function(numPoints) {
     return numPoints.toString().replace(/(\d)(?=(\d{3})+$)/g, "$1,");
 });
 
-Handlebars.registerHelper("pluralize", function(num) {
-    return (num === 1) ? "" : "s";
-});
-
 /**
  * Convert number of seconds to a time phrase for recent activity video entries.
  * Stolen from templatefilters.py
