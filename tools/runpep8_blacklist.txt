@@ -10,6 +10,8 @@
 ./oauth_provider
 ./third_party
 ./webapp2_extras
+./pymeta
+./pybars
 
 # Subrepo directories
 ./khan-exercises
@@ -63,6 +65,7 @@
 ./deploy/hipchat/room.py
 ./deploy/hipchat/user.py
 ./deploy/npm.py
+./tools/npm.py
 ./discussion/comments.py
 ./discussion/notification.py
 ./discussion/qa.py
