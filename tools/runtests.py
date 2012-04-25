@@ -10,6 +10,7 @@ except ImportError:
     import unittest
 
 import xmlrunner
+import npm
 
 USAGE = """%prog [options] [TEST_SPEC]
 
@@ -83,6 +84,9 @@ def main(test_spec, should_write_xml, max_size, appengine_sdk_dir=None):
     from testutil import testsize
     testsize.set_max_size(max_size)
 
+    if not npm.check_dependencies():
+        return
+
     loader = unittest.loader.TestLoader()
     if not os.path.exists(test_spec):
         suite = loader.loadTestsFromName(test_spec)
@@ -97,6 +101,7 @@ def main(test_spec, should_write_xml, max_size, appengine_sdk_dir=None):
         runner = unittest.TextTestRunner(verbosity=2)
 
     result = runner.run(suite)
+
     return not result.wasSuccessful()
 
 

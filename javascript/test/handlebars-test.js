@@ -2,9 +2,10 @@
  * Node.js script that is called by handlebars.py during unit tests.
  * Compiles & executes a Handlebars template, writing result to STDOUT.
  */
+
 var fs = require("fs");
-_ = require("underscore");
-Handlebars = require("handlebars");
+_ = require("../../tools/node_modules/underscore");
+Handlebars = require("../../tools/node_modules/handlebars");
 
 var partials = {};
 Templates = {
