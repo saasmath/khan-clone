@@ -1192,7 +1192,7 @@ def get_user_profile():
     current_user_data = user_models.UserData.current() or user_models.UserData.pre_phantom()
     # TODO(marcia): This uses user_id, as opposed to email...
     # which means that the GET and POST are not symmetric...
-    user_data = request.request_user_data_by_user_id()
+    user_data = request.request_student_user_data()
     return util_profile.UserProfile.from_user(user_data, current_user_data)
 
 @route("/api/v1/user/profile", methods=["POST", "PUT"])

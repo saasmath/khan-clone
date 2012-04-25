@@ -60,10 +60,9 @@ def get_last_student_list(request_handler, student_lists, use_cookie=True):
     return list_id, current_list
 
 def get_student(coach, request_handler):
-    student = request_handler.request_student_user_data(legacy=True)
+    student = request_handler.request_student_user_data()
     if student is None:
-        raise Exception("No student found with email='%s'."
-            % request_handler.request_student_email_legacy())
+        raise Exception("No student found")
     if not student.is_coached_by(coach):
         raise Exception("Not your student!")
     return student
@@ -100,7 +99,6 @@ class ViewClassProfile(request_handler.RequestHandler):
                                   child_user_allowed=False,
                                   demo_user_allowed=True)
     def get(self):
-        show_coach_resources = self.request_bool('show_coach_resources', default=True)
         coach = UserData.current()
 
         user_override = self.request_user_data("coach_email")
@@ -238,7 +236,7 @@ class ViewProfile(request_handler.RequestHandler):
 
 
 class UserProfile(object):
-    """ Profile information about a user.
+    """Profile information about a user.
 
     This is a transient object and derived from the information in UserData,
     and formatted/tailored for use as an object about a user's public profile.
@@ -422,9 +420,7 @@ class ProfileGraph(request_handler.RequestHandler):
             self.response.out.write(html)
 
     def get_profile_target_user_data(self):
-        email = self.request_student_email_legacy()
-        # TODO: ACL
-        return UserData.get_possibly_current_user(email)
+        return self.request_visible_student_user_data()
 
     def redirect_if_not_ajax(self, student):
         if not self.is_ajax_request():
