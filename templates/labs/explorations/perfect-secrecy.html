@@ -1,0 +1,101 @@
+{% extends "labs/explorations/template.html" %}
+
+{% block pagescript %}
+{{ js_css_packages.css_package("bootstrap") }}
+<script>{% include "labs/explorations/highcharts.js" %}</script>
+<script>{% include "labs/explorations/perfect-secrecy.js" %}</script>
+
+<style>
+    h2 {
+        text-align: center;
+    }
+
+    .column {
+        display:    inline-block;
+        text-align: center;
+        width:      1.4em;
+    }
+
+    .row {
+        margin-bottom: 20px;
+        margin-top:    20px;
+    }
+
+    #chars {
+        float:          left;
+        overflow-x:     scroll;
+        padding-bottom: 1em;
+        white-space:    nowrap;
+        width:          90%;
+    }
+
+    #chart1,
+    #chart2,
+    #chart3 {
+        height: 300px;
+    }
+</style>
+{% endblock pagescript %}
+
+{% block pagetitle %}Perfect Secrecy | Khan Academy Labs{% endblock pagetitle %}
+
+{% block pagecontent %}
+    <div class="row" style="margin-top: 0;">
+        <div class="span12">
+            <ul class="breadcrumb">
+                <li><a href="/labs">Labs</a> <span class="divider">/</span></li>
+                <li><a href="/labs/explorations">Explorations</a> <span class="divider">/</span></li>
+                <li>Perfect Secrecy</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="span12">
+            <h1>Perfect Secrecy</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="span12">
+            <p style="margin: 0;">Insert a few sentences of text and watch your frequency fingerprint emerge. Notice how random shifts applied to your message absorb this unevenness. The resulting ciphertext contains no information. (Try pasting a large body of text and see what happens!)</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="span12">
+            <textarea autofocus maxlength="13000" style="display: block;margin: 0 auto;width: 95%;"></textarea>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="span12">
+            <div style="float: left;width: 10%;">
+                Plaintext<br>Random Shift<br>Ciphertext
+            </div>
+
+            <div id="chars">
+                <div class="column">&nbsp;<br>&nbsp;<br>&nbsp;</div>
+            </div>
+
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="span4">
+            <h2>Plaintext Frequency</h2>
+            <div id="chart1"></div>
+        </div>
+
+        <div class="span4">
+            <h2>Shift Frequency</h2>
+            <div id="chart2"></div>
+        </div>
+
+        <div class="span4">
+            <h2>Ciphertext Frequency</h2>
+            <div id="chart3"></div>
+        </div>
+    </div>
+{% endblock pagecontent %}
