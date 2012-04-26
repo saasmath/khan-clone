@@ -465,13 +465,13 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
                        '/topic-page')
         self.assertIn('"title": "One Step Equations"', r)
         self.assertIn('"title": "Absolute Value 1"', r)
-        self.assertIn('"topicPageUrl": "/math/basic-equations"', r)
+        self.assertIn('"topic_page_url": "/math/basic-equations"', r)
 
         r = self.fetch('/api/v1/topicversion/11/topic/basic-equations'
                        '/topic-page')
         self.assertIn('"title": "One Step Equations"', r)
         self.assertNotIn('"title": "Absolute Value 1"', r)
-        self.assertIn('"topicPageUrl": "/math/basic-equations"', r)
+        self.assertIn('"topic_page_url": "/math/basic-equations"', r)
 
         # Test a topic that doesn't exist in one version.
         r = self.fetch('/api/v1/topicversion/2/topic/art_of_math/topic-page')
@@ -481,8 +481,8 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
 
         # Test a super-topic.
         r = self.fetch('/api/v1/topicversion/11/topic/math/topic-page')
-        self.assertIn('"childCount": 2', r)
-        self.assertIn('"standaloneTitle": "Mathematics (other)"', r)
+        self.assertIn('"child_count": 2', r)
+        self.assertIn('"standalone_title": "Mathematics (other)"', r)
         self.assertIn('"title": "Mathematics [late]"', r)
         self.assertNotIn('[early]', r)
 
@@ -495,9 +495,9 @@ class V1EndToEndGetTest(V1EndToEndTestBase):
     @testsize.large()
     def test_topic__topic_id__topic_page(self):
         r = self.fetch('/api/v1/topic/math/topic-page')
-        self.assertIn('"teaserHtml": "Introduction to exponent rules"', r)
-        self.assertIn('"childCount": 2', r)
-        self.assertIn('"standaloneTitle": "Mathematics (other)"', r)
+        self.assertIn('"teaser_html": "Introduction to exponent rules"', r)
+        self.assertIn('"child_count": 2', r)
+        self.assertIn('"standalone_title": "Mathematics (other)"', r)
         self.assertIn('"title": "Mathematics [late]"', r)
         self.assertNotIn('[early]', r)
 

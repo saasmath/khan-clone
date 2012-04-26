@@ -111,8 +111,12 @@ def send_hipchat_deploy_message(
                 "git_msg": truncate(git_msg, 60),
                 "local_changes_warning": local_changes_warning,
             }
+    deployer_id = email
+    if email in ['prod-deploys@khanacademy.org']:  # Check for role-accounts
+        real_user = popen_results(['whoami']).strip()
+        deployer_id = "%s (%s)" % (email, real_user)
     public_message = "Just deployed %s" % message_tmpl
-    private_message = "%s just deployed %s%s" % (email, message_tmpl, authors_tmpl)
+    private_message = "%s just deployed %s%s" % (deployer_id, message_tmpl, authors_tmpl)
 
     hipchat_message(public_message, ["Exercises"])
     hipchat_message(private_message, ["1s and 0s"])

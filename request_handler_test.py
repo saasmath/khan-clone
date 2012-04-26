@@ -8,24 +8,35 @@ import request_handler
 import testutil
 import user_models
 
+
 class DummyHandler(request_handler.RequestHandler):
     pass
+
 
 # TODO(benkomalo): write tests to check for ACL-checking of
 #     request_visible_student_user_data
 class RequestHandlerTest(testutil.GAEModelTestCase):
     def setUp(self):
         super(RequestHandlerTest, self).setUp()
-        self.orig_current_user = user_models.UserData.current
+        self.current_user_mock = None
         self.handler = DummyHandler()
 
     def tearDown(self):
-        user_models.UserData.current = self.orig_current_user
+        self.unmock_current_user()
         super(RequestHandlerTest, self).tearDown()
+
+    def unmock_current_user(self):
+        if self.current_user_mock:
+            self.current_user_mock.stop()
+        self.current_user_mock = None
 
     def fake_request(self, params={}, current_user=None):
         if current_user:
-            user_models.UserData.current = staticmethod(lambda: current_user)
+            self.unmock_current_user()
+            self.current_user_mock = mock.patch(
+                "user_models.UserData.current",
+                staticmethod(lambda: current_user))
+            self.current_user_mock.start()
         self.handler.request = webapp2.Request.blank("/", POST=params)
 
     def make_user(self, user_id, email=None, username=None):
@@ -64,7 +75,7 @@ class RequestHandlerTest(testutil.GAEModelTestCase):
         # Legacy naming should work, too, though it warns
         with mock.patch("logging.warning") as warnmock:
             self.fake_request(params={"student_email": "other"},
-                          	  current_user=actor)
+                              current_user=actor)
             self.assertEquals(
                 other.key(),
                 self.handler.request_student_user_data().key())
