@@ -4,7 +4,9 @@ In particular, test that we can successfully unpickle using the
 pickle-map.
 """
 
+import cPickle
 import imp
+import pickle
 import sys
 try:
     import unittest2 as unittest     # python 2.5
@@ -94,3 +96,35 @@ class PickleUtilTest(unittest.TestCase):
         actual = pickle_util.load(pickled)
         import mod.submod1.submod2
         self.assertTrue(isinstance(actual, mod.submod1.submod2.NewClass))
+
+    def test_unpickling_data_pickled_with_pickle(self):
+        expected = 'This is a test string'
+        actual = pickle_util.load(pickle.dumps(expected))
+        self.assertEqual(expected, actual)
+
+    def test_unpickling_data_pickled_with_cpickle(self):
+        expected = 'This is a test string'
+        actual = pickle_util.load(pickle.dumps(expected))
+        self.assertEqual(expected, actual)
+
+    def test_unpickling_data_pickled_with_pickle_vhigh(self):
+        expected = 'This is a test string'
+        actual = pickle_util.load(pickle.dumps(expected,
+                                               pickle.HIGHEST_PROTOCOL))
+        self.assertEqual(expected, actual)
+
+    def test_unpickling_data_pickled_with_cpickle_vhigh(self):
+        expected = 'This is a test string'
+        actual = pickle_util.load(cPickle.dumps(expected,
+                                                cPickle.HIGHEST_PROTOCOL))
+        self.assertEqual(expected, actual)
+
+    def test_using_pickle_to_unpickle(self):
+        expected = 'This is a test string'
+        actual = pickle.loads(pickle_util.dump(expected))
+        self.assertEqual(expected, actual)
+
+    def test_using_cpickle_to_unpickle(self):
+        expected = 'This is a test string'
+        actual = cPickle.loads(pickle_util.dump(expected))
+        self.assertEqual(expected, actual)
