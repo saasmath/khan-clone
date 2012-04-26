@@ -5,12 +5,15 @@ import simplejson
 import subprocess
 import tempfile
 
+
 from handlebars import handlebars_template
+
 
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+
 
 # Unit test to ensure that Python & JS outputs match
 class HandlebarsTest(unittest.TestCase):
@@ -18,14 +21,17 @@ class HandlebarsTest(unittest.TestCase):
         matches = []
         for root, dirnames, filenames in os.walk('javascript'):
             for filename in fnmatch.filter(filenames, '*.handlebars.json'):
-                package = re.match('javascript/([^-]+)-package', root).group(1);
+                package = re.match('javascript/([^-]+)-package', root)
+                package = package.group(1)
                 matches.append((package, root, filename))
 
         for match in matches:
             package = match[0]
             template_name = re.sub('\.handlebars\.json$', '', match[2])
             test_file = os.path.join(match[1], match[2])
-            handlebars_file = re.sub('handlebars\.json$', 'handlebars', test_file)
+            handlebars_file = re.sub('handlebars\.json$',
+                                     'handlebars',
+                                     test_file)
 
             # Load test file data
             in_file = open(test_file, 'r')
@@ -34,19 +40,32 @@ class HandlebarsTest(unittest.TestCase):
 
             print "Testing %s..." % handlebars_file
 
-            # Run Python template (append extra newline to make comparison with JS easier)
-            python_output = str(handlebars_template(package, template_name, test_data)) + "\n"
+            # Run Python template (append extra newline to make
+            # comparison with JS easier)
+            python_output = str(handlebars_template(package,
+                                                    template_name,
+                                                    test_data)) + "\n"
 
             # Run JS template in node.js
             tmp = tempfile.TemporaryFile()
-            subprocess.call(["node", "javascript/test/handlebars-test.js", handlebars_file, test_file], stdout=tmp)
+            subprocess.call(
+                [
+                    "node",
+                    "javascript/test/handlebars-test.js",
+                    handlebars_file,
+                    test_file
+                ],
+                stdout=tmp)
             tmp.seek(0, 0)
             js_output = str(tmp.read())
 
             if js_output != python_output:
-                open("unittest-%s-python.txt" % template_name, "w").write(python_output)
-                open("unittest-%s-js.txt" % template_name, "w").write(js_output)
-                print "Test failed! Wrote output to unittest-%s-python.txt and unittest-%s-js.txt." % (template_name, template_name)
+                f = open("unittest-%s-python.txt" % template_name, "w")
+                f.write(python_output)
+                f = open("unittest-%s-js.txt" % template_name, "w")
+                f.write(js_output)
+                print ("Test failed! Wrote output to unittest-%s-python.txt "
+                       "and unittest-%s-js.txt."
+                       % (template_name, template_name))
 
             self.assertEqual(js_output, python_output)
-

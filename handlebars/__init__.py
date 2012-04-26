@@ -5,13 +5,14 @@ import logging
 import copy
 import traceback
 
-from google.appengine.ext import db
 
 import api.jsonify
 from app import App
 from pybars import Compiler
 
+
 # Helpers (from javascript/shared-package/handlebars-extras.js)
+
 
 def handlebars_repeat(context, options, count):
     fn = options["fn"]
@@ -22,15 +23,19 @@ def handlebars_repeat(context, options, count):
 
     return ret
 
+
 def handlebars_to_login_redirect_href(context, destination):
     redirectParam = "/postlogin?continue=" + destination
     return "/login?continue=" + urllib.quote(redirectParam, '')
 
+
 def handlebars_commafy(context, number):
     return re.sub(r'(\d)(?=(\d{3})+$)', r'\1,', str(number))
 
+
 def handlebars_arraylength(context, array):
     return len(array)
+
 
 def handlebars_multiply(context, num1, num2):
     val = unicode(float(num1) * float(num2))
@@ -38,17 +43,20 @@ def handlebars_multiply(context, num1, num2):
         return val[:-2]
     return val
 
+
 def handlebars_skillbar(context, end=0, start=0, exerciseStates={}):
     subcontext = copy.copy(exerciseStates)
     subcontext.update({"start": start, "end": end})
     return handlebars_template("shared", "skill-bar", subcontext)
+
 
 def handlebars_ellipsis(context, data, length):
     text_stripped = re.sub("<[^>]*>", "", data)
     if len(text_stripped) < length:
         return text_stripped
     else:
-        return text_stripped[:(length-3)] + "..."
+        return text_stripped[:(length - 3)] + "..."
+
 
 handlebars_helpers = {
     "repeat": handlebars_repeat,
@@ -59,6 +67,7 @@ handlebars_helpers = {
     "skill-bar": handlebars_skillbar,
     "ellipsis": handlebars_ellipsis,
 }
+
 
 def handlebars_dynamic_load(package, name):
     """ Dynamically compile a Handlebars template.
@@ -73,12 +82,14 @@ def handlebars_dynamic_load(package, name):
     if combined_name in handlebars_partials:
         handlebars_partials[combined_name]
 
-    logging.info("Dynamically loading %s-package/%s.handlebars." % (package, name))
+    logging.info("Dynamically loading %s-package/%s.handlebars."
+                  % (package, name))
     file_name = "clienttemplates/%s-package/%s.handlebars" % (package, name)
 
     in_file = open(file_name, 'r')
     source = unicode(in_file.read())
-    source = source.replace("{{else}}", "{{^}}") # Pybars doesn't handle {{else}} for some reason
+    # HACK: Pybars doesn't handle {{else}} for some reason
+    source = source.replace("{{else}}", "{{^}}")
 
     matches = re.search('{{>[\s]*([\w\-_]+)[\s]*}}', source)
     if matches:
@@ -92,6 +103,7 @@ def handlebars_dynamic_load(package, name):
 
     return function
 
+
 def handlebars_check_context(obj, path="context"):
     """ Validate parameters to Handlebars renderer.
 
@@ -101,7 +113,9 @@ def handlebars_check_context(obj, path="context"):
     if (obj is not None
         and not isinstance(obj, api.jsonify.SIMPLE_TYPES)
         and not isinstance(obj, (dict, list))):
-        raise Exception("Invalid type passed to handlebars_template at path '%s': %s" % (path, type(obj)))
+        raise Exception(
+            "Invalid type passed to handlebars_template at path '%s': %s"
+            % (path, type(obj)))
 
     if isinstance(obj, dict):
         for key, child in obj.iteritems():
@@ -119,7 +133,8 @@ def handlebars_template(package, name, context):
     package_name = package.replace("-", "_")
     function_name = name.replace("-", "_")
 
-    module_name = "compiled_templates.%s_package.%s" % (package_name, function_name)
+    module_name = ("compiled_templates.%s_package.%s"
+                   % (package_name, function_name))
 
     function = None
 
@@ -142,13 +157,17 @@ def handlebars_template(package, name, context):
 
     if function:
         try:
-            ret = function(context, helpers=handlebars_helpers, partials=handlebars_partials)
+            ret = function(context,
+                           helpers=handlebars_helpers,
+                           partials=handlebars_partials)
             return u"".join(ret)
         except:
-            logging.info("Exception running Handlebars template: %s" % traceback.format_exc())
+            logging.info("Exception running Handlebars template: %s"
+                         % traceback.format_exc())
             return u""
     else:
         return u""
+
 
 def render_from_jinja(package, name, context):
     """ Wrapper for rendering a Handlebars template from Jinja.
