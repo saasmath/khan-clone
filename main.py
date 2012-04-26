@@ -147,9 +147,6 @@ class TopicPage(request_handler.RequestHandler):
             topic = topic_models.Topic.get_by_id(path_list[-1])
 
             if topic:
-                bingo("topic_pages_view_page")
-                # End topic pages A/B test
-
                 if path != topic.get_extended_slug():
                     # If the topic ID is found but the path is incorrect,
                     # redirect the user to the canonical path
