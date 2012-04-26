@@ -396,7 +396,8 @@ def persist_gae_bingo_identity_records(list_identities):
             bingo_identity = _GAEBingoIdentityRecord(
                         key_name = _GAEBingoIdentityRecord.key_for_identity(ident),
                         identity = ident,
-                        pickled = pickle.dumps(identity_cache),
+                        pickled = pickle.dumps(identity_cache, 
+                                               pickle.HIGHEST_PROTOCOL),
                     )
             bingo_identity.put()
 

@@ -1,6 +1,6 @@
 var ProgressSummaryView = function() {
     var fInitialized = false,
-        template = Templates.get("profile.class-progress-summary"),
+        template = Templates.get("studentlists.class-progress-summary"),
         statusInfo = {
                 "not-started": {
                     fShowOnLeft: true,
@@ -45,7 +45,7 @@ var ProgressSummaryView = function() {
         fInitialized = true;
 
         // Register partials and helpers
-        Handlebars.registerPartial("class-progress-column", Templates.get("profile.class-progress-column"));
+        Handlebars.registerPartial("studentlists_class-progress-column", Templates.get("studentlists.class-progress-column"));
 
         Handlebars.registerHelper("toPixelWidth", function(num) {
             return toPixelWidth(num);

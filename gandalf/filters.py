@@ -143,11 +143,3 @@ class SpecificCoachesBridgeFilter(BridgeFilter):
         return {
             'coaches': "",
         }
-
-
-class IsCertainToBeThirteenFilter(BridgeFilter):
-    name = "is-certain-to-be-thirteen"
-
-    @staticmethod
-    def _matches(context, identity):
-        return identity.is_certain_to_be_thirteen()

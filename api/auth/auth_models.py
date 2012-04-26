@@ -59,10 +59,10 @@ class OAuthMap(db.Model):
 
     def callback_url_with_request_token_params(self, include_verifier=False):
         params_callback = {
-            "oauth_token": self.request_token, 
+            "oauth_token": self.request_token,
             "oauth_token_secret": self.request_token_secret
         }
-        
+
         if include_verifier and self.verifier:
             params_callback["oauth_verifier"] = self.verifier
 
@@ -71,7 +71,7 @@ class OAuthMap(db.Model):
     def _get_authenticated_user_info(self):
         """ Gets the UserData and user_id for this OAuthMap, if it's still
         valid. Returns (None, None) if no valid user is found.
-        
+
         """
         if self.uses_password():
             user_data = auth.tokens.AuthToken.get_user_for_value(
@@ -96,12 +96,22 @@ class OAuthMap(db.Model):
                 user_id = get_facebook_user_id_from_oauth_map(self)
                 email = user_id
 
-            if user_id:
-                user_data = (
-                    user_models.UserData.get_from_user_id(user_id) or
-                    user_models.UserData.get_from_db_key_email(email) or
-                    user_models.UserData.insert_for(user_id, email))
-            return (user_data, user_id)
+            if not user_id:
+                return (None, None)
+
+            existing = user_models.UserData.get_from_request_info(
+                    user_id, email, self)
+
+            if existing:
+                # Note that existing.user_id may be different than
+                # user_id computed above.
+                return (existing, existing.user_id)
+
+            # TODO(benkomalo): consolidate this with logic in PostLogin
+            # since it will likely have to duplicate logic re: first time
+            # logins for Google/FB users and doing the proper connections.
+            user_data = user_models.UserData.insert_for(user_id, email)
+            return (user_data, user_data.user_id)
 
     def get_user_id(self):
         """ Returns the authenticated user_id for this OAuthMap

@@ -11,7 +11,7 @@ import datetime as dt
 
 
 class Test(request_handler.RequestHandler):
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         return self.from_exercise_stats()
 

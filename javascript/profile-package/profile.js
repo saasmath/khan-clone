@@ -116,7 +116,7 @@ var Profile = {
         "vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
         "vital-statistics/:graph": "showVitalStatistics",
         "coaches": "showCoaches",
-
+        "discussion": "showDiscussion",
         // Not associated with any tab highlighting.
         "settings": "showSettings",
 
@@ -183,16 +183,23 @@ var Profile = {
         },
 
         showVitalStatistics: function(graph, exercise, timePeriod) {
-            var exercise = exercise || "addition_1",
-                emailEncoded = encodeURIComponent(USER_EMAIL),
-                hrefLookup = {
-                    "activity": "/profile/graph/activity?student_email=" + emailEncoded,
-                    "focus": "/profile/graph/focus?student_email=" + emailEncoded,
-                    "skill-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
-                    "skill-progress": "/api/v1/user/exercises?email=" + emailEncoded,
+            var exercise = exercise || "addition_1";
+            var identityParam = "";
+            if (Profile.profile.get("email")) {
+                identityParam = "email=" +
+                        encodeURIComponent(Profile.profile.get("email"));
+            } else if (Profile.profile.get("username")) {
+                identityParam = "username=" + Profile.profile.get("username");
+            }
+
+            var hrefLookup = {
+                    "activity": "/profile/graph/activity?" + identityParam,
+                    "focus": "/profile/graph/focus?" + identityParam,
+                    "skill-progress-over-time": "/profile/graph/exercisesovertime?" + identityParam,
+                    "skill-progress": "/api/v1/user/exercises?" + identityParam,
                     "problems": "/profile/graph/exerciseproblems?" +
                                             "exercise_name=" + exercise +
-                                            "&" + "student_email=" + emailEncoded
+                                            "&" + identityParam
                 },
                 timePeriodLookup = {
                     "today": "&dt_start=today",
@@ -201,8 +208,8 @@ var Profile = {
                     "last-month": "&dt_start=lastmonth&dt_end=today"
                 },
                 graph = !!(hrefLookup[graph]) ? graph : "activity",
-                timePeriod = !!(timePeriodLookup[timePeriod]) ? timePeriod : "",
-                timeURLParameter = timePeriod ? timePeriodLookup[timePeriod] : "",
+                timePeriod = !!(timePeriodLookup[timePeriod]) ? timePeriod : "last-week",
+                timeURLParameter = timePeriodLookup[timePeriod],
                 href = hrefLookup[graph] + timeURLParameter;
 
             // Known bug: the wrong graph-date-picker item is selected when
@@ -226,7 +233,7 @@ var Profile = {
                 this.updateTitleBreadcrumbs([prettyGraphName]);
             }
 
-            if (Profile.profile.get("email")) {
+            if (Profile.profile.isFullyAccessible()) {
                 // If we have access to the profiled person's email, load real data.
                 Profile.loadGraph(href);
             } else {
@@ -271,12 +278,22 @@ var Profile = {
             $("#tab-content-coaches").show()
                 .siblings().hide();
 
-            this.activateRelatedTab("people coaches");
+            this.activateRelatedTab("community coaches");
             this.updateTitleBreadcrumbs(["Coaches"]);
 
             if (Profile.profile.get("isPhantom")) {
                 Profile.showNotification("no-coaches-for-phantoms");
             }
+        },
+
+        showDiscussion: function() {
+            $("#tab-content-discussion").show()
+                .siblings().hide();
+
+            this.activateRelatedTab("community discussion");
+            this.updateTitleBreadcrumbs(["Discussion"]);
+
+            Profile.populateDiscussion();
         },
 
         settingsIframe_: null,
@@ -322,7 +339,7 @@ var Profile = {
                 parts.unshift(rootCrumb);
                 sheetTitle.text(parts.join(" » ")).show();
 
-                if (!Profile.profile.get("email")) {
+                if (!Profile.profile.isFullyAccessible()) {
                     $(".profile-notification").show();
                 }
             } else {
@@ -578,7 +595,7 @@ var Profile = {
     showNotification: function(className) {
         var jel = $(".profile-notification").removeClass("uncover-nav");
 
-        if (className === "empty-graph") {
+        if (className === "empty-graph" || className === "no-discussion") {
             jel.addClass("uncover-nav");
         }
 
@@ -640,8 +657,8 @@ var Profile = {
             this.graph = block.hash.graph;
             return block(this);
         });
-        Handlebars.registerPartial("graph-date-picker", Templates.get("profile.graph-date-picker"));
-        Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
+        Handlebars.registerPartial("profile_graph-date-picker", Templates.get("profile.graph-date-picker"));
+        Handlebars.registerPartial("profile_vital-statistics", Templates.get("profile.vital-statistics"));
 
         $("#profile-content").html(profileTemplate({
             profileRoot: this.profileRoot,
@@ -776,13 +793,13 @@ var Profile = {
                 });
 
                 Handlebars.registerPartial(
-                        "badge-container",
+                        "profile_badge-container",
                         Templates.get("profile.badge-container"));
                 Handlebars.registerPartial(
-                        "badge",
+                        "profile_badge",
                         Templates.get("profile.badge"));
                 Handlebars.registerPartial(
-                        "user-badge",
+                        "profile_user-badge",
                         Templates.get("profile.user-badge"));
 
                 $.each(data["badgeCollections"], function(collectionIndex, collection) {
@@ -904,14 +921,11 @@ var Profile = {
             return Profile.goalsDeferred_;
         }
 
-        // TODO: Abstract away profile + actor privileges
-        // Also in profile.handlebars
-        var email = Profile.profile.get("email");
-        if (email) {
+        if (Profile.profile.isFullyAccessible()) {
             Profile.goalsDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/goals",
-                data: {email: email},
+                data: Profile.getBaseRequestParams_(),
                 dataType: "json",
                 success: function(data) {
                     GoalProfileViewsCollection.render(data);
@@ -943,6 +957,66 @@ var Profile = {
         Profile.coachesDeferred_ = Coaches.init();
 
         return Profile.coachesDeferred_;
+    },
+
+    discussionDeferred_: null,
+    noDiscussion_: false,
+    populateDiscussion: function() {
+        if (Profile.noDiscussion_) {
+            Profile.showNotification("no-discussion");
+        }
+
+        if (Profile.discussionDeferred_) {
+            return Profile.discussionDeferred_;
+        }
+
+        if (Profile.profile.isFullyAccessible()) {
+            Profile.discussionDeferred_ = $.ajax({
+                type: "GET",
+                url: "/api/v1/user/questions",
+                data: Profile.getBaseRequestParams_(),
+                dataType: "json",
+                success: function(questions) {
+                    if (questions.length === 0) {
+                        Profile.noDiscussion_ = true;
+                        Profile.showNotification("no-discussion");
+                        return;
+                    }
+
+                    var template = Templates.get("profile.questions-list");
+
+                    // Order questions from oldest to newest
+                    questions = _.sortBy(questions, function(question) {
+                        return question["lastDate"];
+                    });
+
+                    // Then reverse to get newest to oldest
+                    questions.reverse();
+
+                    $("#tab-content-discussion")
+                        .append(template(questions))
+                        .find("div.timeago").timeago();
+
+                    if (Profile.profile.get("isSelf")) {
+                        var initialPause = 500;
+                        var rampOn = 500;
+                        var hiOn = 300;
+                        var rampOff = 300;
+
+                        $("#tab-content-discussion .unread")
+                            .delay(initialPause)
+                            .animate({"background-color": "#dcf2fa"}, rampOn)
+                            .delay(hiOn)
+                            .animate({"background-color": "#ebf7fb"}, rampOff);
+                    }
+                }
+            });
+        } else {
+            Profile.discussionDeferred_ = new $.Deferred();
+            Profile.discussionDeferred_.resolve();
+        }
+
+        return Profile.discussionDeferred_;
     },
 
     populateSuggestedActivity: function(activities) {
@@ -990,16 +1064,11 @@ var Profile = {
         }
         $("#recent-activity-progress-bar").progressbar({value: 100});
 
-        // TODO: Abstract away profile + actor privileges
-        var email = Profile.profile.get("email");
-        if (email) {
+        if (Profile.profile.isFullyAccessible()) {
             Profile.activityDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/activity",
-                data: {
-                    email: email,
-                    casing: "camel"
-                },
+                data: Profile.getBaseRequestParams_(),
                 dataType: "json",
                 success: function(data) {
                     $("#activity-loading-placeholder").fadeOut(
@@ -1016,5 +1085,23 @@ var Profile = {
             Profile.activityDeferred_.resolve();
         }
         return Profile.activityDeferred_;
+    },
+
+    /**
+     * Return an object to be used in an outgoing XHR for user profile data
+     * (e.g. activity graph data).
+     * This includes an identifier for the current profile being viewed at,
+     * and other common properties.
+     */
+    getBaseRequestParams_: function() {
+        var params = {
+            "casing": "camel"
+        };
+        if (Profile.profile.get("email")) {
+            params["email"] = Profile.profile.get("email");
+        } else if (Profile.profile.get("username")) {
+            params["username"] = Profile.profile.get("username");
+        }
+        return params;
     }
 };

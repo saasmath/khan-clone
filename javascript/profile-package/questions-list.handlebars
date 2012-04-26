@@ -1,0 +1,20 @@
+<div style="font-size: 14px;">
+{{#if this.length}}
+    {{#each this}}
+    <div style="margin-left: -10px;">
+        <ul>
+        <li>
+            <div class="question clearfix {{#if hasUnread}}unread{{/if}} visited-no-recolor">
+                <div class="ellipsis">
+                    <a class="discussion-link" href="/v/{{video.readableId}}?qa_expand_key={{qaExpandKey}}">{{pluralize answererCount "person"}} answered your question</a>:
+                    <span class="content">{{content}}</span>
+                </div>
+                on "<a href="/v/{{video.readableId}}" style="color: #777">{{video.title}}</a>."
+                <div class="timeago" title="{{lastDate}}">{{lastDate}}</div>
+            </div>
+        </li>
+        </ul>
+    </div>
+    {{/each}}
+{{/if}}
+</div>

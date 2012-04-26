@@ -277,6 +277,15 @@ class UsernameTest(testutil.GAEModelTestCase):
                 u2.user_id,
                 UserData.get_from_username("superbob").user_id)
 
+    def test_usernames_dont_match_if_invalid(self):
+        self.assertFalse(UniqueUsername.matches(None, None))
+        self.assertFalse(UniqueUsername.matches("superbob", None))
+        self.assertFalse(UniqueUsername.matches("superbob", "i n v a l id"))
+
+    def test_username_matching(self):
+        self.assertTrue(UniqueUsername.matches("superbob", "super.bob"))
+        self.assertTrue(UniqueUsername.matches("superbob", "SuperBob"))
+        self.assertFalse(UniqueUsername.matches("superbob", "fakebob"))
 
 class ProfileSegmentTest(testutil.GAEModelTestCase):
     def to_url(self, user):

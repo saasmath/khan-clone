@@ -13,9 +13,10 @@ var Login = Login || {};
  * fields of the login page are hosted in an iframe so it can be sent
  * over https. Google/FB logins are in the outer container.
  */
-Login.initLoginPage = function() {
+Login.initLoginPage = function(options) {
     $("#login-facebook").click(function(e) {
-        Login.connectWithFacebook();
+        Login.connectWithFacebook(
+            options["continueUrl"], true /* requireEmail */);
     });
 };
 
@@ -56,10 +57,15 @@ Login.initLoginForm = function(options) {
 
 /**
  * Use Facebook's JS SDK to connect with Facebook.
+ * @param {string} continueUrl The URL to redirect to after a successful login.
+ * @param {boolean} requireEmail An optional parameter to indicate whether or
+ *     not the user needs to grant extended permissions to our app so we
+ *     can retrieve their e-mail address.
  */
-Login.connectWithFacebook = function(continueUrl) {
+Login.connectWithFacebook = function(continueUrl, requireEmail) {
     FacebookUtil.runOnFbReady(function() {
         // TODO(benkomalo): add some visual indicator that we're trying.
+        var extendedPerms = requireEmail ? {"scope": "email"} : undefined;
         FB.login(function(response) {
             if (response) {
                 FacebookUtil.fixMissingCookie(response);
@@ -78,7 +84,7 @@ Login.connectWithFacebook = function(continueUrl) {
             } else {
                 // TODO(benkomalo): handle - the user didn't login properly in facebook.
             }
-       });
+       }, extendedPerms);
     });
 };
 

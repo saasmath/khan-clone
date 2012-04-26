@@ -29,11 +29,11 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None, parent_
             "thumb_urls": video_models.Video.youtube_thumbnail_urls(video.youtube_id),
             "title": video.title,
             "desc_html": templatetags.video_name_and_progress(video),
-            "teaser_html": video.description,
+            "teaser_html": unicode(video.description),
             "youtube_id": video.youtube_id,
             "marquee": ("marquee" in video.keywords),
             "selected": False,
-            "key": video.key(),
+            "key": unicode(video.key()),
             "type": "video-thumb",
         }
 
@@ -133,7 +133,7 @@ class ViewHomePage(request_handler.RequestHandler):
     # See https://sites.google.com/a/khanacademy.org/forge/for-team-members/how-to-use-new-and-noteworthy-content
     # for info on how to update the New & Noteworthy videos
     @user_util.open_access
-    @ensure_xsrf_cookie
+    @ensure_xsrf_cookie    # TODO(csilvers): remove this (make sure autocomplete works)
     def get(self):
         version_number = None
 

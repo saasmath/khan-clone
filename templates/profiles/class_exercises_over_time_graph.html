@@ -7,94 +7,167 @@
 {% endif %}
 
 <script>
+// TODO(marcia): Would be nice if this were in API like the profile graphs
 
-    var chart;
+var chart;
 
-    var ClassExerciseProgressChart = {
+var ClassExerciseProgressChart = {
 
-        init: function() {
-            if (window.fBoundClassExerciseProgressChart) return;
+    init: function() {
+        if (window.fBoundClassExerciseProgressChart) return;
 
-            $("a.show-students-highlight").click(function( e ) {
-                e.preventDefault();
-                ClassExerciseProgressChart.showStudents();
-            });
+        $("a.show-students-highlight").click(function( e ) {
+            e.preventDefault();
+            ClassExerciseProgressChart.showStudents();
+        });
 
-            $("a.show-exercises-highlight").click(function( e ) {
-                e.preventDefault();
-                ClassExerciseProgressChart.showExercises();
-            });
+        $("a.show-exercises-highlight").click(function( e ) {
+            e.preventDefault();
+            ClassExerciseProgressChart.showExercises();
+        });
 
-            $("a.highlight-student-series").live("click", function(e) {
-                ClassExerciseProgressChart.highlightStudentSeries(this);
-                e.preventDefault();
-            });
+        $("a.highlight-student-series").live("click", function(e) {
+            ClassExerciseProgressChart.highlightStudentSeries(this);
+            e.preventDefault();
+        });
 
-            $("a.highlight-exercise-points").click(function() {
-                ClassExerciseProgressChart.highlightExercisePoints(this);
-                return false;
-            });
+        $("a.highlight-exercise-points").click(function() {
+            ClassExerciseProgressChart.highlightExercisePoints(this);
+            return false;
+        });
 
-            $("a.graph-link-header").click(function() {
-                ClassExerciseProgressChart.deselectSublinks();
-                ClassExerciseProgressChart.showNone();
-            });
+        $("a.graph-link-header").click(function() {
+            ClassExerciseProgressChart.deselectSublinks();
+            ClassExerciseProgressChart.showNone();
+        });
 
-            window.fBoundClassExerciseProgressChart = true;
-        },
+        window.fBoundClassExerciseProgressChart = true;
+    },
 
-        showStudents: function() {
-            $(".highlight-section").removeClass("selected");
-            $(".show-students-highlight").addClass("selected");
-            $("#students-highlight").slideDown();
-            $("#exercises-highlight").slideUp();
-        },
+    showStudents: function() {
+        $(".highlight-section").removeClass("selected");
+        $(".show-students-highlight").addClass("selected");
+        $("#students-highlight").slideDown();
+        $("#exercises-highlight").slideUp();
+    },
 
-        showExercises: function() {
-            $(".highlight-section").removeClass("selected");
-            $(".show-exercises-highlight").addClass("selected");
-            $("#exercises-highlight").slideDown();
-            $("#students-highlight").slideUp();
-        },
+    showExercises: function() {
+        $(".highlight-section").removeClass("selected");
+        $(".show-exercises-highlight").addClass("selected");
+        $("#exercises-highlight").slideDown();
+        $("#students-highlight").slideUp();
+    },
 
-        showNone: function() {
-            $(".highlight-section").removeClass("selected");
-            $("#exercises-highlight, #students-highlight").slideUp();
-        },
+    showNone: function() {
+        $(".highlight-section").removeClass("selected");
+        $("#exercises-highlight, #students-highlight").slideUp();
+    },
 
-        deselectSublinks: function() {
-            $("a.highlight-student-series, a.highlight-exercise-points").removeClass("selected");
-        },
+    deselectSublinks: function() {
+        $("a.highlight-student-series, a.highlight-exercise-points").removeClass("selected");
+    },
 
-        highlightStudentSeries: function(el) {
-            var jel = $(el);
-            this.deselectSublinks();
-            ClassProfile.highlightSeries(chart, ClassExerciseProgressChart.getSeriesByEmail(chart, jel.attr("data-email")));
-            jel.addClass("selected");
-        },
+    highlightStudentSeries: function(el) {
+        var jel = $(el);
+        this.deselectSublinks();
+        this.highlightSeries(chart, ClassExerciseProgressChart.getSeriesByEmail(chart, jel.attr("data-email")));
+        jel.addClass("selected");
+    },
 
-        highlightExercisePoints: function(el) {
-            var jel = $(el);
-            this.deselectSublinks();
-            var sExerciseName = jel.attr("data-exercise");
-            ClassProfile.highlightPoints(chart, function(point){ return point.name == sExerciseName; });
-            jel.addClass("selected");
-        },
+    highlightExercisePoints: function(el) {
+        var jel = $(el);
+        this.deselectSublinks();
+        var sExerciseName = jel.attr("data-exercise");
+        this.highlightPoints(chart, function(point){ return point.name == sExerciseName; });
+        jel.addClass("selected");
+    },
 
-        getSeriesByEmail: function (chart, sEmail) {
-            if (!chart) return null;
+    getSeriesByEmail: function (chart, sEmail) {
+        if (!chart) return null;
 
-            for (var ix = 0; ix < chart.series.length; ix++) {
-                if (chart.series[ix].options.email == sEmail) return chart.series[ix];
+        for (var ix = 0; ix < chart.series.length; ix++) {
+            if (chart.series[ix].options.email == sEmail) return chart.series[ix];
+        }
+
+        return null;
+    },
+
+    accentuateSeriesStyles: function(series) {
+        series.options.lineWidth = 3.5;
+        series.options.shadow = true;
+        series.options.fMuted = false;
+    },
+
+    muteSeriesStyles: function(series) {
+        if (series.options.fMuted) return;
+
+        series.graph.attr('opacity', 0.1);
+        series.graph.attr('stroke', '#CCCCCC');
+        series.options.lineWidth = 1;
+        series.options.shadow = false;
+        series.options.fMuted = true;
+    },
+
+    highlightPoints: function(chart, fxnHighlight) {
+
+        if (!chart) return;
+
+        for (var ix = 0; ix < chart.series.length; ix++) {
+            var series = chart.series[ix];
+
+            this.muteSeriesStyles(series);
+
+            for (var ixData = 0; ixData < series.data.length; ixData++) {
+                var pointOptions = series.data[ixData].options;
+                if (!pointOptions.marker) pointOptions.marker = {};
+                pointOptions.marker.enabled = fxnHighlight(pointOptions);
+                if (pointOptions.marker.enabled) pointOptions.marker.radius = 6;
             }
 
-            return null;
+            series.isDirty = true;
         }
+
+        chart.redraw();
+    },
+
+    highlightSeries: function(chart, seriesHighlight) {
+        if (!chart || !seriesHighlight) return;
+
+        for (var ix = 0; ix < chart.series.length; ix++)
+        {
+            var series = chart.series[ix];
+            var fSelected = (series == seriesHighlight);
+
+            if (series.fSelectedLast == null || series.fSelectedLast != fSelected)
+            {
+                if (fSelected)
+                    this.accentuateSeriesStyles(series);
+                else
+                    this.muteSeriesStyles(series);
+
+                for (var ixData = 0; ixData < series.data.length; ixData++) {
+                    series.data[ixData].options.marker = {
+                        enabled: fSelected,
+                        radius: fSelected ? 5 : 4
+                    };
+                }
+
+                series.isDirty = true;
+                series.fSelectedLast = fSelected;
+            }
+        }
+
+        var options = seriesHighlight.options;
+        options.color = '#0080C9';
+        seriesHighlight.remove(false);
+        chart.addSeries(options, false, false);
+
+        chart.redraw();
     }
 
-            $(document).ready(function() {
+};
 
-                ClassExerciseProgressChart.init();
+$(document).ready(function() {
 
                 chart = new Highcharts.Chart({
                     chart: {

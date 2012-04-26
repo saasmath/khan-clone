@@ -80,10 +80,14 @@ class ThirdPartyRestrictedImport(object):
         # tb[0] is our caller, the import statement (tb[1] is us).
         caller = traceback.extract_stack(limit=2)[0]
         caller_file = caller[0]
+
         # Importers in third_party can refer to modules however they want.
+        # We have to check in two ways, since caller_file is relative to
+        # an entry in PYTHONPATH, which may be _third_party_root.
         # TODO(csilvers): better would be to split the filename components
         # and check if any is third_party, but this is probably good enough.
-        if 'third_party' in caller_file:
+        if ('third_party' in caller_file or
+            os.path.exists(os.path.join(_third_party_root, caller_file))):
             return None
 
         # Other importers must follow the rules!

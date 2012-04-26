@@ -20,12 +20,12 @@ import urllib
 from google.appengine.api import datastore_errors, users
 from google.appengine.ext import db
 
-import accuracy_model
+from exercises import accuracy_model
 from api import jsonify   # TODO(csilvers): move out of api/?
 import auth.models
 from auth import age_util
 from counters import user_counter
-from discussion import models_discussion
+from discussion import discussion_models
 import badges
 import facebook_util
 import gae_bingo.models
@@ -76,13 +76,13 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     # A globally unique user-specified username,
     # which will be used in URLS like khanacademy.org/profile/<username>
     username = db.StringProperty(default="")
-    
+
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
 
     # Account creation date in UTC
     joined = db.DateTimeProperty(auto_now_add=True)
-    
+
     # Last login date in UTC. Note that this was incorrectly set, and could
     # have stale values (though is always non-empty) for users who have never
     # logged in prior to the launch of our own password based logins(2012-04-12)
@@ -116,8 +116,10 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     last_badge_review = db.DateTimeProperty(indexed=False)
     last_activity = db.DateTimeProperty(indexed=False)
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
-    count_feedback_notification = db.IntegerProperty(default= -1, indexed=False)
-    question_sort_order = db.IntegerProperty(default= -1, indexed=False)
+    count_feedback_notification = db.IntegerProperty(default=-1,
+                                                     indexed=False)
+
+    question_sort_order = db.IntegerProperty(default=-1, indexed=False)
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
@@ -142,7 +144,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
     is_profile_public = db.BooleanProperty(default=False, indexed=False)
 
     _serialize_blacklist = [
-            "badges", "count_feedback_notification",
+            "badges", "count_feedback_notification", "last_discussion_view",
             "last_daily_summary", "need_to_reassess", "videos_completed",
             "moderator", "question_sort_order",
             "last_login", "user", "current_user", "map_coords",
@@ -202,9 +204,12 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @property
     def email(self):
-        """ Unlike key_email below, this email property
-        represents the user's current email address and
-        can be displayed to users.
+        """ Unlike key_email below, this email property represents the user's
+        current email address and can be displayed to users.
+
+        Note that for some users, this field can be a URI and not an actual
+        e-mail address.
+
         """
         return self.user_email
 
@@ -218,6 +223,20 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         property.
         """
         return self.user.email()
+    
+    def has_sendable_email(self):
+        """ Returns whether or not this user's email property corresponds to
+        an actual e-mail that we can send mail to.
+
+        """
+
+        if self.is_pre_phantom:
+            return False
+
+        value = self.email
+        return (value and
+                not facebook_util.is_facebook_user_id(value) and
+                not phantom_users.phantom_util.is_phantom_id(value))
 
     @property
     def badge_counts(self):
@@ -234,7 +253,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @staticmethod
     def get_from_url_segment(segment):
-        """ Retrieves a user by a URL segment, as expected to be built from
+        """Retrieve a user by a URL segment, as expected to be built from
         the user's UserData.profile_root value.
         
         Arguments:
@@ -296,21 +315,96 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @staticmethod
     @request_cache.cache()
-    def current():
-        user_id = util.get_current_user_id(bust_cache=True)
-        email = user_id
+    def current(create_if_none=False):
+        """Determine the current logged in user and return it.
+
+        Arguments:
+            create_if_none: Whether or not to create a new user if valid
+                auth credentials are detected, but no existing user was found
+                for those credentials.
+
+        Returns:
+            The user_models.UserData object corresponding to the logged in
+            user, or phantom user. Returns None if no phantom or user
+            was detected.
+        """
+
+        user_id = util.get_current_user_id_unsafe(bust_cache=True)
+        if user_id is None:
+            return None
 
         google_user = users.get_current_user()
         if google_user:
             email = google_user.email()
+        else:
+            email = user_id
 
-        if user_id:
-            # Once we have rekeyed legacy entities,
-            # we will be able to simplify this.
-            return  UserData.get_from_user_id(user_id) or \
-                    UserData.get_from_db_key_email(email) or \
-                    UserData.insert_for(user_id, email)
+        existing = UserData.get_from_request_info(user_id, email)
+        if existing:
+            return existing
+        elif create_if_none:
+            # Try to "upgrade" to a real email for FB users, if possible.
+            if facebook_util.is_facebook_user_id(email):
+                fb_email = facebook_util.get_fb_email_from_cookies()
+                email = fb_email or user_id
+            return UserData.insert_for(user_id, email)
         return None
+
+    @staticmethod
+    def get_from_request_info(user_id, email=None, oauth_map=None):
+        """Retrieve a user given the specified information for the request.
+
+        This should be used sparingly, typically by login code that can
+        resolve the request information from authentication credentials
+        or tokens in the request.
+
+        Arguments:
+            user_id:
+                The user_id computed from the request credentials.
+                This is typically the user_id of the returned user,
+                if one matches. However, if no existing user matches
+                this user_id, and an existing e-mail matches instead,
+                the result user will have a different user_id.
+
+            email:
+                The e-mail address from the request credentials (may be a URI
+                value for Facebook users).
+
+            oauth_map:
+                The OAuthMap corresponding to this request. If None is
+                provided, this method will look at the cookies for the
+                current request (if cookie auth is allowed).
+
+        Returns:
+            The existing UserData object matching the parameters, if any.
+            None if no user was found.
+        """
+
+        if not user_id:
+            return None
+
+        # Always try to retrieve by user_id. Note that for _really_ old users,
+        # we didn't have user_id values, and we used a "db_key_email". That
+        # value never changes (it's an e-mail for most users, but is a URI
+        # for facebook users).
+        existing = (UserData.get_from_user_id(user_id) or
+                    UserData.get_from_db_key_email(email))
+        if existing:
+            return existing
+
+        # If no user exists by the user_id, it could be that the user logged
+        # in as a different third party auth provider than what she
+        # initially registered with (logging now with FB instead of Google).
+        # Look for a matching e-mail address (this time the email value
+        # tries to be a real email for FB users, not a URI).
+        if facebook_util.is_facebook_user_id(user_id):
+            if oauth_map:
+                fb_email = facebook_util.get_fb_email_from_oauth_map(oauth_map)
+            else:
+                fb_email = facebook_util.get_fb_email_from_cookies()
+            email = fb_email or user_id
+
+        return UserData.get_from_user_input_email(email)
 
     @staticmethod
     def pre_phantom():
@@ -318,6 +412,12 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @property
     def is_facebook_user(self):
+        """Return whether or not this account was registered using Facebook.
+
+        Note that it's possible that the user has logged in with Facebook,
+        but had initially registered the account using a Google or KA login,
+        in which case this will return False.
+        """
         return facebook_util.is_facebook_user_id(self.user_id)
 
     @property
@@ -326,7 +426,8 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
     @property
     def is_demo(self):
-        return self.user_email.startswith(_COACH_DEMO_COWORKER_EMAIL)
+        return (self.user_email and
+                self.user_email.startswith(_COACH_DEMO_COWORKER_EMAIL))
 
     @property
     def is_pre_phantom(self):
@@ -358,15 +459,6 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         query.order('-points') # Temporary workaround for issue 289
 
         return query.get()
-    
-    @staticmethod
-    def get_all_for_user_input_email(email):
-        if not email:
-            return []
-
-        query = UserData.all()
-        query.filter('user_email =', email)
-        return query
 
     @staticmethod
     def get_from_username(username):
@@ -402,23 +494,41 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         user_data = None
 
         if UniqueUsername.is_valid_username(username_or_email):
-            user_data = UserData.get_from_username(username_or_email)
+            user_data = UserData.get_possibly_current_user_by_username(
+                username_or_email)
         else:
             user_data = UserData.get_possibly_current_user(username_or_email)
 
         return user_data
 
-    # Avoid an extra DB call in the (fairly often) case that the requested email
-    # is the email of the currently logged-in user
+    # TODO(benkomalo): collapse this method into the other methods in
+    #   request_handler related to getting a user that may be the current user.
+    #   Either that or make this private and encourage clients to use the
+    #   request_handler versions instead.
     @staticmethod
-    def get_possibly_current_user(email):
-        if not email:
+    def get_possibly_current_user(identifier):
+        """Return a UserData object corresponding to the identifier
+        using the request cache for the current-logged in user if
+        the identifier matches.
+
+        Arguments:
+            identifier: A string representing either the user_id,
+            or user email for the user (searched in that order).
+            Note that this is the user visible e-mail, not the email used in
+            the db User property, as most user-visible operations should
+            use that field as parameters and not the db key email.
+        """
+
+        if not identifier:
             return None
 
         user_data_current = UserData.current()
-        if user_data_current and user_data_current.user_email == email:
+        if (user_data_current and
+                (user_data_current.user_id == identifier or
+                 user_data_current.email == identifier)):
             return user_data_current
-        return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
+        return (UserData.get_from_user_id(identifier) or
+                UserData.get_from_user_input_email(identifier))
 
     @classmethod
     def key_for(cls, user_id):
@@ -430,7 +540,8 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             return None
 
         user_data_current = UserData.current()
-        if user_data_current and user_data_current.username == username:
+        if (user_data_current and
+                UniqueUsername.matches(user_data_current.username, username)):
             return user_data_current
 
         return UserData.get_from_username(username)
@@ -501,6 +612,7 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             # Note that get_or_insert is a transaction itself, and it can't
             # be nested in the above transaction.
             user_data = UserData.get_or_insert(**prop_values)
+            user_data = db.get(user_data.key())   # force-commit for HRD data
 
         if user_data and not user_data.is_phantom:
             # Record that we now have one more registered user
@@ -601,30 +713,79 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
 
         if not self.is_phantom:
             user_counter.add(-1)
-        
+
         # TODO(benkomalo): handle cleanup of nickname indices!
 
         # Delegate to the normal implentation
         super(UserData, self).delete()
 
-    def is_certain_to_be_thirteen(self):
-        """ A conservative check that guarantees a user is at least 13 years
-        old based on their login type.
+    def is_over_eighteen(self):
+        """A conservative check that guarantees a user is at least 18.
 
-        Note that even if someone is over 13, this can return False, but if
-        this returns True, they're guaranteed to be over 13.
+        Note that even if someone is over 18, this can return False, since we
+        may not have their birthdate. However, if this returns True,
+        they're guaranteed to be over 18.
         """
 
-        # Normal Gmail accounts and FB accounts require users be at least 13yo.
         if self.birthdate:
-            return age_util.get_age(self.birthdate) >= 13
-            
-        email = self.email
-        return (email.endswith("@gmail.com")
-                or email.endswith("@googlemail.com")  # Gmail in Germany
-                or email.endswith("@khanacademy.org")  # We're special
-                or self.developer  # Really little kids don't write software
-                or facebook_util.is_facebook_user_id(email))
+            return age_util.get_age(self.birthdate) >= 18
+        return False
+
+    def is_child_account(self):
+        """Whether or not this account is intended for someone under 13.
+
+        Child accounts have restricted functionality on the site, such as
+        limited ability to interact with the community.
+        """
+
+        if self.birthdate:
+            return age_util.get_age(self.birthdate) < 13
+
+        # Users who are missing a birthdate in the system registered via
+        # third party accounts (Google or Facebook), and their ToS requires
+        # users to be 13 years old (with the exception of Google Apps for Edu,
+        # though they have parental consent to be treated as full users)
+        return False
+
+    def is_maybe_edu_account(self):
+        """A conservative check for Google Apps for Education users.
+
+        Note that this method may return True for users in the gray area,
+        even though they may not be GAFE users, since there is no official,
+        sanctioned way by Google to check if a domain is a GAFE domain.
+        """
+
+        if self.developer:
+            return False
+
+        if self.is_facebook_user:
+            return False
+
+        if not self.has_sendable_email():
+            return False
+
+        domain_index = self.email.rfind('@')
+        email_domain = self.email[domain_index + 1:]
+
+        white_listed_domains = set(["gmail.com",
+                                    "googlemail.com",  # Gmail in germany
+                                    "khanacademy.org",
+                                    "hotmail.com",
+                                    "aol.com",
+                                    "yahoo.com",
+                                    "comcast.net",
+                                    "live.com",
+                                    "sbcglobal.net",
+                                    "msn.com",
+                                    "ymail.com",
+                                    "hotmail.co.uk",
+                                    "verizon.net",
+                                    "att.net",
+                                    "me.com",
+                                    "rocketmail.com",
+                                   ])
+
+        return email_domain not in white_listed_domains
 
     def get_or_insert_exercise(self, exercise, allow_insert=True):
         # TODO(csilvers): get rid of the circular import here
@@ -784,9 +945,11 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         """ Returns whether or not this user's information is *fully* visible
         to the specified user
         """
-        return (self.key_email == user_data.key_email or self.is_coached_by(user_data)
-                or self.is_coached_by_coworker_of_coach(user_data)
-                or user_data.developer or user_data.is_administrator())
+        return (self.key() == user_data.key() or
+                self.is_coached_by(user_data) or
+                self.is_coached_by_coworker_of_coach(user_data) or
+                user_data.developer or
+                user_data.is_administrator())
 
     def are_students_visible_to(self, user_data):
         return self.is_coworker_of(user_data) or user_data.developer or user_data.is_administrator()
@@ -850,10 +1013,32 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
             self.put()
         return self.videos_completed
 
+    def mark_feedback_notification_count_as_stale(self):
+        """Mark that the feedback notification count must be recalculated."""
+        self.count_feedback_notification = -1
+        self.put()
+
     def feedback_notification_count(self):
+        """Return the number of questions with unread answers.
+        
+        May calculate (and cache) a stale count if called shortly after any
+        change to the FeedbackNotification index.
+        """
         if self.count_feedback_notification == -1:
-            self.count_feedback_notification = models_discussion.FeedbackNotification.gql("WHERE user = :1", self.user).count()
+            # Recalculate feedback notification count
+
+            # Get all unread answers
+            answers = discussion_models.FeedbackNotification.get_feedback_for(
+                    self)
+
+            # Group the unread answers by question
+            questions = set(answer.question_key() for answer in answers
+                            if answer.question().is_type(
+                                discussion_models.FeedbackType.Question))
+
+            self.count_feedback_notification = len(questions)
             self.put()
+
         return self.count_feedback_notification
 
     def save_goal(self, goal):
@@ -899,9 +1084,9 @@ class UserData(gae_bingo.models.GAEBingoIdentityModel,
         return self.credential_version is not None
 
     def has_public_profile(self):
-        return (self.is_profile_public
-                and self.username is not None
-                and len(self.username) > 0)
+        return (self.is_profile_public and
+                bool(self.username) and
+                not self.is_child_account())
 
     def __str__(self):
         return self.__unicode__()
@@ -1002,6 +1187,21 @@ class UniqueUsername(db.Model):
         if clock is None:
             clock = datetime.datetime
         return entity is None or not entity._is_in_holding(clock.utcnow())
+
+    @staticmethod
+    def matches(username1, username2):
+        """Determine if two username strings match to one canonical name.
+        
+        If either string is not a valid username, will return False.
+        """
+        if not username1 or not username2:
+            return False
+        key1 = UniqueUsername.build_key_name(username1)
+        key2 = UniqueUsername.build_key_name(username2)
+        if (not UniqueUsername.is_valid_username(username1, key1) or
+                not UniqueUsername.is_valid_username(username2, key2)):
+            return False
+        return key1 == key2
 
     def _is_in_holding(self, utcnow):
         return self.release_date + UniqueUsername.HOLDING_PERIOD_DELTA >= utcnow

@@ -87,7 +87,7 @@ class YouTubeSyncStepLog(db.Model):
 
 class YouTubeSync(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def get(self):
 
         if self.request_bool("start", default = False):
@@ -103,7 +103,7 @@ class YouTubeSync(request_handler.RequestHandler):
                 self.response.out.write("Step: %s, Generation: %s, Date: %s<br/>" % (sync_log.step, sync_log.generation, sync_log.dt))
             self.response.out.write("<br/><a href='/admin/youtubesync?start=1'>Start New Sync</a>")
 
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def post(self):
         # Protected for admins only by app.yaml so taskqueue can hit this URL
         step = self.request_int("step", default = 0)
@@ -118,7 +118,8 @@ class YouTubeSync(request_handler.RequestHandler):
         log.generation = int(Setting.last_youtube_sync_generation_start())
         log.put()
 
-        if step < YouTubeSyncStep.UPDATE_FROM_TOPICS:
+        # check to see if we have more steps to go
+        if step < YouTubeSyncStep.UPDATE_VIDEO_STATS:
             self.task_step(step + 1)
 
     def task_step(self, step):

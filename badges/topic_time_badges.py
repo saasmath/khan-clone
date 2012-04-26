@@ -2,14 +2,17 @@ from badges import BadgeCategory
 from topic_badges import TopicBadge
 from templatefilters import seconds_to_time_string
 
-# All badges awarded for watching a specific amount of topic time inherit from TopicTimeBadge
+
+# All badges awarded for watching a specific amount of topic time
+# inherit from TopicTimeBadge
 class TopicTimeBadge(TopicBadge):
 
     def __init__(self):
         TopicBadge.__init__(self)
 
-        # Backwards compatibility with old playlist badges requires that the badge
-        # name isn't changed (which currently relies on __class__.__name__ not changing)
+        # Backwards compatibility with old playlist badges requires
+        # that the badge name isn't changed (which currently relies on
+        # __class__.__name__ not changing)
         self.name = self.name.replace("topictimebadge", "playlisttimebadge")
 
     def is_satisfied_by(self, *args, **kwargs):
@@ -21,7 +24,9 @@ class TopicTimeBadge(TopicBadge):
         return user_topic.seconds_watched >= self.seconds_required
 
     def extended_description(self):
-        return "Watch %s of video in a single topic" % seconds_to_time_string(self.seconds_required)
+        return ("Watch %s of video in a single topic" %
+                seconds_to_time_string(self.seconds_required))
+
 
 class NiceTopicTimeBadge(TopicTimeBadge):
     def __init__(self):
@@ -31,6 +36,7 @@ class NiceTopicTimeBadge(TopicTimeBadge):
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
 
+
 class GreatTopicTimeBadge(TopicTimeBadge):
     def __init__(self):
         TopicTimeBadge.__init__(self)
@@ -38,6 +44,7 @@ class GreatTopicTimeBadge(TopicTimeBadge):
         self.description = "Great Listener"
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
+
 
 class AwesomeTopicTimeBadge(TopicTimeBadge):
     def __init__(self):
@@ -47,6 +54,7 @@ class AwesomeTopicTimeBadge(TopicTimeBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 0
 
+
 class RidiculousTopicTimeBadge(TopicTimeBadge):
     def __init__(self):
         TopicTimeBadge.__init__(self)
@@ -54,6 +62,7 @@ class RidiculousTopicTimeBadge(TopicTimeBadge):
         self.description = "Ridiculous Listener"
         self.badge_category = BadgeCategory.GOLD
         self.points = 0
+
 
 class LudicrousTopicTimeBadge(TopicTimeBadge):
     def __init__(self):

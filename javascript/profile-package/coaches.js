@@ -9,8 +9,7 @@ var Coaches = {
             deferred;
 
         if (isSelf && !isPhantom) {
-            var email = Profile.profile.get("email"),
-                template = Templates.get("profile.coaches");
+            var template = Templates.get("profile.coaches");
             $("#tab-content-coaches").html(template(Profile.profile.toJSON()));
 
             this.delegateEvents_();
@@ -19,7 +18,6 @@ var Coaches = {
                 type: "GET",
                 url: this.url,
                 data: {
-                    email: email,
                     casing: "camel"
                 },
                 dataType: "json",
@@ -150,7 +148,7 @@ Coaches.Coach = ProfileModel.extend({
         delete json["id"];
         return json;
     }
-})
+});
 
 Coaches.CoachCollection = Backbone.Collection.extend({
     model: Coaches.Coach,
@@ -318,7 +316,7 @@ Coaches.CoachCollectionView = Backbone.View.extend({
 
             this.coachViews_ = _.without(this.coachViews_, viewToRemove);
 
-            if (this.rendered_){
+            if (this.rendered_) {
                 $(viewToRemove.el).fadeOut(function() {
                     viewToRemove.remove();
                 });

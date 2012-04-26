@@ -50,7 +50,23 @@ def get_app_engine_credentials():
         password = getpass.getpass("Password for %s: " % email)
         return (email, password)
 
-def send_hipchat_deploy_message(version, includes_local_changes, email):
+def send_hipchat_deploy_message(
+        version, includes_local_changes, email, authors):
+    """Send a summary of the deploy information to HipChat.
+
+    Arguments:
+        version:
+            A string indicating the AppEngine version name of the deploy.
+        includes_local_changes:
+            A bool indicating whether or not the current file system
+            is dirty and has changes that aren't checked into source control.
+            These changes are included in the deploy.
+        email:
+            The email of the AppEngine account being used to deploy.
+        authors:
+            A list of code authors with changesets since the last deploy,
+            and are likely to be interested in this deploy.
+    """
     if hipchat_deploy_token is None:
         return
 
@@ -63,29 +79,44 @@ def send_hipchat_deploy_message(version, includes_local_changes, email):
     url = "http://%s.%s.appspot.com" % (version, app_id)
 
     hg_id = hg_version()
-    hg_msg = hg_changeset_msg(hg_id)
+    hg_msg = hg_changeset_msg(hg_id.replace('+', ''))
     kiln_url = "https://khanacademy.kilnhg.com/Search?search=%s" % hg_id
 
     git_id = git_version()
     git_msg = git_revision_msg(git_id)
     github_url = "https://github.com/Khan/khan-exercises/commit/%s" % git_id
 
-    local_changes_warning = " (including uncommitted local changes)" if includes_local_changes else ""
+    authors_tmpl = ""
+    if authors:
+        # TODO(benkomalo): hardcode a mapping of users whose hipchat ID
+        # doesn't match the user part of their e-mail address?
+        authors_tmpl = ("<br>Devs with changesets in this deploy:<br>" +
+                        ", ".join("@%s" % author.split('@')[0]
+                                  for author in authors))
+
+    local_changes_warning = " (with local changes)" if includes_local_changes else ""
+    changeset_id = "%s as " % hg_id if hg_id != version else ""
     message_tmpl = """
-            %(hg_id)s%(local_changes_warning)s to <a href='%(url)s'>a non-default url</a>. Includes
-            website changeset "<a href='%(kiln_url)s'>%(hg_msg)s</a>" and khan-exercises
-            revision "<a href='%(github_url)s'>%(git_msg)s</a>."
+            %(changeset_id)sversion <a href='%(url)s'>%(version)s</a>.<br>
+            &bull; website changeset: <a href='%(kiln_url)s'>%(hg_msg)s</a>%(local_changes_warning)s<br>
+            &bull; khan-exercises revision: <a href='%(github_url)s'>%(git_msg)s</a>
             """ % {
+                "changeset_id": changeset_id,
                 "url": url,
+                "version": version,
                 "hg_id": hg_id,
                 "kiln_url": kiln_url,
-                "hg_msg": hg_msg,
+                "hg_msg": truncate(hg_msg, 60),
                 "github_url": github_url,
-                "git_msg": git_msg,
+                "git_msg": truncate(git_msg, 60),
                 "local_changes_warning": local_changes_warning,
             }
+    deployer_id = email
+    if email in ['prod-deploys@khanacademy.org']:  # Check for role-accounts
+        real_user = popen_results(['whoami']).strip()
+        deployer_id = "%s (%s)" % (email, real_user)
     public_message = "Just deployed %s" % message_tmpl
-    private_message = "%s just deployed %s" % (email, message_tmpl)
+    private_message = "%s just deployed %s%s" % (deployer_id, message_tmpl, authors_tmpl)
 
     hipchat_message(public_message, ["Exercises"])
     hipchat_message(private_message, ["1s and 0s"])
@@ -99,7 +130,12 @@ def hipchat_message(msg, rooms):
         if room.name in rooms:
 
             result = ""
-            msg_dict = {"room_id": room.room_id, "from": "Mr Monkey", "message": msg, "color": "purple"}
+            msg_dict = {
+                "room_id": room.room_id,
+                "from": "Mr Monkey",
+                "message": msg,
+                "color": "purple",
+            }
 
             try:
                 result = str(hipchat.room.Room.message(**msg_dict))
@@ -110,6 +146,12 @@ def hipchat_message(msg, rooms):
                 print "Notified Hipchat room %s" % room.name
             else:
                 print "Failed to send message to Hipchat: %s" % msg
+
+def truncate(s, n):
+    if len(s) <= n:
+        return s
+    else:
+        return s[:(n - 3)] + '...'
 
 def get_app_id():
     f = open("app.yaml", "r")
@@ -136,7 +178,37 @@ def hg_pull_up():
         # Ran into merge or other problem
         return -1
 
-    return hg_version()
+    return dated_hg_version()
+
+def get_changeset_authors(from_hg_version, to_hg_version=None):
+    """Retrieve the list of changsets since a given HG version.
+
+    Returns a set of email addresses of all authors with an associated
+    changeset in the list.
+    """
+    if not to_hg_version:
+        to_hg_version = 'tip'
+
+    command = "hg log -r %s:%s --template {author}\\n" % (from_hg_version,
+                                                           to_hg_version)
+    raw_authors = popen_results(command.split(' ')).strip()
+    authors = set()
+
+    for author in raw_authors.split('\n'):
+        if author.endswith('>'):
+            # In the format "Joe Shmoe <email@domain.com>"
+            email = re.split('[<>]', author)[1]
+        else:
+            email = author
+        authors.add(email)
+    return authors
+
+def dated_hg_version():
+    version = hg_version()
+
+    # e.g. "0421" for April 21:
+    date_prefix = datetime.date.today().strftime("%m%d")
+    return "%s-%s" % (date_prefix, version)
 
 def hg_version():
     # grab the tip changeset hash
@@ -146,7 +218,7 @@ def hg_version():
 def hg_changeset_msg(changeset_id):
     # grab the summary and date
     output = popen_results(['hg', 'log', '--template','{desc}', '-r', changeset_id])
-    return output
+    return output.split('\n')[0]
 
 def git_version():
     # grab the tip changeset hash
@@ -210,8 +282,18 @@ def prime_cache(version):
     except:
         print "Error when priming cache"
 
+def _quiet_browser_open(url):
+    """Opens a browser session without the default Python message to stdout."""
+    savout = os.dup(1)
+    os.close(1)
+    os.open(os.devnull, os.O_RDWR)
+    try:
+        webbrowser.open(url)
+    finally:
+        os.dup2(savout, 1)
+
 def open_browser_to_ka_version(version):
-    webbrowser.open("http://%s.%s.appspot.com" % (version, get_app_id()))
+    _quiet_browser_open("http://%s.%s.appspot.com" % (version, get_app_id()))
 
 def deploy(version, email, password):
     print "Deploying version " + str(version)
@@ -272,6 +354,7 @@ def main():
         return
 
     version = -1
+    last_version = None
 
     if not options.noup:
         version = hg_pull_up()
@@ -302,18 +385,31 @@ def main():
     compress_exercises()
 
     if not options.dryrun:
+        changeset_authors = []
         if options.version:
             version = options.version
         elif options.noup:
             print 'You must supply a version when deploying with --no-up'
             return
+        else:
+            # TODO(benkomalo): figure out a way to programmatically do this
+            # without having the deployer enter the SHA of the current default.
+            # For now, just open the versions page for the deployer.
+
+            # Default deploy from tip of tree - find the changesets delta
+            # from the last production default.
+            _quiet_browser_open("https://appengine.google.com/deployment?&app_id=s~khan-academy")
+            last_version = raw_input(
+                    "Changeset SHA of the current default version: ").strip()
+            if last_version:
+                changeset_authors = get_changeset_authors(last_version)
 
         print "Deploying version " + str(version)
 
         (email, password) = get_app_engine_credentials()
         success = deploy(version, email, password)
         if success:
-            send_hipchat_deploy_message(version, includes_local_changes, email)
+            send_hipchat_deploy_message(version, includes_local_changes, email, changeset_authors)
             open_browser_to_ka_version(version)
             prime_cache(version)
 

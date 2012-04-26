@@ -58,8 +58,8 @@ class ViewTopicExerciseDeprecated(request_handler.RequestHandler):
 
 class ViewExercise(request_handler.RequestHandler):
 
-    @ensure_xsrf_cookie
     @user_util.open_access
+    @ensure_xsrf_cookie
     def get(self, topic_path, exid=None):
 
         title = None
@@ -173,7 +173,7 @@ class ViewExercise(request_handler.RequestHandler):
 
         problem_number = self.request_int('problem_number', default=(user_exercise.total_done + 1))
 
-        user_data_student = self.request_student_user_data(legacy=True) or user_data
+        user_data_student = self.request_student_user_data() or user_data
 
         if user_data_student.user_id != user_data.user_id and not user_data_student.is_visible_to(user_data):
             user_data_student = user_data

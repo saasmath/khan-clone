@@ -17,7 +17,6 @@ import util
 import exercise_models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
-from phantom_users.phantom_util import disallow_phantoms
 from user_models import StudentList, UserData
 from coach_resources.coach_request_model import CoachRequest
 from avatars import util_avatars
@@ -61,10 +60,9 @@ def get_last_student_list(request_handler, student_lists, use_cookie=True):
     return list_id, current_list
 
 def get_student(coach, request_handler):
-    student = request_handler.request_student_user_data(legacy=True)
+    student = request_handler.request_student_user_data()
     if student is None:
-        raise Exception("No student found with email='%s'."
-            % request_handler.request_student_email_legacy())
+        raise Exception("No student found")
     if not student.is_coached_by(coach):
         raise Exception("Not your student!")
     return student
@@ -97,72 +95,66 @@ def get_coach_student_and_student_list(request_handler):
     return (coach, student, student_list)
 
 class ViewClassProfile(request_handler.RequestHandler):
-    # TODO(sundar) - add login_required_special(demo_allowed = True)
-    @disallow_phantoms
-    @ensure_xsrf_cookie
-    @user_util.manual_access_checking
+    @user_util.login_required_and(phantom_user_allowed=False,
+                                  child_user_allowed=False,
+                                  demo_user_allowed=True)
     def get(self):
-        show_coach_resources = self.request_bool('show_coach_resources', default=True)
         coach = UserData.current()
 
-        if coach:
+        user_override = self.request_user_data("coach_email")
+        if user_override and user_override.are_students_visible_to(coach):
+            # Only allow looking at a student list other than your own
+            # if you are a dev, admin, or coworker.
+            coach = user_override
 
-            user_override = self.request_user_data("coach_email")
-            if user_override and user_override.are_students_visible_to(coach):
-                # Only allow looking at a student list other than your own
-                # if you are a dev, admin, or coworker.
-                coach = user_override
+        student_lists = StudentList.get_for_coach(coach.key())
 
-            student_lists = StudentList.get_for_coach(coach.key())
+        student_lists_list = [{
+            'key': 'allstudents',
+            'name': 'All students',
+        }];
+        for student_list in student_lists:
+            student_lists_list.append({
+                'key': str(student_list.key()),
+                'name': student_list.name,
+            })
 
-            student_lists_list = [{
-                'key': 'allstudents',
-                'name': 'All students',
-            }];
-            for student_list in student_lists:
-                student_lists_list.append({
-                    'key': str(student_list.key()),
-                    'name': student_list.name,
-                })
+        list_id, _ = get_last_student_list(self, student_lists, coach==UserData.current())
+        current_list = None
+        for student_list in student_lists_list:
+            if student_list['key'] == list_id:
+                current_list = student_list
 
-            list_id, _ = get_last_student_list(self, student_lists, coach==UserData.current())
-            current_list = None
-            for student_list in student_lists_list:
-                if student_list['key'] == list_id:
-                    current_list = student_list
-
-            selected_graph_type = self.request_string("selected_graph_type") or ClassProgressReportGraph.GRAPH_TYPE
-            if selected_graph_type == 'progressreport' or selected_graph_type == 'goals': # TomY This is temporary until all the graphs are API calls
-                initial_graph_url = "/api/v1/user/students/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
-            else:
-                initial_graph_url = "/profile/graph/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
-            initial_graph_url += 'list_id=%s' % list_id
-
-            template_values = {
-                    'user_data_coach': coach,
-                    'coach_email': coach.email,
-                    'list_id': list_id,
-                    'student_list': current_list,
-                    'student_lists': student_lists_list,
-                    'student_lists_json': json.dumps(student_lists_list),
-                    'coach_nickname': coach.nickname,
-                    'selected_graph_type': selected_graph_type,
-                    'initial_graph_url': initial_graph_url,
-                    'exercises': exercise_models.Exercise.get_all_use_cache(),
-                    'is_profile_empty': not coach.has_students(),
-                    'selected_nav_link': 'coach',
-                    "view": self.request_string("view", default=""),
-                    'stats_charts_class': 'coach-view',
-                    }
-            self.render_jinja2_template('viewclassprofile.html', template_values)
+        selected_graph_type = self.request_string("selected_graph_type") or ClassProgressReportGraph.GRAPH_TYPE
+        if selected_graph_type == 'progressreport' or selected_graph_type == 'goals': # TomY This is temporary until all the graphs are API calls
+            initial_graph_url = "/api/v1/user/students/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
         else:
-            self.redirect(util.create_login_url(self.request.uri))
+            initial_graph_url = "/profile/graph/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
+        initial_graph_url += 'list_id=%s' % list_id
+
+        template_values = {
+                'user_data_coach': coach,
+                'coach_email': coach.email,
+                'list_id': list_id,
+                'student_list': current_list,
+                'student_lists': student_lists_list,
+                'student_lists_json': json.dumps(student_lists_list),
+                'coach_nickname': coach.nickname,
+                'selected_graph_type': selected_graph_type,
+                'initial_graph_url': initial_graph_url,
+                'exercises': exercise_models.Exercise.get_all_use_cache(),
+                'is_profile_empty': not coach.has_students(),
+                'selected_nav_link': 'coach',
+                "view": self.request_string("view", default=""),
+                'stats_charts_class': 'coach-view',
+                }
+        self.render_jinja2_template('viewclassprofile.html', template_values)
 
 class ViewProfile(request_handler.RequestHandler):
     # TODO(sundar) - add login_required_special(demo_allowed = True)
     # However, here only the profile of the students of the demo account are allowed
-    @ensure_xsrf_cookie
     @user_util.open_access
+    @ensure_xsrf_cookie
     def get(self, email_or_username=None, subpath=None):
 
         """Render a student profile.
@@ -244,7 +236,7 @@ class ViewProfile(request_handler.RequestHandler):
 
 
 class UserProfile(object):
-    """ Profile information about a user.
+    """Profile information about a user.
 
     This is a transient object and derived from the information in UserData,
     and formatted/tailored for use as an object about a user's public profile.
@@ -346,7 +338,8 @@ class UserProfile(object):
 
         if full_projection:
             profile.email = user.email
-            profile.is_data_collectible = user.is_certain_to_be_thirteen()
+            profile.is_data_collectible = (not user.is_child_account() and
+                                           not user.is_maybe_edu_account())
 
         return profile
 
@@ -399,7 +392,7 @@ class UserProfile(object):
 
 class ProfileGraph(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.open_access    # TODO(csilvers): is this right? -- ask marcia
     def get(self):
         html = ""
         json_update = ""
@@ -427,9 +420,7 @@ class ProfileGraph(request_handler.RequestHandler):
             self.response.out.write(html)
 
     def get_profile_target_user_data(self):
-        email = self.request_student_email_legacy()
-        # TODO: ACL
-        return UserData.get_possibly_current_user(email)
+        return self.request_visible_student_user_data()
 
     def redirect_if_not_ajax(self, student):
         if not self.is_ajax_request():

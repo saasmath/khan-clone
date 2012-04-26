@@ -1,4 +1,3 @@
-import logging
 import urllib
 import urllib2
 

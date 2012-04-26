@@ -15,30 +15,6 @@
           <div>
               <span>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></span>
           </div>
-          <div class="user-profile-controls clearfix">
-          {{#if isEditable}}
-            <div class="dropdown">
-              <span class="dropdown-toggle simple-button action-gradient">
-                Edit profile
-              </span>
-              <ul class="dropdown-menu">
-                  {{#if isFullyEditable}}
-                  <li><a class="edit-basic-info" href="javascript:void(0)">Edit basic info</a></li>
-                  {{/if}}
-                  <li><a class="edit-display-case" href="javascript:void(0)">Edit display case</a></li>
-                  <li><a class="edit-avatar" href="javascript:void(0)">Edit avatar</a></li>
-                  {{#if isFullyEditable}}
-                  <li><a class="edit-visibility" href="javascript:void(0)">Toggle privacy setting</a></li>
-                  {{/if}}
-              </ul>
-            </div>
-          {{else}}
-            <!--
-              {{#unless isSelf}}<a href="javascript:void(0)" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>{{/unless}}
-              <a href="javascript:void(0)" class="add-remove-coach simple-button action-gradient" style="{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</a>
-              -->
-          {{/if}}
-          </div>
           <div class="basic-stats clearfix">
               <div class="simple-stat">
                   <img class="summary-icon star" src="/images/profile-icons/inset-star.png">
@@ -49,6 +25,31 @@
                   <div class="stat-text">{{countVideosCompleted}}<span class="stat-divider">/</span>{{countVideos}}</div>
               </div>
               <div class="simple-stat"><span title="{{commafy points}} energy points" class="energy-points-badge" style="float:none; display:block; margin-bottom: 1px; margin-top: 2px; padding:0; line-height: 20px;">{{commafy points}}</span> Energy Points</div>
+          </div>
+          <div class="user-profile-controls clearfix">
+          {{#if isEditable}}
+            <span class="dropdown">
+              <span class="dropdown-toggle simple-button">
+                Edit profile
+                <span class="caret"></span>
+              </span>
+              <ul class="dropdown-menu vertical-shadow-strong">
+                  {{#if isFullyEditable}}
+                  <li><a class="edit-basic-info" href="javascript:void(0)">Edit basic info</a></li>
+                  {{/if}}
+                  <li><a class="edit-display-case" href="javascript:void(0)">Edit display case</a></li>
+                  <li><a class="edit-avatar" href="javascript:void(0)">Edit avatar</a></li>
+                  {{#if isFullyEditable}}
+                  <li><a class="edit-visibility" href="javascript:void(0)">Toggle privacy setting</a></li>
+                  {{/if}}
+              </ul>
+            </span>
+          {{else}}
+            <!--
+              {{#unless isSelf}}<a href="javascript:void(0)" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>{{/unless}}
+              <a href="javascript:void(0)" class="add-remove-coach simple-button action-gradient" style="{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</a>
+              -->
+          {{/if}}
           </div>
       </div>
     </div>

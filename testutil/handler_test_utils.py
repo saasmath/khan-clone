@@ -51,6 +51,13 @@ tmpdir = None
 pid = None
 
 
+def dev_appserver_logfile_name():
+    """Where we log the dev_appserver output; None if no server is running."""
+    if not tmpdir:
+        return None
+    return os.path.join(tmpdir, 'dev_appserver.log')
+
+
 def start_dev_appserver(db=None):
     """Start up a dev-appserver instance on an unused port, return its url.
 
@@ -128,12 +135,12 @@ def start_dev_appserver(db=None):
             tmpdir]
     # Its output is noisy, but useful, so store it in tmpdir.  Third
     # arg to open() uses line-buffering so the output is available.
-    dev_appserver_file = os.path.join(tmpdir, 'dev_appserver.log')
+    dev_appserver_file = dev_appserver_logfile_name()
     dev_appserver_output = open(dev_appserver_file, 'w', 1)
     print 'NOTE: Starting dev_appserver.py; output in %s' % dev_appserver_file
     pid = subprocess.Popen(args,
-                            stdout=dev_appserver_output,
-                            stderr=subprocess.STDOUT).pid
+                           stdout=dev_appserver_output,
+                           stderr=subprocess.STDOUT).pid
 
     # Wait for the server to start up
     time.sleep(1)          # it *definitely* takes at least a second

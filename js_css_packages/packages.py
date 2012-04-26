@@ -175,6 +175,7 @@ javascript = {
             "coach.handlebars",
             "no-coaches.handlebars",
             "coaches.handlebars",
+            "questions-list.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",
             "user-badge.handlebars",
@@ -184,11 +185,6 @@ javascript = {
             "empty-badge-picker.handlebars",
             "badges.js",
             "profile-goals.handlebars",
-            "profile-class-goals.handlebars",
-            "profile-class-progress-report.handlebars",
-            "class-progress-column.handlebars",
-            "class-progress-summary.handlebars",
-            "class-progress-summary.js",
             "exercise_progress.handlebars",
             "profile-goals.js",
             "profile.js",
@@ -223,6 +219,13 @@ javascript = {
         "files": [
             "studentlists.js",
             "classprofile.js",
+            "class-goals.js",
+            "class-progress-report.js",
+            "class-progress-column.handlebars",
+            "class-progress-summary.handlebars",
+            "class-progress-summary.js",
+            "class-goals.handlebars",
+            "class-progress-report.handlebars",
         ]
     },
     "donate": {
@@ -318,6 +321,7 @@ javascript = {
         "files": [
             "jquery.ui.draggable.js",
             "jquery.ui.droppable.js",
+            "jquery.ui.sortable.js",
             "jquery.dynatree.js",
             "jquery.contextMenu.js",
             "jquery.ajaxq-0.0.1.js",
@@ -343,6 +347,7 @@ javascript = {
         "files": [
             "../../khan-exercises/utils/raphael.js",
             "../topicsadmin-package/jquery.ui.draggable.js",
+            "../topicsadmin-package/jquery.ui.sortable.js",
             "kmap-editor.js",
         ]
     },

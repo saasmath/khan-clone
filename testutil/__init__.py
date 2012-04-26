@@ -50,7 +50,6 @@ class GAEModelTestCase(unittest.TestCase):
                 str_a[-max_length / 2:])
 
     def assertEqualTruncateError(self, a, b):
-        maxlen = 100
         assert a == b, "%s != %s" % (self.truncateValue(a), 
                                      self.truncateValue(b))
 

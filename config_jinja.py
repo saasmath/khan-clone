@@ -24,6 +24,7 @@ import gae_mini_profiler.templatetags
 import api.auth.xsrf
 import util
 from app import App
+import handlebars
 
 _file_dir = os.path.dirname(__file__)
 
@@ -53,6 +54,7 @@ jinja2.default_config = {
         "UserData": UserData,
         "json": json,
         "App": App,
+        "handlebars_template": handlebars.render_from_jinja,
     }, 
     "filters": {
         "urlencode": templatefilters.urlencode,

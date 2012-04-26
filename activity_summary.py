@@ -213,7 +213,7 @@ def daily_activity_summary_map(user_data):
     db.put(list_entities_to_put)
 
 class StartNewDailyActivityLogMapReduce(request_handler.RequestHandler):
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser only via app.yaml (/admin)
     def get(self):
         # Admin-only restriction is handled by /admin/* URL pattern
         # so this can be called by a cron job.

@@ -1,28 +1,18 @@
-import os
 import logging
 
 from google.appengine.ext import db, deferred
-from google.appengine.api import users
 import user_util
-import util
-from app import App
 from user_models import UserData
 from common_core.models import CommonCoreMap
 import request_handler
-import itertools
-from api.auth.xsrf import ensure_xsrf_cookie
 
-import gdata.youtube
-import gdata.youtube.data
-import gdata.youtube.service
-import urllib
 import csv
 import StringIO
 
 
 class Panel(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         self.render_jinja2_template('devpanel/panel.html',
                                     {"selected_id": "panel"})
@@ -30,7 +20,7 @@ class Panel(request_handler.RequestHandler):
 
 class MergeUsers(request_handler.RequestHandler):
 
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
 
         source = self.request_user_data("source_email")
@@ -55,7 +45,7 @@ class MergeUsers(request_handler.RequestHandler):
         self.render_jinja2_template("devpanel/mergeusers.html",
                                     template_values)
 
-    @user_util.developer_only
+    @user_util.developer_required
     def post(self):
 
         if not self.request_bool("confirm", default=False):
@@ -64,8 +54,6 @@ class MergeUsers(request_handler.RequestHandler):
 
         source = self.request_user_data("source_email")
         target = self.request_user_data("target_email")
-
-        merged = False
 
         if source and target:
 
@@ -95,8 +83,7 @@ class MergeUsers(request_handler.RequestHandler):
 
 class Manage(request_handler.RequestHandler):
 
-    @user_util.admin_only  # only admins may add devs, devs cannot add devs
-    @ensure_xsrf_cookie
+    @user_util.admin_required  # only admins may add devs, devs cannot add devs
     def get(self):
         developers = UserData.all()
         developers.filter('developer = ', True).fetch(1000)
@@ -110,8 +97,7 @@ class Manage(request_handler.RequestHandler):
 
 class ManageCoworkers(request_handler.RequestHandler):
 
-    @user_util.developer_only
-    @ensure_xsrf_cookie
+    @user_util.developer_required
     def get(self):
 
         user_data_coach = self.request_user_data("coach_email")
@@ -132,7 +118,7 @@ class ManageCoworkers(request_handler.RequestHandler):
 def update_common_core_map(cc_file):
     logging.info("Deferred job <update_common_core_map> started")
     reader = csv.reader(cc_file, delimiter='\t')
-    headerline = reader.next()
+    _ = reader.next()
     cc_list = []
     cc_standards = {}
     for line in reader:
@@ -140,7 +126,7 @@ def update_common_core_map(cc_file):
         cc_cluster = line[1]
         try:
             cc_description = line[2].encode('utf-8')
-        except Exception, e:
+        except Exception:
             cc_description = cc_cluster
         exercise_name = line[3]
         video_youtube_id = line[4]
@@ -178,8 +164,7 @@ def update_common_core_map(cc_file):
 
 class ManageCommonCore(request_handler.RequestHandler):
 
-    @user_util.developer_only
-    @ensure_xsrf_cookie
+    @user_util.developer_required
     def get(self):
         template_values = {
             "selected_id": "commoncore",
@@ -188,8 +173,7 @@ class ManageCommonCore(request_handler.RequestHandler):
         self.render_jinja2_template("devpanel/uploadcommoncorefile.html",
                                     template_values)
 
-    @user_util.developer_only
-    @ensure_xsrf_cookie
+    @user_util.developer_required
     def post(self):
 
         logging.info("Accessing %s" % self.request.path)

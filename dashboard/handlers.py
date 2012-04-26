@@ -80,7 +80,7 @@ class RecordStatistics(request_handler.RequestHandler):
         self.response.out.write("Dashboard statistics recorded.")
 
 class EntityCounts(request_handler.RequestHandler):
-    @user_util.developer_only
+    @user_util.developer_required
     def get(self):
         kind_stats = [s for s in stats.KindStat.all().fetch(1000)]
 
@@ -94,7 +94,7 @@ class EntityCounts(request_handler.RequestHandler):
         
 class ContentCountsCSV(request_handler.RequestHandler):
 
-    @user_util.open_access
+    @user_util.developer_required
     def get(self):
         root = topic_models.Topic.get_root()
         tree = root.make_tree()

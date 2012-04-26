@@ -19,7 +19,7 @@
             {% set points = user_data.points %}
         {% endif %}
     {% else %}
-        {% set profile_root = '/profile' %}
+        {% set profile_root = '/profile/' %}
         {% set points = 0 %}
     {% endif %}
     <span id="user-points-container">{{ user_points_content(profile_root, points) }}</span>
@@ -39,20 +39,21 @@
         {% set count = user_data.feedback_notification_count() %}
     {% endif %}
 {% else %}
-    {% set profile_root = '/profile' %}
+    {% set profile_root = '/profile/' %}
     {% set count = 0 %}
 {% endif %}
 {% if count %}
-<span class="user-notification">
-    <a class="notification_link" href="/discussion/videofeedbacknotificationlist" title="{{ count }} new answers to your questions"><img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
-</span>
+<a class="user-notification" href="{{profile_root}}discussion" title="New updates to {{count}} question{{count|pluralize}}">
+    <img src="{{ "/images/discussions-hi-16px.png"|static_url }}" class="icon"><span class="notification-bubble">{{ count }}</span>
+</a>
 {% endif %}
+
 <span class="dropdown">
     <span class="username_and_notification dropdown-toggle">
         <a href="{{profile_root}}" {% if user_data.is_demo %}class="show-demo-dialog"{% endif %}><img class="user-avatar" src="{{ avatars.get_src_for_user(user_data) }}"><span class="user-name">{{username|escape}}</span></a>
-        <b class="caret"></b>
+        <span class="caret"></span>
     </span>
-    <ul class="dropdown-menu vertical-shadow">
+    <ul class="dropdown-menu vertical-shadow-strong">
         <li><a class="dropdown-link{% if user_data.is_demo %} show-demo-dialog{% endif %}" href="{{profile_root}}">Visit profile</a></li>
         {% if user_data.has_password() %}
         <li><a class="dropdown-link" href="{{profile_root}}settings">Change settings</a></li>

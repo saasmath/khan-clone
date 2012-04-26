@@ -4,24 +4,15 @@ try:
 except ImportError:
     import simplejson as json
 
-from app import App
-import app
 import custom_exceptions
-import facebook_util
 import util
 import user_util
 import request_handler
 
 from user_models import UserData, StudentList
 from coach_resources.coach_request_model import CoachRequest
-from badges import util_badges
 
-from profiles.util_profile import ExercisesOverTimeGraph, ExerciseProblemsGraph
-from profiles.util_profile import ClassProgressReportGraph, ClassEnergyPointsPerMinuteGraph, ClassTimeGraph
-
-from phantom_users.phantom_util import disallow_phantoms
 import profiles.util_profile as util_profile
-from api.auth.xsrf import ensure_xsrf_cookie
 
 def update_coaches_and_requests(user_data, coaches_json):
     """ Update the user's coaches and requests.
@@ -84,79 +75,64 @@ def update_requests(user_data, requester_emails):
             current_request.delete()
 
 class ViewCoaches(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     def get(self):
         """ Redirect legacy /coaches to profile page's coaches tab.
         """
         user_data = UserData.current()
-        if user_data:
-            self.redirect(user_data.profile_root + "coaches")
-        else:
-            self.redirect(util.create_login_url(self.request.uri))
+        self.redirect(user_data.profile_root + "coaches")
 
 
 class ViewStudents(request_handler.RequestHandler):
-    @disallow_phantoms
-    @ensure_xsrf_cookie
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     def get(self):
         user_data = UserData.current()
-        if user_data:
+        user_data_override = self.request_user_data("coach_email")
+        if user_util.is_current_user_developer() and user_data_override:
+            user_data = user_data_override
 
-            user_data_override = self.request_user_data("coach_email")
-            if user_util.is_current_user_developer() and user_data_override:
-                user_data = user_data_override
+        invalid_student = self.request_bool("invalid_student", default = False)
 
-            invalid_student = self.request_bool("invalid_student", default = False)
+        coach_requests = [x.student_requested_data.email for x in CoachRequest.get_for_coach(user_data) if x.student_requested_data]
 
-            coach_requests = [x.student_requested_data.email for x in CoachRequest.get_for_coach(user_data) if x.student_requested_data]
+        student_lists_models = StudentList.get_for_coach(user_data.key())
+        student_lists_list = [];
+        for student_list in student_lists_models:
+            student_lists_list.append({
+                'key': str(student_list.key()),
+                'name': student_list.name,
+            })
+        student_lists_dict = dict((g['key'], g) for g in student_lists_list)
 
-            student_lists_models = StudentList.get_for_coach(user_data.key())
-            student_lists_list = [];
-            for student_list in student_lists_models:
-                student_lists_list.append({
-                    'key': str(student_list.key()),
-                    'name': student_list.name,
-                })
-            student_lists_dict = dict((g['key'], g) for g in student_lists_list)
+        students_data = user_data.get_students_data()
+        students = map(lambda s: {
+            'key': str(s.key()),
+            'email': s.email,
+            'nickname': s.nickname,
+            'profile_root': s.profile_root,
+            'studentLists': [l for l in [student_lists_dict.get(str(list_id)) for list_id in s.student_lists] if l],
+        }, students_data)
+        students.sort(key=lambda s: s['nickname'])
 
-            students_data = user_data.get_students_data()
-            students = map(lambda s: {
-                'key': str(s.key()),
-                'email': s.email,
-                'nickname': s.nickname,
-                'profile_root': s.profile_root,
-                'studentLists': [l for l in [student_lists_dict.get(str(list_id)) for list_id in s.student_lists] if l],
-            }, students_data)
-            students.sort(key=lambda s: s['nickname'])
-
-            template_values = {
-                'students': students,
-                'students_json': json.dumps(students),
-                'student_lists': student_lists_list,
-                'student_lists_json': json.dumps(student_lists_list),
-                'invalid_student': invalid_student,
-                'coach_requests': coach_requests,
-                'coach_requests_json': json.dumps(coach_requests),
-                'selected_nav_link': 'coach',
-                'email': user_data.email,
-            }
-            self.render_jinja2_template('viewstudentlists.html', template_values)
-        else:
-            self.redirect(util.create_login_url(self.request.uri))
+        template_values = {
+            'students': students,
+            'students_json': json.dumps(students),
+            'student_lists': student_lists_list,
+            'student_lists_json': json.dumps(student_lists_list),
+            'invalid_student': invalid_student,
+            'coach_requests': coach_requests,
+            'coach_requests_json': json.dumps(coach_requests),
+            'selected_nav_link': 'coach',
+            'email': user_data.email,
+        }
+        self.render_jinja2_template('viewstudentlists.html', template_values)
 
 class RequestStudent(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.manual_access_checking
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
         user_data = UserData.current()
 
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
-
-        user_data_student = self.request_user_data("student_email")
+        user_data_student = self.request_student_user_data()
         if user_data_student:
             if not user_data_student.is_coached_by(user_data):
                 coach_request = CoachRequest.get_or_insert_for(user_data, user_data_student)
@@ -171,31 +147,21 @@ class RequestStudent(request_handler.RequestHandler):
             self.redirect("/students?invalid_student=1")
 
 class AcceptCoach(request_handler.RequestHandler):
-    @user_util.manual_access_checking
+    @user_util.login_required_and(phantom_user_allowed=False)
     @request_handler.RequestHandler.exceptions_to_http(400)
-    @disallow_phantoms
     def get(self):
         """ Only used when a coach deletes a request in studentlists.js.
         """
         user_data = UserData.current()
 
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
-
         accept_coach = self.request_bool("accept", default = False)
-        user_data_coach = self.request_user_data("coach_email")
-        user_data_student = self.request_user_data('student_email')
+        user_data_student = self.request_student_user_data()
 
-        if bool(user_data_coach) == bool(user_data_student):
-            raise Exception('must provide coach_email xor student_email')
-
-        if user_data_coach:
-            user_data_student = user_data
-        elif user_data_student:
+        if user_data_student:
             user_data_coach = user_data
 
-        if user_data_coach and not user_data_student.is_coached_by(user_data_coach):
+        if (user_data_coach and
+                not user_data_student.is_coached_by(user_data_coach)):
             coach_request = CoachRequest.get_for(user_data_coach, user_data_student)
             if coach_request:
                 coach_request.delete()
@@ -238,22 +204,18 @@ class UnregisterStudentCoach(request_handler.RequestHandler):
             self.redirect(redirect_to)
 
 class UnregisterStudent(UnregisterStudentCoach):
-    @disallow_phantoms
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     def get(self):
-        user_data = UserData.current()
         return self.do_request(
-            self.request_user_data("student_email"),
+            self.request_student_user_data(),
             UserData.current(),
             "/students"
         )
 
 class AddStudentToList(request_handler.RequestHandler):
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     @request_handler.RequestHandler.exceptions_to_http(400)
     def post(self):
-        user_data = UserData.current()
-
         coach_data, student_data, student_list = util_profile.get_coach_student_and_student_list(self)
 
         if student_list.key() in student_data.student_lists:
@@ -263,11 +225,9 @@ class AddStudentToList(request_handler.RequestHandler):
         student_data.put()
 
 class RemoveStudentFromList(request_handler.RequestHandler):
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     @request_handler.RequestHandler.exceptions_to_http(400)
     def post(self):
-        user_data = UserData.current()
-
         coach_data, student_data, student_list = util_profile.get_coach_student_and_student_list(self)
 
         # due to a bug, we have duplicate lists in the collection. fix this:

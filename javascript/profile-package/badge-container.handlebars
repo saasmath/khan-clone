@@ -9,7 +9,7 @@
       <div id="user-owned">
       <h2 style="display: block; margin-left: 10px;">Badges Earned</h2>
         {{#each userBadges}}
-          {{> user-badge}}
+          {{> profile_user-badge}}
         {{/each}}
         <div class="clear"></div>
       </div>
@@ -18,7 +18,7 @@
         <h2 style="display: block; margin-left: 10px;">Possible Badges</h2>
         {{#each badges}}
           {{#unless isRetired}}
-            {{> badge}}
+            {{> profile_badge}}
           {{/unless}}
         {{/each}}
       </div>

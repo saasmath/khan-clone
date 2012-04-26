@@ -25,8 +25,30 @@ Handlebars.registerHelper("repeat", function(n, options) {
     return ret;
 });
 
-Handlebars.registerHelper("pluralize", function(num) {
-    return (num === 1) ? "" : "s";
+/**
+ * Usage:
+    {{pluralize 1 "dog"}} ==> 1 dog
+    {{pluralize 3 "dog"}} ==> 3 dogs
+    {{pluralize 1 "person"}} ==> 1 person
+    {{pluralize 5 "person"}} ==> 5 people
+
+ * TODO(marcia): Unify w the real pluralize function in
+ * /khan-exercises/utils/word-problems.js
+ */
+Handlebars.registerHelper("pluralize", function(num, word) {
+    if (num === 1) {
+        return num + " " + word;
+    }
+
+    var result = num + " ";
+
+    if (word === "person") {
+        result += "people";
+    } else {
+        result += word + "s";
+    }
+
+    return result;
 });
 
 Handlebars.registerHelper("reverseEach", function(context, block) {
@@ -42,7 +64,7 @@ Handlebars.registerHelper("reverseEach", function(context, block) {
  * starting position, exercise states, and whether or not proficiency was just
  * earned and should be animated.
  */
-Handlebars.registerPartial("small-exercise-icon", Templates.get("shared.small-exercise-icon"));
+Handlebars.registerPartial("shared_small-exercise-icon", Templates.get("shared.small-exercise-icon"));
 Handlebars.registerHelper("skill-bar", function(end, start, exerciseStates) {
 
     var template = Templates.get("shared.skill-bar"),
@@ -90,5 +112,9 @@ Handlebars.registerHelper("ellipsis", function(text, length) {
     } else {
         return textStripped.substr(0, length-3) + "...";
     }
+});
+
+Handlebars.registerHelper("arrayLength", function(array) {
+    return array.length;
 });
 

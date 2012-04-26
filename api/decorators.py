@@ -24,10 +24,32 @@ def has_flask_request_context():
     return flask._request_ctx_stack.top is not None
 
 def etag(func_tag_content):
+    """ETag header support: check etag hdr for requests, add it to responses.
+
+    If a function is decorated with @etag, then when a request comes
+    in with an If-None-Match header, we check if that header value
+    matches the given etag value and return a 304 (not modified) if
+    so.  Otherwise, we run the decorated function normally and set an
+    ETag header in the response, to allow future requests to use an
+    If-None-Match header.
+
+    Arguments:
+      func_tag_content: a function that yields the ETag value for this
+        request.  It should take the exact same arguments that the
+        function-being-decorated does.  It can use these arguments to
+        come up with a unique etag value.  TODO(csilvers): why not
+        just pickle the args and kwargs and use that?, and replace
+        func_tag_content with 'extra_args'?
+    """
     def etag_wrapper(func):
         @wraps(func)
         def etag_enabled(*args, **kwargs):
-            etag_inner_content = "%s:%s" % (func_tag_content(*args, **kwargs), App.version)
+            tag_content = func_tag_content(*args, **kwargs)
+            # You can disable etags on a per-arg basis by returning None above.
+            if tag_content is None:
+                return func(*args, **kwargs)
+
+            etag_inner_content = "%s:%s" % (tag_content, App.version)
             etag_server = "\"%s\"" % hashlib.md5(etag_inner_content).hexdigest()
 
             etag_client = request.headers.get("If-None-Match")

@@ -3,14 +3,13 @@ from mapreduce import control
 from mapreduce import operation as op
 
 import user_models
-import models_discussion
+import discussion_models
 import notification
 import util_discussion
 import user_util
 import util
 import request_handler
 import voting
-from phantom_users.phantom_util import disallow_phantoms
 from rate_limiter import FlagRateLimiter
 from badges.discussion_badges import FirstFlagBadge
 
@@ -19,13 +18,13 @@ def feedback_flag_update_map(feedback):
     yield op.db.Put(feedback)
 
 class StartNewFlagUpdateMapReduce(request_handler.RequestHandler):
-    @user_util.open_access
+    @user_util.manual_access_checking  # superuser-only via app.yaml (/admin)
     def get(self):
         mapreduce_id = control.start_map(
                 name = "FeedbackFlagUpdate",
                 handler_spec = "discussion.qa.feedback_flag_update_map",
                 reader_spec = "mapreduce.input_readers.DatastoreInputReader",
-                reader_parameters = {"entity_kind": "discussion.models_discussion.Feedback"},
+                reader_parameters = {"entity_kind": "discussion.discussion_models.Feedback"},
                 shard_count = 64,
                 queue_name = "backfill-mapreduce-queue",
                 )
@@ -34,12 +33,11 @@ class StartNewFlagUpdateMapReduce(request_handler.RequestHandler):
 class ExpandQuestion(request_handler.RequestHandler):
     @user_util.open_access
     def post(self):
-        notification.clear_question_answers_for_current_user(self.request.get("qa_expand_key"))
+        notification.clear_notification_for_question(self.request.get("qa_expand_key"))
 
 class PageQuestions(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
-
         page = 0
         try:
             page = int(self.request.get("page"))
@@ -47,50 +45,36 @@ class PageQuestions(request_handler.RequestHandler):
             pass
 
         video_key = self.request.get("video_key")
-        topic_key = self.request.get("topic_key")
         qa_expand_key = self.request_string("qa_expand_key")
         sort = self.request_int("sort", default=-1)
-
-        try:
-            video = db.get(video_key)
-        except db.BadRequestError:
-            # Temporarily ignore errors caused by cached google pages of non-HR app
-            return
+        video = db.get(video_key)
 
         user_data = user_models.UserData.current()
+        count = user_data.feedback_notification_count() if user_data else 0
+
+        if qa_expand_key:
+            # Clear unread answer notification for expanded question
+            count = notification.clear_notification_for_question(qa_expand_key)
 
         if video:
-            try:
-                topic = db.get(topic_key)
-            except db.BadKeyError:
-                topic = video.first_topic()
-
-            template_values = video_qa_context(user_data, video, topic, page, qa_expand_key, sort)
+            template_values = video_qa_context(user_data, video, page, qa_expand_key, sort)
             html = self.render_jinja2_template_to_string("discussion/video_qa_content.html", template_values)
-            self.render_json({"html": html, "page": page, "qa_expand_key": qa_expand_key})
-
-        if qa_expand_key > 0:
-            # If a QA question is being expanded, we want to clear notifications for its
-            # answers before we render page_template so the notification icon shows
-            # its updated count. 
-            notification.clear_question_answers_for_current_user(qa_expand_key)
+            self.render_json({
+                "html": html,
+                "page": page,
+                "qa_expand_key": qa_expand_key,
+                "count_notifications": count,
+            })
 
         return
 
 class AddAnswer(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
 
         user_data = user_models.UserData.current()
 
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
-
-        if not util_discussion.is_honeypot_empty(self.request):
-            # Honeypot caught a spammer (in case this is ever public or spammers
-            # have google accounts)!
+        if not util_discussion.is_post_allowed(user_data, self.request):
             return
 
         answer_text = self.request.get("answer_text")
@@ -101,23 +85,14 @@ class AddAnswer(request_handler.RequestHandler):
         question = db.get(question_key)
 
         if answer_text and video and question:
-
-            answer = models_discussion.Feedback(parent=user_data)
-            answer.set_author(user_data)
-            answer.content = answer_text
-            answer.targets = [video.key(), question.key()]
-            answer.types = [models_discussion.FeedbackType.Answer]
+            answer = discussion_models.Feedback.insert_answer_for(answer_text,
+                                                                  question,
+                                                                  user_data)
 
             if user_data.discussion_banned:
                 # Hellbanned users' posts are automatically hidden
                 answer.deleted = True
-
-            # We don't limit answer.content length, which means we're vulnerable to
-            # RequestTooLargeErrors being thrown if somebody submits a POST over the GAE
-            # limit of 1MB per entity.  This is *highly* unlikely for a legitimate piece of feedback,
-            # and we're choosing to crash in this case until someone legitimately runs into this.
-            # See Issue 841.
-            answer.put()
+                answer.put()
 
             if not answer.deleted:
                 notification.new_answer_for_video_question(video, question, answer)
@@ -133,9 +108,9 @@ class Answers(request_handler.RequestHandler):
 
         if question:
             video = question.video()
-            dict_votes = models_discussion.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
+            dict_votes = discussion_models.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
 
-            answers = models_discussion.Feedback.gql("WHERE types = :1 AND targets = :2", models_discussion.FeedbackType.Answer, question.key()).fetch(1000)
+            answers = discussion_models.Feedback.gql("WHERE types = :1 AND targets = :2", discussion_models.FeedbackType.Answer, question.key()).fetch(1000)
             answers = filter(lambda answer: answer.is_visible_to(user_data), answers)
             answers = voting.VotingSortOrder.sort(answers)
 
@@ -153,57 +128,43 @@ class Answers(request_handler.RequestHandler):
         return
 
 class AddQuestion(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
 
         user_data = user_models.UserData.current()
 
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
+        if not util_discussion.is_post_allowed(user_data, self.request):
             return
 
-        if not util_discussion.is_honeypot_empty(self.request):
-            # Honeypot caught a spammer (in case this is ever public or spammers
-            # have google accounts)!
-            return
-
-        question_text = self.request.get("question_text")
+        text = self.request.get("question_text")
         video_key = self.request.get("video_key")
-        topic_key = self.request.get("topic_key")
         video = db.get(video_key)
         question_key = ""
 
-        if question_text and video:
-            if len(question_text) > 500:
-                question_text = question_text[0:500] # max question length, also limited by client
+        if text and video:
+            if len(text) > 500:
+                text = text[0:500] # max question length, also limited by client
 
-            question = models_discussion.Feedback(parent=user_data)
-            question.set_author(user_data)
-            question.content = question_text
-            question.targets = [video.key()]
-            question.types = [models_discussion.FeedbackType.Question]
+            question = discussion_models.Feedback.insert_question_for(text,
+                                                                      video,
+                                                                      user_data)
 
             if user_data.discussion_banned:
                 # Hellbanned users' posts are automatically hidden
                 question.deleted = True
+                question.put()
 
-            question.put()
             question_key = question.key()
 
-        self.redirect("/discussion/pagequestions?video_key=%s&topic_key=%s&qa_expand_key=%s" % 
-                (video_key, topic_key, question_key))
+        self.redirect("/discussion/pagequestions?video_key=%s&qa_expand_key=%s" % 
+                (video_key, question_key))
 
 class EditEntity(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.open_access
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
         user_data = user_models.UserData.current()
-        if not user_data:
-            return
 
         key = self.request.get("entity_key")
-        topic_key = self.request.get("topic_key")
         text = self.request.get("question_text") or self.request.get("answer_text")
 
         if key and text:
@@ -216,26 +177,23 @@ class EditEntity(request_handler.RequestHandler):
 
                     # Redirect to appropriate list of entities depending on type of 
                     # feedback entity being edited.
-                    if feedback.is_type(models_discussion.FeedbackType.Question):
+                    if feedback.is_type(discussion_models.FeedbackType.Question):
 
                         page = self.request.get("page")
                         video = feedback.video()
-                        self.redirect("/discussion/pagequestions?video_key=%s&topic_key=%s&page=%s&qa_expand_key=%s" % 
-                                        (video.key(), topic_key, page, feedback.key()))
+                        self.redirect("/discussion/pagequestions?video_key=%s&page=%s&qa_expand_key=%s" % 
+                                        (video.key(), page, feedback.key()))
 
-                    elif feedback.is_type(models_discussion.FeedbackType.Answer):
+                    elif feedback.is_type(discussion_models.FeedbackType.Answer):
 
                         question = feedback.question()
                         self.redirect("/discussion/answers?question_key=%s" % question.key())
 
 class FlagEntity(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.open_access
+    # You have to at least be logged in to flag
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
-        # You have to at least be logged in to flag
         user_data = user_models.UserData.current()
-        if not user_data:
-            return
 
         limiter = FlagRateLimiter(user_data)
         if not limiter.increment():
@@ -244,7 +202,7 @@ class FlagEntity(request_handler.RequestHandler):
 
         key = self.request_string("entity_key", default="")
         flag = self.request_string("flag", default="")
-        if key and models_discussion.FeedbackFlag.is_valid(flag):
+        if key and discussion_models.FeedbackFlag.is_valid(flag):
             entity = db.get(key)
             if entity and entity.add_flag_by(flag, user_data):
                 entity.put()
@@ -254,7 +212,7 @@ class FlagEntity(request_handler.RequestHandler):
                     user_data.put()
 
 class ClearFlags(request_handler.RequestHandler):
-    @user_util.moderator_only
+    @user_util.moderator_required
     def post(self):
         key = self.request.get("entity_key")
         if key:
@@ -266,7 +224,7 @@ class ClearFlags(request_handler.RequestHandler):
         self.redirect("/discussion/flaggedfeedback")
 
 class ChangeEntityType(request_handler.RequestHandler):
-    @user_util.moderator_only
+    @user_util.moderator_required
     def post(self):
         # Must be a moderator to change types of anything
         if not user_util.is_current_user_moderator():
@@ -274,21 +232,17 @@ class ChangeEntityType(request_handler.RequestHandler):
 
         key = self.request.get("entity_key")
         target_type = self.request.get("target_type")
-        if key and models_discussion.FeedbackType.is_valid(target_type):
+
+        if key:
             entity = db.get(key)
             if entity:
-                entity.types = [target_type]
-
-                if self.request_bool("clear_flags", default=False):
-                    entity.clear_flags()
-
-                entity.put()
+                clear_flags = self.request_bool("clear_flags", default=False)
+                entity.change_type(target_type, clear_flags)
 
         self.redirect("/discussion/flaggedfeedback")
 
 class DeleteEntity(request_handler.RequestHandler):
-    @disallow_phantoms
-    @user_util.manual_access_checking
+    @user_util.login_required_and(phantom_user_allowed=False)
     def post(self):
         user_data = user_models.UserData.current()
         if not user_data:
@@ -310,7 +264,7 @@ class DeleteEntity(request_handler.RequestHandler):
 
         self.redirect("/discussion/flaggedfeedback")
 
-def video_qa_context(user_data, video, topic=None, page=0, qa_expand_key=None, sort_override=-1):
+def video_qa_context(user_data, video, page=0, qa_expand_key=None, sort_override=-1):
     limit_per_page = 5
 
     if page <= 0:
@@ -322,13 +276,13 @@ def video_qa_context(user_data, video, topic=None, page=0, qa_expand_key=None, s
     if sort_override >= 0:
         sort_order = sort_override
 
-    questions = util_discussion.get_feedback_by_type_for_video(video, models_discussion.FeedbackType.Question, user_data)
+    questions = util_discussion.get_feedback_by_type_for_video(video, discussion_models.FeedbackType.Question, user_data)
     questions = voting.VotingSortOrder.sort(questions, sort_order=sort_order)
 
     if qa_expand_key:
         # If we're showing an initially expanded question,
         # make sure we're on the correct page
-        question = models_discussion.Feedback.get(qa_expand_key)
+        question = discussion_models.Feedback.get(qa_expand_key)
         if question:
             count_preceding = 0
             for question_test in questions:
@@ -337,11 +291,11 @@ def video_qa_context(user_data, video, topic=None, page=0, qa_expand_key=None, s
                 count_preceding += 1
             page = 1 + (count_preceding / limit_per_page)
 
-    answers = util_discussion.get_feedback_by_type_for_video(video, models_discussion.FeedbackType.Answer, user_data)
+    answers = util_discussion.get_feedback_by_type_for_video(video, discussion_models.FeedbackType.Answer, user_data)
     answers.reverse() # Answers are initially in date descending -- we want ascending before the points sort
     answers = voting.VotingSortOrder.sort(answers)
 
-    dict_votes = models_discussion.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
+    dict_votes = discussion_models.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
 
     count_total = len(questions)
     questions = questions[((page - 1) * limit_per_page):(page * limit_per_page)]
@@ -366,7 +320,6 @@ def video_qa_context(user_data, video, topic=None, page=0, qa_expand_key=None, s
     return {
             "is_mod": user_util.is_current_user_moderator(),
             "video": video,
-            "topic": topic,
             "questions": questions,
             "count_total": count_total,
             "pages": range(1, pages_total + 1),

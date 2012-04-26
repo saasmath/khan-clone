@@ -95,6 +95,15 @@ class TokenTests(BaseTest):
         time_to_expiry = datetime.timedelta(30)
         self.assertTrue(parsed.is_valid(u, time_to_expiry, clock))
 
+    def test_user_retrieval_from_token(self):
+        clock = testutil.MockDatetime()
+        u = self.make_user("userid1", "credential version 0")
+        token = tokens.AuthToken.for_user(u, clock)
+
+        retrieved = tokens.AuthToken.get_user_for_value(
+            token.value, user_models.UserData.get_from_user_id, clock)
+        self.assertEquals(retrieved.key(), u.key())
+
     @testsize.medium()
     def test_pw_reset_token_should_be_single_use(self):
         clock = testutil.MockDatetime()
@@ -119,3 +128,16 @@ class TokenTests(BaseTest):
         token2 = tokens.PasswordResetToken.for_user(u, clock)
         self.assertFalse(token1.is_valid(u, datetime.timedelta(1), clock))
         self.assertTrue(token2.is_valid(u, datetime.timedelta(1), clock))
+
+    @testsize.medium()
+    def test_pw_reset_token_does_not_reset_pw_until_used(self):
+        clock = testutil.MockDatetime()
+        u = self.make_user("userid1")
+        u.set_password("seekrit one")
+        pw_token = tokens.PasswordResetToken.for_user(u, clock)
+
+        self.assertTrue(pw_token.is_valid(
+                u, datetime.timedelta(1), clock))
+
+        # Didn't use the token-just issued it, so the existing pw should work
+        self.assertTrue(u.validate_password("seekrit one"))

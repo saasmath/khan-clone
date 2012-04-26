@@ -1,31 +1,34 @@
-from api import jsonify
-from google.appengine.api import mail
-
-from app import App
-from auth import age_util
-from counters import user_counter
-from google.appengine.api import users
-import user_models
-from user_models import UserData
-from notifications import UserNotifier
-from phantom_users.phantom_util import get_phantom_user_id_from_cookies
-
-import auth.cookies
-import auth.passwords
-from auth.tokens import AuthToken, TransferAuthToken
-import cookie_util
 import datetime
 import logging
 import os
 import re
+import urllib
+
+from google.appengine.api import mail, users
+
+import auth.cookies
+import auth.passwords
+import cookie_util
+import facebook_util
 import request_handler
 import shared_jinja
 import transaction_util
 import uid
+import user_models
 import user_util
 import util
-from api.auth.auth_models import OAuthMap
+
+from api import jsonify
 from api.auth import auth_util
+from api.auth.auth_models import OAuthMap
+from app import App
+from auth import age_util
+from auth.tokens import AuthToken, PasswordResetToken, TransferAuthToken
+from counters import user_counter
+from models import UserData
+from notifications import UserNotifier
+from phantom_users.phantom_util import get_phantom_user_id_from_cookies
+
 
 class Login(request_handler.RequestHandler):
     @user_util.open_access
@@ -34,7 +37,7 @@ class Login(request_handler.RequestHandler):
             self.render_login_form()
         else:
             self.render_login_outer()
-            
+
     def request_continue_url(self, key="continue", default="/"):
         cont = super(Login, self).request_continue_url(key, default)
 
@@ -43,7 +46,7 @@ class Login(request_handler.RequestHandler):
         return util.create_post_login_url(cont)
 
     def render_login_outer(self):
-        """ Renders the login page.
+        """Render the login page.
 
         Note that part of the contents of this page is hosted on an iframe
         and rendered by this same RequestHandler (render_login_form)
@@ -67,10 +70,10 @@ class Login(request_handler.RequestHandler):
                            }
 
         self.render_jinja2_template('login.html', template_values)
-        
+
 
     def render_login_form(self, identifier=None, errors=None):
-        """ Renders the form with the username/password fields. This is
+        """Render the form with the username/password fields. This is
         hosted an in iframe in the main login page.
 
         errors - a dictionary of possible errors from a previous login that
@@ -91,11 +94,10 @@ class Login(request_handler.RequestHandler):
 
     @user_util.open_access
     def post(self):
-        """ Handles a POST from the login form.
+        """Handle a POST from the login form.
 
         This happens when the user attempts to login with an identifier (email
         or username) and password.
-
         """
 
         cont = self.request_continue_url()
@@ -123,7 +125,7 @@ class Login(request_handler.RequestHandler):
 
     @staticmethod
     def return_login_json(handler, user_data, cont="/"):
-        """ Handles a successful login for a user by redirecting them
+        """Handle a successful login for a user by redirecting them
         to the PostLogin URL with the auth token, which will ultimately set
         the auth cookie for them.
 
@@ -131,7 +133,6 @@ class Login(request_handler.RequestHandler):
         must accept requests with password strings over https, but the rest
         of the site is not (yet) using https, and therefore must use a
         non-https cookie.
-
         """
 
         auth_token = AuthToken.for_user(user_data)
@@ -155,9 +156,8 @@ class MobileOAuthLogin(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def post(self):
-        """ POST submissions are for username/password based logins to
+        """POST submissions are for username/password based logins to
         acquire an OAuth access token.
-        
         """
 
         identifier = self.request_string('identifier')
@@ -171,7 +171,7 @@ class MobileOAuthLogin(request_handler.RequestHandler):
             # TODO(benkomalo): IP-based throttling of failed logins?
             self.render_login_page("Your login or password is incorrect.")
             return
-        
+
         # Successful login - convert to an OAuth access_token
         oauth_map_id = self.request_string("oauth_map_id", default="")
         oauth_map = OAuthMap.get_by_id_safe(oauth_map_id)
@@ -194,7 +194,7 @@ class MobileOAuthLogin(request_handler.RequestHandler):
         return auth_util.authorize_token_redirect(oauth_map, force_http=True)
 
 def _upgrade_phantom_into(phantom_data, target_data):
-    """ Attempts to merge a phantom user into a target user.
+    """Attempt to merge a phantom user into a target user.
     Will bail if any signs that the target user has previous activity.
     """
 
@@ -211,13 +211,12 @@ def _upgrade_phantom_into(phantom_data, target_data):
     return False
 
 class PostLogin(request_handler.RequestHandler):
-    def consume_auth_token(self):
-        """ Checks to see if a valid auth token is specified as a param
+    def _consume_auth_token(self):
+        """Check to see if a valid auth token is specified as a param
         in the request, so it can be converted into a cookie
         and used as the identifier for the current and future requests.
-        
         """
-        
+
         auth_stamp = self.request_string("auth")
         if auth_stamp:
             # If an auth stamp is provided, it means they logged in using
@@ -238,76 +237,104 @@ class PostLogin(request_handler.RequestHandler):
                     return True
         return False
 
+    def _finish_and_redirect(self, cont):
+        # Always delete phantom user cookies on login
+        self.delete_cookie('ureg_id')
+        self.redirect(cont)
+
     @user_util.manual_access_checking
     def get(self):
         cont = self.request_continue_url()
 
-        self.consume_auth_token()
+        self._consume_auth_token()
 
-        user_data = UserData.current()
-        if user_data:
+        user_data = UserData.current(create_if_none=True)
+        if not user_data:
+            # Nobody is logged in - clear any expired Facebook cookies
+            # that may be hanging around.
+            facebook_util.delete_fb_cookies(self)
 
-            first_time = not user_data.last_login
+            logging.critical(("Missing UserData during PostLogin, " +
+                              "with id: %s, cookies: (%s), google user: %s") %
+                             (util.get_current_user_id_unsafe(),
+                              os.environ.get('HTTP_COOKIE', ''),
+                              users.get_current_user()))
+            self._finish_and_redirect(cont)
+            return
 
-            # Update email address if it has changed
-            current_google_user = users.get_current_user()
-            if current_google_user:
-                if current_google_user.email() != user_data.email:
-                    user_data.user_email = current_google_user.email()
+        first_time = not user_data.last_login
 
-            # If the user has a public profile, we stop "syncing" their username
-            # from Facebook, as they now have an opportunity to set it themself
-            if not user_data.username:
-                user_data.update_nickname()
+        if not user_data.has_sendable_email():
 
-            # Set developer and moderator to True if user is admin
-            if ((not user_data.developer or not user_data.moderator) and
-                    users.is_current_user_admin()):
-                user_data.developer = True
-                user_data.moderator = True
+            if not user_data.is_facebook_user:
+                # TODO(benkomalo): seems like there are some phantoms hitting
+                # this code path at least - are there any others?
+                logging.error(
+                    "Non-FB users should have a valid email. User: [%s]" %
+                    user_data)
 
-            user_data.last_login = datetime.datetime.utcnow()
-            user_data.put()
-            
-            complete_signup = self.request_bool("completesignup", default=False)
-            if first_time:
-                if current_google_user:
-                    # Look for a matching UnverifiedUser with the same e-mail
-                    # to see if the user used Google login to verify.
-                    unverified_user = user_models.UnverifiedUser.get_for_value(
-                            current_google_user.email())
-                    if unverified_user:
-                        unverified_user.delete()
+            # Facebook can give us the user's e-mail if the user granted
+            # us permission to see it - try to update existing users with
+            # emails, if we don't already have one for them.
+            fb_email = facebook_util.get_fb_email_from_cookies()
+            if fb_email:
+                # We have to be careful - we haven't always asked for emails
+                # from facebook users, so getting an e-mail after the fact
+                # may result in a collision with an existing Google or Khan
+                # account. In those cases, we silently drop the e-mail.
+                existing_user = \
+                    user_models.UserData.get_from_user_input_email(fb_email)
 
-                # Note that we can only migrate phantom users right now if this
-                # login is not going to lead to a "/completesignup" page, which
-                # indicates the user has to finish more information in the
-                # signup phase.
-                if not complete_signup:
-                    # If user is brand new and has 0 points, migrate data.
-                    phantom_id = get_phantom_user_id_from_cookies()
-                    if phantom_id:
-                        phantom_data = UserData.get_from_db_key_email(phantom_id)
-                        if _upgrade_phantom_into(phantom_data, user_data):
-                            cont = "/newaccount?continue=%s" % cont
-            if complete_signup:
-                cont = "/completesignup"
+                if (existing_user and
+                        existing_user.user_id != user_data.user_id):
+                    logging.warning("FB user gave us e-mail and it "
+                                    "corresponds to an existing account. "
+                                    "Ignoring e-mail value.")
+                else:
+                    user_data.user_email = fb_email
 
-        else:
+        # If the user has a public profile, we stop "syncing" their username
+        # from Facebook, as they now have an opportunity to set it themself
+        if not user_data.username:
+            user_data.update_nickname()
 
-            # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
-            if App.facebook_app_id:
-                self.delete_cookie("fbsr_" + App.facebook_app_id)
-                self.delete_cookie("fbm_" + App.facebook_app_id)
+        # Set developer and moderator to True if user is admin
+        if ((not user_data.developer or not user_data.moderator) and
+                users.is_current_user_admin()):
+            user_data.developer = True
+            user_data.moderator = True
 
-            logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
-                    util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
-                )
-            )
+        user_data.last_login = datetime.datetime.utcnow()
+        user_data.put()
 
-        # Always delete phantom user cookies on login
-        self.delete_cookie('ureg_id')
-        self.redirect(cont)
+        complete_signup = self.request_bool("completesignup", default=False)
+        if first_time:
+            email_now_verified = None
+            if user_data.has_sendable_email():
+                email_now_verified = user_data.email
+
+                # Look for a matching UnverifiedUser with the same e-mail
+                # to see if the user used Google login to verify.
+                unverified_user = user_models.UnverifiedUser.get_for_value(
+                        email_now_verified)
+                if unverified_user:
+                    unverified_user.delete()
+
+            # Note that we can only migrate phantom users right now if this
+            # login is not going to lead to a "/completesignup" page, which
+            # indicates the user has to finish more information in the
+            # signup phase.
+            if not complete_signup:
+                # If user is brand new and has 0 points, migrate data.
+                phantom_id = get_phantom_user_id_from_cookies()
+                if phantom_id:
+                    phantom_data = UserData.get_from_db_key_email(phantom_id)
+                    if _upgrade_phantom_into(phantom_data, user_data):
+                        cont = "/newaccount?continue=%s" % cont
+        if complete_signup:
+            cont = "/completesignup"
+
+        self._finish_and_redirect(cont)
 
 class Logout(request_handler.RequestHandler):
     @staticmethod
@@ -319,9 +346,7 @@ class Logout(request_handler.RequestHandler):
         handler.delete_cookie('session')
 
         # Delete Facebook cookie, which sets ithandler both on "www.ka.org" and ".www.ka.org"
-        if App.facebook_app_id:
-            handler.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
-            handler.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+        facebook_util.delete_fb_cookies(handler)
 
     @user_util.open_access
     def get(self):
@@ -346,7 +371,7 @@ _email_re = re.compile(
 class Signup(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
-        """ Renders the register for new user page.  """
+        """Render the register for new user page."""
 
         if (self.request_bool('under13', default=False)
                 or cookie_util.get_cookie_value(auth.cookies.U13_COOKIE_NAME)):
@@ -369,12 +394,11 @@ class Signup(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def post(self):
-        """ Handles registration request on our site.
+        """Handle registration request on our site.
 
         Note that new users can still be created via PostLogin if the user
         signs in via Google/FB for the first time - this is for the
         explicit registration via our own services.
-
         """
 
         values = {
@@ -402,9 +426,7 @@ class Signup(request_handler.RequestHandler):
             # unfortunately. Set an under-13 cookie so they can't try again.
             Logout.delete_all_identifying_cookies(self)
             auth.cookies.set_under13_cookie(self)
-            
-            # TODO(benkomalo): investigate how reliable setting cookies from
-            # a jQuery POST is going to be
+
             self.render_json({"under13": True})
             return
 
@@ -436,7 +458,7 @@ class Signup(request_handler.RequestHandler):
                     resend_detected = existing is not None
         else:
             errors['email'] = "Please enter your email."
-            
+
         if existing_google_user_detected:
             # TODO(benkomalo): just deny signing up with username/password for
             # existing users with a Google login. In the future, we can show
@@ -454,16 +476,15 @@ class Signup(request_handler.RequestHandler):
                 email,
                 birthdate)
         Signup.send_verification_email(unverified_user)
-        
+
         response_json = {
                 'success': True,
                 'email': email,
                 'resend_detected': resend_detected,
-                'existing_google_user_detected': existing_google_user_detected,
                 }
-        
+
         if App.is_dev_server:
-            # Send down the verification token so the client can easily 
+            # Send down the verification token so the client can easily
             # create a link to test with.
             response_json['token'] = unverified_user.randstring
 
@@ -495,17 +516,15 @@ class Signup(request_handler.RequestHandler):
                     body=body)
 
 class CompleteSignup(request_handler.RequestHandler):
-    """ A handler for a page that allows users to create a password to login
+    """A handler for a page that allows users to create a password to login
     with a Khan Academy account. This is also being doubly used for existing
     Google/FB users to add a password to their account.
-
     """
 
     @staticmethod
     def build_link(unverified_user):
-        """ Builds a link for an unverified user by using their unique
+        """Build a link for an unverified user by using their unique
         randstring as a token embedded into the URL
-
         """
 
         return util.absolute_url(
@@ -513,10 +532,9 @@ class CompleteSignup(request_handler.RequestHandler):
                 unverified_user.randstring)
 
     def resolve_token(self):
-        """ Validates the token specified in the request parameters and returns
+        """Validate the token specified in the request parameters and returns
         a tuple of (token, UnverifiedUser) if it is a valid token.
         Returns (None, None) if no valid token was detected.
-
         """
 
         token = self.request_string("token", default=None)
@@ -536,20 +554,19 @@ class CompleteSignup(request_handler.RequestHandler):
             return self.render_form()
         else:
             return self.render_outer()
-        
+
     def render_outer(self):
-        """ Renders the second part of the user signup step, after the user
+        """Render the second part of the user signup step, after the user
         has verified ownership of their e-mail account.
 
         The request URI must include a valid token from an UnverifiedUser, and
         can be made via build_link(), or be made by a user without an existing
         password set.
-        
+
         Note that the contents are actually rendered in an iframe so it
         can be sent over https (generated in render_form).
-
         """
-        valid_token, unverified_user = self.resolve_token()
+        (valid_token, _) = self.resolve_token()
         user_data = UserData.current()
         if valid_token and user_data:
             if not user_data.is_phantom:
@@ -574,6 +591,15 @@ class CompleteSignup(request_handler.RequestHandler):
                 # The user already has a KA login - redirect them to their profile
                 self.redirect(user_data.profile_root)
                 return
+            elif not user_data.has_sendable_email():
+                # This is a case where a Facebook user logged in and tried
+                # to signup for a KA password. Unfortunately, since we don't
+                # have their e-mail, we can't let them proceed, since, without
+                # a valid e-mail we can't reset passwords, etc.
+                logging.error("User tried to signup for password with "
+                              "no email associated with the account")
+                self.redirect("/")
+                return
             else:
                 # Here we have a valid user, and need to transfer their identity
                 # to the inner iframe that will be hosted on https.
@@ -592,7 +618,7 @@ class CompleteSignup(request_handler.RequestHandler):
         self.render_jinja2_template('completesignup.html', template_values)
 
     def render_form(self):
-        """ Renders the contents of the form for completing a signup. """
+        """Render the contents of the form for completing a signup."""
 
         valid_token, unverified_user = self.resolve_token()
         user_data = _resolve_user_in_https_frame(self)
@@ -604,10 +630,15 @@ class CompleteSignup(request_handler.RequestHandler):
             self.redirect("/")
             return
 
-        if not valid_token and user_data and user_data.has_password():
-            # The user already has a KA login - redirect them to their profile
-            self.redirect(user_data.profile_root)
-            return
+        if not valid_token and user_data:
+            if user_data.has_password():
+                # The user already has a KA login - redirect them to
+                # their profile
+                self.redirect(user_data.profile_root)
+                return
+            elif not user_data.has_sendable_email():
+                self.redirect("/")
+                return
 
         values = {}
         if valid_token:
@@ -621,15 +652,15 @@ class CompleteSignup(request_handler.RequestHandler):
             # TODO(benkomalo): handle storage for FB users. Right now their
             # "email" value is a URI like http://facebookid.ka.org/1234
             email = user_data.email
-            if not user_data.is_facebook_user:
-                values['email'] = email
-            
             nickname = user_data.nickname
-            if email.find('@') != -1 and email.split('@')[0] == nickname:
-                # The user's "nickname" property defaults to the user part of
-                # their e-mail. Encourage them to use a real name and leave
-                # the name field blank in that case.
-                nickname = ""
+            if user_data.has_sendable_email():
+                values['email'] = email
+
+                if email.split('@')[0] == nickname:
+                    # The user's "nickname" property defaults to the user part
+                    # of their e-mail. Encourage them to use a real name and
+                    # leave the name field blank in that case.
+                    nickname = ""
 
             values['nickname'] = nickname
             values['gender'] = user_data.gender
@@ -746,7 +777,7 @@ class CompleteSignup(request_handler.RequestHandler):
                     # an existing user due to an ID collision. Try again.
                     user_data = None
                 num_tries += 1
-                
+
             if not user_data:
                 logging.error("Tried several times to create a new user " +
                               "unsuccessfully")
@@ -766,12 +797,11 @@ class CompleteSignup(request_handler.RequestHandler):
         Login.return_login_json(self, user_data, cont=user_data.profile_root)
 
 class PasswordChange(request_handler.RequestHandler):
-    """ Handler for changing a user's password.
-    
+    """Handler for changing a user's password.
+
     This must always be rendered in an https form. If a request is made to
     render the form in HTTP, this handler will automatically redirect to
     the HTTPS version with a transfer_token to identify the user in HTTPS.
-
     """
 
     @user_util.manual_access_checking
@@ -780,76 +810,211 @@ class PasswordChange(request_handler.RequestHandler):
         if self.request.scheme != "https" and not App.is_dev_server:
             self.redirect(self.secure_url_with_token(self.request.uri))
             return
-        
+
         if self.request_bool("success", default=False):
             self.render_form(message="Password changed", success=True)
         else:
             self.render_form()
 
-    def render_form(self, message=None, success=False):
+    def render_form(self, message=None, success=False, user_data=None):
         transfer_token_value = self.request_string("transfer_token", default="")
+        reset_token_value = self.request_string("reset_token", default="")
+        if not user_data:
+            (user_data, _) = self.resolve_user_info()
+
         self.render_jinja2_template('password-change.html',
                                     {'message': message or "",
                                      'success': success,
-                                     'transfer_token': transfer_token_value})
-        
-    def secure_url_with_token(self, url):
-        user_data = UserData.current()
+                                     'user_data': user_data,
+                                     'transfer_token': transfer_token_value,
+                                     'reset_token': reset_token_value})
+
+    def secure_url_with_token(self, url, user_data=None):
+        if user_data is None:
+            (user_data, _) = self.resolve_user_info()
         if not user_data:
-            logging.warn("No user detected for password change")
+            if not self.request_string("reset_token", default=""):
+                logging.warn("No user detected for password change")
             return util.secure_url(url)
 
         token = TransferAuthToken.for_user(user_data).value
         if url.find('?') == -1:
-            return "%s?transfer_token=%s" % (util.secure_url(url), token)
+            return "%s?transfer_token=%s" % (util.secure_url(url),
+                                             urllib.quote_plus(token))
         else:
-            return "%s&transfer_token=%s" % (util.secure_url(url), token)
+            return "%s&transfer_token=%s" % (util.secure_url(url),
+                                             urllib.quote_plus(token))
+
+    def resolve_user_info(self):
+        """Return the information for the user and current request.
+
+        Returns:
+            A tuple of (UserData, bool) including the UserData of the actor
+            and a bool indicating whether or not this is for a password
+            reset or a normal change of password. Returns (None, False)
+            if no valid user is resolved.
+        """
+
+        user_data = _resolve_user_in_https_frame(self)
+        reset_token_value = self.request_string("reset_token", default="")
+        is_password_reset = False
+        if not user_data:
+            # Try to resolve the user from a reset token, if nobody is
+            # logged in.
+            reset_token = PasswordResetToken.for_value(reset_token_value)
+            if reset_token:
+                user_data = user_models.UserData.get_from_user_id(
+                    reset_token.user_id)
+
+                if reset_token.is_valid(user_data):
+                    is_password_reset = True
+                else:
+                    user_data = None
+        return (user_data, is_password_reset)
 
     @user_util.manual_access_checking
     def post(self):
-        user_data = _resolve_user_in_https_frame(self)
+        (user_data, is_password_reset) = self.resolve_user_info()
         if not user_data:
             self.response.write("Oops. Something went wrong. Please try again.")
             return
 
-        existing = self.request_string("existing")
-        if not user_data.validate_password(existing):
-            # TODO(benkomalo): throttle incorrect password attempts
-            self.render_form(message="Incorrect password")
-            return
+        if not is_password_reset:
+            existing = self.request_string("existing")
+            if not user_data.validate_password(existing):
+                # TODO(benkomalo): throttle incorrect password attempts
+                self.render_form(message="Incorrect password",
+                                 user_data=user_data)
+                return
 
         password1 = self.request_string("password1")
         password2 = self.request_string("password2")
         if (not password1 or
                 not password2 or
                 password1 != password2):
-            self.render_form(message="Passwords don't match")
+            self.render_form(message="Passwords don't match",
+                             user_data=user_data)
         elif not auth.passwords.is_sufficient_password(password1,
                                                        user_data.nickname,
                                                        user_data.username):
-            self.render_form(message="Password too weak")
+            self.render_form(message="Password too weak",
+                             user_data=user_data)
         else:
             # We're good!
             user_data.set_password(password1)
-
-            # Need to create a new auth token as the existing cookie will expire
-            # Use /postlogin to set the cookie. This requires some redirects
-            # (/postlogin on http, then back to this pwchange form in https).
-            auth_token = AuthToken.for_user(user_data)
-            self.redirect("%s?%s" % (
+            if is_password_reset:
+                # Password resets are done when the user is not even logged in,
+                # so redirect the host page to the login page (done via
+                # client side JS)
+                self.render_form(message="Password reset. Redirecting...",
+                                 success=True,
+                                 user_data=user_data)
+            else:
+                # Need to create a new auth token as the existing cookie will
+                # expire. Use /postlogin to set the cookie. This requires
+                # some redirects (/postlogin on http, then back to this
+                # pwchange form in https).
+                auth_token = AuthToken.for_user(user_data)
+                self.redirect("%s?%s" % (
                     util.insecure_url("/postlogin"),
                     util.build_params({
                         'auth': auth_token.value,
-                        'continue': self.secure_url_with_token("/pwchange?success=1"),
+                        'continue': self.secure_url_with_token(
+                            "/pwchange?success=1", user_data),
                     })))
 
+class ForgotPassword(request_handler.RequestHandler):
+    """Handler for initiating the password reset flow."""
+
+    @user_util.open_access
+    def get(self):
+        user_data = user_models.UserData.current()
+        if user_data:
+            # User is already logged in! Shouldn't want to reset passwords.
+            self.redirect(user_data.profile_root)
+            return
+
+        self.render_jinja2_template('forgot-password.html', {})
+
+    @user_util.open_access
+    def post(self):
+        email = self.request_string("email", default=None)
+        if not email:
+            self.render_jinja2_template('forgot-password.html', {})
+            return
+
+        user_data = user_models.UserData.get_from_user_input_email(email)
+        if not user_data or not user_data.has_password():
+            # TODO(benkomalo): separate out the case where we detected a user
+            # but he/she doesn't have a password set?
+            self.render_jinja2_template(
+                'forgot-password-error.html', {
+                    'email': email,
+                    'google_url': users.create_login_url('/completesignup'),
+                })
+            return
+
+        reset_url = PasswordReset.build_link(user_data)
+        template_values = {
+            'name': user_data.nickname,
+            'url': reset_url,
+        }
+        body = shared_jinja.template_to_string(
+                'password-reset-email-text-only.html',
+                template_values)
+
+        if not App.is_dev_server:
+            mail.send_mail(
+                    sender="Khan Academy Accounts <no-reply@khanacademy.org>",
+                    to=email,
+                    subject="Khan Academy account recovery",
+                    body=body)
+
+        template_values =  {
+            'sent_email': email,
+        }
+        if App.is_dev_server:
+            template_values['debug_link'] = reset_url
+        self.render_jinja2_template('forgot-password.html', template_values)
+
+
+class PasswordReset(request_handler.RequestHandler):
+    """Handler for the password reset flow.
+
+    This is after the user has received an e-mail with a recovery link
+    and handles the request for when they click on that link in the e-mail.
+    """
+
+    @user_util.manual_access_checking
+    def get(self):
+        reset_token_value = self.request_string("token", default="")
+        
+        user_data = PasswordResetToken.get_user_for_value(
+            reset_token_value, UserData.get_from_user_id)
+        if not user_data:
+            self.redirect("/")
+            return
+
+        self.render_jinja2_template(
+            'password-reset.html', {
+                'reset_token': reset_token_value,
+            })
+
+    @staticmethod
+    def build_link(user_data):
+        pw_reset_token = PasswordResetToken.for_user(user_data)
+        if not pw_reset_token:
+            raise Exception("Unable to build password reset link for user")
+        return util.absolute_url("/pwreset?token=%s" %
+                                 urllib.quote_plus(pw_reset_token.value))
+
+
 def _resolve_user_in_https_frame(handler):
-    """ Determines the current logged in user for the HTTPS request.
-    
+    """Determine the current logged in user for the HTTPS request.
+
     This has logic in additional to UserData.current(), since it should also
     accept TransferAuthTokens, since HTTPS requests may not have normal HTTP
     cookies sent.
-
     """
 
     user_data = UserData.current()
@@ -862,13 +1027,5 @@ def _resolve_user_in_https_frame(handler):
     # On https, users aren't recognized through the normal means of cookie auth
     # since their cookies were set on HTTP domains.
     token_value = handler.request_string("transfer_token", default=None)
-    if not token_value:
-        return None
-
-    transfer_token = TransferAuthToken.for_value(token_value)
-    if not transfer_token:
-        return None
-
-    user_data = UserData.get_from_user_id(transfer_token.user_id)
-    if user_data and transfer_token.is_valid(user_data):
-        return user_data
+    return TransferAuthToken.get_user_for_value(
+        token_value, UserData.get_from_user_id)

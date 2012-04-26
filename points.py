@@ -1,6 +1,6 @@
 import math
 import consts
-from accuracy_model.accuracy_model import AccuracyModel
+from exercises.accuracy_model import AccuracyModel
 
 MIN_STREAK_TILL_PROFICIENCY = AccuracyModel.min_streak_till_threshold(
     consts.PROFICIENCY_ACCURACY_THRESHOLD)

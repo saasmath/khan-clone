@@ -1,5 +1,4 @@
 import cgi
-import logging
 import urllib2
 import urlparse
 import webbrowser
