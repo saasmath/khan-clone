@@ -104,7 +104,7 @@ class PickleUtilTest(unittest.TestCase):
 
     def test_unpickling_data_pickled_with_cpickle(self):
         expected = 'This is a test string'
-        actual = pickle_util.load(pickle.dumps(expected))
+        actual = pickle_util.load(cPickle.dumps(expected))
         self.assertEqual(expected, actual)
 
     def test_unpickling_data_pickled_with_pickle_vhigh(self):
