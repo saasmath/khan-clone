@@ -1688,27 +1688,6 @@ def user_playlists_all():
 
     return None
 
-# TODO(csilvers): this seems to be unused (as evidenced by the fact it
-#                 has a typo that makes it never complete).  Remove it.
-@route("/api/v1/user/topic/<topic_id>", methods=["GET"])
-@route("/api/v1/user/playlists/<topic_id>", methods=["GET"])
-@api.auth.decorators.login_required
-@jsonp
-@jsonify
-def user_playlists_specific(topic_id):
-    user_data = user_models.UserData.current()
-
-    if user_data and playlist_title:
-        user_data_student = get_visible_user_data_from_request()
-        topic = topic_models.Topic.get_by_id(topic_id)
-        if topic is None:
-            topic = topic_models.Topic.all().filter("standalone_title =", topic_id).get()
-
-        if user_data_student and topic:
-            return topic_models.UserTopic.get_for_topic_and_user_data(topic, user_data_student)
-
-    return None
-
 @route("/api/v1/user/exercises/reviews/count", methods=["GET"])
 @api.auth.decorators.login_required
 @jsonp
