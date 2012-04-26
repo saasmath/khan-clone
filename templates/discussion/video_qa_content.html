@@ -8,7 +8,7 @@
         <div class="question {% if question.appears_as_deleted_to(user_data) %}deleted{% endif %}" data-question_key="{{ question.key() }}">
             {{ discussion.vote_tools(question) }}
             {% if qa_expand_key != question.key().__str__() %}
-                <a class="question_link" href="javascript:void(0);">
+                <a class="question_link" href="/v/{{video.readable_id}}?qa_expand_key={{ question.key() }}">
                     <span>{{ question.content|escape|linebreaksbr_ellipsis|youtube_timestamp_links }}</span>
                 </a>
             {% endif %}
