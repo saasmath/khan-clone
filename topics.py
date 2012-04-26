@@ -165,25 +165,36 @@ class RefreshCaches(request_handler.RequestHandler):
         refresh_homepage = self.request_bool('homepage', False)
         refresh_topicpages = self.request_bool('topicpages', False)
         refresh_browsers = self.request_bool('browsers', False)
+        refresh_searchindex = self.request_bool('searchindex', False)
 
-        if (not refresh_homepage and not refresh_topicpages and not refresh_browsers):
-            print "Cache names to refresh must be passed into the URL, i.e. /devadmin/refresh?homepage=1&topicpages=0&browsers=0"
+        if (not refresh_homepage and not refresh_topicpages
+            and not refresh_browsers and not refresh_searchindex):
+            print ("Cache names to refresh must be passed into the URL, "
+                   "e.g. /devadmin/refresh?homepage=1&topicpages=0&browsers=0")
             return
 
         version = topic_models.TopicVersion.get_default_version()
 
         if refresh_homepage:
             deferred.defer(topic_models.preload_library_homepage, version,
-                        _queue="topics-set-default-queue")
+                        _queue="topics-set-default-queue",
+                        _url="/_ah/queue/deferred_topics-set-default-queue")
             logging.info("Queued preload_library_homepage.")
         if refresh_topicpages:
             deferred.defer(topic_models.preload_topic_pages, version,
-                        _queue="topics-set-default-queue")
+                        _queue="topics-set-default-queue",
+                        _url="/_ah/queue/deferred_topics-set-default-queue")
             logging.info("Queued preload_topic_pages.")
         if refresh_browsers:
             deferred.defer(topic_models.preload_topic_browsers, version,
-                        _queue="topics-set-default-queue")
+                        _queue="topics-set-default-queue",
+                        _url="/_ah/queue/deferred_topics-set-default-queue")
             logging.info("Queued preload_topic_browsers.")
+        if refresh_searchindex:
+            deferred.defer(topic_models.refresh_topictree_search_index_deferred,
+                        _queue="topics-set-default-queue",
+                        _url="/_ah/queue/deferred_topics-set-default-queue")
+            logging.info("Queued refresh_topictree_search_index_deferred.")
 
         print "Queued refresh of selected queues."
 

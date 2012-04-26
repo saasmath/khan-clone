@@ -759,6 +759,18 @@ def save_url(url_id = None, version_id=None):
             changeable_props)
 
 
+@route("/api/v1/searchindex", methods=["GET"])
+@api.auth.decorators.open_access
+@jsonp
+@jsonify
+def get_topictree_search_index():
+    search_data = []
+
+    search_data.extend(video_models.Video.get_all_search_data())
+    search_data.extend(topic_models.Topic.get_all_search_data())
+
+    return search_data
+
 @route("/api/v1/videos/<video_id>/explore_url", methods=["GET"])
 @api.auth.decorators.open_access
 @jsonp
