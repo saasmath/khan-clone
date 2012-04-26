@@ -15,7 +15,6 @@ A 'topic' the stuff after the # in urls like
 """
 
 import base64
-import cPickle as pickle
 import datetime
 import logging
 import os
@@ -38,6 +37,7 @@ from knowledgemap import layout
 import layer_cache
 import library
 import object_property
+import pickle_util
 import request_cache
 import search
 import setting_model
@@ -1520,7 +1520,7 @@ class Topic(search.Searchable, db.Model):
 
         user_video_css = video_models.UserVideoCss.get_for_user_data(user_data)
         if user_video_css:
-            user_video_dict = pickle.loads(user_video_css.pickled_dict)
+            user_video_dict = pickle_util.load(user_video_css.pickled_dict)
         else:
             user_video_dict = {}
 
@@ -1545,6 +1545,41 @@ class Topic(search.Searchable, db.Model):
             return flat_output
         else:
             return progress_tree
+
+    def get_search_data(self, topics_cache):
+        child_topics = [topics_cache[str(k)] for k in self.child_keys if k.kind() == "Topic" and str(k) in topics_cache]
+        child_list = [{ "title": t.title, "url": t.relative_url } for t in child_topics]
+        return {
+            "kind": "Topic",
+            "id": self.id,
+            "title": self.standalone_title,
+            "description": self.description,
+            "ka_url": self.relative_url,
+            "parent_topic": unicode(self.parent_keys[0]) if self.parent_keys else None,
+            "child_topics": jsonify.jsonify(child_list)
+        }
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda:
+        "Topic.get_all_search_data.%s.v1" %
+        setting_model.Setting.topic_tree_version(),
+        layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
+    def get_all_search_data():
+        topic_search_data = []
+        version = TopicVersion.get_default_version()
+
+        topics = Topic.all().filter('version =', version).filter("hide =", False)
+        topics_cache = {}
+        for topic in topics:
+            topics_cache[str(topic.key())] = topic
+
+        for topic in topics:
+            topic_data = topic.get_search_data(topics_cache)
+            topic_data["version"] = version.number
+
+            topic_search_data.append(topic_data)
+
+        return topic_search_data
 
 class UserTopic(db.Model):
     user = db.UserProperty()
@@ -1716,6 +1751,7 @@ def _preload_default_version_data(version_number, run_code):
     _do_set_default_deferred_step(_change_default_version,
                                   version_number,
                                   run_code)
+
 
 
 def _change_default_version(version_number, run_code):
@@ -1891,9 +1927,18 @@ def _rebuild_content_caches(version_number, run_code):
     setting_model.Setting.cached_exercises_date(str(datetime.datetime.now()))
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
+
+    # Preload the search index (accessed via the API /api/v1/searchindex)
+    refresh_topictree_search_index_deferred()
+
     logging.info("set_default_version complete")
     setting_model.Setting.topic_admin_task_message("Publish: finished successfully")
 
+
+def refresh_topictree_search_index_deferred():
+    video_models.Video.get_all_search_data(bust_cache=True)
+    Topic.get_all_search_data(bust_cache=True)
+    logging.info("Refreshed search index cache.")
 
 
 class VersionContentChange(db.Model):

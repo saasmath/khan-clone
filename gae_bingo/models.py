@@ -1,8 +1,9 @@
-import cPickle as pickle
 import datetime
 
 from google.appengine.ext import db
 from google.appengine.api import memcache
+
+import pickle_util
 
 # If you use a datastore model to uniquely identify each user,
 # let it inherit from this class, like so...
@@ -41,11 +42,10 @@ class _GAEBingoExperiment(db.Model):
 
     @property
     def short_circuit_content(self):
-        return pickle.loads(self.short_circuit_pickled_content)
+        return pickle_util.load(self.short_circuit_pickled_content)
 
     def set_short_circuit_content(self, value):
-        self.short_circuit_pickled_content = pickle.dumps(value, 
-                                                    pickle.HIGHEST_PROTOCOL)
+        self.short_circuit_pickled_content = pickle_util.dump(value)
 
     @property
     def pretty_name(self):
@@ -103,7 +103,7 @@ class _GAEBingoAlternative(db.Model):
 
     @property
     def content(self):
-        return pickle.loads(self.pickled_content)
+        return pickle_util.load(self.pickled_content)
 
     @property
     def conversion_rate(self):
@@ -165,7 +165,7 @@ class _GAEBingoIdentityRecord(db.Model):
     def load(identity):
         gae_bingo_identity_record = _GAEBingoIdentityRecord.get_by_key_name(_GAEBingoIdentityRecord.key_for_identity(identity))
         if gae_bingo_identity_record:
-            return pickle.loads(gae_bingo_identity_record.pickled)
+            return pickle_util.load(gae_bingo_identity_record.pickled)
 
         return None
 
@@ -201,7 +201,7 @@ def create_experiment_and_alternatives(experiment_name, canonical_name, alternat
                         parent = experiment,
                         experiment_name = experiment.name,
                         number = i,
-                        pickled_content = pickle.dumps(content),
+                        pickled_content = pickle_util.dump(content),
                         live = True,
                         weight = alternative_params[content] if is_dict else 1,
                     )

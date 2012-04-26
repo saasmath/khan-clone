@@ -4,9 +4,7 @@ import logging
 import re
 from urlparse import urlparse
 
-import gdata.youtube
-import gdata.youtube.service
-import gdata.alt.appengine
+import third_party.gdata.youtube.service
 
 from google.appengine.api import taskqueue
 from google.appengine.api import users
@@ -19,7 +17,7 @@ import request_handler
 import user_util
 
 def youtube_get_video_data_dict(youtube_id):
-    yt_service = gdata.youtube.service.YouTubeService()
+    yt_service = third_party.gdata.youtube.service.YouTubeService()
 
     # Now that we run these queries from the App Engine servers, we need to 
     # explicitly specify our developer_key to avoid being lumped together w/ rest of GAE and
@@ -129,7 +127,7 @@ class YouTubeSync(request_handler.RequestHandler):
         Setting.last_youtube_sync_generation_start(int(Setting.last_youtube_sync_generation_start()) + 1)
 
     def updateVideoStats(self):
-        yt_service = gdata.youtube.service.YouTubeService()
+        yt_service = third_party.gdata.youtube.service.YouTubeService()
         # Now that we run these queries from the App Engine servers, we need to 
         # explicitly specify our developer_key to avoid being lumped together w/ rest of GAE and
         # throttled by YouTube's "Too many request" quota
@@ -171,5 +169,3 @@ class YouTubeSync(request_handler.RequestHandler):
                     videos_to_put.add(video)
 
         db.put(list(videos_to_put))
-            
-

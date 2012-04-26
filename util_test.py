@@ -11,8 +11,12 @@ class TestUrl(unittest.TestCase):
     def setUp(self):
         super(TestUrl, self).setUp()
 
+        self.orig_app_dev_server = App.is_dev_server
         App.is_dev_server = False
         self.orig_host = None
+
+    def tearDown(self):
+        App.is_dev_server = self.orig_app_dev_server
 
     def stub_server_name(self, stubbed_name):
         if os.environ.has_key('HTTP_HOST'):

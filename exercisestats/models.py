@@ -1,7 +1,8 @@
 from google.appengine.ext import db
 from time import mktime
-import cPickle as pickle
 import datetime as dt
+
+import pickle_util
 
 
 class ExerciseStatisticShard(db.Model):
@@ -36,7 +37,7 @@ class ExerciseStatistic(db.Model):
 
     @property
     def histogram(self):
-        return pickle.loads(self.blob_val)
+        return pickle_util.load(self.blob_val)
 
     @staticmethod
     def date_to_bounds(date):

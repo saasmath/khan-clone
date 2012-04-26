@@ -16,7 +16,6 @@ A 'video' is what's on a Khan page like
    http://www.khanacademy.org/math/algebra/introduction-to-algebra/v/the-beauty-of-algebra
 """
 
-import cPickle as pickle
 import datetime
 import logging
 try:
@@ -28,6 +27,7 @@ from google.appengine.api import users
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 
+from api import jsonify
 import app
 import backup_model
 import classtime
@@ -38,6 +38,7 @@ import goals.models
 import image_cache
 import layer_cache
 import object_property
+import pickle_util
 import points
 import search
 import setting_model
@@ -360,6 +361,80 @@ class Video(search.Searchable, db.Model):
             video.index()
             video.indexed_title_changed()
 
+    def get_search_data(self, exercise_videos):
+        # TODO(csilvers): get rid of circular dependency here
+        import exercise_video_model
+        import topic_models
+        exercises = []
+        parent_supertopic_key = self.topic_string_keys[0]
+        for parent in self.topic_string_keys:
+            if parent in topic_models.Topic._super_topic_ids:
+                parent_supertopic_key = parent
+
+        parent_supertopic = db.get(parent_supertopic_key)
+        parent_supertopic_data = {
+            "id": parent_supertopic.id,
+            "url": parent_supertopic.relative_url,
+            "title": parent_supertopic.standalone_title,
+            "description": parent_supertopic.description,
+        }
+
+        if self.key() in exercise_videos:
+            exvid = exercise_videos[self.key()]
+            exercise = exvid.exercise
+            exercise_data = {
+                "name": exercise.display_name,
+                "url": exercise.relative_url,
+            }
+            exercises.append(exercise_data)
+
+        subtitles_key_name = VideoSubtitles.get_key_name('en', self.youtube_id)
+        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
+        subtitles_text = u""
+        if subtitles:
+            subtitles_json = subtitles.load_json()
+            subtitles_text = u" ".join([sub["text"] for sub in subtitles_json if "text" in sub])
+
+        return {
+            "kind": "Video",
+            "id": self.readable_id,
+            "key_id": self.key().id(),
+            "title": self.title,
+            "description": self.description,
+            "keywords": self.keywords,
+            "ka_url": self.ka_url,
+            "parent_topic": jsonify.jsonify(parent_supertopic_data),
+            "related_exercises": jsonify.jsonify(exercises),
+            "subtitles": subtitles_text,
+        }
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda:
+        "Video.get_all_search_data.%s.v2" %
+        setting_model.Setting.topic_tree_version(),
+        layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
+    def get_all_search_data():
+        # TODO(csilvers): get rid of circular dependency here
+        import exercise_video_model
+        import topic_models
+        video_search_data = []
+        version = topic_models.TopicVersion.get_default_version()
+
+        videos = [v for v in Video.all()]
+        exvids = [ev for ev in exercise_video_model.ExerciseVideo.all()]
+        exvids_dict = dict([(exercise_video_model.ExerciseVideo.video.get_value_for_datastore(ev), ev) for ev in exvids])
+        logging.info("Found %d exvids" % len(exvids))
+
+        for video in videos:
+            if video.topic_string_keys:
+        
+                video_data = video.get_search_data(exvids_dict)
+                video_data["version"] = version.number
+
+                video_search_data.append(video_data)
+
+        return video_search_data
+
 class VideoSubtitles(db.Model):
     """Subtitles for a YouTube video
 
@@ -622,7 +697,7 @@ class VideoLog(backup_model.BackupModel):
 def _set_css_deferred(user_data_key, video_key, status, version):
     user_data = user_models.UserData.get(user_data_key)
     uvc = UserVideoCss.get_for_user_data(user_data)
-    css = pickle.loads(uvc.pickled_dict)
+    css = pickle_util.load(uvc.pickled_dict)
 
     id = '.v%d' % video_key.id()
     if status == UserVideoCss.STARTED:
@@ -635,7 +710,7 @@ def _set_css_deferred(user_data_key, video_key, status, version):
         css['started'].discard(id)
         css['completed'].add(id)
 
-    uvc.pickled_dict = pickle.dumps(css, pickle.HIGHEST_PROTOCOL)
+    uvc.pickled_dict = pickle_util.dump(css)
     uvc.load_pickled()
 
     # if set_css_deferred runs out of order then we bump the version number
@@ -747,8 +822,7 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def get_for_user_data(user_data):
-        p = pickle.dumps({'started': set([]), 'completed': set([])}, 
-                         pickle.HIGHEST_PROTOCOL)
+        p = pickle_util.dump({'started': set([]), 'completed': set([])})
         return UserVideoCss.get_or_insert(UserVideoCss._key_for(user_data),
                                           user=user_data.user,
                                           video_css='',
@@ -784,7 +858,7 @@ class UserVideoCss(db.Model):
     def load_pickled(self):
         max_selectors = 20
         css_list = []
-        css = pickle.loads(self.pickled_dict)
+        css = pickle_util.load(self.pickled_dict)
 
         started_css = '{background-image:url(/images/video-indicator-started.png);padding-left:14px;}'
         complete_css = '{background-image:url(/images/video-indicator-complete.png);padding-left:14px;}'

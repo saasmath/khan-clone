@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import logging
 import datetime as dt
-import cPickle as pickle
+import pickle_util
 
 from google.appengine.ext import db, deferred
 from google.appengine.api import taskqueue
@@ -99,7 +99,7 @@ def fancy_stats_deferred(exid, start_dt, end_dt, cursor, uid, i):
             exid = exid,
             start_dt = start_dt,
             end_dt = end_dt,
-            blob_val = pickle.dumps(all_stats, pickle.HIGHEST_PROTOCOL),
+            blob_val = pickle_util.dump(all_stats),
             log_count = all_stats['log_count'])
         model.put()
 
@@ -167,7 +167,7 @@ def fancy_stats_shard_reducer(exid, start_dt, end_dt):
             accumulated[key] = so_far + updates[key]
 
     def accumulate_from_stat_shard(stat_shard):
-        shard_val = pickle.loads(stat_shard.blob_val)
+        shard_val = pickle_util.load(stat_shard.blob_val)
 
         for k, v in shard_val.items():
             if isinstance(v, dict):

@@ -32,10 +32,9 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 '''
 
-import gdata.youtube
-import gdata.youtube.data
-import gdata.youtube.service
-import gdata.youtube.client
+import third_party.gdata.service
+import third_party.gdata.youtube.client
+import third_party.gdata.youtube.service
 import time
 import cgi
 import os
@@ -43,7 +42,7 @@ from getpass import getpass
 
 
 def main():
-    yt_service = gdata.youtube.service.YouTubeService()
+    yt_service = third_party.gdata.youtube.service.YouTubeService()
     yt_service.email = 'khanacademy'
     yt_service.password = getpass('Enter the password for the khanacademy '
                                   'account YouTube account: ')
@@ -65,7 +64,7 @@ def main():
             while True:
                 result = None
                 try:
-                    caption_post_url = gdata.youtube.client.YOUTUBE_CAPTION_FEED_URI % id
+                    caption_post_url = third_party.gdata.youtube.client.YOUTUBE_CAPTION_FEED_URI % id
                     print caption_post_url
                     result = yt_service.Post(caption_text, caption_post_url, 
                                              extra_headers={'Content-Type': 'application/vnd.youtube.timedtext; charset=UTF-8',
@@ -74,7 +73,7 @@ def main():
                     os.remove(file)
                     time.sleep(delay)
                     break
-                except gdata.service.RequestError, err:
+                except third_party.gdata.service.RequestError, err:
                     print "Trying again in 10 minutes due to error: %s" % err
                     delay = min(delay + 1, 10)
                     print "New inter-request delay = %s seconds" % delay

@@ -368,15 +368,14 @@ def topictree_export(version_id = None, topic_id = "root"):
 @jsonify
 def topictree_import(version_id = "edit", topic_id="root", publish=False):
     import zlib
-    import cPickle as pickle
+    import pickle_util
     logging.info("calling /_ah/queue/deferred_import")
 
     # importing the full topic tree can be too large so pickling and compressing
     deferred.defer(v1_utils.topictree_import_task, version_id, topic_id, publish,
-                zlib.compress(pickle.dumps(request.json, 
-                                           pickle.HIGHEST_PROTOCOL)),
-                _queue = "import-queue",
-                _url = "/_ah/queue/deferred_import")
+                   zlib.compress(pickle_util.dump(request.json)),
+                   _queue = "import-queue",
+                   _url = "/_ah/queue/deferred_import")
 
 @route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
 @api.auth.decorators.open_access
@@ -759,6 +758,18 @@ def save_url(url_id = None, version_id=None):
             request.json,
             changeable_props)
 
+
+@route("/api/v1/searchindex", methods=["GET"])
+@api.auth.decorators.open_access
+@jsonp
+@jsonify
+def get_topictree_search_index():
+    search_data = []
+
+    search_data.extend(video_models.Video.get_all_search_data())
+    search_data.extend(topic_models.Topic.get_all_search_data())
+
+    return search_data
 
 @route("/api/v1/videos/<video_id>/explore_url", methods=["GET"])
 @api.auth.decorators.open_access

@@ -3,7 +3,6 @@ from __future__ import with_statement
 
 import datetime
 import logging
-import pickle
 import zlib
 import os
 
@@ -13,6 +12,7 @@ from google.appengine.runtime.apiproxy_errors import RequestTooLargeError
 from google.appengine.api.datastore_errors import BadRequestError
                                             
 from app import App
+import pickle_util
 import request_cache
 
 if App.is_dev_server:
@@ -413,7 +413,7 @@ class ChunkedResult():
         class cache_class is set to (memcache or KeyValueCache)
         '''
 
-        result = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
+        result = pickle_util.dump(value)
         if compress:
             result = zlib.compress(result)
         
@@ -506,7 +506,7 @@ class ChunkedResult():
                 return None
              
         try:
-            return pickle.loads(self.data)
+            return pickle_util.load(self.data)
         except Exception:
             # If for some reason the data coming back is corrupted so it can't
             # be depickled, we will return None in order to recaclulate the 
@@ -576,7 +576,7 @@ class KeyValueCache(db.Model):
                 # TODO(james): After May 2nd 2012 the default cache time of 25 
                 # days should have ended and the or can be removed.
                 if key_value.pickled or key_value.pickled is None:
-                    values[key] = pickle.loads(key_value.value)
+                    values[key] = pickle_util.load(key_value.value)
                 else:
                     values[key] = key_value.value
 
@@ -613,7 +613,7 @@ class KeyValueCache(db.Model):
             pickled = False
             if not isinstance(value, str):
                 pickled = True
-                value = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
+                value = pickle_util.dump(value)
 
             key_values.append(KeyValueCache(
                     key_name = namespaced_key,

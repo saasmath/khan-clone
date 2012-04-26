@@ -1,4 +1,3 @@
-import cPickle as pickle
 import hashlib
 
 from google.appengine.ext import db
@@ -10,6 +9,7 @@ from google.appengine.ext.webapp import RequestHandler
 from .models import _GAEBingoExperiment, _GAEBingoAlternative, _GAEBingoIdentityRecord, _GAEBingoSnapshotLog
 from identity import identity
 from config import QUEUE_NAME
+import pickle_util
 
 # gae_bingo relies on the deferred library,
 # and as such it is susceptible to the same path manipulation weaknesses explained here:
@@ -396,8 +396,7 @@ def persist_gae_bingo_identity_records(list_identities):
             bingo_identity = _GAEBingoIdentityRecord(
                         key_name = _GAEBingoIdentityRecord.key_for_identity(ident),
                         identity = ident,
-                        pickled = pickle.dumps(identity_cache, 
-                                               pickle.HIGHEST_PROTOCOL),
+                        pickled = pickle_util.dump(identity_cache),
                     )
             bingo_identity.put()
 

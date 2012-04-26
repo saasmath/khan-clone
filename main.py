@@ -3,12 +3,18 @@
 import urllib
 import logging
 import re
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 from google.appengine.api import users
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 from google.appengine.api import memcache
+from google.appengine.api import urlfetch
 
 import webapp2
 from webapp2_extras.routes import DomainRoute
@@ -20,7 +26,7 @@ from webapp2_extras.routes import RedirectRoute
 # the way at first seems to fix some of those issues.
 import templatetags #@UnusedImport
 
-import devpanel
+import devpanel.handlers
 import bulk_update.handler
 import request_cache
 from gae_mini_profiler import profiler
@@ -48,13 +54,14 @@ import exercises.handlers
 import exercisestats.report
 import exercisestats.report_json
 import exercisestats.exercisestats_util
+import gandalf
 import github
 import paypal
 import smarthistory
 import topics
 import goals.handlers
 import appengine_stats
-import stories
+import stories.handlers
 import summer
 import common_core
 import unisubs
@@ -62,7 +69,7 @@ import api.jsonify
 import socrates
 import labs.explorations
 import layer_cache
-import kmap_editor
+from knowledgemap import kmap_editor
 
 import topic_models
 import video_models
@@ -140,9 +147,6 @@ class TopicPage(request_handler.RequestHandler):
             topic = topic_models.Topic.get_by_id(path_list[-1])
 
             if topic:
-                bingo("topic_pages_view_page")
-                # End topic pages A/B test
-
                 if path != topic.get_extended_slug():
                     # If the topic ID is found but the path is incorrect,
                     # redirect the user to the canonical path
@@ -461,6 +465,79 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
 
 class Search(request_handler.RequestHandler):
 
+    @user_util.open_access
+    def get(self):
+        if not gandalf.gandalf("new_faster_search"):
+            self.get_old()
+            return
+
+        query = self.request.get('page_search_query')
+        template_values = {'page_search_query': query}
+        query = query.strip()
+        if len(query) < search.SEARCH_PHRASE_MIN_LENGTH:
+            if len(query) > 0:
+                template_values.update({
+                    'query_too_short': search.SEARCH_PHRASE_MIN_LENGTH
+                })
+            self.render_jinja2_template("searchresults_new.html", template_values)
+            return
+        searched_phrases = []
+
+        url = "http://search-rpc.khanacademy.org/solr/select/?q=%s&start=0&rows=1000&indent=on&wt=json&fl=*%%20score" % urllib.quote(query)
+        try:
+            logging.info("Fetching: %s" % url)
+            # Allow responses to be cached for an hour
+            response = urlfetch.fetch(url = url, deadline=25, headers = {'Cache-Control' : 'max-age=3600'})
+            response_object = json.loads(response.content)
+        except Exception, e:
+            logging.error("Failed to fetch search results from search-rpc! Error: %s" % str(e))
+            template_values.update({
+                'server_timout': True
+            })
+            self.render_jinja2_template("searchresults_new.html", template_values)
+            return
+
+        logging.info("Received response: %d" % response_object["response"]["numFound"])
+
+        matching_topics = [t for t in response_object["response"]["docs"] if t["kind"] == "Topic"]
+        if matching_topics:
+            matching_topic_count = 1
+            matching_topic = matching_topics[0] if matching_topics else None
+            matching_topic["children"] = json.loads(matching_topic["child_topics"]) if "child_topics" in matching_topic else None
+        else:
+            matching_topic_count = 0
+            matching_topic = None
+
+        videos = [v for v in response_object["response"]["docs"] if v["kind"] == "Video"]
+        topics = {}
+
+        for video in videos:
+            video["related_exercises"] = json.loads(video["related_exercises"])
+
+            parent_topic = json.loads(video["parent_topic"])
+            topic_id = parent_topic["id"]
+            if topic_id not in topics:
+                topics[topic_id] = parent_topic
+                topics[topic_id]["videos"] = []
+                topics[topic_id]["match_count"] = 0
+
+            topics[topic_id]["videos"].append(video)
+            topics[topic_id]["match_count"] += 1
+
+        topics_list = sorted(topics.values(), key=lambda topic: -topic["match_count"])
+
+        template_values.update({
+                           'topics': topics_list,
+                           'matching_topic': matching_topic,
+                           'videos': videos,
+                           'search_string': query,
+                           'video_count': len(videos),
+                           'topic_count': len(topics_list),
+                           'matching_topic_count': matching_topic_count
+                           })
+
+        self.render_jinja2_template("searchresults_new.html", template_values)
+
     @user_util.admin_required
     def update(self):
         if App.is_dev_server:
@@ -483,8 +560,11 @@ class Search(request_handler.RequestHandler):
             layer_cache.KeyValueCache.set("last_dev_topic_vesion_indexed", 
                                           new_version.number)
 
-    @user_util.open_access
-    def get(self):
+    def get_old(self):
+        """ Deprecated old version of search, so we can Gandalf in the new one.
+
+        If new search is working, this should be taken out by May 31, 2012.
+        """
 
         show_update = False
         if App.is_dev_server and user_util.is_current_user_admin():
@@ -700,8 +780,8 @@ application = webapp2.WSGIApplication([
     ('/donate', Donate),
     ('/exercisedashboard', knowledgemap.handlers.ViewKnowledgeMap),
 
-    ('/stories/submit', stories.SubmitStory),
-    ('/stories/?.*', stories.ViewStories),
+    ('/stories/submit', stories.handlers.SubmitStory),
+    ('/stories/?.*', stories.handlers.ViewStories),
 
     # Labs
     ('/labs', labs.LabsRequestHandler),
@@ -751,12 +831,12 @@ application = webapp2.WSGIApplication([
     ('/admin/unisubs', unisubs.ReportHandler),
     ('/admin/unisubs/import', unisubs.ImportHandler),
 
-    ('/devadmin', devpanel.Panel),
+    ('/devadmin', devpanel.handlers.Panel),
     ('/devadmin/maplayout', kmap_editor.MapLayoutEditor),
-    ('/devadmin/emailchange', devpanel.MergeUsers),
-    ('/devadmin/managedevs', devpanel.Manage),
-    ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
-    ('/devadmin/managecommoncore', devpanel.ManageCommonCore),
+    ('/devadmin/emailchange', devpanel.handlers.MergeUsers),
+    ('/devadmin/managedevs', devpanel.handlers.Manage),
+    ('/devadmin/managecoworkers', devpanel.handlers.ManageCoworkers),
+    ('/devadmin/managecommoncore', devpanel.handlers.ManageCommonCore),
     ('/commoncore', common_core.CommonCore),
     ('/staging/commoncore', common_core.CommonCore),
     ('/devadmin/content', topics.EditContent),
