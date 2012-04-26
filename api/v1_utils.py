@@ -153,7 +153,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                         # it up again when creating the video in 
                         # add_new_content
                         tree["related_video_keys"] = []
-                        for readable_id in tree["related_videos_readable_ids"]:
+                        for readable_id in tree["related_video_readable_ids"]:
                             video = video_dict[readable_id]
                             tree["related_video_keys"].append(video.key())
 

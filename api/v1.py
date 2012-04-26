@@ -993,7 +993,9 @@ def video_download_available(video_id):
 @jsonp
 @jsonify
 def video_exercises(video_id):
-    video = video_models.Video.all().filter("youtube_id =", video_id).get()
+    video = video_models.Video.get_for_readable_id(video_id, version)
+    if video is None:
+        video = video_models.Video.all().filter("youtube_id =", video_id).get()
     if video:
         return video.related_exercises(bust_cache=True)
     return []
@@ -1126,21 +1128,6 @@ def save_video(video_id="", version_id = "edit"):
                 video_models.Video,
                 version,
                 video_data)
-
-def replace_playlist_values(structure, playlist_dict):
-    if type(structure) == list:
-        for sub_structure in structure:
-            replace_playlist_values(sub_structure, playlist_dict)
-    else:
-        if "items" in structure:
-            replace_playlist_values(structure["items"], playlist_dict)
-        elif "playlist" in structure:
-            # Replace string playlist title with real playlist object
-            key = structure["playlist"]
-            if key in playlist_dict:
-                structure["playlist"] = playlist_dict[key]
-            else:
-                del structure["playlist"]
 
 def get_students_data_from_request(user_data):
     return util_profile.get_students_data(user_data, request.request_string("list_id"))
@@ -1698,27 +1685,6 @@ def user_playlists_all():
     if user_data_student:
         user_playlists = topic_models.UserTopic.all().filter("user =", user_data_student.user)
         return user_playlists.fetch(10000)
-
-    return None
-
-# TODO(csilvers): this seems to be unused (as evidenced by the fact it
-#                 has a typo that makes it never complete).  Remove it.
-@route("/api/v1/user/topic/<topic_id>", methods=["GET"])
-@route("/api/v1/user/playlists/<topic_id>", methods=["GET"])
-@api.auth.decorators.login_required
-@jsonp
-@jsonify
-def user_playlists_specific(topic_id):
-    user_data = user_models.UserData.current()
-
-    if user_data and playlist_title:
-        user_data_student = get_visible_user_data_from_request()
-        topic = topic_models.Topic.get_by_id(topic_id)
-        if topic is None:
-            topic = topic_models.Topic.all().filter("standalone_title =", topic_id).get()
-
-        if user_data_student and topic:
-            return topic_models.UserTopic.get_for_topic_and_user_data(topic, user_data_student)
 
     return None
 
