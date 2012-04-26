@@ -993,7 +993,9 @@ def video_download_available(video_id):
 @jsonp
 @jsonify
 def video_exercises(video_id):
-    video = video_models.Video.all().filter("youtube_id =", video_id).get()
+    video = video_models.Video.get_for_readable_id(video_id, version)
+    if video is None:
+        video = video_models.Video.all().filter("youtube_id =", video_id).get()
     if video:
         return video.related_exercises(bust_cache=True)
     return []
