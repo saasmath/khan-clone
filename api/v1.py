@@ -992,7 +992,9 @@ def video_download_available(video_id):
 @jsonp
 @jsonify
 def video_exercises(video_id):
-    video = video_models.Video.all().filter("youtube_id =", video_id).get()
+    video = video_models.Video.get_for_readable_id(video_id, version)
+    if video is None:
+        video = video_models.Video.all().filter("youtube_id =", video_id).get()
     if video:
         return video.related_exercises(bust_cache=True)
     return []
@@ -1125,21 +1127,6 @@ def save_video(video_id="", version_id = "edit"):
                 video_models.Video,
                 version,
                 video_data)
-
-def replace_playlist_values(structure, playlist_dict):
-    if type(structure) == list:
-        for sub_structure in structure:
-            replace_playlist_values(sub_structure, playlist_dict)
-    else:
-        if "items" in structure:
-            replace_playlist_values(structure["items"], playlist_dict)
-        elif "playlist" in structure:
-            # Replace string playlist title with real playlist object
-            key = structure["playlist"]
-            if key in playlist_dict:
-                structure["playlist"] = playlist_dict[key]
-            else:
-                del structure["playlist"]
 
 def get_students_data_from_request(user_data):
     return util_profile.get_students_data(user_data, request.request_string("list_id"))
