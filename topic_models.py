@@ -1546,6 +1546,43 @@ class Topic(search.Searchable, db.Model):
         else:
             return progress_tree
 
+    def get_search_data(self, topics_cache):
+        child_topics = [topics_cache[str(k)] for k in self.child_keys if k.kind() == "Topic" and str(k) in topics_cache]
+        child_list = [{ "title": t.title, "url": t.relative_url } for t in child_topics]
+        return {
+            "kind": "Topic",
+            "id": self.id,
+            "title": self.standalone_title,
+            "description": self.description,
+            "ka_url": self.relative_url,
+            "parent_topic": unicode(self.parent_keys[0]) if self.parent_keys else None,
+            "child_topics": jsonify.jsonify(child_list)
+        }
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda version=None:
+        "Topic.get_all_search_data.%d.%s" %
+        (version.number if version else -1, setting_model.Setting.cached_content_add_date()),
+        layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
+    def get_all_search_data(version=None):
+        topic_search_data = []
+
+        if not version:
+            version = TopicVersion.get_by_id(None)
+
+        topics = Topic.all().filter('version =', version).filter("hide =", False)
+        topics_cache = {}
+        for topic in topics:
+            topics_cache[str(topic.key())] = topic
+
+        for topic in topics:
+            topic_data = topic.get_search_data(topics_cache)
+            topic_data["version"] = version.number
+
+            topic_search_data.append(topic_data)
+
+        return topic_search_data
+
 class UserTopic(db.Model):
     user = db.UserProperty()
     seconds_watched = db.IntegerProperty(default=0)
@@ -1716,6 +1753,7 @@ def _preload_default_version_data(version_number, run_code):
     _do_set_default_deferred_step(_change_default_version,
                                   version_number,
                                   run_code)
+
 
 
 def _change_default_version(version_number, run_code):
@@ -1891,9 +1929,19 @@ def _rebuild_content_caches(version_number, run_code):
     setting_model.Setting.cached_exercises_date(str(datetime.datetime.now()))
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
+
+    # Preload the search index (accessed via the API /api/v1/searchindex)
+    refresh_topictree_search_index_deferred()
+
     logging.info("set_default_version complete")
     setting_model.Setting.topic_admin_task_message("Publish: finished successfully")
 
+
+def refresh_topictree_search_index_deferred():
+    version = TopicVersion.get_by_id(None)
+    video_models.Video.get_all_search_data(version.number, bust_cache=True)
+    Topic.get_all_search_data(bust_cache=True)
+    logging.info("Refreshed search index cache.")
 
 
 class VersionContentChange(db.Model):
