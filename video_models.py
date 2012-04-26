@@ -379,15 +379,14 @@ class Video(search.Searchable, db.Model):
             "description": parent_supertopic.description,
         }
 
-        for exvid in exercise_videos:
-            video_key = exercise_video_model.ExerciseVideo.video.get_value_for_datastore(exvid)
-            if video_key == self.key():
-                exercise = exvid.exercise
-                exercise_data = {
-                    "name": exercise.display_name,
-                    "url": exercise.relative_url,
-                }
-                exercises.append(exercise_data)
+        if self.key() in exercise_videos:
+            exvid = exercise_videos[self.key()]
+            exercise = exvid.exercise
+            exercise_data = {
+                "name": exercise.display_name,
+                "url": exercise.relative_url,
+            }
+            exercises.append(exercise_data)
 
         subtitles_key_name = VideoSubtitles.get_key_name('en', self.youtube_id)
         subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
@@ -420,12 +419,13 @@ class Video(search.Searchable, db.Model):
 
         videos = [v for v in Video.all()]
         exvids = [ev for ev in exercise_video_model.ExerciseVideo.all()]
+        exvids_dict = dict([(exercise_video_model.ExerciseVideo.video.get_value_for_datastore(ev), ev) for ev in exvids])
         logging.info("Found %d exvids" % len(exvids))
 
         for video in videos:
             if video.topic_string_keys:
         
-                video_data = video.get_search_data(exvids)
+                video_data = video.get_search_data(exvids_dict)
                 video_data["version"] = version_number
 
                 video_search_data.append(video_data)

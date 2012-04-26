@@ -483,7 +483,7 @@ class Search(request_handler.RequestHandler):
             return
         searched_phrases = []
 
-        url = "http://search-rpc.khanacademy.org/solr/select/?q=version%%3A1+%%2B%s&start=0&rows=9999&indent=on&wt=json&fl=*%%20score" % urllib.quote(query)
+        url = "http://search-rpc.khanacademy.org/solr/select/?q=%s&start=0&rows=1000&indent=on&wt=json&fl=*%%20score" % urllib.quote(query)
         try:
             logging.info("Fetching: %s" % url)
             response = urlfetch.fetch(url = url, deadline=25)

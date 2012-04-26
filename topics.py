@@ -183,22 +183,23 @@ class RefreshCaches(request_handler.RequestHandler):
         if refresh_homepage:
             deferred.defer(topic_models.preload_library_homepage, version,
                         _queue="topics-set-default-queue",
-                        _name="preload_library_homepage")
+                        _url="/_ah/queue/deferred_topics-set-default-queue")
             logging.info("Queued preload_library_homepage.")
         if refresh_topicpages:
             deferred.defer(topic_models.preload_topic_pages, version,
-                        _queue="topics-set-default-queue")
-            logging.info("Queued preload_topic_pages.",
-                        _name="preload_topic_pages")
+                        _queue="topics-set-default-queue",
+                        _url="/_ah/queue/deferred_topics-set-default-queue")
+            logging.info("Queued preload_topic_pages.")
         if refresh_browsers:
             deferred.defer(topic_models.preload_topic_browsers, version,
                         _queue="topics-set-default-queue",
-                        _name="preload_topic_browsers")
+                        _url="/_ah/queue/deferred_topics-set-default-queue")
             logging.info("Queued preload_topic_browsers.")
         if refresh_searchindex:
             deferred.defer(topic_models.refresh_topictree_search_index_deferred,
                         _queue="topics-set-default-queue",
-                        _name="search_index")
+                        _url="/_ah/queue/deferred_topics-set-default-queue")
+            logging.info("Queued refresh_topictree_search_index_deferred.")
 
         print "Queued refresh of selected queues."
 
