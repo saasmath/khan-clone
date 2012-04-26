@@ -770,7 +770,7 @@ def get_topictree_search_index():
 
     search_data = []
 
-    search_data.extend(models.Video.get_all_search_data(version.number))
+    search_data.extend(video_models.Video.get_all_search_data(version.number))
     search_data.extend(topic_models.Topic.get_all_search_data())
 
     return search_data

@@ -389,6 +389,13 @@ class Video(search.Searchable, db.Model):
                 }
                 exercises.append(exercise_data)
 
+        subtitles_key_name = VideoSubtitles.get_key_name('en', self.youtube_id)
+        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
+        subtitles_text = u""
+        if subtitles:
+            subtitles_json = subtitles.load_json()
+            subtitles_text = u" ".join([sub["text"] for sub in subtitles_json if "text" in sub])
+
         return {
             "kind": "Video",
             "id": self.readable_id,
@@ -399,6 +406,7 @@ class Video(search.Searchable, db.Model):
             "ka_url": self.ka_url,
             "parent_topic": jsonify.jsonify(parent_supertopic_data),
             "related_exercises": jsonify.jsonify(exercises),
+            "subtitles": subtitles_text,
         }
 
     @staticmethod
