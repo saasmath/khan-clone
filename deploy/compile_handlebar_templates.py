@@ -8,6 +8,8 @@ import inspect
 import types
 import re
 
+# Include "." in python path so pybars can be imported.
+sys.path.append(os.path.abspath("."))
 from pybars import Compiler
 
 
