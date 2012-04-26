@@ -1562,7 +1562,8 @@ class Topic(search.Searchable, db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda version=None:
         "Topic.get_all_search_data.%d.%s" %
-        (version.number if version else -1, setting_model.Setting.cached_content_add_date()))
+        (version.number if version else -1, setting_model.Setting.cached_content_add_date()),
+        layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
     def get_all_search_data(version=None):
         topic_search_data = []
 

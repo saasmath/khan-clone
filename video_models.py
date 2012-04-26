@@ -411,7 +411,8 @@ class Video(search.Searchable, db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda version_number:
         "Video.get_all_search_data.%s.v1" %
-        setting_model.Setting.cached_content_add_date())
+        setting_model.Setting.cached_content_add_date(),
+        layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
     def get_all_search_data(version_number):
         # TODO(csilvers): get rid of circular dependency here
         import exercise_video_model
