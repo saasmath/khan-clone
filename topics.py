@@ -175,7 +175,7 @@ class RefreshCaches(request_handler.RequestHandler):
         if (not refresh_homepage and not refresh_topicpages
             and not refresh_browsers and not refresh_searchindex):
             print ("Cache names to refresh must be passed into the URL, "
-                   "i.e. /devadmin/refresh?homepage=1&topicpages=0&browsers=0")
+                   "e.g. /devadmin/refresh?homepage=1&topicpages=0&browsers=0")
             return
 
         version = topic_models.TopicVersion.get_default_version()

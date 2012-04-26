@@ -486,10 +486,11 @@ class Search(request_handler.RequestHandler):
         url = "http://search-rpc.khanacademy.org/solr/select/?q=%s&start=0&rows=1000&indent=on&wt=json&fl=*%%20score" % urllib.quote(query)
         try:
             logging.info("Fetching: %s" % url)
-            response = urlfetch.fetch(url = url, deadline=25)
+            # Allow responses to be cached for an hour
+            response = urlfetch.fetch(url = url, deadline=25, headers = {'Cache-Control' : 'max-age=3600'})
             response_object = json.loads(response.content)
         except Exception, e:
-            logging.error("Failed to fetch search results from search-rpc!")
+            logging.error("Failed to fetch search results from search-rpc! Error: %s" % str(e))
             template_values.update({
                 'server_timout': True
             })
@@ -562,7 +563,7 @@ class Search(request_handler.RequestHandler):
     def get_old(self):
         """ Deprecated old version of search, so we can Gandalf in the new one.
 
-        Will eventually disappear.
+        If new search is working, this should be taken out by May 31, 2012.
         """
 
         show_update = False
