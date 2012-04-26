@@ -1560,15 +1560,13 @@ class Topic(search.Searchable, db.Model):
         }
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda version=None:
-        "Topic.get_all_search_data.%d.%s" %
-        (version.number if version else -1, setting_model.Setting.cached_content_add_date()),
+    @layer_cache.cache_with_key_fxn(lambda:
+        "Topic.get_all_search_data.%s.v1" %
+        setting_model.Setting.topic_tree_version(),
         layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
-    def get_all_search_data(version=None):
+    def get_all_search_data():
         topic_search_data = []
-
-        if not version:
-            version = TopicVersion.get_by_id(None)
+        version = TopicVersion.get_default_version()
 
         topics = Topic.all().filter('version =', version).filter("hide =", False)
         topics_cache = {}
@@ -1938,8 +1936,7 @@ def _rebuild_content_caches(version_number, run_code):
 
 
 def refresh_topictree_search_index_deferred():
-    version = TopicVersion.get_by_id(None)
-    video_models.Video.get_all_search_data(version.number, bust_cache=True)
+    video_models.Video.get_all_search_data(bust_cache=True)
     Topic.get_all_search_data(bust_cache=True)
     logging.info("Refreshed search index cache.")
 

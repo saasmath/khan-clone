@@ -409,14 +409,16 @@ class Video(search.Searchable, db.Model):
         }
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda version_number:
-        "Video.get_all_search_data.%s.v1" %
-        setting_model.Setting.cached_content_add_date(),
+    @layer_cache.cache_with_key_fxn(lambda:
+        "Video.get_all_search_data.%s.v2" %
+        setting_model.Setting.topic_tree_version(),
         layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore)
-    def get_all_search_data(version_number):
+    def get_all_search_data():
         # TODO(csilvers): get rid of circular dependency here
         import exercise_video_model
+        import topic_models
         video_search_data = []
+        version = topic_models.TopicVersion.get_default_version()
 
         videos = [v for v in Video.all()]
         exvids = [ev for ev in exercise_video_model.ExerciseVideo.all()]
@@ -427,7 +429,7 @@ class Video(search.Searchable, db.Model):
             if video.topic_string_keys:
         
                 video_data = video.get_search_data(exvids_dict)
-                video_data["version"] = version_number
+                video_data["version"] = version.number
 
                 video_search_data.append(video_data)
 

@@ -765,12 +765,9 @@ def save_url(url_id = None, version_id=None):
 @jsonp
 @jsonify
 def get_topictree_search_index():
-    # Get current version
-    version = topic_models.TopicVersion.get_by_id(None)
-
     search_data = []
 
-    search_data.extend(video_models.Video.get_all_search_data(version.number))
+    search_data.extend(video_models.Video.get_all_search_data())
     search_data.extend(topic_models.Topic.get_all_search_data())
 
     return search_data
