@@ -30,10 +30,10 @@ from pickle import PicklingError   # @UnusedImport
 # but also modify the existing oldname entry to be:
 #   (old_modules, old_classname) -> (newer_modules, newer_classname)
 _CLASS_RENAME_MAP = {
-    ('accuracy_model.accuracy_model', 'AccurarcyModel'):
+    ('accuracy_model.accuracy_model', 'AccuracyModel'):
     ('exercises.accuracy_model', 'AccuracyModel'),
 
-    ('accuracy_model', 'AccurarcyModel'):
+    ('accuracy_model', 'AccuracyModel'):
     ('exercises.accuracy_model', 'AccuracyModel'),
 }
 
