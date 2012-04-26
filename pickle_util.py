@@ -63,5 +63,6 @@ def dump(obj):
 def load(s):
     """Return an unpickled object from s: equivalent to pickle.loads(s)."""
     unpickler = cPickle.Unpickler(cStringIO.StringIO(s))
+    # See http://docs.python.org/library/pickle.html#subclassing-unpicklers
     unpickler.find_global = _renamed_class_loader
     return unpickler.load()
